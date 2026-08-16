@@ -2,12 +2,37 @@
 
 **From BIM Model Data to Delivery Decisions**
 
+[![CI](https://github.com/EricRoosevelt/epc-digital-delivery-control-tower/actions/workflows/ci.yml/badge.svg)](https://github.com/EricRoosevelt/epc-digital-delivery-control-tower/actions/workflows/ci.yml)
+
 This portfolio prototype converts multidisciplinary IFC model data and
 project-authored information requirements into traceable digital-delivery
 findings and future management KPIs.
 
 It uses public buildingSMART sample models and clearly identifies
 project-specific assumptions. It is not presented as a production deployment.
+
+![EPC Delivery Control Tower overview](docs/evidence/stage_3b/overview-final.png)
+
+## V1.0.0 at a Glance
+
+The verified portfolio fixture contains three multidisciplinary IFC models and
+39 federated element occurrences. The end-to-end workflow produces:
+
+| Delivery measure | Verified result |
+| --- | ---: |
+| Source IFC models | 3 |
+| Federated element occurrences | 39 |
+| Evaluated elements | 17 |
+| Applicable IDS checks | 31 |
+| Passed / failed checks | 25 / 6 |
+| Selected-rule applicable pass rate | 80.65% |
+| Noncompliant elements | 3 |
+| Deterministic BCF 3.0 topics | 3 |
+| Failed-check-to-BCF lineage | 6/6 (100%) |
+
+The 80.65 percent result is an **applicable-check pass rate for the selected
+project-authored rules**, not an overall model-compliance score. The six
+failed checks belong to three elements and generate three traceable BCF topics.
 
 ## Current MVP
 
@@ -20,7 +45,9 @@ The current implementation:
 - validates all three IFC models in one batch;
 - produces JSON, HTML, and normalized CSV validation results;
 - converts the six failed checks into three deterministic BCF 3.0 issues;
-- validates BCF XML, archive safety, model lineage, and repeatability.
+- validates BCF XML, archive safety, model lineage, and repeatability;
+- delivers a de-identified Power BI Project with seven KPI cards, four
+  operational filters, BCF finding lineage, and Speckle 3D topic isolation.
 
 ## Data Pipeline
 
@@ -33,6 +60,8 @@ Public IFC models
 -> per-model JSON and HTML reports
 -> normalized ids_findings.csv
 -> deterministic BCF 3.0 issues and analytical sidecars
+-> Power BI semantic model and KPI measures
+-> Speckle federated-model selection and topic isolation
 ```
 
 ## Data Products
@@ -71,6 +100,10 @@ files. Cross-model joins use:
 ```text
 element_key = model_id::global_id
 ```
+
+The fixture contains 39 unique `element_key` values but only 32 distinct bare
+IFC GlobalIds because four GUID groups recur across discipline files. A bare
+GlobalId is therefore never used as a federated join key.
 
 ### `data/processed/ids_findings.csv`
 
@@ -140,6 +173,33 @@ The raw IfcTester JSON and HTML reports retain IfcTester's native aggregates,
 where an optional zero-applicable specification may appear as passed even
 though its individual section is marked as skipped. Those native headline
 percentages must not be used as the dashboard compliance measure.
+
+## Power BI and Speckle Control Tower
+
+The tracked Power BI Project is under [`dashboard/`](dashboard/). Its semantic
+model uses normalized repository data for KPIs and the official Speckle visual
+for federated 3D selection. The accepted single-page report provides:
+
+- seven formula-driven KPI cards;
+- applicable-check and renderability views by discipline;
+- Discipline, Rule, Priority, and Assignee filters;
+- three BCF topics with two linked findings each;
+- selection of exactly one issue element in the federated 3D view.
+
+The Direct IFC connector mapping uniquely resolves all 39 inventory
+`element_key` values. Of those, 32 elements have IFC representations and all
+32 map to renderable objects. Seven `Representation=NULL` elements remain in
+the semantic inventory and are reported separately; they are not claimed as
+highlightable geometry. All three issue elements are mapped, renderable, and
+verified in the topic workflow.
+
+The committed PBIP/PBIR/TMDL source and de-identified evidence are public and
+reproducible. Real Speckle model/version URLs, authentication state, cached
+connector data, and the connected PBIX remain local and Git-ignored. Opening a
+fully connected copy therefore requires Power BI Desktop, the official Speckle
+connector/visual, and user-controlled access to the source models. See
+[`dashboard/README.md`](dashboard/README.md) for the exact boundary and
+reconnection procedure.
 
 ## Reports
 
@@ -229,6 +289,14 @@ python -m pip install -r requirements-dev.txt
 python -m pytest -p no:cacheprovider tests -q
 ```
 
+Validate the repository-safe dashboard data and tracked Power BI Project:
+
+```powershell
+python src\validate_dashboard.py --mode core
+python src\validate_pbip.py
+python -m pip check
+```
+
 ## Reproducibility and Input Protection
 
 * Files in `data/raw` are read-only source inputs.
@@ -277,6 +345,10 @@ prototype and are not official buildingSMART delivery requirements.
 * Property actual values are left blank when IfcTester does not provide them consistently; the pipeline does not invent data.
 * The validation results demonstrate a portfolio workflow, not a contractual model acceptance decision.
 * The BCF workflow covers IDS failures only; it is not an issue-server sync.
-* KPI calculations and the connected Power BI/Speckle dashboard require the
-  explicitly confirmed model-version and federation URLs described under
-  `dashboard/`.
+* The Power BI evidence is a validated portfolio fixture, not a hosted
+  production monitoring service.
+* Revit may be used for optional downstream visual or BCF review, but it is not
+  an ingestion, validation, or control-tower source of truth.
+* A fully connected local Power BI/Speckle copy requires the private,
+  explicitly confirmed model-version URLs described under `dashboard/`; those
+  URLs and credentials are intentionally not distributed.
