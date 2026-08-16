@@ -1,0 +1,96 @@
+{
+  "bcf_version": "3.0",
+  "counts": {
+    "topic_events": 3,
+    "topic_findings": 6,
+    "topics": 3,
+    "viewpoint_components": 3,
+    "viewpoints": 3
+  },
+  "dependencies": {
+    "ifcopenshell": "0.8.5",
+    "xmlschema": "4.3.2"
+  },
+  "generated_at": "2026-08-13T00:00:00Z",
+  "generator": "stdlib-xml-zipfile",
+  "inputs": [
+    {
+      "path": "data/processed/ids_findings.csv",
+      "rows": 47,
+      "sha256": "4e655d7f82ef68c5d72750c2eb74a5e2fc4e799bf6f57d4a29bbad0afa44e18d"
+    },
+    {
+      "path": "data/processed/models.csv",
+      "rows": 3,
+      "sha256": "25e05c22bf80783da6fc71b8cf02d07f6c2848b9d5de8ae910b936754b633899"
+    },
+    {
+      "path": "data/processed/model_inventory.csv",
+      "rows": 39,
+      "sha256": "ad24b410e39fba140faf81f6b794f3b7e7fd17eb7b09fa5db448ea3babcc8e44"
+    },
+    {
+      "path": "ids/epc_delivery_requirements_v0.1.ids",
+      "sha256": "913a5aa64d57f019dd93ff5566c5b18476ccfd8a30a3e35f80b3b375570e00fa"
+    },
+    {
+      "path": "data/raw/Building-Hvac.ifc",
+      "sha256": "11a8552bc555fa44dfdc49374d1ab2da0a16104c10f086af509f500ce03fa2b3"
+    }
+  ],
+  "manifest_version": "0.1",
+  "outputs": [
+    {
+      "bytes": 10160,
+      "path": "reports/bcf/ids_failures.bcf",
+      "sha256": "b3c6f51abc9647ef4baeee9f9bccd884094b362362e516778c4bf083326abc99"
+    },
+    {
+      "bytes": 1103,
+      "path": "data/processed/bcf_topics.csv",
+      "rows": 3,
+      "sha256": "dd39cf192f010d0e72b1daeaa30ecb2b7bbd948d01a9acf197ddfd19fc0cf550"
+    },
+    {
+      "bytes": 1965,
+      "path": "data/processed/bcf_topic_findings.csv",
+      "rows": 6,
+      "sha256": "ab49e6de9c41c98c29bfcfb14da2710ff9e976754580e6807e09309e99156209"
+    },
+    {
+      "bytes": 1696,
+      "path": "data/processed/bcf_viewpoints.csv",
+      "rows": 3,
+      "sha256": "6e31593bf5b0a88ffb0bbd9ece7c509130206a244bce82709b507065f9b57bbf"
+    },
+    {
+      "bytes": 771,
+      "path": "data/processed/bcf_viewpoint_components.csv",
+      "rows": 3,
+      "sha256": "0268a09c712c2bbefe80af52f232b838ce3d929748f88c4767a7618bf60b5f5c"
+    },
+    {
+      "bytes": 630,
+      "path": "data/processed/bcf_topic_events.csv",
+      "rows": 3,
+      "sha256": "569a2ec391b5726c652d74c75e86ebfc654f10e9b1cfeb97cc8445fa81a0b5bf"
+    }
+  ],
+  "pipeline": "ids-failures-to-bcf-3.0",
+  "project_guid": "6c0184f4-77fe-5d12-bdf2-c47abbd86a65",
+  "run_id": "ids-v0.1-8706ef58303bfd11",
+  "schema_bundle": {
+    "commit": "bc48611d0d7a1587f028a2b69677a1aafd5cd0a8",
+    "files": {
+      "documents.xsd": "9f74995582ed5b1e3375a785c818466d3a24171cc5935976970e8acc2f0f0da7",
+      "extensions.xsd": "5551f83d99e1c82de61201071756f118c8a429afba969e3ebdd95abeb5fe6141",
+      "markup.xsd": "e274d9020ec30b6ea05eb5ebde875d3859319cc5324df030f7e5579a4287d631",
+      "project.xsd": "3ee87efa318882c76177477147b959a706757743bf089ddbf8365ca7d8f0bfdb",
+      "shared-types.xsd": "c5cb0526cae1b38820f1b1311115a189c5df600431cf9d87c9a96b53efe1b725",
+      "version.xsd": "6663e7acaef740ca49e81df01f14d075bc136952282e7df40219584bc62a82c3",
+      "visinfo.xsd": "683c20f6d06daaa16f8c93ef1dc6bdabcecf66ff1548a6c4d24b6f3b8b476222"
+    },
+    "path": "third_party/buildingsmart/bcf-xml/3.0/Schemas",
+    "repository": "buildingSMART/BCF-XML"
+  }
+}

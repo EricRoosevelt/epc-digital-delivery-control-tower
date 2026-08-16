@@ -18,7 +18,9 @@ The current implementation:
 - extracts a 39-element federated model inventory;
 - generates a project-authored IDS;
 - validates all three IFC models in one batch;
-- produces JSON, HTML, and normalized CSV validation results.
+- produces JSON, HTML, and normalized CSV validation results;
+- converts the six failed checks into three deterministic BCF 3.0 issues;
+- validates BCF XML, archive safety, model lineage, and repeatability.
 
 ## Data Pipeline
 
@@ -30,6 +32,7 @@ Public IFC models
 -> IfcTester validation
 -> per-model JSON and HTML reports
 -> normalized ids_findings.csv
+-> deterministic BCF 3.0 issues and analytical sidecars
 ```
 
 ## Data Products
@@ -81,6 +84,8 @@ The current batch produces 47 findings with the normalized statuses:
 * `N/A`.
 
 Every non-`N/A` finding can be traced back to a `model_id` and `element_key`.
+Stable requirement and finding UUIDv5 keys are generated once in Python for
+downstream lineage; dashboard queries do not reimplement identity logic.
 
 The complete table definitions and constraints are documented in
 [`docs/data_contract.md`](docs/data_contract.md).
@@ -153,6 +158,30 @@ reports/ids/hvac.html
 JSON reports provide detailed machine-readable validation output. HTML reports
 provide human-readable review output.
 
+### BCF issue workflow
+
+The current six `FAIL` findings form three element-level issues. Each issue has
+exactly two linked findings, one perspective viewpoint, and one selected HVAC
+IFC component. The issue wording records that a project-assumed information
+requirement is unmet; it does not classify the public sample as defective.
+
+Generated artifacts are:
+
+```text
+reports/bcf/ids_failures.bcf
+reports/bcf/run_manifest.json
+data/processed/bcf_topics.csv
+data/processed/bcf_topic_findings.csv
+data/processed/bcf_viewpoints.csv
+data/processed/bcf_viewpoint_components.csv
+data/processed/bcf_topic_events.csv
+```
+
+The normative generator and validator use the official pinned BCF 3.0 XSDs
+and do not import `bcf-client`. See
+[`docs/bcf_data_contract.md`](docs/bcf_data_contract.md) for identities,
+sidecar grains, archive rules, and validation gates.
+
 ## Run Locally
 
 Create and activate a Python virtual environment:
@@ -186,6 +215,20 @@ Validate all three IFC models and generate the reports and normalized findings:
 python src\validate_ids.py
 ```
 
+Generate and strictly validate the deterministic BCF workflow:
+
+```powershell
+python src\generate_bcf.py
+python src\validate_bcf.py
+```
+
+Install development dependencies and run the regression suite:
+
+```powershell
+python -m pip install -r requirements-dev.txt
+python -m pytest -p no:cacheprovider tests -q
+```
+
 ## Reproducibility and Input Protection
 
 * Files in `data/raw` are read-only source inputs.
@@ -193,10 +236,16 @@ python src\validate_ids.py
 * The validation `run_id` is derived from the IDS and source-model hashes.
 * Repeated validation with unchanged inputs produces the same ordered
   `ids_findings.csv`.
-* The verified findings SHA-256 is:
+* The verified normalized findings SHA-256 is:
 
 ```text
-2573b27112d82586dc6a94fc4b8d79b77fab5fa291c005a9d13e666081fb06c5
+4e655d7f82ef68c5d72750c2eb74a5e2fc4e799bf6f57d4a29bbad0afa44e18d
+```
+
+* The deterministic BCF SHA-256 is:
+
+```text
+b3c6f51abc9647ef4baeee9f9bccd884094b362362e516778c4bf083326abc99
 ```
 
 ## Data Source and Attribution
@@ -227,4 +276,7 @@ prototype and are not official buildingSMART delivery requirements.
 * The first IDS version covers selected information requirements, not all BIM quality dimensions.
 * Property actual values are left blank when IfcTester does not provide them consistently; the pipeline does not invent data.
 * The validation results demonstrate a portfolio workflow, not a contractual model acceptance decision.
-* BCF-style issue data, KPI calculations, and the Power BI dashboard are planned for later phases.
+* The BCF workflow covers IDS failures only; it is not an issue-server sync.
+* KPI calculations and the connected Power BI/Speckle dashboard require the
+  explicitly confirmed model-version and federation URLs described under
+  `dashboard/`.

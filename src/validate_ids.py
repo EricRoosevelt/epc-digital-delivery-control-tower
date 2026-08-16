@@ -7,6 +7,17 @@ import ifcopenshell
 import pandas as pd
 from ifctester import ids, reporter
 
+try:
+    from .identity import (
+        build_finding_key,
+        build_requirement_key,
+    )
+except ImportError:
+    from identity import (
+        build_finding_key,
+        build_requirement_key,
+    )
+
 
 # 取得项目根目录，使脚本不依赖当前 PowerShell 所在位置
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
@@ -44,14 +55,20 @@ FINDINGS_OUTPUT = (
 
 # ids_findings.csv 的固定列顺序
 FINDING_COLUMNS = [
+    "finding_key",
     "run_id",
     "model_id",
     "element_key",
     "global_id",
     "ids_version",
+    "specification_id",
     "specification",
+    "requirement_id",
+    "requirement_key",
     "requirement",
     "status",
+    "is_applicable",
+    "is_issue",
     "severity",
     "ifc_class",
     "element_name",
@@ -106,6 +123,7 @@ def read_ids_metadata():
     )
 
     specification_ids = {}
+    known_identifiers = set()
 
     for node in specification_nodes:
         name = node.get("name")
@@ -121,7 +139,14 @@ def read_ids_metadata():
                 f"Duplicate IDS specification name: {name}"
             )
 
+        if identifier in known_identifiers:
+            raise ValueError(
+                "Duplicate IDS specification identifier: "
+                f"{identifier}"
+            )
+
         specification_ids[name] = identifier
+        known_identifiers.add(identifier)
 
     return version_node.text, specification_ids
 
@@ -201,6 +226,19 @@ def get_severity(identifier, status):
         return "WARNING"
 
     return "ERROR"
+
+
+def get_requirement_id(requirement):
+    """Return the canonical requirement label emitted by IfcTester."""
+
+    requirement_id = requirement.get("label")
+
+    if not requirement_id:
+        raise ValueError(
+            "An IDS requirement has no canonical label"
+        )
+
+    return str(requirement_id)
 
 
 def validate_model(model_row):
@@ -293,30 +331,43 @@ def add_na_findings(
     """
 
     for requirement in requirements:
-        label = (
-            requirement.get("label")
-            or requirement.get("description")
-            or "Unnamed requirement"
+        requirement_id = get_requirement_id(requirement)
+        requirement_key = build_requirement_key(
+            identifier,
+            requirement_id,
         )
 
         expected = (
             requirement.get("description")
-            or label
+            or requirement_id
+        )
+
+        finding_key = build_finding_key(
+            run_id=run_id,
+            model_id=model_id,
+            requirement_key=requirement_key,
+            element_key="",
         )
 
         findings.append(
             {
+                "finding_key": finding_key,
                 "run_id": run_id,
                 "model_id": model_id,
                 "element_key": "",
                 "global_id": "",
                 "ids_version": ids_version,
+                "specification_id": identifier,
                 "specification": (
                     f"{identifier}: "
                     f"{specification_name}"
                 ),
-                "requirement": label,
+                "requirement_id": requirement_id,
+                "requirement_key": requirement_key,
+                "requirement": requirement_id,
                 "status": "N/A",
+                "is_applicable": "false",
+                "is_issue": "false",
                 "severity": "INFO",
                 "ifc_class": "",
                 "element_name": "",
@@ -346,15 +397,15 @@ def add_entity_findings(
     将通过或失败的构件结果转换成扁平 Finding 行。
     """
 
-    label = (
-        requirement.get("label")
-        or requirement.get("description")
-        or "Unnamed requirement"
+    requirement_id = get_requirement_id(requirement)
+    requirement_key = build_requirement_key(
+        identifier,
+        requirement_id,
     )
 
     expected = (
         requirement.get("description")
-        or label
+        or requirement_id
     )
 
     for entity in entities:
@@ -382,19 +433,34 @@ def add_entity_findings(
                 or "Requirement not satisfied."
             )
 
+        finding_key = build_finding_key(
+            run_id=run_id,
+            model_id=model_id,
+            requirement_key=requirement_key,
+            element_key=element_key,
+        )
+
         findings.append(
             {
+                "finding_key": finding_key,
                 "run_id": run_id,
                 "model_id": model_id,
                 "element_key": element_key,
                 "global_id": global_id,
                 "ids_version": ids_version,
+                "specification_id": identifier,
                 "specification": (
                     f"{identifier}: "
                     f"{specification_name}"
                 ),
-                "requirement": label,
+                "requirement_id": requirement_id,
+                "requirement_key": requirement_key,
+                "requirement": requirement_id,
                 "status": status,
+                "is_applicable": "true",
+                "is_issue": (
+                    "true" if status == "FAIL" else "false"
+                ),
                 "severity": get_severity(
                     identifier,
                     status,
@@ -449,6 +515,19 @@ def normalize_report(
             "requirements",
             [],
         )
+
+        requirement_ids = [
+            get_requirement_id(requirement)
+            for requirement in requirements
+        ]
+
+        if len(requirement_ids) != len(
+            set(requirement_ids)
+        ):
+            raise ValueError(
+                "Duplicate requirement label in IDS "
+                f"specification: {identifier}"
+            )
 
         specification_status = (
             get_specification_status(specification)
@@ -628,8 +707,8 @@ def main():
     findings_df = findings_df.sort_values(
         [
             "model_id",
-            "specification",
-            "requirement",
+            "specification_id",
+            "requirement_id",
             "element_key",
             "status",
         ]
@@ -641,8 +720,7 @@ def main():
     finding_key_columns = [
         "run_id",
         "model_id",
-        "specification",
-        "requirement",
+        "requirement_key",
         "element_key",
     ]
 
@@ -660,6 +738,60 @@ def main():
         raise ValueError(
             "Duplicate normalized findings: "
             f"{duplicate_keys}"
+        )
+
+    if not findings_df["finding_key"].is_unique:
+        raise ValueError("finding_key is not unique")
+
+    expected_requirement_keys = [
+        build_requirement_key(
+            row.specification_id,
+            row.requirement_id,
+        )
+        for row in findings_df.itertuples(index=False)
+    ]
+
+    if not findings_df["requirement_key"].equals(
+        pd.Series(expected_requirement_keys)
+    ):
+        raise ValueError(
+            "A requirement_key does not match its identity payload"
+        )
+
+    expected_finding_keys = [
+        build_finding_key(
+            run_id=row.run_id,
+            model_id=row.model_id,
+            requirement_key=row.requirement_key,
+            element_key=row.element_key,
+        )
+        for row in findings_df.itertuples(index=False)
+    ]
+
+    if not findings_df["finding_key"].equals(
+        pd.Series(expected_finding_keys)
+    ):
+        raise ValueError(
+            "A finding_key does not match its identity payload"
+        )
+
+    expected_applicable = findings_df["status"].map(
+        lambda status: "false" if status == "N/A" else "true"
+    )
+    expected_issue = findings_df["status"].map(
+        lambda status: "true" if status == "FAIL" else "false"
+    )
+
+    if not findings_df["is_applicable"].equals(
+        expected_applicable
+    ):
+        raise ValueError(
+            "is_applicable does not match finding status"
+        )
+
+    if not findings_df["is_issue"].equals(expected_issue):
+        raise ValueError(
+            "is_issue does not match finding status"
         )
 
     # 所有非 N/A 结果都必须关联到一个真实构件

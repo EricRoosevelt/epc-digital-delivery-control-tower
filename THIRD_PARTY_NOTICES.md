@@ -1,0 +1,67 @@
+# Third-Party Notices
+
+The EPC Digital Delivery Control Tower source code is licensed under the MIT
+License in `LICENSE`. That license does not replace the licenses that apply to
+third-party software, standards, schemas, or sample data described below.
+
+## Runtime and Development Dependencies
+
+Python packages are installed from their upstream distributions and are not
+vendored in this repository.
+
+| Component | Version | License | Use |
+|---|---:|---|---|
+| [IfcOpenShell](https://github.com/IfcOpenShell/IfcOpenShell) | 0.8.5 | LGPL-3.0-or-later | IFC parsing and model inspection |
+| [IfcTester](https://github.com/IfcOpenShell/IfcOpenShell) | 0.8.5 | LGPL-3.0-or-later | IDS authoring, validation, and reporting |
+| [BCF library (`bcf-client`)](https://github.com/IfcOpenShell/IfcOpenShell) | 0.8.5 | Conflicting metadata; see note below | Transitive dependency of IfcTester; not imported by the normative BCF generator or validator |
+| [pandas](https://github.com/pandas-dev/pandas) | 3.0.5 | BSD-3-Clause | Normalized tabular data products |
+| [xmlschema](https://github.com/sissaschool/xmlschema) | 4.3.2 | MIT | Strict XML Schema validation |
+| [pytest](https://github.com/pytest-dev/pytest) | 9.1.1 | MIT | Development-time automated tests only |
+
+Each distribution may include additional transitive dependencies. Their own
+metadata and license files remain authoritative.
+
+The installed `bcf-client` 0.8.5 wheel declares the PyPI classifier
+`GNU General Public License v3 (GPLv3)`, while its source project is distributed
+within the IfcOpenShell repository, whose root licensing and BCF source headers
+identify LGPL terms. This project does not resolve that upstream metadata
+conflict or redistribute the package. The normative Stage 3 BCF implementation
+uses Python XML/ZIP facilities and the vendored official schemas instead.
+
+## buildingSMART Sample IFC Files
+
+The following files are unmodified public samples from the buildingSMART
+International
+[Sample-Test-Files repository](https://github.com/buildingSMART/Sample-Test-Files),
+IFC 4 PCERT Sample Scene:
+
+- `data/raw/Building-Architecture.ifc`
+- `data/raw/Building-Structural.ifc`
+- `data/raw/Building-Hvac.ifc`
+
+Copyright buildingSMART International Ltd. Licensed under the
+[Creative Commons Attribution 4.0 International License](https://creativecommons.org/licenses/by/4.0/).
+The project records each file's source URL and SHA-256 in
+`data/processed/models.csv`.
+
+## buildingSMART BCF 3.0 Schemas
+
+Unmodified BCF-XML 3.0 schema files under
+`third_party/buildingsmart/bcf-xml/3.0/` originate from the
+[buildingSMART BCF-XML `release_3_0` branch](https://github.com/buildingSMART/BCF-XML/tree/release_3_0).
+
+Copyright buildingSMART International Ltd. Licensed under the
+[Creative Commons Attribution-NoDerivatives 4.0 International License](https://creativecommons.org/licenses/by-nd/4.0/).
+These files are retained byte-for-byte as the validation source of truth. They
+must not be reformatted, normalized, or modified. Source revision and file
+hashes are recorded alongside the vendored snapshot.
+
+## Externally Installed Software
+
+The official [Speckle Power BI connector and 3D visual](https://github.com/specklesystems/speckle-powerbi)
+are installed separately by the user. Their binaries and source code are not
+redistributed in this repository. Speckle's repository license and the terms
+of the installed release apply independently.
+
+For the complete adoption boundary, including projects used only as design or
+architecture references, see `docs/open_source_adoption.md`.

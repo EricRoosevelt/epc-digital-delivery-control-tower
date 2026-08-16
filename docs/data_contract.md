@@ -16,11 +16,49 @@ Delivery Control Tower prototype.
 - A bare IFC `GlobalId` is not treated as unique across federated models.
 - When pandas reads `ids_findings.csv`, use `keep_default_na=False` so the
   literal status `N/A` is not converted to a missing value.
+- Boolean CSV values are serialized as the lowercase strings `true` and
+  `false`.
 - The federated element key is:
 
 ```text
 element_key = model_id::global_id
 ```
+
+## Stable UUID Keys
+
+Normalized requirement and finding keys use UUIDv5 with the fixed namespace:
+
+```text
+7611c2a0-c29a-50fa-b00d-5058d25a41d3
+```
+
+The UUID name is a versioned type prefix followed by a canonical JSON array.
+Canonical JSON is produced with `ensure_ascii=False` and
+`separators=(",", ":")`, so it contains no incidental whitespace. UUIDs are
+stored as lowercase, hyphenated strings.
+
+```text
+requirement_key = uuid5(
+  namespace,
+  "requirement:v1:" + canonical_json([
+    specification_id,
+    requirement_id
+  ])
+)
+
+finding_key = uuid5(
+  namespace,
+  "finding:v1:" + canonical_json([
+    run_id,
+    model_id,
+    requirement_key,
+    element_key or ""
+  ])
+)
+```
+
+Array order, empty-string handling, type prefix, and version are part of the
+identity contract and must not be changed without an explicit schema version.
 
 ## Table: `data/processed/models.csv`
 
@@ -71,29 +109,43 @@ Constraints:
 
 One row represents one normalized IDS validation result.
 
-| Column          | Type   |    Required | Description                                 |
-| --------------- | ------ | ----------: | ------------------------------------------- |
-| `run_id`        | string |         Yes | Stable identifier for the validation inputs |
-| `model_id`      | string |         Yes | Foreign key to `models.csv`                 |
-| `element_key`   | string | Conditional | Federated element key; blank only for `N/A` |
-| `global_id`     | string | Conditional | IFC `GlobalId`; blank only for `N/A`        |
-| `ids_version`   | string |         Yes | Project IDS version, such as `0.1`          |
-| `specification` | string |         Yes | IDS specification name                      |
-| `requirement`   | string |         Yes | Requirement being evaluated                 |
-| `status`        | string |         Yes | `PASS`, `FAIL`, or `N/A`                    |
-| `severity`      | string |         Yes | `ERROR`, `WARNING`, or `INFO`               |
-| `ifc_class`     | string | Conditional | IFC class; blank only for `N/A`             |
-| `element_name`  | string |          No | IFC element name                            |
-| `expected`      | string |         Yes | Expected information or relationship        |
-| `actual`        | string |          No | Actual model value                          |
-| `reason`        | string |         Yes | Human-readable validation explanation       |
+| Column             | Type    |    Required | Description                                             |
+| ------------------ | ------- | ----------: | ------------------------------------------------------- |
+| `finding_key`      | UUIDv5  |         Yes | Stable primary key for the normalized finding           |
+| `run_id`           | string  |         Yes | Stable identifier for the validation inputs             |
+| `model_id`         | string  |         Yes | Foreign key to `models.csv`                             |
+| `element_key`      | string  | Conditional | Federated element key; blank only for `N/A`             |
+| `global_id`        | string  | Conditional | IFC `GlobalId`; blank only for `N/A`                    |
+| `ids_version`      | string  |         Yes | Project IDS version, such as `0.1`                      |
+| `specification_id` | string  |         Yes | IDS `identifier`, such as `R-005A`                      |
+| `specification`    | string  |         Yes | Human-readable IDS specification label                  |
+| `requirement_id`   | string  |         Yes | Canonical IfcTester requirement label within the spec    |
+| `requirement_key`  | UUIDv5  |         Yes | Stable key for `specification_id` plus `requirement_id` |
+| `requirement`      | string  |         Yes | Human-readable requirement label                        |
+| `status`           | string  |         Yes | `PASS`, `FAIL`, or `N/A`                                |
+| `is_applicable`    | boolean |         Yes | `true` for `PASS`/`FAIL`; `false` for `N/A`             |
+| `is_issue`         | boolean |         Yes | `true` only for `FAIL`                                  |
+| `severity`         | string  |         Yes | `ERROR`, `WARNING`, or `INFO`                           |
+| `ifc_class`        | string  | Conditional | IFC class; blank only for `N/A`                         |
+| `element_name`     | string  |          No | IFC element name                                        |
+| `expected`         | string  |         Yes | Expected information or relationship                    |
+| `actual`           | string  |          No | Actual model value                                      |
+| `reason`           | string  |         Yes | Human-readable validation explanation                   |
 
 Constraints:
 
 * `status` must be `PASS`, `FAIL`, or `N/A`.
 * Zero applicable objects must produce `N/A`, not `PASS`.
-* The composite key `(run_id, model_id, specification, requirement, element_key)`
-  must be unique.
+* `specification_id` is read directly from the IDS specification identifier.
+* `requirement_id` is the canonical requirement label emitted by IfcTester and
+  must be unique within its specification.
+* `requirement_key` must match its documented UUIDv5 payload.
+* `finding_key` must be unique and match its documented UUIDv5 payload.
+* The composite key `(run_id, model_id, requirement_key, element_key)` must be
+  unique.
+* `PASS` and `FAIL` rows have `is_applicable=true`; `N/A` rows have
+  `is_applicable=false`.
+* Only `FAIL` rows have `is_issue=true`.
 * Every non-`N/A` row must contain `model_id` and `element_key`.
 * Every `model_id` must exist in `models.csv`.
 * A project-specific EPC requirement must be labelled as a project assumption.

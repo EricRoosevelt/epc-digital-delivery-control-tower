@@ -1,0 +1,4 @@
+﻿run_id,event_id,topic_guid,event_type,event_date,event_author,value,source
+ids-v0.1-8706ef58303bfd11,a5fac132-6294-5a10-a44f-23a5d7c90946,be0ef29b-2855-5f97-b60e-466abc66252d,topic_created,2026-08-13T00:00:00Z,control-tower@example.invalid,,ANALYTICS_SIDECAR
+ids-v0.1-8706ef58303bfd11,ace571f4-e23f-53e5-b00e-d368071c5dea,7fe29ad3-674a-57fe-aa74-325e34053ffc,topic_created,2026-08-13T00:00:00Z,control-tower@example.invalid,,ANALYTICS_SIDECAR
+ids-v0.1-8706ef58303bfd11,fbb1621b-b9ce-5b0e-957d-ce81c4cbb112,dbfa5125-2ea0-5587-ab5b-947a02c3ba49,topic_created,2026-08-13T00:00:00Z,control-tower@example.invalid,,ANALYTICS_SIDECAR

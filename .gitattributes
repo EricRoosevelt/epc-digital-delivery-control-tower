@@ -5,3 +5,5 @@
 *.txt text eol=lf
 *.csv text eol=lf
 *.ifc text eol=lf
+
+third_party/buildingsmart/bcf-xml/3.0/** -text
