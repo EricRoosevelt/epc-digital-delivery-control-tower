@@ -307,7 +307,7 @@ python -m pip check
 * The verified normalized findings SHA-256 is:
 
 ```text
-4e655d7f82ef68c5d72750c2eb74a5e2fc4e799bf6f57d4a29bbad0afa44e18d
+ea7d2fa2cd1690eb8b791dcab2792f116238566f0c60b10b64f1b02ce504eb4d
 ```
 
 * The deterministic BCF SHA-256 is:

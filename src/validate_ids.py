@@ -831,6 +831,7 @@ def main():
         FINDINGS_OUTPUT,
         index=False,
         encoding="utf-8-sig",
+        lineterminator="\n",
     )
 
     print(

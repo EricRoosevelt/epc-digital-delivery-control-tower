@@ -195,12 +195,14 @@ models_df.to_csv(
     models_output,
     index=False,
     encoding="utf-8-sig",
+    lineterminator="\n",
 )
 
 inventory_df.to_csv(
     inventory_output,
     index=False,
     encoding="utf-8-sig",
+    lineterminator="\n",
 )
 
 
