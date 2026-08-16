@@ -1,0 +1,40 @@
+﻿element_key,source_model,discipline,global_id,ifc_class,name,storey,pset_count
+Building-Architecture.ifc::1wADrO19H3w980h1wUyXLk,Building-Architecture.ifc,Architecture,1wADrO19H3w980h1wUyXLk,IfcBuildingElementProxy,Group#18,00 groundfloor,0
+Building-Architecture.ifc::0bo7_K6az7AA$4RxkSNVNM,Building-Architecture.ifc,Architecture,0bo7_K6az7AA$4RxkSNVNM,IfcBuildingElementProxy,Group#19,00 groundfloor,0
+Building-Architecture.ifc::3_4VN63S96DfWiJjgG8j1C,Building-Architecture.ifc,Architecture,3_4VN63S96DfWiJjgG8j1C,IfcBuildingElementProxy,sand bedding,,0
+Building-Architecture.ifc::2F44QMqSH3TOkM$SZoqCBe,Building-Architecture.ifc,Architecture,2F44QMqSH3TOkM$SZoqCBe,IfcBuildingElementProxy,origin,,0
+Building-Architecture.ifc::3Fit2Fad92zf2f6aWdJtF5,Building-Architecture.ifc,Architecture,3Fit2Fad92zf2f6aWdJtF5,IfcBuildingElementProxy,geo-reference,,0
+Building-Architecture.ifc::3dkFAzOGrAIuOzY_RdrdVv,Building-Architecture.ifc,Architecture,3dkFAzOGrAIuOzY_RdrdVv,IfcChimney,house - chimney,00 groundfloor,0
+Building-Architecture.ifc::2iPwJwpPDCSgMheXwk9cBT,Building-Architecture.ifc,Architecture,2iPwJwpPDCSgMheXwk9cBT,IfcRoof,house - roof,,1
+Building-Architecture.ifc::3zR0BOEcLADRKln4HYporH,Building-Architecture.ifc,Architecture,3zR0BOEcLADRKln4HYporH,IfcSlab,floor,00 groundfloor,1
+Building-Architecture.ifc::0ZTBBPo6f6bxqV2K7Oelrq,Building-Architecture.ifc,Architecture,0ZTBBPo6f6bxqV2K7Oelrq,IfcSlab,house - roof - slab left,,1
+Building-Architecture.ifc::12UVOn4wvAJPMUExKdZLb8,Building-Architecture.ifc,Architecture,12UVOn4wvAJPMUExKdZLb8,IfcSlab,house - roof - slab right,,1
+Building-Architecture.ifc::1AQAupaRP1txwK1AGiN61V,Building-Architecture.ifc,Architecture,1AQAupaRP1txwK1AGiN61V,IfcWall,house - outer wall - house right front,00 groundfloor,1
+Building-Architecture.ifc::3wdauVJT5Fx9drrREiDqA$,Building-Architecture.ifc,Architecture,3wdauVJT5Fx9drrREiDqA$,IfcWall,house - outer wall - house right back,00 groundfloor,1
+Building-Architecture.ifc::0OfZwWc8j9QP5uX8xPTxDH,Building-Architecture.ifc,Architecture,0OfZwWc8j9QP5uX8xPTxDH,IfcWall,house - outer wall - house left,00 groundfloor,1
+Building-Architecture.ifc::1uS5vfZPn9R8PlAaVd73on,Building-Architecture.ifc,Architecture,1uS5vfZPn9R8PlAaVd73on,IfcWall,plumbing wall,00 groundfloor,1
+Building-Architecture.ifc::2e9pghUJbBqR4jTInsONQT,Building-Architecture.ifc,Architecture,2e9pghUJbBqR4jTInsONQT,IfcFurniture,kitchen,00 groundfloor,0
+Building-Hvac.ifc::2F44QMqSH3TOkM$SZoqCBe,Building-Hvac.ifc,Hvac,2F44QMqSH3TOkM$SZoqCBe,IfcBuildingElementProxy,origin,,0
+Building-Hvac.ifc::3Fit2Fad92zf2f6aWdJtF5,Building-Hvac.ifc,Hvac,3Fit2Fad92zf2f6aWdJtF5,IfcBuildingElementProxy,geo-reference,,0
+Building-Hvac.ifc::3dkFAzOGrAIuOzY_RdrdVv,Building-Hvac.ifc,Hvac,3dkFAzOGrAIuOzY_RdrdVv,IfcChimney,house - chimney,00 groundfloor,0
+Building-Hvac.ifc::38WbwIGD90nB_3T2BTU5Ed,Building-Hvac.ifc,Hvac,38WbwIGD90nB_3T2BTU5Ed,IfcDuctSegment,building element,00 groundfloor,0
+Building-Hvac.ifc::23uPJWDfXEcwHH3kdFgV9c,Building-Hvac.ifc,Hvac,23uPJWDfXEcwHH3kdFgV9c,IfcAirTerminal,chimney cover,00 groundfloor,0
+Building-Hvac.ifc::34Y6EIt3nDCAS1k$kPGOKm,Building-Hvac.ifc,Hvac,34Y6EIt3nDCAS1k$kPGOKm,IfcAirTerminal,house fireplace cap,00 groundfloor,0
+Building-Structural.ifc::0fqX614OH1YO1Njdxms2$Q,Building-Structural.ifc,Structural,0fqX614OH1YO1Njdxms2$Q,IfcBeam,girder,,1
+Building-Structural.ifc::0rh7bRO0L9fg1NzgGKU$Ut,Building-Structural.ifc,Structural,0rh7bRO0L9fg1NzgGKU$Ut,IfcBeam,girder,,1
+Building-Structural.ifc::3roxUKbVv98xiUcl22_T07,Building-Structural.ifc,Structural,3roxUKbVv98xiUcl22_T07,IfcBeam,girder,,1
+Building-Structural.ifc::0Lvk$Qa81D5et3l3a4S9Vk,Building-Structural.ifc,Structural,0Lvk$Qa81D5et3l3a4S9Vk,IfcBeam,girder,,1
+Building-Structural.ifc::2ddLgAnQf4mBfh5IpUp54U,Building-Structural.ifc,Structural,2ddLgAnQf4mBfh5IpUp54U,IfcBeam,girder,,1
+Building-Structural.ifc::2fjJuPht9EIQaZQYZfC1Op,Building-Structural.ifc,Structural,2fjJuPht9EIQaZQYZfC1Op,IfcBeam,girder,,1
+Building-Structural.ifc::1CjP_CWub368bZVuVHeHs3,Building-Structural.ifc,Structural,1CjP_CWub368bZVuVHeHs3,IfcBuildingElementProxy,Group#21,00 groundfloor,0
+Building-Structural.ifc::2F44QMqSH3TOkM$SZoqCBe,Building-Structural.ifc,Structural,2F44QMqSH3TOkM$SZoqCBe,IfcBuildingElementProxy,origin,,0
+Building-Structural.ifc::3Fit2Fad92zf2f6aWdJtF5,Building-Structural.ifc,Structural,3Fit2Fad92zf2f6aWdJtF5,IfcBuildingElementProxy,geo-reference,,0
+Building-Structural.ifc::3dkFAzOGrAIuOzY_RdrdVv,Building-Structural.ifc,Structural,3dkFAzOGrAIuOzY_RdrdVv,IfcChimney,house - chimney,00 groundfloor,0
+Building-Structural.ifc::0pFmhV8oD1dB40_b4pscr8,Building-Structural.ifc,Structural,0pFmhV8oD1dB40_b4pscr8,IfcFooting,house - foundation,00 groundfloor,0
+Building-Structural.ifc::2iPwJwpPDCSgMheXwk9cBT,Building-Structural.ifc,Structural,2iPwJwpPDCSgMheXwk9cBT,IfcRoof,house - roof,,1
+Building-Structural.ifc::0DyViLJJ175RvWQi1rE7a6,Building-Structural.ifc,Structural,0DyViLJJ175RvWQi1rE7a6,IfcWall,house - outer wall - house back,00 groundfloor,1
+Building-Structural.ifc::3SGBcf7Lv0r80vKtUCgOpf,Building-Structural.ifc,Structural,3SGBcf7Lv0r80vKtUCgOpf,IfcWall,house - outer wall - house front,00 groundfloor,1
+Building-Structural.ifc::3oNJ9yHi5FJuFnK8yg68Yt,Building-Structural.ifc,Structural,3oNJ9yHi5FJuFnK8yg68Yt,IfcWall,house - outer wall - house front right,00 groundfloor,1
+Building-Structural.ifc::2gTJhghMT81QThk15l2VwR,Building-Structural.ifc,Structural,2gTJhghMT81QThk15l2VwR,IfcWall,house - inner wall,00 groundfloor,1
+Building-Structural.ifc::2r_8UEywH9_RLHe8z$Xa8J,Building-Structural.ifc,Structural,2r_8UEywH9_RLHe8z$Xa8J,IfcDiscreteAccessory,beam shoe,,0
+Building-Structural.ifc::2cc4uJUVv5BevbidUpn1H3,Building-Structural.ifc,Structural,2cc4uJUVv5BevbidUpn1H3,IfcDiscreteAccessory,beam shoe,,0
