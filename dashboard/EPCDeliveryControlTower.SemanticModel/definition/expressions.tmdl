@@ -1,0 +1,201 @@
+expression RepositoryRoot = "C:\REPLACE_WITH_LOCAL_REPOSITORY" meta [IsParameterQuery=true, Type="Text", IsParameterQueryRequired=true]
+
+expression LoadProjectCsv =
+		(relativePath as text) as table =>
+		let
+			NativeRelativePath = Text.Replace(relativePath, "/", "\"),
+			Source = Csv.Document(
+				File.Contents(RepositoryRoot & "\" & NativeRelativePath),
+				[Delimiter = ",", Encoding = 65001, QuoteStyle = QuoteStyle.Csv]
+			),
+			Headers = Table.PromoteHeaders(Source, [PromoteAllScalars = true])
+		in
+			Headers
+
+expression SpeckleConnectionManifest =
+		let
+			Source = Json.Document(
+				File.Contents(
+					RepositoryRoot & "\dashboard\local\speckle_connections.json"
+				)
+			),
+			Models = try Record.Field(Source, "models") otherwise error "Speckle connection manifest is missing models",
+			DirectIfcSources =
+				if not (Models is list) or List.Count(Models) <> 3
+				then error "Speckle connection manifest must contain exactly three model/version entries"
+				else List.Transform(
+					Models,
+					each
+						let
+							UploadRoute = try Text.From(Record.Field(_, "upload_route")) otherwise "",
+							SourceFilename = try Text.From(Record.Field(_, "source_filename")) otherwise "",
+							IfcSha256 = try Text.Lower(Text.From(Record.Field(_, "ifc_sha256"))) otherwise ""
+						in
+							if UploadRoute <> "direct_ifc"
+							then error "Each Speckle source must use upload_route=direct_ifc"
+							else if not Text.EndsWith(Text.Lower(SourceFilename), ".ifc")
+							then error "Each direct Speckle source must name its IFC file"
+							else if
+								Text.Length(IfcSha256) <> 64
+								or Text.Length(Text.Select(IfcSha256, {"0".."9", "a".."f"})) <> 64
+							then error "Each direct Speckle source must record its IFC SHA-256"
+							else _
+				),
+			Validated =
+				if List.Count(DirectIfcSources) <> 3
+				then error "Speckle direct IFC source validation failed"
+				else Source
+		in
+			Validated
+
+expression GetSpeckleModelUrl =
+		(ModelId as text) as text =>
+		let
+			Models = Record.Field(SpeckleConnectionManifest, "models"),
+			Matches = List.Select(
+				Models,
+				each Text.From(Record.Field(_, "model_id")) = ModelId
+			),
+			Url =
+				if List.Count(Matches) <> 1
+				then error "Speckle model_id must map to exactly one fixed version URL"
+				else Text.From(Record.Field(Matches{0}, "model_version_url")),
+			Validated =
+				if not Text.StartsWith(Url, "https://") or not Text.Contains(Url, "@")
+				then error "Speckle source URL must be HTTPS and version-pinned"
+				else Url
+		in
+			Validated
+
+expression NormalizeSpeckleModel =
+		(ModelId as text, ModelVersionUrl as text) as table =>
+		let
+			Source = Speckle.GetByUrl(ModelVersionUrl, false),
+			NormalizeOptionalText =
+				(Value as any) as nullable text =>
+				let
+					Normalized = try Text.Trim(Text.From(Value)) otherwise null
+				in
+					if Normalized = null or Normalized = "" then null else Normalized,
+			WithModelId = Table.AddColumn(Source, "model_id", each ModelId, type text),
+			WithRawProperties = Table.AddColumn(
+				WithModelId,
+				"_raw_properties",
+				each try Record.Field([data], "properties") otherwise null,
+				type nullable record
+			),
+			WithModernIfcGuid = Table.AddColumn(
+				WithRawProperties,
+				"_modern_ifc_guid",
+				each NormalizeOptionalText(
+					try Record.Field([_raw_properties], "IFC GUID") otherwise null
+				),
+				type nullable text
+			),
+			WithModernAttributesGuid = Table.AddColumn(
+				WithModernIfcGuid,
+				"_modern_attributes_global_id",
+				each NormalizeOptionalText(
+					try Record.Field(
+						Record.Field([_raw_properties], "IFC Attributes"),
+						"GlobalId"
+					) otherwise null
+				),
+				type nullable text
+			),
+			WithLegacyAttributesGuid = Table.AddColumn(
+				WithModernAttributesGuid,
+				"_legacy_attributes_global_id",
+				each NormalizeOptionalText(
+					try Record.Field(
+						Record.Field([_raw_properties], "Attributes"),
+						"GlobalId"
+					) otherwise null
+				),
+				type nullable text
+			),
+			WithFlattenedGuid = Table.AddColumn(
+				WithLegacyAttributesGuid,
+				"_flattened_global_id",
+				each NormalizeOptionalText(
+					try Record.Field([properties], "GlobalId") otherwise null
+				),
+				type nullable text
+			),
+			WithIdentityEvidence = Table.AddColumn(
+				WithFlattenedGuid,
+				"_identity_evidence",
+				each List.RemoveNulls(
+					{
+						[_modern_ifc_guid],
+						[_modern_attributes_global_id],
+						[_legacy_attributes_global_id],
+						[_flattened_global_id]
+					}
+				),
+				type list
+			),
+			WithIfcGuid = Table.AddColumn(
+				WithIdentityEvidence,
+				"speckle_ifc_guid",
+				each List.First([_identity_evidence], null),
+				type nullable text
+			),
+			IfcIdentityCandidates = Table.SelectRows(
+				WithIfcGuid,
+				each List.Count([_identity_evidence]) > 0
+			),
+			IfcIdentityValidated =
+				if Table.RowCount(
+					Table.SelectRows(
+						IfcIdentityCandidates,
+						each
+							List.Count([_identity_evidence]) < 2
+							or List.Count(List.Distinct([_identity_evidence])) <> 1
+					)
+				) <> 0
+				then error "Connector IFC identity evidence fields disagree or fewer than two are present"
+				else IfcIdentityCandidates,
+			WithIfcType = Table.AddColumn(
+				IfcIdentityValidated,
+				"speckle_ifc_type",
+				each NormalizeOptionalText(
+					try Record.Field([data], "ifcType") otherwise null
+				),
+				type nullable text
+			),
+			WithRepresentation = Table.AddColumn(
+				WithIfcType,
+				"has_representation",
+				each
+					let
+						DisplayValue = try Record.Field([data], "displayValue") otherwise null
+					in
+						if DisplayValue is list then List.Count(DisplayValue) > 0 else DisplayValue <> null,
+				type logical
+			),
+			WithVersionUrl = Table.AddColumn(
+				WithRepresentation,
+				"speckle_model_version_url",
+				each ModelVersionUrl,
+				type text
+			),
+			Selected = Table.SelectColumns(
+				WithVersionUrl,
+				{
+					"model_id", "speckle_ifc_guid", "speckle_ifc_type",
+					"Object IDs", "Model Info", "Version Object ID",
+					"speckle_model_version_url", "has_representation"
+				}
+			)
+		in
+			Selected
+
+expression SpeckleElementStage =
+		let
+			Architecture = NormalizeSpeckleModel("architecture", GetSpeckleModelUrl("architecture")),
+			Structural = NormalizeSpeckleModel("structural", GetSpeckleModelUrl("structural")),
+			Hvac = NormalizeSpeckleModel("hvac", GetSpeckleModelUrl("hvac")),
+			Federated = Speckle.Models.Federate({Architecture, Structural, Hvac}, false)
+		in
+			Federated

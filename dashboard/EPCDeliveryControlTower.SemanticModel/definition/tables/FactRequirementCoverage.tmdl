@@ -1,0 +1,96 @@
+table FactRequirementCoverage
+
+	column run_id
+		dataType: string
+		summarizeBy: none
+		sourceColumn: run_id
+
+	column model_id
+		dataType: string
+		summarizeBy: none
+		sourceColumn: model_id
+
+	column requirement_key
+		dataType: string
+		summarizeBy: none
+		sourceColumn: requirement_key
+
+	column specification_id
+		dataType: string
+		summarizeBy: none
+		sourceColumn: specification_id
+
+	column specification
+		dataType: string
+		summarizeBy: none
+		sourceColumn: specification
+
+	column requirement_id
+		dataType: string
+		summarizeBy: none
+		sourceColumn: requirement_id
+
+	column requirement
+		dataType: string
+		summarizeBy: none
+		sourceColumn: requirement
+
+	column applicable_checks
+		dataType: int64
+		summarizeBy: sum
+		sourceColumn: applicable_checks
+
+	column pass_checks
+		dataType: int64
+		summarizeBy: sum
+		sourceColumn: pass_checks
+
+	column fail_checks
+		dataType: int64
+		summarizeBy: sum
+		sourceColumn: fail_checks
+
+	column na_rows
+		dataType: int64
+		summarizeBy: sum
+		sourceColumn: na_rows
+
+	column pass_rate
+		dataType: double
+		formatString: 0.00%
+		summarizeBy: average
+		sourceColumn: pass_rate
+
+	partition FactRequirementCoverage = m
+		mode: import
+		source =
+				let
+					Source = LoadProjectCsv("data/processed/ids_findings.csv"),
+					WithFlag = Table.TransformColumns(
+						Source,
+						{{"is_applicable", each Text.Lower(Text.From(_)) = "true", type logical}}
+					),
+					Grouped = Table.Group(
+						WithFlag,
+						{
+							"run_id", "model_id", "requirement_key", "specification_id",
+							"specification", "requirement_id", "requirement"
+						},
+						{
+							{"applicable_checks", each Table.RowCount(Table.SelectRows(_, each [is_applicable] = true)), Int64.Type},
+							{"pass_checks", each Table.RowCount(Table.SelectRows(_, each [status] = "PASS")), Int64.Type},
+							{"fail_checks", each Table.RowCount(Table.SelectRows(_, each [status] = "FAIL")), Int64.Type},
+							{"na_rows", each Table.RowCount(Table.SelectRows(_, each [status] = "N/A")), Int64.Type}
+						}
+					),
+					WithRate = Table.AddColumn(
+						Grouped,
+						"pass_rate",
+						each if [applicable_checks] = 0 then null else [pass_checks] / [applicable_checks],
+						Percentage.Type
+					),
+					Validated = if Table.RowCount(WithRate) <> 27 then error "FactRequirementCoverage must contain 27 rows" else WithRate
+				in
+					Validated
+
+	annotation PBI_ResultType = Table

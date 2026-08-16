@@ -1,0 +1,138 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.11.0/schema.json",
+  "name": "e0000000000000000001",
+  "position": {
+    "x": 10,
+    "y": 315,
+    "z": 1000,
+    "height": 160,
+    "width": 720,
+    "tabOrder": 1000
+  },
+  "visual": {
+    "visualType": "tableEx",
+    "query": {
+      "queryState": {
+        "Values": {
+          "projections": [
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "DimTopic"
+                    }
+                  },
+                  "Property": "title"
+                }
+              },
+              "queryRef": "DimTopic.title",
+              "nativeQueryRef": "Topic"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "DimTopic"
+                    }
+                  },
+                  "Property": "ifc_class"
+                }
+              },
+              "queryRef": "DimTopic.ifc_class",
+              "nativeQueryRef": "IFC Class"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "DimTopic"
+                    }
+                  },
+                  "Property": "element_name"
+                }
+              },
+              "queryRef": "DimTopic.element_name",
+              "nativeQueryRef": "Element"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "DimTopic"
+                    }
+                  },
+                  "Property": "priority"
+                }
+              },
+              "queryRef": "DimTopic.priority",
+              "nativeQueryRef": "Priority"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "DimTopic"
+                    }
+                  },
+                  "Property": "assigned_to"
+                }
+              },
+              "queryRef": "DimTopic.assigned_to",
+              "nativeQueryRef": "Assigned To"
+            }
+          ]
+        }
+      }
+    },
+    "objects": {
+      "columnHeaders": [
+        {
+          "properties": {
+            "columnAdjustment": {
+              "expr": {
+                "Literal": {
+                  "Value": "'growToFit'"
+                }
+              }
+            },
+            "autoSizeColumnWidth": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "visualContainerObjects": {
+      "title": [
+        {
+          "properties": {
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
+            "text": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Open BCF Topics — select one row'"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "drillFilterOtherVisuals": true
+  }
+}

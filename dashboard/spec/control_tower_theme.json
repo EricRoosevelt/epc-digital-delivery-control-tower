@@ -1,0 +1,22 @@
+{
+  "name": "EPC Delivery Control Tower",
+  "dataColors": [
+    "#0B6E99",
+    "#2E8540",
+    "#F4B400",
+    "#C0392B",
+    "#6B7280",
+    "#6842A5",
+    "#2D9CDB",
+    "#8A5A44"
+  ],
+  "background": "#F4F7FA",
+  "foreground": "#172033",
+  "tableAccent": "#0B6E99",
+  "good": "#2E8540",
+  "neutral": "#F4B400",
+  "bad": "#C0392B",
+  "maximum": "#0B6E99",
+  "center": "#F4B400",
+  "minimum": "#C0392B"
+}

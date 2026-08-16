@@ -56,12 +56,27 @@ These files are retained byte-for-byte as the validation source of truth. They
 must not be reformatted, normalized, or modified. Source revision and file
 hashes are recorded alongside the vendored snapshot.
 
-## Externally Installed Software
+## Speckle Power BI Connector and 3D Visual
 
-The official [Speckle Power BI connector and 3D visual](https://github.com/specklesystems/speckle-powerbi)
-are installed separately by the user. Their binaries and source code are not
-redistributed in this repository. Speckle's repository license and the terms
-of the installed release apply independently.
+The Control Tower report definition references the official
+[`specklePowerBiVisual`](https://github.com/specklesystems/speckle-powerbi)
+version 2026.6.0. The connector and compiled visual bundle remain external
+Desktop prerequisites: no `.pqx`, `.pbiviz`, or expanded `CustomVisuals/**`
+payload is redistributed by this repository.
+
+The audited upstream release is `v2026.6.0` at commit
+`3d6a9391b3b5576b0e49ef9e844763681695a299`. The signed installer and installed
+visual hashes, build-run provenance, and the exact redistribution boundary are
+recorded in
+`third_party/speckle/powerbi-visual/2026.6.0/provenance.json`. The upstream
+visual directory contains an Apache-2.0 `LICENSE`, retained verbatim beside the
+provenance record, but no `NOTICE` file. No NOTICE is invented here.
+
+Upstream licensing metadata is not fully consistent: the visual directory's
+license file is Apache-2.0 while its `package.json` declares MIT. This project
+does not resolve that difference and therefore requires users to import the
+official installed visual through Power BI Desktop instead of redistributing
+the bundle.
 
 For the complete adoption boundary, including projects used only as design or
 architecture references, see `docs/open_source_adoption.md`.

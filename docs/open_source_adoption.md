@@ -43,7 +43,7 @@ accompanied by their source paths and SHA-256 values.
 |---|---|---|---|
 | [buildingSMART IDS Audit Tool](https://github.com/buildingSMART/IDS-Audit-tool) | Pin an exact release or commit when introduced | MIT | Future independent IDS audit gate; call the tool without copying its implementation. |
 | [ifcqa-tool](https://github.com/tommylee0923/ifcqa-tool) | Reference only; no pinned dependency | Verify before any adoption | Learn from run manifests, quality gates, and finding/issue separation; do not copy code. |
-| [Speckle Power BI](https://github.com/specklesystems/speckle-powerbi) | Official installed connector and visual release | Apache-2.0 at the reviewed upstream repository | Use the separately installed connector and visual; do not vendor its binaries or source. Store no Speckle credentials or private URLs in Git. |
+| [Speckle Power BI](https://github.com/specklesystems/speckle-powerbi) | `v2026.6.0`, commit `3d6a9391b3b5576b0e49ef9e844763681695a299` | Visual directory LICENSE: Apache-2.0; package metadata says MIT | The report references the separately installed connector and visual. The signed-installer and installed-visual hashes are recorded, but the expired build artifact prevents a complete published inner-bundle hash chain, so no `.pqx`, `.pbiviz`, or expanded visual bundle is committed. |
 | [ifc4PowerBI](https://github.com/shift-construction/ifc4PowerBI) | Reference only | GPL; verify the exact upstream license before any use | Learn from Power Query and PBIX organization only; do not copy M code or package it with this project. |
 | [APS BIM 360 Issue Dashboard](https://github.com/autodesk-platform-services/aps-bim360-issue-dashboard) | Reference only | Verify before any adoption | UX reference for overdue, ageing, and assignee KPIs; do not copy source. |
 | [That Open Components](https://github.com/ThatOpen/engine_components) | Pin a release in Stage 4 if adopted | MIT | Candidate direct dependency for the future browser-based IFC/BCF viewer. |
@@ -60,8 +60,11 @@ copied or dependency added. The retired `web-ifc-viewer` route is not adopted.
 - Keep PBIX binaries, PBIP local caches, and `dashboard/local/` out of Git.
 - Load Control Tower KPIs from the normalized project CSV contracts, not from
   IfcTester's native HTML headline percentage.
-- Use the official Speckle connector and visual as external installed products;
-  do not redistribute `.pqx` or `.pbiviz` files.
+- Use the official Speckle connector and visual as external installed products.
+  Import visual version 2026.6.0 through Desktop; `CustomVisuals/**`, `.pqx`,
+  and `.pbiviz` payloads are deliberately ignored and not redistributed.
+- Retain the audited Apache-2.0 license and provenance record. The reviewed tag
+  has no NOTICE file, and the Apache/MIT metadata difference remains disclosed.
 - Authentication, federation URLs, Power BI workspace selection, publishing,
   and scheduled-refresh gateway configuration remain user-managed operations.
 

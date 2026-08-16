@@ -1,0 +1,64 @@
+table BridgeViewpointComponent
+	isHidden
+
+	column run_id
+		dataType: string
+		summarizeBy: none
+		sourceColumn: run_id
+
+	column viewpoint_guid
+		dataType: string
+		isKey
+		summarizeBy: none
+		sourceColumn: viewpoint_guid
+
+	column topic_guid
+		dataType: string
+		summarizeBy: none
+		sourceColumn: topic_guid
+
+	column component_index
+		dataType: int64
+		summarizeBy: sum
+		sourceColumn: component_index
+
+	column model_id
+		dataType: string
+		summarizeBy: none
+		sourceColumn: model_id
+
+	column element_key
+		dataType: string
+		summarizeBy: none
+		sourceColumn: element_key
+
+	column global_id
+		dataType: string
+		summarizeBy: none
+		sourceColumn: global_id
+
+	column originating_system
+		dataType: string
+		summarizeBy: none
+		sourceColumn: originating_system
+
+	column authoring_tool_id
+		dataType: string
+		summarizeBy: none
+		sourceColumn: authoring_tool_id
+
+	partition BridgeViewpointComponent = m
+		mode: import
+		source =
+				let
+					Source = LoadProjectCsv("data/processed/bcf_viewpoint_components.csv"),
+					TypedText = Table.TransformColumnTypes(
+						Source,
+						List.Transform(List.RemoveItems(Table.ColumnNames(Source), {"component_index"}), each {_, type text})
+					),
+					Typed = Table.TransformColumnTypes(TypedText, {{"component_index", Int64.Type}}),
+					Validated = if Table.RowCount(Typed) <> 3 then error "BridgeViewpointComponent must contain 3 rows" else Typed
+				in
+					Validated
+
+	annotation PBI_ResultType = Table

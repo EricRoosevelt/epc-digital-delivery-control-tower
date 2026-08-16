@@ -1,0 +1,110 @@
+table DimTopic
+
+	column topic_guid
+		dataType: string
+		isKey
+		summarizeBy: none
+		sourceColumn: topic_guid
+
+	column run_id
+		dataType: string
+		isHidden
+		summarizeBy: none
+		sourceColumn: run_id
+
+	column topic_type
+		dataType: string
+		summarizeBy: none
+		sourceColumn: topic_type
+
+	column topic_status
+		dataType: string
+		summarizeBy: none
+		sourceColumn: topic_status
+
+	column title
+		dataType: string
+		summarizeBy: none
+		sourceColumn: title
+
+	column priority
+		dataType: string
+		summarizeBy: none
+		sourceColumn: priority
+
+	column creation_date
+		dataType: string
+		summarizeBy: none
+		sourceColumn: creation_date
+
+	column creation_author
+		dataType: string
+		isHidden
+		summarizeBy: none
+		sourceColumn: creation_author
+
+	column assigned_to
+		dataType: string
+		summarizeBy: none
+		sourceColumn: assigned_to
+
+	column stage
+		dataType: string
+		summarizeBy: none
+		sourceColumn: stage
+
+	column model_id
+		dataType: string
+		summarizeBy: none
+		sourceColumn: model_id
+
+	column element_key
+		dataType: string
+		summarizeBy: none
+		sourceColumn: element_key
+
+	column global_id
+		dataType: string
+		isHidden
+		summarizeBy: none
+		sourceColumn: global_id
+
+	column ifc_class
+		dataType: string
+		summarizeBy: none
+		sourceColumn: ifc_class
+
+	column element_name
+		dataType: string
+		summarizeBy: none
+		sourceColumn: element_name
+
+	column finding_count
+		dataType: int64
+		summarizeBy: sum
+		sourceColumn: finding_count
+
+	partition DimTopic = m
+		mode: import
+		source =
+				let
+					Source = LoadProjectCsv("data/processed/bcf_topics.csv"),
+					TypedText = Table.TransformColumnTypes(
+						Source,
+						{
+							{"run_id", type text}, {"topic_guid", type text},
+							{"topic_type", type text}, {"topic_status", type text},
+							{"title", type text}, {"priority", type text},
+							{"creation_date", type text}, {"creation_author", type text},
+							{"assigned_to", type text}, {"stage", type text},
+							{"model_id", type text}, {"element_key", type text},
+							{"global_id", type text}, {"ifc_class", type text},
+							{"element_name", type text}
+						}
+					),
+					Typed = Table.TransformColumnTypes(TypedText, {{"finding_count", Int64.Type}}),
+					Validated = if Table.RowCount(Typed) <> 3 then error "DimTopic must contain 3 rows" else Typed
+				in
+					Validated
+
+	annotation PBI_ResultType = Table

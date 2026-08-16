@@ -1,0 +1,190 @@
+{
+  "contract_version": "0.1",
+  "artifact_type": "implementation-specification-only",
+  "not_a_pbip": true,
+  "semantic_model": {
+    "auto_detect_relationships": false,
+    "tables": {
+      "DimModel": 3,
+      "DimElement": 39,
+      "DimRequirement": 9,
+      "DimRun": 1,
+      "FactIDSCheck": 31,
+      "FactRequirementCoverage": 27,
+      "DimTopic": 3,
+      "BridgeTopicFinding": 6,
+      "BridgeViewpointComponent": 3
+    },
+    "relationships": [
+      {
+        "name": "DimModel_DimElement",
+        "one": "DimModel.model_id",
+        "many": "DimElement.model_id",
+        "cross_filter": "single",
+        "active": true
+      },
+      {
+        "name": "DimModel_FactRequirementCoverage",
+        "one": "DimModel.model_id",
+        "many": "FactRequirementCoverage.model_id",
+        "cross_filter": "single",
+        "active": true
+      },
+      {
+        "name": "DimRun_FactIDSCheck",
+        "one": "DimRun.run_id",
+        "many": "FactIDSCheck.run_id",
+        "cross_filter": "single",
+        "active": true
+      },
+      {
+        "name": "DimRun_FactRequirementCoverage",
+        "one": "DimRun.run_id",
+        "many": "FactRequirementCoverage.run_id",
+        "cross_filter": "single",
+        "active": true
+      },
+      {
+        "name": "DimRequirement_FactIDSCheck",
+        "one": "DimRequirement.requirement_key",
+        "many": "FactIDSCheck.requirement_key",
+        "cross_filter": "single",
+        "active": true
+      },
+      {
+        "name": "DimRequirement_FactRequirementCoverage",
+        "one": "DimRequirement.requirement_key",
+        "many": "FactRequirementCoverage.requirement_key",
+        "cross_filter": "single",
+        "active": true
+      },
+      {
+        "name": "DimElement_FactIDSCheck",
+        "one": "DimElement.element_key",
+        "many": "FactIDSCheck.element_key",
+        "cross_filter": "both",
+        "active": true
+      },
+      {
+        "name": "DimElement_DimTopic",
+        "one": "DimElement.element_key",
+        "many": "DimTopic.element_key",
+        "cross_filter": "both",
+        "active": true
+      }
+    ],
+    "disconnected_hidden_tables": [
+      "BridgeTopicFinding",
+      "BridgeViewpointComponent"
+    ]
+  },
+  "speckle_mapping": {
+    "local_path": "dashboard/local/speckle_mapping.csv",
+    "business_key": [
+      "model_id",
+      "speckle_ifc_guid"
+    ],
+    "cross_check": "inventory_global_id",
+    "connector_identity_fields": {
+      "modern": {
+        "primary": "data.properties[\"IFC GUID\"]",
+        "cross_check": "data.properties[\"IFC Attributes\"][\"GlobalId\"]"
+      },
+      "legacy_direct_ifc": {
+        "primary": "data.properties[\"Attributes\"][\"GlobalId\"]",
+        "cross_check": "properties[\"GlobalId\"]"
+      },
+      "minimum_agreeing_evidence": 2,
+      "forbidden_identity": "data.applicationId"
+    },
+    "forbidden_business_keys": [
+      "applicationId",
+      "speckle_object_id",
+      "bare_speckle_ifc_guid"
+    ],
+    "expected": {
+      "semantic_rows": 39,
+      "semantic_rows_by_model": {
+        "architecture": 15,
+        "structural": 18,
+        "hvac": 6
+      },
+      "missing": 0,
+      "ambiguous": 0,
+      "duplicate": 0,
+      "unique_speckle_object_ids": 39,
+      "renderable": 32,
+      "renderable_by_model": {
+        "architecture": 11,
+        "structural": 16,
+        "hvac": 5
+      },
+      "non_renderable": 7,
+      "non_renderable_by_model": {
+        "architecture": 4,
+        "structural": 2,
+        "hvac": 1
+      },
+      "issue_mapped_renderable_highlighted": 3,
+      "fixed_model_version_urls": 3
+    }
+  },
+  "speckle_connections": {
+    "local_path": "dashboard/local/speckle_connections.json",
+    "required_fields": [
+      "federation_url",
+      "models"
+    ],
+    "federation_url_role": "audit_only",
+    "model_entry_fields": [
+      "model_id",
+      "model_version_url",
+      "source_filename",
+      "ifc_sha256",
+      "upload_route"
+    ],
+    "model_ids": [
+      "architecture",
+      "structural",
+      "hvac"
+    ],
+    "model_count": 3,
+    "required_upload_route": "direct_ifc",
+    "reconcile_with": {
+      "path": "data/processed/models.csv",
+      "source_filename": "filename",
+      "ifc_sha256": "content_sha256"
+    }
+  },
+  "kpis": {
+    "total_elements": 39,
+    "evaluated_elements": 17,
+    "applicable_pass_numerator": 25,
+    "applicable_pass_denominator": 31,
+    "failed_checks": 6,
+    "noncompliant_elements": 3,
+    "bcf_lineage_numerator": 6,
+    "bcf_lineage_denominator": 6,
+    "open_topics": 3
+  },
+  "discipline_acceptance": {
+    "Architecture": {
+      "pass": 8,
+      "applicable": 8,
+      "fail": 0,
+      "noncompliant_elements": 0
+    },
+    "Structural": {
+      "pass": 14,
+      "applicable": 14,
+      "fail": 0,
+      "noncompliant_elements": 0
+    },
+    "HVAC": {
+      "pass": 3,
+      "applicable": 9,
+      "fail": 6,
+      "noncompliant_elements": 3
+    }
+  }
+}

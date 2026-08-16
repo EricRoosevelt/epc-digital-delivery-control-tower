@@ -1,0 +1,170 @@
+table DimRun
+
+	measure 'Total Elements' = DISTINCTCOUNT ( DimElement[element_key] )
+		formatString: 0
+		displayFolder: Control Tower KPIs
+
+	measure 'Evaluated Elements' = DISTINCTCOUNT ( FactIDSCheck[element_key] )
+		formatString: 0
+		displayFolder: Control Tower KPIs
+
+	measure 'Applicable Checks' = COUNTROWS ( FactIDSCheck )
+		formatString: 0
+		displayFolder: Control Tower KPIs
+
+	measure 'Passed Checks' =
+			CALCULATE (
+				COUNTROWS ( FactIDSCheck ),
+				FactIDSCheck[status] = "PASS"
+			)
+		formatString: 0
+		displayFolder: Control Tower KPIs
+
+	measure 'Applicable Check Pass Rate' = DIVIDE ( COALESCE ( [Passed Checks], 0 ), [Applicable Checks] )
+		formatString: 0.00%
+		displayFolder: Control Tower KPIs
+
+	measure 'Failed Checks' =
+			CALCULATE (
+				COUNTROWS ( FactIDSCheck ),
+				FactIDSCheck[status] = "FAIL"
+			)
+		formatString: 0
+		displayFolder: Control Tower KPIs
+
+	measure 'Noncompliant Elements' =
+			CALCULATE (
+				DISTINCTCOUNT ( FactIDSCheck[element_key] ),
+				FactIDSCheck[status] = "FAIL"
+			)
+		formatString: 0
+		displayFolder: Control Tower KPIs
+
+	measure 'BCF Linked Findings' =
+			VAR FailedFindingKeys =
+				CALCULATETABLE (
+					VALUES ( FactIDSCheck[finding_key] ),
+					FactIDSCheck[status] = "FAIL"
+				)
+			VAR LinkedFindingKeys = VALUES ( BridgeTopicFinding[finding_key] )
+			RETURN
+				COUNTROWS ( INTERSECT ( FailedFindingKeys, LinkedFindingKeys ) )
+		formatString: 0
+		displayFolder: Control Tower KPIs
+
+	measure 'BCF Lineage Coverage' = DIVIDE ( [BCF Linked Findings], [Failed Checks] )
+		formatString: 0.00%
+		displayFolder: Control Tower KPIs
+
+	measure 'Open Topics' =
+			CALCULATE (
+				DISTINCTCOUNT ( DimTopic[topic_guid] ),
+				DimTopic[topic_status] = "Open"
+			)
+		formatString: 0
+		displayFolder: Control Tower KPIs
+
+	measure 'Mapped Elements' =
+			CALCULATE (
+				DISTINCTCOUNT ( DimElement[element_key] ),
+				NOT ISBLANK ( DimElement[speckle_object_id] )
+			)
+		formatString: 0
+		displayFolder: Speckle Mapping Audit
+
+	measure 'Renderable Elements' =
+			CALCULATE (
+				DISTINCTCOUNT ( DimElement[element_key] ),
+				DimElement[has_representation] = TRUE ()
+			)
+		formatString: 0
+		displayFolder: Speckle Mapping Audit
+
+	measure 'Non-renderable Elements' =
+			CALCULATE (
+				DISTINCTCOUNT ( DimElement[element_key] ),
+				DimElement[has_representation] = FALSE ()
+			)
+		formatString: 0
+		displayFolder: Speckle Mapping Audit
+
+	measure 'Issue Workflow Ready Elements' =
+			CALCULATE (
+				DISTINCTCOUNT ( DimTopic[element_key] ),
+				DimElement[has_representation] = TRUE (),
+				DimElement[highlight_verified] = TRUE ()
+			)
+		formatString: 0
+		displayFolder: Speckle Mapping Audit
+
+	measure 'Selected Topic Linked Findings' =
+			VAR SelectedTopicGuid = SELECTEDVALUE ( DimTopic[topic_guid] )
+			RETURN
+				IF (
+					ISBLANK ( SelectedTopicGuid ),
+					BLANK (),
+					COUNTROWS (
+						CALCULATETABLE (
+							VALUES ( BridgeTopicFinding[finding_key] ),
+							TREATAS ( { SelectedTopicGuid }, BridgeTopicFinding[topic_guid] )
+						)
+					)
+				)
+		formatString: 0
+		displayFolder: Topic Detail
+
+	measure 'Selected Topic Finding Details' =
+			VAR SelectedTopicGuids = VALUES ( DimTopic[topic_guid] )
+			VAR LinkedFindingKeys =
+				CALCULATETABLE (
+					VALUES ( BridgeTopicFinding[finding_key] ),
+					TREATAS ( SelectedTopicGuids, BridgeTopicFinding[topic_guid] )
+				)
+			VAR LinkedRows =
+				FILTER (
+					ALL ( FactIDSCheck ),
+					CONTAINS (
+						LinkedFindingKeys,
+						BridgeTopicFinding[finding_key],
+						FactIDSCheck[finding_key]
+					)
+				)
+			RETURN
+				IF (
+					NOT HASONEVALUE ( DimTopic[topic_guid] ),
+					"Select one topic to view its two linked findings.",
+					CONCATENATEX (
+						LinkedRows,
+						FactIDSCheck[requirement_id] & " - " & FactIDSCheck[requirement]
+							& ": " & COALESCE ( FactIDSCheck[actual], "blank" ),
+						UNICHAR ( 10 ),
+						FactIDSCheck[requirement_id],
+						ASC
+					)
+				)
+		displayFolder: Topic Detail
+
+	column run_id
+		dataType: string
+		isKey
+		summarizeBy: none
+		sourceColumn: run_id
+
+	column ids_version
+		dataType: string
+		summarizeBy: none
+		sourceColumn: ids_version
+
+	partition DimRun = m
+		mode: import
+		source =
+				let
+					Source = LoadProjectCsv("data/processed/ids_findings.csv"),
+					Selected = Table.SelectColumns(Source, {"run_id", "ids_version"}),
+					Typed = Table.TransformColumnTypes(Selected, {{"run_id", type text}, {"ids_version", type text}}),
+					DistinctRows = Table.Distinct(Typed),
+					Validated = if Table.RowCount(DistinctRows) <> 1 then error "DimRun must contain 1 row" else DistinctRows
+				in
+					Validated
+
+	annotation PBI_ResultType = Table

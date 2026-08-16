@@ -1,0 +1,70 @@
+table DimModel
+
+	column model_id
+		dataType: string
+		isKey
+		summarizeBy: none
+		sourceColumn: model_id
+
+	column filename
+		dataType: string
+		summarizeBy: none
+		sourceColumn: filename
+
+	column discipline
+		dataType: string
+		summarizeBy: none
+		sourceColumn: discipline
+
+	column discipline_label
+		dataType: string
+		summarizeBy: none
+		sourceColumn: discipline_label
+
+	column ifc_project_guid
+		dataType: string
+		summarizeBy: none
+		sourceColumn: ifc_project_guid
+
+	column ifc_schema
+		dataType: string
+		summarizeBy: none
+		sourceColumn: ifc_schema
+
+	column content_sha256
+		dataType: string
+		isHidden
+		summarizeBy: none
+		sourceColumn: content_sha256
+
+	column source_url
+		dataType: string
+		isHidden
+		summarizeBy: none
+		sourceColumn: source_url
+
+	column license
+		dataType: string
+		summarizeBy: none
+		sourceColumn: license
+
+	partition DimModel = m
+		mode: import
+		source =
+				let
+					Source = LoadProjectCsv("data/processed/models.csv"),
+					Typed = Table.TransformColumnTypes(
+						Source,
+						List.Transform(Table.ColumnNames(Source), each {_, type text})
+					),
+					WithLabel = Table.AddColumn(
+						Typed,
+						"discipline_label",
+						each if [discipline] = "hvac" then "HVAC" else Text.Proper([discipline]),
+						type text
+					),
+					Validated = if Table.RowCount(WithLabel) <> 3 then error "DimModel must contain 3 rows" else WithLabel
+				in
+					Validated
+
+	annotation PBI_ResultType = Table

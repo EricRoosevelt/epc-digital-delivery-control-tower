@@ -1,0 +1,282 @@
+table DimElement
+
+	column element_key
+		dataType: string
+		isKey
+		summarizeBy: none
+		sourceColumn: element_key
+
+	column model_id
+		dataType: string
+		summarizeBy: none
+		sourceColumn: model_id
+
+	column source_model
+		dataType: string
+		summarizeBy: none
+		sourceColumn: source_model
+
+	column discipline
+		dataType: string
+		summarizeBy: none
+		sourceColumn: discipline
+
+	column global_id
+		dataType: string
+		summarizeBy: none
+		sourceColumn: global_id
+
+	column ifc_class
+		dataType: string
+		summarizeBy: none
+		sourceColumn: ifc_class
+
+	column name
+		dataType: string
+		summarizeBy: none
+		sourceColumn: name
+
+	column storey
+		dataType: string
+		summarizeBy: none
+		sourceColumn: storey
+
+	column pset_count
+		dataType: int64
+		summarizeBy: sum
+		sourceColumn: pset_count
+
+	column speckle_ifc_guid
+		dataType: string
+		summarizeBy: none
+		sourceColumn: speckle_ifc_guid
+
+	column speckle_ifc_type
+		dataType: string
+		summarizeBy: none
+		sourceColumn: speckle_ifc_type
+
+	column speckle_object_id
+		dataType: string
+		summarizeBy: none
+		sourceColumn: speckle_object_id
+
+	column speckle_model_version_url
+		dataType: string
+		isHidden
+		summarizeBy: none
+		sourceColumn: speckle_model_version_url
+
+	column has_representation
+		dataType: boolean
+		summarizeBy: none
+		sourceColumn: has_representation
+
+	column highlight_verified
+		dataType: boolean
+		summarizeBy: none
+		sourceColumn: highlight_verified
+
+	column is_issue_element
+		dataType: boolean
+		summarizeBy: none
+		sourceColumn: is_issue_element
+
+	column 'Object IDs'
+		dataType: string
+		summarizeBy: none
+		sourceColumn: Object IDs
+
+	column 'Model Info'
+		dataType: string
+		summarizeBy: none
+		sourceColumn: Model Info
+
+	partition DimElement = m
+		mode: import
+		source =
+				let
+					InventorySource = LoadProjectCsv("data/processed/model_inventory.csv"),
+					Inventory = Table.TransformColumnTypes(
+						InventorySource,
+						{
+							{"model_id", type text}, {"source_model", type text},
+							{"discipline", type text}, {"element_key", type text},
+							{"global_id", type text}, {"ifc_class", type text},
+							{"name", type text}, {"storey", type text},
+							{"pset_count", Int64.Type}
+						}
+					),
+					AuditSource = LoadProjectCsv("dashboard/local/speckle_mapping.csv"),
+					AuditText = Table.TransformColumnTypes(
+						AuditSource,
+						{
+							{"model_id", type text}, {"speckle_ifc_guid", type text},
+							{"inventory_global_id", type text}, {"speckle_object_id", type text},
+							{"speckle_model_version_url", type text}
+						}
+					),
+					Audit = Table.TransformColumns(
+						AuditText,
+						{
+							{"has_representation", each Text.Lower(Text.From(_)) = "true", type logical},
+							{"highlight_verified", each Text.Lower(Text.From(_)) = "true", type logical}
+						}
+					),
+					AuditKeyCounts = Table.Group(
+						Audit,
+						{"model_id", "speckle_ifc_guid"},
+						{{"row_count", each Table.RowCount(_), Int64.Type}}
+					),
+					AuditValidated =
+						if Table.RowCount(Audit) <> 39
+						then error "Speckle audit must contain exactly 39 rows"
+						else if List.Max(AuditKeyCounts[row_count]) <> 1
+						then error "Speckle audit business key is not unique"
+						else if List.Count(List.Distinct(Audit[speckle_object_id])) <> 39
+						then error "Speckle object IDs must be globally unique"
+						else if Table.RowCount(Table.SelectRows(Audit, each [speckle_ifc_guid] <> [inventory_global_id])) <> 0
+						then error "Speckle and inventory GUID cross-check failed"
+						else Audit,
+					JoinedConnector = Table.NestedJoin(
+						Inventory,
+						{"model_id", "global_id"},
+						SpeckleElementStage,
+						{"model_id", "speckle_ifc_guid"},
+						"SpeckleMatch",
+						JoinKind.LeftOuter
+					),
+					WithConnectorCount = Table.AddColumn(
+						JoinedConnector,
+						"_connector_count",
+						each Table.RowCount([SpeckleMatch]),
+						Int64.Type
+					),
+					ConnectorMismatches = Table.SelectRows(
+						WithConnectorCount,
+						each [_connector_count] <> 1
+					),
+					ConnectorMissingCount = Table.RowCount(
+						Table.SelectRows(ConnectorMismatches, each [_connector_count] = 0)
+					),
+					ConnectorAmbiguousCount = Table.RowCount(
+						Table.SelectRows(ConnectorMismatches, each [_connector_count] > 1)
+					),
+					ConnectorMismatchKeys = Text.Combine(
+						List.Transform(
+							List.FirstN(
+								Table.ToRecords(
+									Table.SelectColumns(
+										ConnectorMismatches,
+										{"model_id", "global_id", "_connector_count"}
+									)
+								),
+								12
+							),
+							each
+								Text.From(Record.Field(_, "model_id"))
+								& "::" & Text.From(Record.Field(_, "global_id"))
+								& "=" & Text.From(Record.Field(_, "_connector_count"))
+						),
+						","
+					),
+					ConnectorStageSummary =
+						"rows=" & Text.From(Table.RowCount(SpeckleElementStage))
+						& "; architecture=" & Text.From(Table.RowCount(Table.SelectRows(SpeckleElementStage, each [model_id] = "architecture")))
+						& "; structural=" & Text.From(Table.RowCount(Table.SelectRows(SpeckleElementStage, each [model_id] = "structural")))
+						& "; hvac=" & Text.From(Table.RowCount(Table.SelectRows(SpeckleElementStage, each [model_id] = "hvac"))),
+					ConnectorValidated =
+						if Table.RowCount(ConnectorMismatches) <> 0
+						then error
+							"Connector identity mapping must be exactly 39/39; "
+							& ConnectorStageSummary
+							& "; missing=" & Text.From(ConnectorMissingCount)
+							& "; ambiguous=" & Text.From(ConnectorAmbiguousCount)
+							& "; keys=" & ConnectorMismatchKeys
+						else WithConnectorCount,
+					ExpandedConnector = Table.ExpandTableColumn(
+						ConnectorValidated,
+						"SpeckleMatch",
+						{
+							"speckle_ifc_guid", "speckle_ifc_type", "Object IDs",
+							"Model Info", "speckle_model_version_url", "has_representation"
+						},
+						{
+							"speckle_ifc_guid", "speckle_ifc_type", "Object IDs",
+							"Model Info", "speckle_model_version_url", "has_representation"
+						}
+					),
+					JoinedAudit = Table.NestedJoin(
+						ExpandedConnector,
+						{"model_id", "speckle_ifc_guid"},
+						AuditValidated,
+						{"model_id", "speckle_ifc_guid"},
+						"AuditMatch",
+						JoinKind.LeftOuter
+					),
+					WithAuditCount = Table.AddColumn(
+						JoinedAudit,
+						"_audit_count",
+						each Table.RowCount([AuditMatch]),
+						Int64.Type
+					),
+					AuditJoinValidated =
+						if Table.RowCount(Table.SelectRows(WithAuditCount, each [_audit_count] <> 1)) <> 0
+						then error "Audit mapping must be exactly 39/39"
+						else WithAuditCount,
+					ExpandedAudit = Table.ExpandTableColumn(
+						AuditJoinValidated,
+						"AuditMatch",
+						{
+							"inventory_global_id", "speckle_object_id", "speckle_model_version_url",
+							"has_representation", "highlight_verified"
+						},
+						{
+							"audit_inventory_global_id", "speckle_object_id", "audit_model_version_url",
+							"audit_has_representation", "highlight_verified"
+						}
+					),
+					CrossChecked =
+						if Table.RowCount(
+							Table.SelectRows(
+								ExpandedAudit,
+								each
+									[global_id] <> [audit_inventory_global_id]
+									or Text.From([#"Object IDs"]) <> [speckle_object_id]
+									or [speckle_model_version_url] <> [audit_model_version_url]
+									or [has_representation] <> [audit_has_representation]
+							)
+						) <> 0
+						then error "Connector-native fields disagree with the local mapping audit"
+						else ExpandedAudit,
+					FindingSource = LoadProjectCsv("data/processed/ids_findings.csv"),
+					IssueRows = Table.SelectRows(FindingSource, each Text.Lower(Text.From([is_issue])) = "true"),
+					IssueKeys = List.Distinct(IssueRows[element_key]),
+					WithIssueFlag = Table.AddColumn(
+						CrossChecked,
+						"is_issue_element",
+						each List.Contains(IssueKeys, [element_key]),
+						type logical
+					),
+					FinalValidated =
+						if Table.RowCount(WithIssueFlag) <> 39
+						then error "DimElement must contain exactly 39 rows"
+						else if List.Count(List.Select(WithIssueFlag[has_representation], each _ = true)) <> 32
+						then error "DimElement must contain exactly 32 renderable rows"
+						else if List.Count(List.Select(WithIssueFlag[highlight_verified], each _ = true)) <> 3
+						then error "Exactly three issue elements must be highlight-verified"
+						else WithIssueFlag,
+					Result = Table.SelectColumns(
+						FinalValidated,
+						{
+							"element_key", "model_id", "source_model", "discipline", "global_id",
+							"ifc_class", "name", "storey", "pset_count", "speckle_ifc_guid",
+							"speckle_ifc_type", "speckle_object_id", "speckle_model_version_url",
+							"has_representation", "highlight_verified", "is_issue_element",
+							"Object IDs", "Model Info"
+						}
+					)
+				in
+					Result
+
+	annotation PBI_ResultType = Table

@@ -1,0 +1,48 @@
+{
+  "schema_version": "1.0",
+  "component": "specklePowerBiVisual",
+  "version": "2026.6.0",
+  "distribution_boundary": "external_desktop_import_required",
+  "upstream": {
+    "repository": "https://github.com/specklesystems/speckle-powerbi",
+    "release": "https://github.com/specklesystems/speckle-powerbi/releases/tag/v2026.6.0",
+    "tag": "v2026.6.0",
+    "commit": "3d6a9391b3b5576b0e49ef9e844763681695a299",
+    "workflow_run": "https://github.com/specklesystems/speckle-powerbi/actions/runs/28164931014",
+    "workflow_run_id": 28164931014,
+    "workflow_artifact_id": 7875959523,
+    "workflow_artifact_archive_sha256": "9a0583d03e5e0e06bbe60e9e8e5b22f6bdb16dc8359c6e897d1216eafc672ad1",
+    "workflow_artifact_expired": true,
+    "release_has_downloadable_pbiviz_asset": false
+  },
+  "signed_installer_audit": {
+    "filename": "speckle.powerbi.installer-2026.6.0.exe",
+    "source": "https://app.speckle.systems/connectors/",
+    "audited_on": "2026-08-14",
+    "sha256": "ee7e2e223ab84bb4ecffc772221619a7e57a6b2aa229fc2f24209b689d0c1223",
+    "file_version": "2026.6.0.42",
+    "product_version": "2026.6.0",
+    "signature_status": "Valid",
+    "signer_subject": "CN=AEC SYSTEMS LTD, O=AEC SYSTEMS LTD, L=London, C=GB",
+    "signer_thumbprint": "7d7f0c3fbd898230b1a170b4cd6d4c15fa4b4f21"
+  },
+  "installed_visual_audit": {
+    "filename": "Speckle Power BI 3D Visual.pbiviz",
+    "audited_on": "2026-08-14",
+    "size_bytes": 1420752,
+    "sha256": "7e1777d77508c11081a8df2581d51a985e639dee73e157095500adc040d15d77"
+  },
+  "license": {
+    "source": "https://github.com/specklesystems/speckle-powerbi/blob/v2026.6.0/src/powerbi-visual/LICENSE",
+    "spdx": "Apache-2.0",
+    "sha256": "9fa2ad3ad22e8c41326829c50b396f676410dff7b208aac28daff7470a992db4",
+    "notice_present_upstream": false,
+    "package_json_metadata_license": "MIT",
+    "metadata_difference_disclosed": true
+  },
+  "repository_policy": {
+    "custom_visual_bundle_committed": false,
+    "custom_visual_ignore_pattern": "dashboard/*.Report/CustomVisuals/",
+    "manual_import_required": true
+  }
+}

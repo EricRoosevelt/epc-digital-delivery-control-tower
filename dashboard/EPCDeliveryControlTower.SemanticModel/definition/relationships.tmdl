@@ -1,0 +1,33 @@
+relationship DimModel_DimElement
+	fromColumn: DimElement.model_id
+	toColumn: DimModel.model_id
+
+relationship DimModel_FactRequirementCoverage
+	fromColumn: FactRequirementCoverage.model_id
+	toColumn: DimModel.model_id
+
+relationship DimRun_FactIDSCheck
+	fromColumn: FactIDSCheck.run_id
+	toColumn: DimRun.run_id
+
+relationship DimRun_FactRequirementCoverage
+	fromColumn: FactRequirementCoverage.run_id
+	toColumn: DimRun.run_id
+
+relationship DimRequirement_FactIDSCheck
+	fromColumn: FactIDSCheck.requirement_key
+	toColumn: DimRequirement.requirement_key
+
+relationship DimRequirement_FactRequirementCoverage
+	fromColumn: FactRequirementCoverage.requirement_key
+	toColumn: DimRequirement.requirement_key
+
+relationship DimElement_FactIDSCheck
+	crossFilteringBehavior: bothDirections
+	fromColumn: FactIDSCheck.element_key
+	toColumn: DimElement.element_key
+
+relationship DimElement_DimTopic
+	crossFilteringBehavior: bothDirections
+	fromColumn: DimTopic.element_key
+	toColumn: DimElement.element_key

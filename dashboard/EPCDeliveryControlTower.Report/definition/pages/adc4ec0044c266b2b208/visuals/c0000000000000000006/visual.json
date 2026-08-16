@@ -1,0 +1,37 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.11.0/schema.json",
+  "name": "c0000000000000000006",
+  "position": {
+    "x": 910,
+    "y": 10,
+    "z": 1000,
+    "height": 80,
+    "width": 170,
+    "tabOrder": 1000
+  },
+  "visual": {
+    "visualType": "cardVisual",
+    "query": {
+      "queryState": {
+        "Data": {
+          "projections": [
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "DimRun"
+                    }
+                  },
+                  "Property": "BCF Lineage Coverage"
+                }
+              },
+              "queryRef": "DimRun.BCF Lineage Coverage",
+              "nativeQueryRef": "BCF Lineage Coverage"
+            }
+          ]
+        }
+      }
+    }
+  }
+}

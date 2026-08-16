@@ -1,0 +1,128 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.11.0/schema.json",
+  "name": "baeb1d13bced10702368",
+  "position": {
+    "x": 740,
+    "y": 100,
+    "z": 1000,
+    "height": 350,
+    "width": 530,
+    "tabOrder": 1000
+  },
+  "visual": {
+    "visualType": "specklePowerBiVisual",
+    "query": {
+      "queryState": {
+        "rootObjectId": {
+          "projections": [
+            {
+              "field": {
+                "Aggregation": {
+                  "Expression": {
+                    "Column": {
+                      "Expression": {
+                        "SourceRef": {
+                          "Entity": "DimElement"
+                        }
+                      },
+                      "Property": "Model Info"
+                    }
+                  },
+                  "Function": 3
+                }
+              },
+              "queryRef": "Min(DimElement.Model Info)",
+              "nativeQueryRef": "First Model Info"
+            }
+          ]
+        },
+        "objectIds": {
+          "projections": [
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "DimElement"
+                    }
+                  },
+                  "Property": "Object IDs"
+                }
+              },
+              "queryRef": "DimElement.Object IDs",
+              "nativeQueryRef": "Object IDs"
+            }
+          ]
+        },
+        "tooltipData": {
+          "projections": [
+            {
+              "field": {
+                "Aggregation": {
+                  "Expression": {
+                    "Column": {
+                      "Expression": {
+                        "SourceRef": {
+                          "Entity": "DimElement"
+                        }
+                      },
+                      "Property": "element_key"
+                    }
+                  },
+                  "Function": 3
+                }
+              },
+              "queryRef": "Min(DimElement.element_key)",
+              "nativeQueryRef": "First element_key"
+            }
+          ]
+        }
+      }
+    },
+    "objects": {
+      "camera": [
+        {
+          "properties": {
+            "isGhost": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
+            "zoomOnFilter": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "visualContainerObjects": {
+      "title": [
+        {
+          "properties": {
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
+            "text": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Federated IFC — filtered selection and Topic isolation'"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "drillFilterOtherVisuals": true
+  }
+}

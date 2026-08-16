@@ -1,0 +1,134 @@
+table FactIDSCheck
+
+	column finding_key
+		dataType: string
+		isKey
+		summarizeBy: none
+		sourceColumn: finding_key
+
+	column run_id
+		dataType: string
+		summarizeBy: none
+		sourceColumn: run_id
+
+	column model_id
+		dataType: string
+		summarizeBy: none
+		sourceColumn: model_id
+
+	column element_key
+		dataType: string
+		summarizeBy: none
+		sourceColumn: element_key
+
+	column global_id
+		dataType: string
+		summarizeBy: none
+		sourceColumn: global_id
+
+	column ids_version
+		dataType: string
+		isHidden
+		summarizeBy: none
+		sourceColumn: ids_version
+
+	column specification_id
+		dataType: string
+		summarizeBy: none
+		sourceColumn: specification_id
+
+	column specification
+		dataType: string
+		summarizeBy: none
+		sourceColumn: specification
+
+	column requirement_id
+		dataType: string
+		summarizeBy: none
+		sourceColumn: requirement_id
+
+	column requirement_key
+		dataType: string
+		summarizeBy: none
+		sourceColumn: requirement_key
+
+	column requirement
+		dataType: string
+		summarizeBy: none
+		sourceColumn: requirement
+
+	column status
+		dataType: string
+		summarizeBy: none
+		sourceColumn: status
+
+	column is_applicable
+		dataType: boolean
+		isHidden
+		summarizeBy: none
+		sourceColumn: is_applicable
+
+	column is_issue
+		dataType: boolean
+		isHidden
+		summarizeBy: none
+		sourceColumn: is_issue
+
+	column severity
+		dataType: string
+		summarizeBy: none
+		sourceColumn: severity
+
+	column ifc_class
+		dataType: string
+		summarizeBy: none
+		sourceColumn: ifc_class
+
+	column element_name
+		dataType: string
+		summarizeBy: none
+		sourceColumn: element_name
+
+	column expected
+		dataType: string
+		summarizeBy: none
+		sourceColumn: expected
+
+	column actual
+		dataType: string
+		summarizeBy: none
+		sourceColumn: actual
+
+	column reason
+		dataType: string
+		summarizeBy: none
+		sourceColumn: reason
+
+	partition FactIDSCheck = m
+		mode: import
+		source =
+				let
+					Source = LoadProjectCsv("data/processed/ids_findings.csv"),
+					TypedText = Table.TransformColumnTypes(
+						Source,
+						List.Transform(
+							List.RemoveItems(Table.ColumnNames(Source), {"is_applicable", "is_issue"}),
+							each {_, type text}
+						)
+					),
+					WithFlags = Table.TransformColumns(
+						TypedText,
+						{
+							{"is_applicable", each Text.Lower(Text.From(_)) = "true", type logical},
+							{"is_issue", each Text.Lower(Text.From(_)) = "true", type logical}
+						}
+					),
+					Applicable = Table.SelectRows(
+						WithFlags,
+						each [is_applicable] = true and List.Contains({"PASS", "FAIL"}, [status])
+					),
+					Validated = if Table.RowCount(Applicable) <> 31 then error "FactIDSCheck must contain 31 applicable rows" else Applicable
+				in
+					Validated
+
+	annotation PBI_ResultType = Table

@@ -1,0 +1,95 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.11.0/schema.json",
+  "name": "e0000000000000000002",
+  "position": {
+    "x": 10,
+    "y": 485,
+    "z": 1000,
+    "height": 220,
+    "width": 720,
+    "tabOrder": 1000
+  },
+  "visual": {
+    "visualType": "tableEx",
+    "query": {
+      "queryState": {
+        "Values": {
+          "projections": [
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "DimRun"
+                    }
+                  },
+                  "Property": "Selected Topic Linked Findings"
+                }
+              },
+              "queryRef": "DimRun.Selected Topic Linked Findings",
+              "nativeQueryRef": "Linked Findings"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "DimRun"
+                    }
+                  },
+                  "Property": "Selected Topic Finding Details"
+                }
+              },
+              "queryRef": "DimRun.Selected Topic Finding Details",
+              "nativeQueryRef": "Finding Details"
+            }
+          ]
+        }
+      }
+    },
+    "objects": {
+      "columnHeaders": [
+        {
+          "properties": {
+            "columnAdjustment": {
+              "expr": {
+                "Literal": {
+                  "Value": "'growToFit'"
+                }
+              }
+            },
+            "autoSizeColumnWidth": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "visualContainerObjects": {
+      "title": [
+        {
+          "properties": {
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
+            "text": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Findings linked to the selected topic'"
+                }
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

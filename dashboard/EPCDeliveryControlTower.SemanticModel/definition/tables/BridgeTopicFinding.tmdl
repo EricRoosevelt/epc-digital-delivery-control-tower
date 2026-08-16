@@ -1,0 +1,78 @@
+table BridgeTopicFinding
+	isHidden
+
+	column run_id
+		dataType: string
+		summarizeBy: none
+		sourceColumn: run_id
+
+	column topic_guid
+		dataType: string
+		summarizeBy: none
+		sourceColumn: topic_guid
+
+	column finding_key
+		dataType: string
+		isKey
+		summarizeBy: none
+		sourceColumn: finding_key
+
+	column requirement_key
+		dataType: string
+		summarizeBy: none
+		sourceColumn: requirement_key
+
+	column specification_id
+		dataType: string
+		summarizeBy: none
+		sourceColumn: specification_id
+
+	column requirement_id
+		dataType: string
+		summarizeBy: none
+		sourceColumn: requirement_id
+
+	column specification
+		dataType: string
+		summarizeBy: none
+		sourceColumn: specification
+
+	column requirement
+		dataType: string
+		summarizeBy: none
+		sourceColumn: requirement
+
+	column severity
+		dataType: string
+		summarizeBy: none
+		sourceColumn: severity
+
+	column model_id
+		dataType: string
+		summarizeBy: none
+		sourceColumn: model_id
+
+	column element_key
+		dataType: string
+		summarizeBy: none
+		sourceColumn: element_key
+
+	column global_id
+		dataType: string
+		summarizeBy: none
+		sourceColumn: global_id
+
+	partition BridgeTopicFinding = m
+		mode: import
+		source =
+				let
+					Source = LoadProjectCsv("data/processed/bcf_topic_findings.csv"),
+					Typed = Table.TransformColumnTypes(
+						Source,
+						List.Transform(Table.ColumnNames(Source), each {_, type text})
+					),
+					Validated = if Table.RowCount(Typed) <> 6 then error "BridgeTopicFinding must contain 6 rows" else Typed
+				in
+					Validated
+
+	annotation PBI_ResultType = Table

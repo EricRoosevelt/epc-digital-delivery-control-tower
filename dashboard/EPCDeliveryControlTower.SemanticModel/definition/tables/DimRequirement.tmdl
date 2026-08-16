@@ -1,0 +1,47 @@
+table DimRequirement
+
+	column requirement_key
+		dataType: string
+		isKey
+		summarizeBy: none
+		sourceColumn: requirement_key
+
+	column specification_id
+		dataType: string
+		summarizeBy: none
+		sourceColumn: specification_id
+
+	column specification
+		dataType: string
+		summarizeBy: none
+		sourceColumn: specification
+
+	column requirement_id
+		dataType: string
+		summarizeBy: none
+		sourceColumn: requirement_id
+
+	column requirement
+		dataType: string
+		summarizeBy: none
+		sourceColumn: requirement
+
+	partition DimRequirement = m
+		mode: import
+		source =
+				let
+					Source = LoadProjectCsv("data/processed/ids_findings.csv"),
+					Selected = Table.SelectColumns(
+						Source,
+						{"requirement_key", "specification_id", "specification", "requirement_id", "requirement"}
+					),
+					Typed = Table.TransformColumnTypes(
+						Selected,
+						List.Transform(Table.ColumnNames(Selected), each {_, type text})
+					),
+					DistinctRows = Table.Distinct(Typed, {"requirement_key"}),
+					Validated = if Table.RowCount(DistinctRows) <> 9 then error "DimRequirement must contain 9 rows" else DistinctRows
+				in
+					Validated
+
+	annotation PBI_ResultType = Table

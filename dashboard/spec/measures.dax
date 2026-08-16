@@ -1,0 +1,119 @@
+// TEMPLATE ONLY. Apply these measures in a Power BI Desktop-created model.
+// All headline KPI values are calculated from normalized tables; none is hard-coded.
+
+Total Elements =
+DISTINCTCOUNT ( DimElement[element_key] )
+
+Evaluated Elements =
+DISTINCTCOUNT ( FactIDSCheck[element_key] )
+
+Applicable Checks =
+COUNTROWS ( FactIDSCheck )
+
+Passed Checks =
+CALCULATE (
+    COUNTROWS ( FactIDSCheck ),
+    FactIDSCheck[status] = "PASS"
+)
+
+Applicable Check Pass Rate =
+DIVIDE ( COALESCE ( [Passed Checks], 0 ), [Applicable Checks] )
+
+Failed Checks =
+CALCULATE (
+    COUNTROWS ( FactIDSCheck ),
+    FactIDSCheck[status] = "FAIL"
+)
+
+Noncompliant Elements =
+CALCULATE (
+    DISTINCTCOUNT ( FactIDSCheck[element_key] ),
+    FactIDSCheck[status] = "FAIL"
+)
+
+BCF Linked Findings =
+VAR FailedFindingKeys =
+    CALCULATETABLE (
+        VALUES ( FactIDSCheck[finding_key] ),
+        FactIDSCheck[status] = "FAIL"
+    )
+VAR LinkedFindingKeys =
+    VALUES ( BridgeTopicFinding[finding_key] )
+RETURN
+    COUNTROWS ( INTERSECT ( FailedFindingKeys, LinkedFindingKeys ) )
+
+BCF Lineage Coverage =
+DIVIDE ( [BCF Linked Findings], [Failed Checks] )
+
+BCF Lineage Coverage Label =
+FORMAT ( [BCF Linked Findings], "0" )
+    & "/"
+    & FORMAT ( [Failed Checks], "0" )
+
+Open Topics =
+CALCULATE (
+    DISTINCTCOUNT ( DimTopic[topic_guid] ),
+    DimTopic[topic_status] = "Open"
+)
+
+Mapped Elements =
+CALCULATE (
+    DISTINCTCOUNT ( DimElement[element_key] ),
+    NOT ISBLANK ( DimElement[speckle_object_id] )
+)
+
+Renderable Elements =
+CALCULATE (
+    DISTINCTCOUNT ( DimElement[element_key] ),
+    DimElement[has_representation] = TRUE ()
+)
+
+Non-renderable Elements =
+CALCULATE (
+    DISTINCTCOUNT ( DimElement[element_key] ),
+    DimElement[has_representation] = FALSE ()
+)
+
+Issue Workflow Ready Elements =
+CALCULATE (
+    DISTINCTCOUNT ( DimTopic[element_key] ),
+    DimElement[has_representation] = TRUE (),
+    DimElement[highlight_verified] = TRUE ()
+)
+
+Selected Topic Linked Findings =
+VAR SelectedTopicGuid =
+    SELECTEDVALUE ( DimTopic[topic_guid] )
+RETURN
+    IF (
+        ISBLANK ( SelectedTopicGuid ),
+        BLANK (),
+        COUNTROWS (
+            CALCULATETABLE (
+                VALUES ( BridgeTopicFinding[finding_key] ),
+                TREATAS ( { SelectedTopicGuid }, BridgeTopicFinding[topic_guid] )
+            )
+        )
+    )
+
+Is Linked Finding For Selected Topic =
+VAR CurrentFindingKey =
+    SELECTEDVALUE ( FactIDSCheck[finding_key] )
+VAR SelectedTopicGuids =
+    VALUES ( DimTopic[topic_guid] )
+VAR LinkedFindingKeys =
+    CALCULATETABLE (
+        VALUES ( BridgeTopicFinding[finding_key] ),
+        TREATAS ( SelectedTopicGuids, BridgeTopicFinding[topic_guid] )
+    )
+RETURN
+    IF (
+        NOT ISBLANK ( CurrentFindingKey )
+            && CONTAINS (
+                LinkedFindingKeys,
+                BridgeTopicFinding[finding_key],
+                CurrentFindingKey
+            ),
+        1,
+        0
+    )

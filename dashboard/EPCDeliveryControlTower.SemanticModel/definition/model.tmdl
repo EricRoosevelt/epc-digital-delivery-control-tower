@@ -1,0 +1,27 @@
+model Model
+	culture: zh-CN
+	defaultPowerBIDataSourceVersion: powerBI_V3
+	sourceQueryCulture: zh-CN
+	valueFilterBehavior: independent
+	dataAccessOptions
+		fastCombine
+		legacyRedirects
+		returnErrorValuesAsNull
+
+annotation __PBI_TimeIntelligenceEnabled = 0
+
+annotation PBI_ProTooling = ["DevMode"]
+
+annotation PBI_QueryOrder = ["RepositoryRoot","LoadProjectCsv","SpeckleConnectionManifest","GetSpeckleModelUrl","NormalizeSpeckleModel","SpeckleElementStage","DimModel","DimElement","DimRequirement","DimRun","FactIDSCheck","FactRequirementCoverage","DimTopic","BridgeTopicFinding","BridgeViewpointComponent"]
+
+ref table DimModel
+ref table DimElement
+ref table DimRequirement
+ref table DimRun
+ref table FactIDSCheck
+ref table FactRequirementCoverage
+ref table DimTopic
+ref table BridgeTopicFinding
+ref table BridgeViewpointComponent
+
+ref cultureInfo zh-CN
