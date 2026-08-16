@@ -2,40 +2,156 @@
 
 **From BIM Model Data to Delivery Decisions**
 
-This portfolio prototype is being developed to convert multidisciplinary IFC models and BCF-style issue data into measurable digital-delivery KPIs. It uses public buildingSMART sample models and will use clearly labelled synthetic issue records. It is not presented as a production deployment.
+This portfolio prototype converts multidisciplinary IFC model data and
+project-authored information requirements into traceable digital-delivery
+findings and future management KPIs.
+
+It uses public buildingSMART sample models and clearly identifies
+project-specific assumptions. It is not presented as a production deployment.
 
 ## Current MVP
 
-The current implementation parses three multidisciplinary IFC models:
+The current implementation:
 
-- Architecture
-- Structural
-- HVAC
-
-It extracts 39 `IfcElement` records into:
-
-```text
-data/processed/model_inventory.csv
-```
+- parses Architecture, Structural, and HVAC IFC models;
+- registers source-model identity and content hashes;
+- extracts a 39-element federated model inventory;
+- generates a project-authored IDS;
+- validates all three IFC models in one batch;
+- produces JSON, HTML, and normalized CSV validation results.
 
 ## Data Pipeline
 
 ```text
-IFC models -> Python and IfcOpenShell -> pandas DataFrame -> CSV inventory
+Public IFC models
+-> Python and IfcOpenShell
+-> models.csv and model_inventory.csv
+-> project-authored IDS requirements
+-> IfcTester validation
+-> per-model JSON and HTML reports
+-> normalized ids_findings.csv
 ```
 
-## Extracted Fields
+## Data Products
 
-| Field          | Description                                         |
-| -------------- | --------------------------------------------------- |
-| `element_key`  | Federated unique key: source model plus IFC GlobalId |
-| `source_model` | Source IFC filename                                 |
-| `discipline`   | Model discipline                                    |
-| `global_id`    | IFC GlobalId of the element                         |
-| `ifc_class`    | IFC entity class, such as `IfcWall` or `IfcBeam`    |
-| `name`         | Element name                                        |
-| `storey`       | Related `IfcBuildingStorey`, when available         |
-| `pset_count`   | Number of property sets associated with the element |
+### `data/processed/models.csv`
+
+One row represents one source IFC model.
+
+It records:
+
+* stable `model_id`;
+* source filename and discipline;
+* IFC project GUID and schema;
+* source-file SHA-256;
+* source URL and license.
+
+### `data/processed/model_inventory.csv`
+
+One row represents one `IfcElement` occurrence in one source model.
+
+| Field          | Description                                          |
+| -------------- | ---------------------------------------------------- |
+| `model_id`     | Stable source-model identifier                       |
+| `source_model` | Source IFC filename                                  |
+| `discipline`   | Model discipline                                     |
+| `element_key`  | Federated unique key: stable model ID plus IFC GlobalId |
+| `global_id`    | IFC GlobalId within the source model                 |
+| `ifc_class`    | IFC entity class, such as `IfcWall` or `IfcBeam`     |
+| `name`         | Element name                                         |
+| `storey`       | Related `IfcBuildingStorey`, when available          |
+| `pset_count`   | Number of property sets associated with the element  |
+
+A bare IFC `GlobalId` is not treated as unique across federated discipline
+files. Cross-model joins use:
+
+```text
+element_key = model_id::global_id
+```
+
+### `data/processed/ids_findings.csv`
+
+One row represents one normalized IDS requirement result for one applicable
+element, or one `N/A` result when no elements are applicable.
+
+The current batch produces 47 findings with the normalized statuses:
+
+* `PASS`;
+* `FAIL`;
+* `N/A`.
+
+Every non-`N/A` finding can be traced back to a `model_id` and `element_key`.
+
+The complete table definitions and constraints are documented in
+[`docs/data_contract.md`](docs/data_contract.md).
+
+## IDS Validation Rules
+
+The project-authored IDS is:
+
+```text
+ids/epc_delivery_requirements_v0.1.ids
+```
+
+Version 0.1 contains five business rule groups implemented as seven IDS
+specifications:
+
+| Rule       | Requirement                                                                      |
+| ---------- | -------------------------------------------------------------------------------- |
+| `R-001`    | `IfcWall` must provide `Name`                                                    |
+| `R-002`    | `IfcWall` must provide `Pset_WallCommon.IsExternal`                              |
+| `R-003`    | `IfcBeam` must provide `Pset_BeamCommon.LoadBearing`                             |
+| `R-004A/B` | `IfcDuctSegment` and `IfcAirTerminal` must have an applicable spatial assignment |
+| `R-005A/B` | Selected HVAC elements must provide the assumed EPC `AssetTag` and `SystemCode` metadata |
+
+R-005 is a project-specific assumed EPC delivery requirement. Its failure does
+not mean the public buildingSMART sample model is defective.
+
+Further rule definitions and interpretation are documented in
+[`ids/README.md`](ids/README.md).
+
+## Current Validation Results
+
+| Rule group                        | Architecture | Structural |     HVAC |
+| --------------------------------- | -----------: | ---------: | -------: |
+| Wall Name                         |     PASS 4/4 |   PASS 4/4 |      N/A |
+| Wall IsExternal                   |     PASS 4/4 |   PASS 4/4 |      N/A |
+| Beam LoadBearing                  |          N/A |   PASS 6/6 |      N/A |
+| Duct spatial assignment           |          N/A |        N/A | PASS 1/1 |
+| Air-terminal spatial assignment   |          N/A |        N/A | PASS 2/2 |
+| Assumed duct EPC metadata         |          N/A |        N/A | FAIL 0/1 |
+| Assumed air-terminal EPC metadata |          N/A |        N/A | FAIL 0/2 |
+
+In `ids_findings.csv`, the six failed requirement checks are reported as
+`WARNING` because they belong to the project-specific R-005 assumption. This
+severity is assigned by the project's normalization logic, not by the native
+IfcTester report.
+
+A zero-applicable result is normalized to `N/A`; it is not counted as 100
+percent compliance.
+
+`ids_findings.csv` is the canonical normalized source for Control Tower KPIs.
+The raw IfcTester JSON and HTML reports retain IfcTester's native aggregates,
+where an optional zero-applicable specification may appear as passed even
+though its individual section is marked as skipped. Those native headline
+percentages must not be used as the dashboard compliance measure.
+
+## Reports
+
+The batch validation generates one JSON report and one HTML report for each
+source model:
+
+```text
+reports/ids/architecture.json
+reports/ids/architecture.html
+reports/ids/structural.json
+reports/ids/structural.html
+reports/ids/hvac.json
+reports/ids/hvac.html
+```
+
+JSON reports provide detailed machine-readable validation output. HTML reports
+provide human-readable review output.
 
 ## Run Locally
 
@@ -52,10 +168,35 @@ Install the dependencies:
 python -m pip install -r requirements.txt
 ```
 
-Run the inventory extraction:
+Generate the model register and inventory:
 
 ```powershell
 python src\extract_inventory.py
+```
+
+Generate the project IDS:
+
+```powershell
+python src\generate_ids.py
+```
+
+Validate all three IFC models and generate the reports and normalized findings:
+
+```powershell
+python src\validate_ids.py
+```
+
+## Reproducibility and Input Protection
+
+* Files in `data/raw` are read-only source inputs.
+* The validation script checks each IFC file against its recorded SHA-256.
+* The validation `run_id` is derived from the IDS and source-model hashes.
+* Repeated validation with unchanged inputs produces the same ordered
+  `ids_findings.csv`.
+* The verified findings SHA-256 is:
+
+```text
+2573b27112d82586dc6a94fc4b8d79b77fab5fa291c005a9d13e666081fb06c5
 ```
 
 ## Data Source and Attribution
@@ -76,10 +217,14 @@ Copyright buildingSMART International Ltd.
 The sample files are licensed under the
 [Creative Commons Attribution 4.0 International License](https://creativecommons.org/licenses/by/4.0/).
 
+The IDS rules and normalization logic are authored for this portfolio
+prototype and are not official buildingSMART delivery requirements.
+
 ## Current Limitations
 
-* The CSV is a selected `IfcElement` inventory, not a complete export of all IFC data.
-* IFC GlobalIds may repeat across discipline files; `element_key` is used for cross-model joins.
-* Geometry, materials, relationships, quantities, and individual property values are not yet extracted.
-* BCF-style issue data, IDS validation, KPIs, and the Power BI dashboard are planned but not yet implemented.
-* The project uses public sample models and is not evidence of a production deployment.
+* The inventory is a selected `IfcElement` export, not a complete IFC database export.
+* Geometry, materials, quantities, connections, and individual property values are not fully extracted.
+* The first IDS version covers selected information requirements, not all BIM quality dimensions.
+* Property actual values are left blank when IfcTester does not provide them consistently; the pipeline does not invent data.
+* The validation results demonstrate a portfolio workflow, not a contractual model acceptance decision.
+* BCF-style issue data, KPI calculations, and the Power BI dashboard are planned for later phases.

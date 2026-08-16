@@ -1,0 +1,4 @@
+﻿model_id,filename,discipline,ifc_project_guid,ifc_schema,content_sha256,source_url,license
+architecture,Building-Architecture.ifc,Architecture,2Ndyd$OSX7s9A04nc4lyye,IFC4,3ff9b10bd00c7b96dded51e7ca5a6b69efbea38b049adcdd05fcd247de7e70d5,https://github.com/buildingSMART/Sample-Test-Files/blob/main/IFC%204.0.2.1%20%28IFC%204%29/PCERT-Sample-Scene/Building-Architecture.ifc,CC BY 4.0
+hvac,Building-Hvac.ifc,HVAC,2Ndyd$OSX7s9A04nc4lyye,IFC4,11a8552bc555fa44dfdc49374d1ab2da0a16104c10f086af509f500ce03fa2b3,https://github.com/buildingSMART/Sample-Test-Files/blob/main/IFC%204.0.2.1%20%28IFC%204%29/PCERT-Sample-Scene/Building-Hvac.ifc,CC BY 4.0
+structural,Building-Structural.ifc,Structural,2Ndyd$OSX7s9A04nc4lyye,IFC4,68be722391e7aaa53bb9278645a02aa4b6382f13cc07548a1612e9b1dc3def67,https://github.com/buildingSMART/Sample-Test-Files/blob/main/IFC%204.0.2.1%20%28IFC%204%29/PCERT-Sample-Scene/Building-Structural.ifc,CC BY 4.0

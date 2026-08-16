@@ -1,0 +1,162 @@
+<?xml version='1.0' encoding='utf-8'?>
+<ids xmlns="http://standards.buildingsmart.org/IDS" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://standards.buildingsmart.org/IDS http://standards.buildingsmart.org/IDS/1.0/ids.xsd">
+    <info>
+        <title>EPC Digital Delivery Requirements</title>
+        <version>0.1</version>
+        <description>Project-authored information requirements for the EPC Digital Delivery Control Tower prototype.</description>
+        <purpose>Validate selected information requirements in public multidisciplinary IFC sample models.</purpose>
+        <milestone>Portfolio prototype</milestone>
+    </info>
+    <specifications>
+        <specification name="Walls must have a name" ifcVersion="IFC4" identifier="R-001" description="Checks whether every applicable IfcWall provides its IFC Name attribute.">
+            <applicability minOccurs="0" maxOccurs="unbounded">
+                <entity>
+                    <name>
+                        <simpleValue>IFCWALL</simpleValue>
+                    </name>
+                </entity>
+            </applicability>
+            <requirements>
+                <attribute cardinality="required" instructions="Provide a non-empty IFC Name.">
+                    <name>
+                        <simpleValue>Name</simpleValue>
+                    </name>
+                </attribute>
+            </requirements>
+        </specification>
+        <specification name="Walls must declare IsExternal" ifcVersion="IFC4" identifier="R-002" description="Checks the presence and IFC data type of Pset_WallCommon.IsExternal.">
+            <applicability minOccurs="0" maxOccurs="unbounded">
+                <entity>
+                    <name>
+                        <simpleValue>IFCWALL</simpleValue>
+                    </name>
+                </entity>
+            </applicability>
+            <requirements>
+                <property dataType="IFCBOOLEAN" cardinality="required" instructions="Declare whether the wall is external.">
+                    <propertySet>
+                        <simpleValue>Pset_WallCommon</simpleValue>
+                    </propertySet>
+                    <baseName>
+                        <simpleValue>IsExternal</simpleValue>
+                    </baseName>
+                </property>
+            </requirements>
+        </specification>
+        <specification name="Beams must declare LoadBearing" ifcVersion="IFC4" identifier="R-003" description="Checks the presence and IFC data type of Pset_BeamCommon.LoadBearing.">
+            <applicability minOccurs="0" maxOccurs="unbounded">
+                <entity>
+                    <name>
+                        <simpleValue>IFCBEAM</simpleValue>
+                    </name>
+                </entity>
+            </applicability>
+            <requirements>
+                <property dataType="IFCBOOLEAN" cardinality="required" instructions="Declare whether the beam is load-bearing.">
+                    <propertySet>
+                        <simpleValue>Pset_BeamCommon</simpleValue>
+                    </propertySet>
+                    <baseName>
+                        <simpleValue>LoadBearing</simpleValue>
+                    </baseName>
+                </property>
+            </requirements>
+        </specification>
+        <specification name="Duct segments need spatial assignment" ifcVersion="IFC4" identifier="R-004A" description="Checks whether each IfcDuctSegment is directly contained in an IfcSpace or IfcBuildingStorey.">
+            <applicability minOccurs="0" maxOccurs="unbounded">
+                <entity>
+                    <name>
+                        <simpleValue>IFCDUCTSEGMENT</simpleValue>
+                    </name>
+                </entity>
+            </applicability>
+            <requirements>
+                <partOf relation="IFCRELCONTAINEDINSPATIALSTRUCTURE" cardinality="required" instructions="Assign the HVAC element directly to an IfcSpace or IfcBuildingStorey.">
+                    <entity>
+                        <name>
+                            <xs:restriction base="xs:string">
+                                <xs:enumeration value="IFCSPACE" />
+                                <xs:enumeration value="IFCBUILDINGSTOREY" />
+                            </xs:restriction>
+                        </name>
+                    </entity>
+                </partOf>
+            </requirements>
+        </specification>
+        <specification name="Air terminals need spatial assignment" ifcVersion="IFC4" identifier="R-004B" description="Checks whether each IfcAirTerminal is directly contained in an IfcSpace or IfcBuildingStorey.">
+            <applicability minOccurs="0" maxOccurs="unbounded">
+                <entity>
+                    <name>
+                        <simpleValue>IFCAIRTERMINAL</simpleValue>
+                    </name>
+                </entity>
+            </applicability>
+            <requirements>
+                <partOf relation="IFCRELCONTAINEDINSPATIALSTRUCTURE" cardinality="required" instructions="Assign the HVAC element directly to an IfcSpace or IfcBuildingStorey.">
+                    <entity>
+                        <name>
+                            <xs:restriction base="xs:string">
+                                <xs:enumeration value="IFCSPACE" />
+                                <xs:enumeration value="IFCBUILDINGSTOREY" />
+                            </xs:restriction>
+                        </name>
+                    </entity>
+                </partOf>
+            </requirements>
+        </specification>
+        <specification name="Duct segments need assumed EPC metadata" ifcVersion="IFC4" identifier="R-005A" description="Project-specific assumed EPC delivery requirement for IfcDuctSegment elements.">
+            <applicability minOccurs="0" maxOccurs="unbounded">
+                <entity>
+                    <name>
+                        <simpleValue>IFCDUCTSEGMENT</simpleValue>
+                    </name>
+                </entity>
+            </applicability>
+            <requirements>
+                <property dataType="IFCLABEL" cardinality="required" instructions="Provide the project-assumed EPC asset tag.">
+                    <propertySet>
+                        <simpleValue>EPC_Delivery</simpleValue>
+                    </propertySet>
+                    <baseName>
+                        <simpleValue>AssetTag</simpleValue>
+                    </baseName>
+                </property>
+                <property dataType="IFCLABEL" cardinality="required" instructions="Provide the project-assumed EPC system code.">
+                    <propertySet>
+                        <simpleValue>EPC_Delivery</simpleValue>
+                    </propertySet>
+                    <baseName>
+                        <simpleValue>SystemCode</simpleValue>
+                    </baseName>
+                </property>
+            </requirements>
+        </specification>
+        <specification name="Air terminals need assumed EPC metadata" ifcVersion="IFC4" identifier="R-005B" description="Project-specific assumed EPC delivery requirement for IfcAirTerminal elements.">
+            <applicability minOccurs="0" maxOccurs="unbounded">
+                <entity>
+                    <name>
+                        <simpleValue>IFCAIRTERMINAL</simpleValue>
+                    </name>
+                </entity>
+            </applicability>
+            <requirements>
+                <property dataType="IFCLABEL" cardinality="required" instructions="Provide the project-assumed EPC asset tag.">
+                    <propertySet>
+                        <simpleValue>EPC_Delivery</simpleValue>
+                    </propertySet>
+                    <baseName>
+                        <simpleValue>AssetTag</simpleValue>
+                    </baseName>
+                </property>
+                <property dataType="IFCLABEL" cardinality="required" instructions="Provide the project-assumed EPC system code.">
+                    <propertySet>
+                        <simpleValue>EPC_Delivery</simpleValue>
+                    </propertySet>
+                    <baseName>
+                        <simpleValue>SystemCode</simpleValue>
+                    </baseName>
+                </property>
+            </requirements>
+        </specification>
+    </specifications>
+</ids>
