@@ -78,6 +78,85 @@ def _command_components(arguments: argparse.Namespace) -> int:
     return 0
 
 
+def _selected_exporters(arguments: argparse.Namespace, config) -> tuple[str, ...]:
+    if getattr(arguments, "format", None):
+        return tuple(arguments.format)
+    return config.exporters
+
+
+def _report_run(result) -> None:
+    bundle = result.pipeline.bundle
+    print(f"validation run   {bundle.run.validation_run_id}")
+    print(f"artifact bundle  {result.export.artifact_bundle_id}")
+    print(f"as of            {bundle.run.as_of}")
+    print(
+        f"{len(bundle.models)} model(s), {len(bundle.elements)} element(s), "
+        f"{len(bundle.findings)} finding(s), {len(bundle.issues)} issue(s)"
+    )
+    for artifact in result.export.artifacts:
+        print(f"  {artifact.sha256[:12]}  {artifact.byte_count:>8}  {artifact.path}")
+    if result.legacy_manifest_path is not None:
+        print(f"  legacy manifest: {result.legacy_manifest_path}")
+
+
+def _command_check(arguments: argparse.Namespace) -> int:
+    """Validate without writing any artifact."""
+
+    from .pipeline import build_bundle
+
+    root = _repository_root(arguments.repository_root)
+    config = load_run_config(root, arguments.config)
+    result = build_bundle(config, reports_dir=arguments.reports_dir)
+    bundle = result.bundle
+
+    print(f"validation run   {bundle.run.validation_run_id}")
+    counts: dict[str, int] = {}
+    for finding in bundle.findings:
+        counts[str(finding.status)] = counts.get(str(finding.status), 0) + 1
+    for status in sorted(counts):
+        print(f"  {status:<4} {counts[status]}")
+    applicable = sum(1 for finding in bundle.findings if finding.is_applicable)
+    print(f"  {applicable} of {len(bundle.findings)} applicable")
+    print(f"  {len(bundle.issues)} issue(s)")
+    return 0
+
+
+def _command_run(arguments: argparse.Namespace) -> int:
+    """Run every stage and write the enabled exporters' artifacts."""
+
+    from .pipeline import execute
+
+    root = _repository_root(arguments.repository_root)
+    config = load_run_config(root, arguments.config)
+    result = execute(
+        config,
+        exporter_ids=_selected_exporters(arguments, config),
+        reports_dir=arguments.reports_dir,
+    )
+    _report_run(result)
+    return 0
+
+
+def _command_export(arguments: argparse.Namespace) -> int:
+    """Write one named exporter's artifacts, and only that one.
+
+    The validation is redone rather than reloaded from disk, deliberately. An
+    export whose inputs are files somebody may have edited is not an export of
+    anything in particular, and reading stage outputs back out of the
+    repository is exactly how the stages came to be coupled through committed
+    CSVs in the first place.
+    """
+
+    if not arguments.format:
+        print(
+            "error: export needs at least one --format; use `run` for the "
+            "configured set",
+            file=sys.stderr,
+        )
+        return 2
+    return _command_run(arguments)
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="epc-ct",
@@ -112,6 +191,43 @@ def build_parser() -> argparse.ArgumentParser:
         "components", help="List registered checkers, grouping policies, and exporters."
     )
     components.set_defaults(handler=_command_components)
+
+    check = subparsers.add_parser(
+        "check", help="Validate the configured projects without writing anything."
+    )
+    check.add_argument(
+        "--reports-dir",
+        type=Path,
+        default=None,
+        help="Where checker reports go; defaults to the configured reports directory.",
+    )
+    check.set_defaults(handler=_command_check)
+
+    run = subparsers.add_parser(
+        "run", help="Run every stage and write the enabled exporters' artifacts."
+    )
+    run.add_argument(
+        "--format",
+        action="append",
+        default=None,
+        metavar="EXPORTER",
+        help="Exporter id to run; repeat for several. Defaults to the configured set.",
+    )
+    run.add_argument("--reports-dir", type=Path, default=None)
+    run.set_defaults(handler=_command_run)
+
+    export = subparsers.add_parser(
+        "export", help="Write one or more exporters' artifacts."
+    )
+    export.add_argument(
+        "--format",
+        action="append",
+        default=None,
+        metavar="EXPORTER",
+        help="Exporter id to run; repeat for several. Defaults to the configured set.",
+    )
+    export.add_argument("--reports-dir", type=Path, default=None)
+    export.set_defaults(handler=_command_export)
 
     return parser
 

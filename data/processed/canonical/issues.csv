@@ -1,0 +1,4 @@
+﻿issue_key,validation_run_id,project_id,model_key,element_key,grouping_policy,lifecycle_state,assignee_role,priority,stage,due
+382a3ddb-ecf1-5bfb-ad28-3a79211ac8c1,ids-v0.1-11b2daa02eab1031,pcert-sample,hvac,hvac::38WbwIGD90nB_3T2BTU5Ed,element,Open,model-coordination,,,
+8d40c569-e32e-5432-9da9-5521511135cf,ids-v0.1-11b2daa02eab1031,pcert-sample,hvac,hvac::34Y6EIt3nDCAS1k$kPGOKm,element,Open,model-coordination,,,
+8e86d843-dc5e-58dd-8405-006a3c179a4f,ids-v0.1-11b2daa02eab1031,pcert-sample,hvac,hvac::23uPJWDfXEcwHH3kdFgV9c,element,Open,model-coordination,,,

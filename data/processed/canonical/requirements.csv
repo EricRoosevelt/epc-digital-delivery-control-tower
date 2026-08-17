@@ -1,0 +1,10 @@
+﻿requirement_key,rule_id,requirement_id,specification_label,requirement_label,checker,facet_kinds,severity,owner_role,stage,discipline_scope,citation
+63e9c0f9-4cb5-5b50-9f4b-456fc6f25c41,R-001,Name,R-001: Walls must have a name,Name,ids,attribute,ERROR,,,,
+5dd2e8a6-985f-5a56-9462-77a2765b7ef4,R-002,Pset_WallCommon.IsExternal,R-002: Walls must declare IsExternal,Pset_WallCommon.IsExternal,ids,property,ERROR,,,,
+0041a575-0031-56c2-a9a3-642dc399b84e,R-003,Pset_BeamCommon.LoadBearing,R-003: Beams must declare LoadBearing,Pset_BeamCommon.LoadBearing,ids,property,ERROR,,,,
+491a4a0b-9b4a-5f77-b90d-31a7dc8beb44,R-004A,IFCRELCONTAINEDINSPATIALSTRUCTURE,R-004A: Duct segments need spatial assignment,IFCRELCONTAINEDINSPATIALSTRUCTURE,ids,partof,ERROR,,,,
+2ead0930-568e-5d49-9708-716c5c740846,R-004B,IFCRELCONTAINEDINSPATIALSTRUCTURE,R-004B: Air terminals need spatial assignment,IFCRELCONTAINEDINSPATIALSTRUCTURE,ids,partof,ERROR,,,,
+842a37c7-3183-5fce-ab45-b93c37ec7a08,R-005A,EPC_Delivery.AssetTag,R-005A: Duct segments need assumed EPC metadata,EPC_Delivery.AssetTag,ids,property,WARNING,,,,
+9321298b-4a9f-5a3e-9d10-6668b736d465,R-005A,EPC_Delivery.SystemCode,R-005A: Duct segments need assumed EPC metadata,EPC_Delivery.SystemCode,ids,property,WARNING,,,,
+a1402559-dcfc-5af4-a222-3a13eaf2b161,R-005B,EPC_Delivery.AssetTag,R-005B: Air terminals need assumed EPC metadata,EPC_Delivery.AssetTag,ids,property,WARNING,,,,
+fd49c300-7ef6-5a8d-825f-53210dd579fe,R-005B,EPC_Delivery.SystemCode,R-005B: Air terminals need assumed EPC metadata,EPC_Delivery.SystemCode,ids,property,WARNING,,,,

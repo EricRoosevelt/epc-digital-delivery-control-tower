@@ -31,6 +31,7 @@ from .domain import Project, Provenance, derive_model_key
 
 __all__ = [
     "DEFAULT_CONFIG_FILENAME",
+    "DEFAULT_EXPORTERS",
     "ManifestModel",
     "ProjectManifest",
     "RunConfig",
@@ -41,6 +42,11 @@ __all__ = [
 ]
 
 DEFAULT_CONFIG_FILENAME = "control-tower.toml"
+
+#: Everything that writes a tracked artifact, so that a default run regenerates
+#: the repository in full and continuous integration can simply check that
+#: nothing changed.
+DEFAULT_EXPORTERS = ("csv", "json", "legacy-bcf", "legacy-pbip")
 
 _SHA256 = re.compile(r"^[0-9a-f]{64}$")
 
@@ -113,7 +119,7 @@ class RunConfig:
     processed_data_dir: Path | None = None
     reports_dir: Path | None = None
     grouping_policy: str = "element"
-    exporters: tuple[str, ...] = ("legacy-pbip",)
+    exporters: tuple[str, ...] = DEFAULT_EXPORTERS
 
     def resolved_processed_data_dir(self) -> Path:
         return self.processed_data_dir or self.repository_root / "data" / "processed"
@@ -289,7 +295,7 @@ def load_run_config(
     else:
         manifests = discover_project_manifests(repository_root / "projects")
 
-    exporters = run_section.get("exporters", ["legacy-pbip"])
+    exporters = run_section.get("exporters", list(DEFAULT_EXPORTERS))
     if not isinstance(exporters, list):
         raise ValueError(f"{config_path}: exporters must be an array")
 

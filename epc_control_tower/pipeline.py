@@ -21,19 +21,30 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from . import CONTRACT_VERSION
+from .bcf.schema import default_schema_dir
 from .config import ProjectManifest, RunConfig, load_project_manifests
 from .domain import RunBundle, RuleSet, ValidationRun
+from .exporters.legacy_manifest import build_legacy_manifest, write_legacy_manifest
+from .exporters.legacy_projection import project_bundle
 from .identity import build_validation_run_id
 from .registry import Registry, default_registry
 from .rules import load_ruleset
 from .stages.check import check
+from .stages.export import ExportResult, export
 from .stages.geometry import compute_geometry
 from .stages.group import group
 from .stages.ingest import IngestResult, ingest
 from .stages.inventory import inventory
 from .validation import validate_bundle
 
-__all__ = ["PipelineResult", "build_bundle", "load_manifests"]
+__all__ = [
+    "PipelineResult",
+    "RunResult",
+    "build_bundle",
+    "execute",
+    "load_manifests",
+    "output_roots",
+]
 
 
 @dataclass(frozen=True, slots=True)
@@ -162,4 +173,76 @@ def build_bundle(
         registry=registry,
         ingested=ingested,
         ruleset=ruleset,
+    )
+
+
+@dataclass(frozen=True, slots=True)
+class RunResult:
+    """A validation and everything writing it produced."""
+
+    pipeline: PipelineResult
+    export: ExportResult
+    legacy_manifest_path: Path | None = None
+
+
+def output_roots(config: RunConfig) -> dict[str, Path]:
+    """Where each kind of output goes, from configuration.
+
+    Exporters declare which kind they write and carry no path of their own, so
+    this mapping is the single place the answer lives.
+    """
+
+    return {
+        "processed": config.resolved_processed_data_dir(),
+        "reports": config.resolved_reports_dir(),
+    }
+
+
+def execute(
+    config: RunConfig,
+    *,
+    exporter_ids: Sequence[str] | None = None,
+    registry: Registry | None = None,
+    reports_dir: Path | None = None,
+) -> RunResult:
+    """Validate, group, and write — the whole thing, in order."""
+
+    result = build_bundle(config, registry=registry, reports_dir=reports_dir)
+    roots = output_roots(config)
+    if reports_dir is not None:
+        roots["reports"] = reports_dir
+
+    enabled = tuple(exporter_ids) if exporter_ids is not None else config.exporters
+    exported = export(
+        result.bundle,
+        registry=result.registry,
+        exporter_ids=enabled,
+        output_roots=roots,
+        repository_root=config.repository_root,
+        # Beside the reports rather than inside any exporter's directory: it
+        # describes whichever exporters ran, so it does not belong to one of
+        # them.
+        manifest_dir=roots["reports"],
+    )
+
+    # The published BCF manifest describes files both legacy writers produce,
+    # so it can only be built once both have run — and only makes sense when
+    # both did.
+    legacy_manifest_path: Path | None = None
+    if {"legacy-bcf", "legacy-pbip"} <= set(enabled):
+        manifest = build_legacy_manifest(
+            project_bundle(result.bundle),
+            repository_root=config.repository_root,
+            processed_dir=roots["processed"],
+            reports_dir=roots["reports"],
+            raw_data_dir=result.manifests[0].raw_data_dir,
+            ruleset_path=config.resolved_ruleset_path(),
+            schema_dir=default_schema_dir(config.repository_root),
+        )
+        legacy_manifest_path = write_legacy_manifest(manifest, roots["reports"])
+
+    return RunResult(
+        pipeline=result,
+        export=exported,
+        legacy_manifest_path=legacy_manifest_path,
     )
