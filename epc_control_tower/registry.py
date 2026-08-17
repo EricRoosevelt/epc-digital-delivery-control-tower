@@ -182,7 +182,9 @@ def default_registry(config: RunConfig) -> Registry:
     """
 
     from .checkers.ids_checker import IdsChecker
+    from .grouping.element import ElementGroupingPolicy
 
     registry = Registry()
     registry.register_checker(IdsChecker(config.resolved_ruleset_path()))
+    registry.register_grouping_policy(ElementGroupingPolicy())
     return registry

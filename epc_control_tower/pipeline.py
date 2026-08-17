@@ -27,6 +27,7 @@ from .identity import build_validation_run_id
 from .registry import Registry, default_registry
 from .rules import load_ruleset
 from .stages.check import check
+from .stages.group import group
 from .stages.ingest import IngestResult, ingest
 from .stages.inventory import inventory
 from .validation import validate_bundle
@@ -110,6 +111,14 @@ def build_bundle(
     )
     checked.raise_for_failures()
 
+    grouped = group(
+        checked.findings,
+        registry=registry,
+        policy_id=config.grouping_policy,
+        validation_run_id=validation_run_id,
+        as_of=config.as_of,
+    )
+
     run = ValidationRun(
         validation_run_id=validation_run_id,
         ruleset_id=ruleset.ruleset_id,
@@ -129,6 +138,8 @@ def build_bundle(
         models=ingested.models,
         elements=elements,
         findings=checked.findings,
+        issues=grouped.issues,
+        issue_events=grouped.events,
     )
 
     if verify:
