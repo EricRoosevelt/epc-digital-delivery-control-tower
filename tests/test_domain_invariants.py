@@ -196,13 +196,25 @@ class RequirementInvariantTests(unittest.TestCase):
             RuleSet(
                 ruleset_id="rs",
                 version="0.1",
-                content_sha256=SHA_A,
+                normalized_digest=SHA_A,
                 requirements=(requirement, requirement),
             )
 
-    def test_ruleset_content_hash_must_look_like_a_digest(self):
+    def test_normalized_digest_must_look_like_a_digest(self):
         with self.assertRaisesRegex(ValueError, "64 lowercase hex"):
-            RuleSet(ruleset_id="rs", version="0.1", content_sha256="nope")
+            RuleSet(ruleset_id="rs", version="0.1", normalized_digest="nope")
+
+    def test_source_blob_hash_is_optional_but_validated(self):
+        # Provenance, not identity: a rule set assembled in memory has no
+        # source file, but one that claims a hash must supply a real digest.
+        RuleSet(ruleset_id="rs", version="0.1", normalized_digest=SHA_A)
+        with self.assertRaisesRegex(ValueError, "source_blob_sha256"):
+            RuleSet(
+                ruleset_id="rs",
+                version="0.1",
+                normalized_digest=SHA_A,
+                source_blob_sha256="nope",
+            )
 
 
 class IssueEventInvariantTests(unittest.TestCase):

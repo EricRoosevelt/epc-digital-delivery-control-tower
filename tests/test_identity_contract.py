@@ -16,12 +16,13 @@ import unittest
 from pathlib import Path
 
 from epc_control_tower.determinism import read_csv_rows, sha256_file
-from epc_control_tower.domain import ComponentFingerprint
+from epc_control_tower.domain import ComponentFingerprint, Requirement, Severity
 from epc_control_tower.identity import (
     build_artifact_bundle_id,
     build_execution_id,
     build_finding_key,
     build_requirement_key,
+    build_ruleset_normalized_digest,
     build_validation_run_id,
     new_execution_nonce,
 )
@@ -47,13 +48,25 @@ def _run_id_inputs(**overrides):
     values = {
         "ruleset_id": "epc-delivery",
         "ruleset_version": "0.1",
-        "ruleset_content_sha256": SHA_A,
+        "ruleset_normalized_digest": SHA_A,
         "models": [("architecture", SHA_B), ("hvac", SHA_C)],
         "checkers": [ComponentFingerprint("ids", "0.8.5", SHA_A)],
         "as_of": "2026-08-13T00:00:00Z",
     }
     values.update(overrides)
     return values
+
+
+def make_requirement(rule_id="R-001", requirement_id="Name", **overrides):
+    values = {
+        "requirement_key": build_requirement_key(rule_id, requirement_id),
+        "rule_id": rule_id,
+        "requirement_id": requirement_id,
+        "specification_label": f"{rule_id}: walls must have a name",
+        "requirement_label": requirement_id,
+    }
+    values.update(overrides)
+    return Requirement(**values)
 
 
 class PublishedIdentityTests(unittest.TestCase):
@@ -173,6 +186,114 @@ class ValidationRunIdentityTests(unittest.TestCase):
     def test_a_non_slug_ruleset_id_is_rejected(self):
         with self.assertRaisesRegex(ValueError, "must be a slug"):
             build_validation_run_id(**_run_id_inputs(ruleset_id="not a slug"))
+
+
+class RulesetDigestTests(unittest.TestCase):
+    """Rule identity is about what the rules say, not how the file is written.
+
+    The project learned this the hard way: the published v1.0.0 run identity
+    hashes the IDS document's raw bytes, so the same rules checked out with
+    different line endings yielded a different run id and different finding
+    keys. The canonical design keeps the source blob hash as provenance and
+    derives identity from a normalized digest instead.
+    """
+
+    def test_declaration_order_does_not_change_the_digest(self):
+        first = make_requirement("R-001", "Name")
+        second = make_requirement("R-002", "IsExternal")
+        self.assertEqual(
+            build_ruleset_normalized_digest(
+                ruleset_id="rs", version="0.1", requirements=[first, second]
+            ),
+            build_ruleset_normalized_digest(
+                ruleset_id="rs", version="0.1", requirements=[second, first]
+            ),
+        )
+
+    def test_facet_and_discipline_ordering_does_not_change_the_digest(self):
+        # These are set-like declarations; the order they were written in is
+        # not part of what the rule says.
+        self.assertEqual(
+            build_ruleset_normalized_digest(
+                ruleset_id="rs",
+                version="0.1",
+                requirements=[
+                    make_requirement(
+                        facet_kinds=("property", "attribute"),
+                        discipline_scope=("HVAC", "Architecture"),
+                    )
+                ],
+            ),
+            build_ruleset_normalized_digest(
+                ruleset_id="rs",
+                version="0.1",
+                requirements=[
+                    make_requirement(
+                        facet_kinds=("attribute", "property"),
+                        discipline_scope=("Architecture", "HVAC"),
+                    )
+                ],
+            ),
+        )
+
+    def test_changing_a_rule_changes_the_digest(self):
+        self.assertNotEqual(
+            build_ruleset_normalized_digest(
+                ruleset_id="rs", version="0.1", requirements=[make_requirement()]
+            ),
+            build_ruleset_normalized_digest(
+                ruleset_id="rs",
+                version="0.1",
+                requirements=[make_requirement(severity=Severity.WARNING)],
+            ),
+        )
+
+    def test_changing_a_rule_s_owner_or_stage_changes_the_digest(self):
+        # These drive issue assignment and priority, so they reach the outputs.
+        base = build_ruleset_normalized_digest(
+            ruleset_id="rs", version="0.1", requirements=[make_requirement()]
+        )
+        for field, value in (("owner_role", "coordination"), ("stage", "Handover")):
+            with self.subTest(field=field):
+                self.assertNotEqual(
+                    base,
+                    build_ruleset_normalized_digest(
+                        ruleset_id="rs",
+                        version="0.1",
+                        requirements=[make_requirement(**{field: value})],
+                    ),
+                )
+
+    def test_adding_a_rule_changes_the_digest(self):
+        self.assertNotEqual(
+            build_ruleset_normalized_digest(
+                ruleset_id="rs", version="0.1", requirements=[make_requirement("R-001")]
+            ),
+            build_ruleset_normalized_digest(
+                ruleset_id="rs",
+                version="0.1",
+                requirements=[make_requirement("R-001"), make_requirement("R-002")],
+            ),
+        )
+
+    def test_the_source_blob_hash_takes_no_part_in_the_run_identity(self):
+        # Reformatting the source file changes its bytes and must not change
+        # what the validation is.
+        self.assertEqual(
+            build_validation_run_id(**_run_id_inputs()),
+            build_validation_run_id(**_run_id_inputs()),
+        )
+        self.assertNotIn(
+            "source_blob",
+            build_validation_run_id.__doc__ or "",
+            msg="source blob must not be documented as an identity input",
+        )
+
+    def test_a_semantic_change_still_changes_the_run_identity(self):
+        self.assertNotEqual(
+            build_validation_run_id(**_run_id_inputs()),
+            build_validation_run_id(**_run_id_inputs(ruleset_normalized_digest=SHA_B)),
+        )
 
 
 class ExecutionIdentityTests(unittest.TestCase):

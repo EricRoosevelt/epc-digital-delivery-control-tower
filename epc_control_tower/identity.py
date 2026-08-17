@@ -38,7 +38,7 @@ import uuid
 from collections.abc import Iterable
 
 from .determinism import canonical_json_document, canonical_json_sequence
-from .domain import ComponentFingerprint
+from .domain import ComponentFingerprint, Requirement
 
 __all__ = [
     "IDENTITY_NAMESPACE",
@@ -49,6 +49,7 @@ __all__ = [
     "build_issue_event_key",
     "build_issue_key",
     "build_requirement_key",
+    "build_ruleset_normalized_digest",
     "build_validation_run_id",
     "new_execution_nonce",
     "uuid5_from_values",
@@ -103,11 +104,61 @@ def build_requirement_key(rule_id: str, requirement_id: str) -> str:
     return uuid5_from_values("requirement", [rule_id, requirement_id])
 
 
+def build_ruleset_normalized_digest(
+    *,
+    ruleset_id: str,
+    version: str,
+    requirements: Iterable[Requirement],
+) -> str:
+    """Digest what a rule set *says*, independent of how it was written.
+
+    Computed from the parsed requirements rather than from the source file, so
+    it survives reformatting, re-indentation and a change of line endings, and
+    so rule sets loaded from different source formats stay comparable. Only a
+    change to the rules themselves moves it.
+
+    This is the digest that feeds :func:`build_validation_run_id`. The raw
+    bytes of the source artifact are recorded separately as provenance and take
+    no part in identity — hashing them would mean a whitespace edit re-keyed
+    every finding.
+    """
+
+    _require_slug(ruleset_id, "ruleset_id")
+    _require_slug(version, "ruleset version")
+
+    document = {
+        "ruleset_id": ruleset_id,
+        "version": version,
+        "requirements": [
+            {
+                "rule_id": requirement.rule_id,
+                "requirement_id": requirement.requirement_id,
+                "requirement_key": requirement.requirement_key,
+                "specification_label": requirement.specification_label,
+                "requirement_label": requirement.requirement_label,
+                "checker": requirement.checker,
+                "facet_kinds": sorted(requirement.facet_kinds),
+                "severity": str(requirement.severity),
+                "owner_role": requirement.owner_role,
+                "stage": requirement.stage,
+                "discipline_scope": sorted(requirement.discipline_scope),
+                "citation": requirement.citation,
+            }
+            for requirement in sorted(
+                requirements, key=lambda item: (item.rule_id, item.requirement_id)
+            )
+        ],
+    }
+    return hashlib.sha256(
+        canonical_json_document(document).encode("utf-8")
+    ).hexdigest()
+
+
 def build_validation_run_id(
     *,
     ruleset_id: str,
     ruleset_version: str,
-    ruleset_content_sha256: str,
+    ruleset_normalized_digest: str,
     models: Iterable[tuple[str, str]],
     checkers: Iterable[ComponentFingerprint],
     as_of: str,
@@ -117,6 +168,10 @@ def build_validation_run_id(
     ``models`` is an iterable of ``(model_key, content_sha256)``. Both it and
     ``checkers`` are sorted here, so the caller's ordering cannot leak into the
     identity.
+
+    ``ruleset_normalized_digest`` is the *semantic* digest from
+    :func:`build_ruleset_normalized_digest`, not a hash of the source file.
+    Reformatting a rule document must not change what a validation is.
 
     ``as_of`` is a *logical* date. It belongs in the identity because a rule
     that depends on a date genuinely produces different findings on different
@@ -139,7 +194,7 @@ def build_validation_run_id(
         "ruleset": {
             "id": ruleset_id,
             "version": ruleset_version,
-            "content_sha256": ruleset_content_sha256,
+            "normalized_digest": ruleset_normalized_digest,
         },
     }
     digest = hashlib.sha256(

@@ -24,6 +24,7 @@ from .domain import (
 from .identity import (
     build_finding_key,
     build_issue_event_key,
+    build_ruleset_normalized_digest,
     build_validation_run_id,
 )
 
@@ -176,10 +177,30 @@ def validate_bundle(bundle: RunBundle, *, recompute_identity: bool = True) -> No
     # -- identity is recomputed, not trusted -------------------------------
 
     if recompute_identity:
+        # The rule set's semantic digest is recomputed from the requirements it
+        # actually carries, so a bundle cannot claim rules it does not contain.
+        expected_digest = build_ruleset_normalized_digest(
+            ruleset_id=bundle.ruleset.ruleset_id,
+            version=bundle.ruleset.version,
+            requirements=bundle.ruleset.requirements,
+        )
+        if expected_digest != bundle.ruleset.normalized_digest:
+            violations.append(
+                f"ruleset normalized_digest {bundle.ruleset.normalized_digest!r} "
+                f"does not recompute from its own requirements "
+                f"(expected {expected_digest!r})"
+            )
+        if bundle.run.ruleset_normalized_digest != bundle.ruleset.normalized_digest:
+            violations.append(
+                "the run's ruleset digest "
+                f"{bundle.run.ruleset_normalized_digest!r} disagrees with the "
+                f"bundle's rule set {bundle.ruleset.normalized_digest!r}"
+            )
+
         expected_run_id = build_validation_run_id(
             ruleset_id=bundle.run.ruleset_id,
             ruleset_version=bundle.run.ruleset_version,
-            ruleset_content_sha256=bundle.run.ruleset_content_sha256,
+            ruleset_normalized_digest=bundle.run.ruleset_normalized_digest,
             models=bundle.run.model_inputs,
             checkers=bundle.run.checker_fingerprints,
             as_of=bundle.run.as_of,

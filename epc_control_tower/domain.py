@@ -321,15 +321,44 @@ class Requirement:
 
 @dataclass(frozen=True, slots=True)
 class RuleSet:
+    """A versioned collection of requirements.
+
+    Two digests, for two different questions.
+
+    ``source_blob_sha256`` answers *which exact file did we read?* It is
+    provenance: it pins the artifact on disk so a swapped or edited source is
+    detectable. It deliberately takes no part in the validation identity.
+
+    ``normalized_digest`` answers *what do these rules say?* It is computed
+    from the parsed requirements, so it is independent of the source format and
+    of how that source happened to be written — reindenting a document, or
+    switching its line endings, leaves it unchanged. This is what
+    ``validation_run_id`` derives from.
+
+    Conflating the two is a real trap, and this project fell into it once: the
+    published v1.0.0 run identity hashes the IDS file's raw bytes, so the same
+    rules checked out with different line endings produced a different run id
+    and therefore different finding keys. Rule identity has to survive
+    reformatting; file identity has to not.
+
+    The digest is recomputed and checked in :func:`~.validation.validate_bundle`
+    rather than here, because computing it needs the identity layer, which in
+    turn is built on these types.
+    """
+
     ruleset_id: str
     version: str
-    content_sha256: str
+    normalized_digest: str
+    source_blob_sha256: str = ""
     requirements: tuple[Requirement, ...] = ()
 
     def __post_init__(self) -> None:
         _require_slug(self.ruleset_id, "ruleset_id")
         _require_slug(self.version, "ruleset version")
-        _require_sha256(self.content_sha256, "ruleset content_sha256")
+        _require_sha256(self.normalized_digest, "ruleset normalized_digest")
+        _require_sha256(
+            self.source_blob_sha256, "ruleset source_blob_sha256", allow_empty=True
+        )
         keys = [requirement.requirement_key for requirement in self.requirements]
         duplicates = sorted({key for key in keys if keys.count(key) > 1})
         if duplicates:
@@ -367,14 +396,22 @@ class ValidationRun:
     validation_run_id: str
     ruleset_id: str
     ruleset_version: str
-    ruleset_content_sha256: str
+    ruleset_normalized_digest: str
     as_of: str
+    ruleset_source_blob_sha256: str = ""
     model_inputs: tuple[tuple[str, str], ...] = ()
     checker_fingerprints: tuple[ComponentFingerprint, ...] = ()
 
     def __post_init__(self) -> None:
         _require_text(self.validation_run_id, "validation_run_id")
-        _require_sha256(self.ruleset_content_sha256, "ruleset_content_sha256")
+        _require_sha256(self.ruleset_normalized_digest, "ruleset_normalized_digest")
+        # Recorded for audit, not for identity: which file was read is worth
+        # knowing, but reformatting it must not re-key the validation.
+        _require_sha256(
+            self.ruleset_source_blob_sha256,
+            "ruleset_source_blob_sha256",
+            allow_empty=True,
+        )
         for model_key, content_sha256 in self.model_inputs:
             _require_text(model_key, "model_inputs model_key")
             _require_sha256(content_sha256, f"model_inputs[{model_key}] content_sha256")
