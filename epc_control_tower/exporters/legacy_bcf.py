@@ -112,11 +112,11 @@ class LegacyBcfExporter:
         projection = projection or project_bundle(bundle)
         self._assert_legacy_scope(projection)
 
-        entries = self._root_entries()
+        entries = self.root_entries()
         for topic in projection.topics:
             entries[f"{topic.topic_guid}/"] = b""
-            entries[f"{topic.topic_guid}/markup.bcf"] = self._markup(topic, bundle.run.as_of)
-            entries[f"{topic.topic_guid}/{topic.viewpoint_filename}"] = self._viewpoint(
+            entries[f"{topic.topic_guid}/markup.bcf"] = self.markup(topic, bundle.run.as_of)
+            entries[f"{topic.topic_guid}/{topic.viewpoint_filename}"] = self.viewpoint(
                 topic
             )
 
@@ -162,7 +162,7 @@ class LegacyBcfExporter:
     # -- XML ---------------------------------------------------------------
 
     @staticmethod
-    def _root_entries() -> dict[str, bytes]:
+    def root_entries() -> dict[str, bytes]:
         version_root = ET.Element("Version", {"VersionId": BCF_VERSION})
 
         project_root = ET.Element("ProjectInfo")
@@ -189,7 +189,7 @@ class LegacyBcfExporter:
         }
 
     @staticmethod
-    def _markup(topic: LegacyTopic, as_of: str) -> bytes:
+    def markup(topic: LegacyTopic, as_of: str) -> bytes:
         root = ET.Element("Markup")
         header = ET.SubElement(root, "Header")
         files = ET.SubElement(header, "Files")
@@ -244,7 +244,7 @@ class LegacyBcfExporter:
         return xml_bytes(root)
 
     @staticmethod
-    def _viewpoint(topic: LegacyTopic) -> bytes:
+    def viewpoint(topic: LegacyTopic) -> bytes:
         root = ET.Element("VisualizationInfo", {"Guid": topic.viewpoint_guid})
         components = ET.SubElement(root, "Components")
         selection = ET.SubElement(components, "Selection")

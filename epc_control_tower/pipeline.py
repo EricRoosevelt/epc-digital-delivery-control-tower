@@ -24,7 +24,12 @@ from . import CONTRACT_VERSION
 from .bcf.schema import default_schema_dir
 from .config import ProjectManifest, RunConfig, load_project_manifests
 from .domain import RunBundle, RuleSet, ValidationRun
-from .exporters.legacy_manifest import build_legacy_manifest, write_legacy_manifest
+from .exporters.legacy_bcf import BCF_FILENAME
+from .exporters.legacy_manifest import (
+    build_legacy_manifest,
+    legacy_input_paths,
+    write_legacy_manifest,
+)
 from .exporters.legacy_projection import project_bundle
 from .identity import build_validation_run_id
 from .registry import Registry, default_registry
@@ -233,13 +238,18 @@ def execute(
     # both did.
     legacy_manifest_path: Path | None = None
     if {"legacy-bcf", "legacy-pbip"} <= set(enabled):
+        projection = project_bundle(result.bundle)
         manifest = build_legacy_manifest(
-            project_bundle(result.bundle),
+            projection,
             repository_root=config.repository_root,
-            processed_dir=roots["processed"],
-            reports_dir=roots["reports"],
-            raw_data_dir=result.manifests[0].raw_data_dir,
-            ruleset_path=config.resolved_ruleset_path(),
+            input_paths=legacy_input_paths(
+                projection,
+                processed_dir=roots["processed"],
+                raw_data_dir=result.manifests[0].raw_data_dir,
+                ruleset_path=config.resolved_ruleset_path(),
+            ),
+            sidecar_dir=roots["processed"],
+            bcf_path=roots["reports"] / "bcf" / BCF_FILENAME,
             schema_dir=default_schema_dir(config.repository_root),
         )
         legacy_manifest_path = write_legacy_manifest(manifest, roots["reports"])

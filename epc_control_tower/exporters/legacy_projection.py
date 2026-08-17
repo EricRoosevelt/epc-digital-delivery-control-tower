@@ -26,6 +26,7 @@ second copy is how the BCF sidecars and the BCF archive would come to disagree.
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from dataclasses import dataclass
 
 from ..bcf.geometry import Aabb, Camera, camera_for_aabb
@@ -63,6 +64,8 @@ __all__ = [
     "LegacyTopic",
     "issue_element_keys",
     "project_bundle",
+    "project_register",
+    "viewpoint_row",
 ]
 
 #: A published title is truncated rather than rejected: BCF constrains the
@@ -156,7 +159,7 @@ def _finding_row(
     )
 
 
-def _viewpoint_row(topic: LegacyTopic, run_id: str) -> LegacyViewpointRow:
+def viewpoint_row(topic: LegacyTopic, run_id: str) -> LegacyViewpointRow:
     axes = {}
     for prefix, values in (
         ("aabb_min", topic.aabb.minimum),
@@ -183,20 +186,18 @@ def _viewpoint_row(topic: LegacyTopic, run_id: str) -> LegacyViewpointRow:
     )
 
 
-def project_bundle(bundle: RunBundle) -> LegacyProjection:
-    """Project a canonical bundle onto the published contract."""
+def project_register(
+    models: Sequence[Model],
+    elements: Sequence[Element],
+) -> tuple[tuple[LegacyModelRow, ...], tuple[LegacyInventoryRow, ...]]:
+    """Project the model and element registers onto their published shape.
 
-    ids_version = bundle.ruleset.version
-    run_id = legacy_run_id(
-        ids_version=ids_version,
-        ids_sha256=bundle.run.ruleset_source_blob_sha256,
-        models=[
-            (model.model_id, model.provenance.content_sha256) for model in bundle.models
-        ],
-    )
+    Split out from :func:`project_bundle` because these two tables need only
+    ingest and inventory — no rules, no findings — and the legacy extraction
+    script rebuilds exactly them.
+    """
 
-    models_by_key = {model.model_key: model for model in bundle.models}
-    elements_by_key = {element.element_key: element for element in bundle.elements}
+    models_by_key = {model.model_key: model for model in models}
 
     model_rows = tuple(
         sorted(
@@ -211,7 +212,7 @@ def project_bundle(bundle: RunBundle) -> LegacyProjection:
                     source_url=model.provenance.source_url,
                     license=model.provenance.license,
                 )
-                for model in bundle.models
+                for model in models
             ),
             key=lambda row: row.model_id,
         )
@@ -231,11 +232,31 @@ def project_bundle(bundle: RunBundle) -> LegacyProjection:
                     storey=element.storey,
                     pset_count=element.pset_count,
                 )
-                for element in bundle.elements
+                for element in elements
             ),
             key=lambda row: (row.model_id, row.element_key),
         )
     )
+
+    return model_rows, inventory_rows
+
+
+def project_bundle(bundle: RunBundle) -> LegacyProjection:
+    """Project a canonical bundle onto the published contract."""
+
+    ids_version = bundle.ruleset.version
+    run_id = legacy_run_id(
+        ids_version=ids_version,
+        ids_sha256=bundle.run.ruleset_source_blob_sha256,
+        models=[
+            (model.model_id, model.provenance.content_sha256) for model in bundle.models
+        ],
+    )
+
+    models_by_key = {model.model_key: model for model in bundle.models}
+    elements_by_key = {element.element_key: element for element in bundle.elements}
+
+    model_rows, inventory_rows = project_register(bundle.models, bundle.elements)
 
     finding_rows = [
         _finding_row(
@@ -316,7 +337,7 @@ def project_bundle(bundle: RunBundle) -> LegacyProjection:
         for row in topic.findings
     )
 
-    viewpoint_rows = tuple(_viewpoint_row(topic, run_id) for topic in topics)
+    viewpoint_rows = tuple(viewpoint_row(topic, run_id) for topic in topics)
 
     component_rows = tuple(
         LegacyComponentRow(

@@ -147,7 +147,10 @@ class LegacyManifestTests(unittest.TestCase):
 
         from epc_control_tower.bcf.schema import default_schema_dir
         from epc_control_tower.exporters.legacy_bcf import LegacyBcfExporter
-        from epc_control_tower.exporters.legacy_manifest import build_legacy_manifest
+        from epc_control_tower.exporters.legacy_manifest import (
+            build_legacy_manifest,
+            legacy_input_paths,
+        )
 
         result = shipped_pipeline_result()
         projection = project_bundle(result.bundle)
@@ -163,10 +166,16 @@ class LegacyManifestTests(unittest.TestCase):
             manifest = build_legacy_manifest(
                 projection,
                 repository_root=PROJECT_ROOT,
-                processed_dir=processed,
-                reports_dir=reports,
-                raw_data_dir=PROJECT_ROOT / "data" / "raw",
-                ruleset_path=PROJECT_ROOT / "ids" / "epc_delivery_requirements_v0.1.ids",
+                input_paths=legacy_input_paths(
+                    projection,
+                    processed_dir=processed,
+                    raw_data_dir=PROJECT_ROOT / "data" / "raw",
+                    ruleset_path=PROJECT_ROOT
+                    / "ids"
+                    / "epc_delivery_requirements_v0.1.ids",
+                ),
+                sidecar_dir=processed,
+                bcf_path=reports / "bcf" / "ids_failures.bcf",
                 schema_dir=default_schema_dir(PROJECT_ROOT),
             )
 

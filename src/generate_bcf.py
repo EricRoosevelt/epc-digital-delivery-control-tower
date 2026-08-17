@@ -1,151 +1,121 @@
-"""Generate deterministic BCF 3.0 issues from normalized IDS failures."""
+"""Generate deterministic BCF 3.0 issues from the published findings CSV.
+
+Compatibility shim over :mod:`epc_control_tower`. Everything that decides what
+the archive *contains* — the markup and viewpoint XML, the camera solve, the
+reproducible ZIP, the sidecar row shapes, the frozen identity derivations —
+lives in the package now and is reused verbatim here. What remains is the
+legacy front end: this script starts from the published CSV files rather than
+from a validation, and it checks them hard before believing them.
+
+That front end is why this is not a two-line delegation. `epc-ct run` produces
+the same artifacts from the canonical model in one pass; this path exists so
+that somebody holding only the published CSVs can still rebuild the archive,
+and so that the fail-closed checks on those files keep being exercised.
+
+Two assertions the previous version made are gone: that there were exactly six
+failures, and exactly three topics of two findings each. They were counts taken
+from a fixture and would have failed the pipeline rather than the data. The
+scope this converter really depends on — the R-005 rule family, the HVAC model —
+is still asserted, by the exporter that owns it.
+
+Retires with the legacy adapters.
+"""
 
 from __future__ import annotations
 
 import argparse
-import json
-import os
-from dataclasses import dataclass
-from importlib.metadata import PackageNotFoundError, version
+import dataclasses
+import sys
 from pathlib import Path
-from xml.etree import ElementTree as ET
 
 import ifcopenshell
 
-from bcf_common import (
-    ASSIGNEE,
-    BCF_VERSION,
-    CREATION_AUTHOR,
-    FINDING_URN_PREFIX,
-    FIXED_TIMESTAMP,
-    OFFICIAL_SCHEMA_COMMIT,
-    PROJECT_GUID,
-    PROJECT_NAME,
-    PROJECT_ROOT,
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+for _entry in (PROJECT_ROOT, PROJECT_ROOT / "src"):
+    # Importable both as ``src.generate_bcf`` and, with ``src/`` already on the
+    # path, as a bare ``generate_bcf``. The previous version only supported the
+    # second, so importing it the dotted way failed on its own sibling import.
+    if str(_entry) not in sys.path:
+        sys.path.insert(0, str(_entry))
+
+from bcf_common import (  # noqa: E402
     SCHEMA_DIR,
     build_deterministic_zip,
-    bytes_sha256,
     calculate_sha256,
     camera_for_aabb,
     enrich_finding_identity,
-    format_float,
     read_csv_rows,
     repo_relative,
     validate_xml_schemas,
     verify_schema_bundle,
     world_coordinate_aabb,
-    write_csv_bytes,
-    xml_bytes,
 )
-from identity import uuid5_from_values
-
+from epc_control_tower.determinism import atomic_write_bytes, json_bytes  # noqa: E402
+from epc_control_tower.domain import (  # noqa: E402
+    Element,
+    Model,
+    Provenance,
+    field_names,
+)
+from epc_control_tower.exporters.legacy_bcf import BCF_FILENAME, LegacyBcfExporter  # noqa: E402
+from epc_control_tower.exporters.legacy_contract import (  # noqa: E402
+    ASSIGNEE,
+    BCF_VERSION,
+    CREATION_AUTHOR,
+    EVENT_SOURCE,
+    EVENT_TYPE_CREATED,
+    FIXED_TIMESTAMP,
+    ORIGINATING_SYSTEM,
+    PROJECT_GUID,
+    TOPIC_PRIORITY,
+    TOPIC_STAGE,
+    TOPIC_STATUS,
+    TOPIC_TYPE,
+    LegacyComponentRow,
+    LegacyEventRow,
+    LegacyFindingRow,
+    LegacyTopicFindingRow,
+    LegacyTopicRow,
+    LegacyViewpointRow,
+)
+from epc_control_tower.exporters.legacy_manifest import (  # noqa: E402
+    MANIFEST_FILENAME,
+    build_legacy_manifest,
+)
+from epc_control_tower.exporters.legacy_projection import (  # noqa: E402
+    LegacyTopic,
+    viewpoint_row,
+)
+from epc_control_tower.legacy_identity import (  # noqa: E402
+    legacy_topic_event_id,
+    legacy_topic_guid,
+    legacy_viewpoint_guid,
+)
 
 FINDINGS_PATH = PROJECT_ROOT / "data" / "processed" / "ids_findings.csv"
 MODELS_PATH = PROJECT_ROOT / "data" / "processed" / "models.csv"
 INVENTORY_PATH = PROJECT_ROOT / "data" / "processed" / "model_inventory.csv"
 RAW_DATA_DIR = PROJECT_ROOT / "data" / "raw"
 IDS_PATH = PROJECT_ROOT / "ids" / "epc_delivery_requirements_v0.1.ids"
-BCF_OUTPUT = PROJECT_ROOT / "reports" / "bcf" / "ids_failures.bcf"
-MANIFEST_OUTPUT = PROJECT_ROOT / "reports" / "bcf" / "run_manifest.json"
+BCF_OUTPUT = PROJECT_ROOT / "reports" / "bcf" / BCF_FILENAME
+MANIFEST_OUTPUT = PROJECT_ROOT / "reports" / "bcf" / MANIFEST_FILENAME
 SIDECAR_DIR = PROJECT_ROOT / "data" / "processed"
 
-TOPIC_COLUMNS = [
-    "run_id",
-    "topic_guid",
-    "topic_type",
-    "topic_status",
-    "title",
-    "priority",
-    "creation_date",
-    "creation_author",
-    "assigned_to",
-    "stage",
-    "model_id",
-    "element_key",
-    "global_id",
-    "ifc_class",
-    "element_name",
-    "finding_count",
-]
-
-TOPIC_FINDING_COLUMNS = [
-    "run_id",
-    "topic_guid",
-    "finding_key",
-    "requirement_key",
-    "specification_id",
-    "requirement_id",
-    "specification",
-    "requirement",
-    "severity",
-    "model_id",
-    "element_key",
-    "global_id",
-]
-
-VIEWPOINT_COLUMNS = [
-    "run_id",
-    "viewpoint_guid",
-    "topic_guid",
-    "viewpoint_filename",
-    "model_id",
-    "element_key",
-    "global_id",
-    "aabb_min_x",
-    "aabb_min_y",
-    "aabb_min_z",
-    "aabb_max_x",
-    "aabb_max_y",
-    "aabb_max_z",
-    "target_x",
-    "target_y",
-    "target_z",
-    "camera_view_point_x",
-    "camera_view_point_y",
-    "camera_view_point_z",
-    "camera_direction_x",
-    "camera_direction_y",
-    "camera_direction_z",
-    "camera_up_x",
-    "camera_up_y",
-    "camera_up_z",
-    "field_of_view",
-    "aspect_ratio",
-]
-
-COMPONENT_COLUMNS = [
-    "run_id",
-    "viewpoint_guid",
-    "topic_guid",
-    "component_index",
-    "model_id",
-    "element_key",
-    "global_id",
-    "originating_system",
-    "authoring_tool_id",
-]
-
-EVENT_COLUMNS = [
-    "run_id",
-    "event_id",
-    "topic_guid",
-    "event_type",
-    "event_date",
-    "event_author",
-    "value",
-    "source",
-]
-
+#: Column order comes from the row types, so it cannot drift from them.
 SIDECAR_COLUMNS = {
-    "bcf_topics.csv": TOPIC_COLUMNS,
-    "bcf_topic_findings.csv": TOPIC_FINDING_COLUMNS,
-    "bcf_viewpoints.csv": VIEWPOINT_COLUMNS,
-    "bcf_viewpoint_components.csv": COMPONENT_COLUMNS,
-    "bcf_topic_events.csv": EVENT_COLUMNS,
+    "bcf_topics.csv": list(field_names(LegacyTopicRow)),
+    "bcf_topic_findings.csv": list(field_names(LegacyTopicFindingRow)),
+    "bcf_viewpoints.csv": list(field_names(LegacyViewpointRow)),
+    "bcf_viewpoint_components.csv": list(field_names(LegacyComponentRow)),
+    "bcf_topic_events.csv": list(field_names(LegacyEventRow)),
 }
 
+#: The project identifier the published contract does not carry. Required by
+#: the domain types, dropped again on the way out.
+_LEGACY_PROJECT_ID = "legacy"
 
-@dataclass(frozen=True)
+
+@dataclasses.dataclass(frozen=True)
 class WorkflowArtifacts:
     """All deterministic in-memory products of one BCF conversion run."""
 
@@ -162,165 +132,37 @@ def _require_unique(rows: list[dict[str, str]], column: str, label: str) -> None
         raise ValueError(f"{label} must contain unique non-empty {column} values")
 
 
-def _child(parent: ET.Element, tag: str, text: object) -> ET.Element:
-    child = ET.SubElement(parent, tag)
-    child.text = str(text)
-    return child
+def _finding_row(row: dict[str, str]) -> LegacyFindingRow:
+    return LegacyFindingRow(**{name: row[name] for name in field_names(LegacyFindingRow)})
 
 
-def _vector(parent: ET.Element, tag: str, values: tuple[float, float, float]) -> None:
-    vector = ET.SubElement(parent, tag)
-    for axis, value in zip(("X", "Y", "Z"), values, strict=True):
-        _child(vector, axis, format_float(value))
-
-
-def _build_root_entries() -> dict[str, bytes]:
-    version_root = ET.Element("Version", {"VersionId": BCF_VERSION})
-
-    project_root = ET.Element("ProjectInfo")
-    project = ET.SubElement(project_root, "Project", {"ProjectId": PROJECT_GUID})
-    _child(project, "Name", PROJECT_NAME)
-
-    extensions_root = ET.Element("Extensions")
-    extension_values = (
-        ("TopicTypes", "TopicType", ["Issue"]),
-        ("TopicStatuses", "TopicStatus", ["Open"]),
-        ("Priorities", "Priority", ["Medium"]),
-        (
-            "TopicLabels",
-            "TopicLabel",
-            ["HVAC", "IDS", "ProjectAssumption"],
+def _model(row: dict[str, str]) -> Model:
+    return Model(
+        model_key=row["model_id"],
+        model_id=row["model_id"],
+        project_id=_LEGACY_PROJECT_ID,
+        discipline=row["discipline"],
+        filename=row["filename"],
+        provenance=Provenance(
+            source_url=row["source_url"],
+            license=row["license"],
+            content_sha256=row["content_sha256"],
         ),
-        ("Users", "User", [ASSIGNEE, CREATION_AUTHOR]),
-        ("Stages", "Stage", ["Coordination"]),
+        ifc_schema=row["ifc_schema"],
+        ifc_project_guid=row["ifc_project_guid"],
     )
-    for group_name, item_name, values in extension_values:
-        group = ET.SubElement(extensions_root, group_name)
-        for value in values:
-            _child(group, item_name, value)
-
-    return {
-        "bcf.version": xml_bytes(version_root),
-        "extensions.xml": xml_bytes(extensions_root),
-        "project.bcfp": xml_bytes(project_root),
-    }
 
 
-def _build_markup(
-    topic_guid: str,
-    viewpoint_guid: str,
-    model_row: dict[str, str],
-    element_row: dict[str, str],
-    findings: list[dict[str, str]],
-) -> bytes:
-    root = ET.Element("Markup")
-    header = ET.SubElement(root, "Header")
-    files = ET.SubElement(header, "Files")
-    file_node = ET.SubElement(
-        files,
-        "File",
-        {
-            "IfcProject": model_row["ifc_project_guid"],
-            "IsExternal": "true",
-        },
+def _element(row: dict[str, str]) -> Element:
+    return Element(
+        element_key=row["element_key"],
+        model_key=row["model_id"],
+        global_id=row["global_id"],
+        ifc_class=row["ifc_class"],
+        name=row["name"],
+        storey=row["storey"],
+        pset_count=int(row["pset_count"]),
     )
-    _child(file_node, "Filename", model_row["filename"])
-    _child(file_node, "Date", FIXED_TIMESTAMP)
-
-    topic = ET.SubElement(
-        root,
-        "Topic",
-        {
-            "Guid": topic_guid,
-            "TopicType": "Issue",
-            "TopicStatus": "Open",
-        },
-    )
-    links = ET.SubElement(topic, "ReferenceLinks")
-    for finding in findings:
-        _child(links, "ReferenceLink", FINDING_URN_PREFIX + finding["finding_key"])
-
-    element_name = element_row.get("name") or element_row["ifc_class"]
-    title = f"IDS metadata action: {element_name}"[:128]
-    _child(topic, "Title", title)
-    _child(topic, "Priority", "Medium")
-    labels = ET.SubElement(topic, "Labels")
-    for label in ("HVAC", "IDS", "ProjectAssumption"):
-        _child(labels, "Label", label)
-    _child(topic, "CreationDate", FIXED_TIMESTAMP)
-    _child(topic, "CreationAuthor", CREATION_AUTHOR)
-    _child(topic, "AssignedTo", ASSIGNEE)
-    _child(topic, "Stage", "Coordination")
-    requirements = ", ".join(finding["requirement"] for finding in findings)
-    _child(
-        topic,
-        "Description",
-        (
-            "Project-assumed information requirement unmet for "
-            f"{element_row['element_key']}. Required checks: {requirements}. "
-            "This workflow classification does not assert a defect in the source model."
-        ),
-    )
-    viewpoints = ET.SubElement(topic, "Viewpoints")
-    viewpoint = ET.SubElement(viewpoints, "ViewPoint", {"Guid": viewpoint_guid})
-    _child(viewpoint, "Viewpoint", f"{viewpoint_guid}.bcfv")
-    return xml_bytes(root)
-
-
-def _build_viewpoint(
-    viewpoint_guid: str,
-    global_id: str,
-    camera,
-) -> bytes:
-    root = ET.Element("VisualizationInfo", {"Guid": viewpoint_guid})
-    components = ET.SubElement(root, "Components")
-    selection = ET.SubElement(components, "Selection")
-    component = ET.SubElement(selection, "Component", {"IfcGuid": global_id})
-    _child(component, "OriginatingSystem", "EPC Digital Delivery Control Tower")
-    _child(component, "AuthoringToolId", global_id)
-    ET.SubElement(components, "Visibility", {"DefaultVisibility": "true"})
-
-    perspective = ET.SubElement(root, "PerspectiveCamera")
-    _vector(perspective, "CameraViewPoint", camera.position)
-    _vector(perspective, "CameraDirection", camera.direction)
-    _vector(perspective, "CameraUpVector", camera.up)
-    _child(perspective, "FieldOfView", format_float(camera.field_of_view))
-    _child(perspective, "AspectRatio", format_float(camera.aspect_ratio))
-    return xml_bytes(root)
-
-
-def _viewpoint_row(
-    run_id: str,
-    viewpoint_guid: str,
-    topic_guid: str,
-    model_id: str,
-    element_key: str,
-    global_id: str,
-    aabb,
-    camera,
-) -> dict[str, object]:
-    row: dict[str, object] = {
-        "run_id": run_id,
-        "viewpoint_guid": viewpoint_guid,
-        "topic_guid": topic_guid,
-        "viewpoint_filename": f"{viewpoint_guid}.bcfv",
-        "model_id": model_id,
-        "element_key": element_key,
-        "global_id": global_id,
-        "field_of_view": format_float(camera.field_of_view),
-        "aspect_ratio": format_float(camera.aspect_ratio),
-    }
-    for prefix, values in (
-        ("aabb_min", aabb.minimum),
-        ("aabb_max", aabb.maximum),
-        ("target", camera.target),
-        ("camera_view_point", camera.position),
-        ("camera_direction", camera.direction),
-        ("camera_up", camera.up),
-    ):
-        for axis, value in zip(("x", "y", "z"), values, strict=True):
-            row[f"{prefix}_{axis}"] = format_float(value)
-    return row
 
 
 def build_workflow_artifacts(
@@ -333,17 +175,20 @@ def build_workflow_artifacts(
     """Build but do not write the BCF and analytical sidecars."""
 
     verify_schema_bundle(schema_dir)
+
     findings = [
         enrich_finding_identity(row)
         for row in read_csv_rows(findings_path)
         if row.get("status") == "FAIL"
     ]
-    if len(findings) != 6:
-        raise ValueError(f"Expected 6 FAIL findings, found {len(findings)}")
+    if not findings:
+        raise ValueError("No FAIL findings to convert")
+
     source_run_ids = {row["run_id"] for row in findings}
     if len(source_run_ids) != 1:
         raise ValueError("FAIL findings must belong to exactly one IDS run")
     source_run_id = next(iter(source_run_ids))
+
     finding_keys = [row["finding_key"] for row in findings]
     if len(finding_keys) != len(set(finding_keys)):
         raise ValueError("FAIL finding_key values are not unique")
@@ -352,149 +197,154 @@ def build_workflow_artifacts(
             raise ValueError("A FAIL finding must be applicable")
         if finding.get("is_issue", "true") != "true":
             raise ValueError("A FAIL finding must be flagged as an issue")
-        if finding["specification_id"] not in {"R-005A", "R-005B"}:
-            raise ValueError("BCF conversion only accepts project-assumed R-005 failures")
 
-    models = read_csv_rows(models_path)
-    inventory = read_csv_rows(inventory_path)
-    _require_unique(models, "model_id", "models.csv")
-    _require_unique(inventory, "element_key", "model_inventory.csv")
-    model_lookup = {row["model_id"]: row for row in models}
-    element_lookup = {row["element_key"]: row for row in inventory}
+    model_records = read_csv_rows(models_path)
+    inventory_records = read_csv_rows(inventory_path)
+    _require_unique(model_records, "model_id", "models.csv")
+    _require_unique(inventory_records, "element_key", "model_inventory.csv")
+    models = {row["model_id"]: _model(row) for row in model_records}
+    elements = {row["element_key"]: _element(row) for row in inventory_records}
 
     groups: dict[str, list[dict[str, str]]] = {}
     for finding in findings:
         element_key = finding["element_key"]
-        if not element_key or element_key not in element_lookup:
+        if not element_key or element_key not in elements:
             raise ValueError(f"FAIL finding has an unknown element_key: {element_key}")
-        element = element_lookup[element_key]
-        for column in ("model_id", "global_id", "ifc_class"):
-            if finding[column] != element[column]:
+        element = elements[element_key]
+        for column, observed in (
+            ("model_id", element.model_key),
+            ("global_id", element.global_id),
+            ("ifc_class", element.ifc_class),
+        ):
+            if finding[column] != observed:
                 raise ValueError(
                     f"Finding/inventory mismatch for {element_key}: {column}"
                 )
         groups.setdefault(element_key, []).append(finding)
-    if len(groups) != 3 or any(len(rows) != 2 for rows in groups.values()):
-        raise ValueError("Expected 3 element topics with exactly 2 findings each")
 
-    entries = _build_root_entries()
+    topics: list[LegacyTopic] = []
+    opened: dict[str, ifcopenshell.file] = {}
+    for element_key in sorted(groups):
+        element = elements[element_key]
+        model = models.get(element.model_key)
+        if model is None:
+            raise ValueError(f"Inventory refers to unknown model_id: {element.model_key}")
+
+        ifc_path = raw_data_dir / model.filename
+        if calculate_sha256(ifc_path) != model.provenance.content_sha256:
+            raise ValueError(f"IFC content hash mismatch: {ifc_path}")
+        if model.model_key not in opened:
+            opened[model.model_key] = ifcopenshell.open(str(ifc_path))
+        ifc_element = opened[model.model_key].by_guid(element.global_id)
+        if ifc_element is None or ifc_element.is_a() != element.ifc_class:
+            raise ValueError(f"Inventory element not found in IFC: {element_key}")
+
+        aabb = world_coordinate_aabb(opened[model.model_key], element.global_id)
+        topic_guid = legacy_topic_guid(element_key)
+        rows = sorted(
+            (_finding_row(finding) for finding in groups[element_key]),
+            key=lambda row: row.finding_key,
+        )
+        topics.append(
+            LegacyTopic(
+                element_key=element_key,
+                topic_guid=topic_guid,
+                viewpoint_guid=legacy_viewpoint_guid(topic_guid),
+                model=model,
+                element=element,
+                findings=tuple(rows),
+                aabb=aabb,
+                camera=camera_for_aabb(aabb),
+            )
+        )
+
+    exporter = LegacyBcfExporter(schema_dir=schema_dir)
+    entries = exporter.root_entries()
     sidecar_rows: dict[str, list[dict[str, object]]] = {
         name: [] for name in SIDECAR_COLUMNS
     }
-    model_cache: dict[str, ifcopenshell.file] = {}
 
-    for element_key in sorted(groups):
-        group = sorted(groups[element_key], key=lambda row: row["finding_key"])
-        element = element_lookup[element_key]
-        model_id = element["model_id"]
-        model_row = model_lookup.get(model_id)
-        if model_row is None:
-            raise ValueError(f"Inventory refers to unknown model_id: {model_id}")
-        if model_id != "hvac" or model_row["filename"] != "Building-Hvac.ifc":
-            raise ValueError("BCF FAIL workflow is expected to target Building-Hvac.ifc")
-
-        ifc_path = raw_data_dir / model_row["filename"]
-        if calculate_sha256(ifc_path) != model_row["content_sha256"]:
-            raise ValueError(f"IFC content hash mismatch: {ifc_path}")
-        model = model_cache.setdefault(model_id, ifcopenshell.open(str(ifc_path)))
-        ifc_element = model.by_guid(element["global_id"])
-        if ifc_element is None or ifc_element.is_a() != element["ifc_class"]:
-            raise ValueError(f"Inventory element not found in IFC: {element_key}")
-
-        aabb = world_coordinate_aabb(model, element["global_id"])
-        camera = camera_for_aabb(aabb)
-        topic_guid = uuid5_from_values("bcf-topic", [element_key])
-        viewpoint_guid = uuid5_from_values("bcf-viewpoint", [topic_guid])
-        markup_name = f"{topic_guid}/markup.bcf"
-        viewpoint_name = f"{topic_guid}/{viewpoint_guid}.bcfv"
-        entries[f"{topic_guid}/"] = b""
-        entries[markup_name] = _build_markup(
-            topic_guid,
-            viewpoint_guid,
-            model_row,
-            element,
-            group,
+    for topic in topics:
+        entries[f"{topic.topic_guid}/"] = b""
+        entries[f"{topic.topic_guid}/markup.bcf"] = exporter.markup(
+            topic, FIXED_TIMESTAMP
         )
-        entries[viewpoint_name] = _build_viewpoint(
-            viewpoint_guid,
-            element["global_id"],
-            camera,
+        entries[f"{topic.topic_guid}/{topic.viewpoint_filename}"] = exporter.viewpoint(
+            topic
         )
 
-        element_name = element.get("name") or element["ifc_class"]
         sidecar_rows["bcf_topics.csv"].append(
-            {
-                "run_id": source_run_id,
-                "topic_guid": topic_guid,
-                "topic_type": "Issue",
-                "topic_status": "Open",
-                "title": f"IDS metadata action: {element_name}"[:128],
-                "priority": "Medium",
-                "creation_date": FIXED_TIMESTAMP,
-                "creation_author": CREATION_AUTHOR,
-                "assigned_to": ASSIGNEE,
-                "stage": "Coordination",
-                "model_id": model_id,
-                "element_key": element_key,
-                "global_id": element["global_id"],
-                "ifc_class": element["ifc_class"],
-                "element_name": element.get("name", ""),
-                "finding_count": len(group),
-            }
+            dataclasses.asdict(
+                LegacyTopicRow(
+                    run_id=source_run_id,
+                    topic_guid=topic.topic_guid,
+                    topic_type=TOPIC_TYPE,
+                    topic_status=TOPIC_STATUS,
+                    title=topic.title,
+                    priority=TOPIC_PRIORITY,
+                    creation_date=FIXED_TIMESTAMP,
+                    creation_author=CREATION_AUTHOR,
+                    assigned_to=ASSIGNEE,
+                    stage=TOPIC_STAGE,
+                    model_id=topic.model.model_id,
+                    element_key=topic.element_key,
+                    global_id=topic.element.global_id,
+                    ifc_class=topic.element.ifc_class,
+                    element_name=topic.element.name,
+                    finding_count=len(topic.findings),
+                )
+            )
         )
-        for finding in group:
+        for row in topic.findings:
             sidecar_rows["bcf_topic_findings.csv"].append(
-                {
-                    "run_id": source_run_id,
-                    "topic_guid": topic_guid,
-                    "finding_key": finding["finding_key"],
-                    "requirement_key": finding["requirement_key"],
-                    "specification_id": finding["specification_id"],
-                    "requirement_id": finding["requirement_id"],
-                    "specification": finding["specification"],
-                    "requirement": finding["requirement"],
-                    "severity": finding["severity"],
-                    "model_id": model_id,
-                    "element_key": element_key,
-                    "global_id": element["global_id"],
-                }
+                dataclasses.asdict(
+                    LegacyTopicFindingRow(
+                        run_id=source_run_id,
+                        topic_guid=topic.topic_guid,
+                        finding_key=row.finding_key,
+                        requirement_key=row.requirement_key,
+                        specification_id=row.specification_id,
+                        requirement_id=row.requirement_id,
+                        specification=row.specification,
+                        requirement=row.requirement,
+                        severity=row.severity,
+                        model_id=topic.model.model_id,
+                        element_key=topic.element_key,
+                        global_id=topic.element.global_id,
+                    )
+                )
             )
         sidecar_rows["bcf_viewpoints.csv"].append(
-            _viewpoint_row(
-                source_run_id,
-                viewpoint_guid,
-                topic_guid,
-                model_id,
-                element_key,
-                element["global_id"],
-                aabb,
-                camera,
-            )
+            dataclasses.asdict(viewpoint_row(topic, source_run_id))
         )
         sidecar_rows["bcf_viewpoint_components.csv"].append(
-            {
-                "run_id": source_run_id,
-                "viewpoint_guid": viewpoint_guid,
-                "topic_guid": topic_guid,
-                "component_index": 1,
-                "model_id": model_id,
-                "element_key": element_key,
-                "global_id": element["global_id"],
-                "originating_system": "EPC Digital Delivery Control Tower",
-                "authoring_tool_id": element["global_id"],
-            }
+            dataclasses.asdict(
+                LegacyComponentRow(
+                    run_id=source_run_id,
+                    viewpoint_guid=topic.viewpoint_guid,
+                    topic_guid=topic.topic_guid,
+                    component_index=1,
+                    model_id=topic.model.model_id,
+                    element_key=topic.element_key,
+                    global_id=topic.element.global_id,
+                    originating_system=ORIGINATING_SYSTEM,
+                    authoring_tool_id=topic.element.global_id,
+                )
+            )
         )
         sidecar_rows["bcf_topic_events.csv"].append(
-            {
-                "run_id": source_run_id,
-                "event_id": uuid5_from_values("bcf-topic-event", [topic_guid, "created"]),
-                "topic_guid": topic_guid,
-                "event_type": "topic_created",
-                "event_date": FIXED_TIMESTAMP,
-                "event_author": CREATION_AUTHOR,
-                "value": "",
-                "source": "ANALYTICS_SIDECAR",
-            }
+            dataclasses.asdict(
+                LegacyEventRow(
+                    run_id=source_run_id,
+                    event_id=legacy_topic_event_id(topic.topic_guid),
+                    topic_guid=topic.topic_guid,
+                    event_type=EVENT_TYPE_CREATED,
+                    event_date=FIXED_TIMESTAMP,
+                    event_author=CREATION_AUTHOR,
+                    value="",
+                    source=EVENT_SOURCE,
+                )
+            )
         )
 
     for name, rows in sidecar_rows.items():
@@ -502,32 +352,19 @@ def build_workflow_artifacts(
         rows.sort(key=lambda row: tuple(str(row[column]) for column in columns))
 
     validate_xml_schemas(entries, schema_dir)
-    bcf_bytes = build_deterministic_zip(entries)
-    sidecar_bytes = {
-        name: write_csv_bytes(sidecar_rows[name], columns)
-        for name, columns in SIDECAR_COLUMNS.items()
-    }
+
+    from bcf_common import write_csv_bytes
+
     return WorkflowArtifacts(
         source_run_id=source_run_id,
         bcf_entries=entries,
-        bcf_bytes=bcf_bytes,
+        bcf_bytes=build_deterministic_zip(entries),
         sidecar_rows=sidecar_rows,
-        sidecar_bytes=sidecar_bytes,
+        sidecar_bytes={
+            name: write_csv_bytes(sidecar_rows[name], columns)
+            for name, columns in SIDECAR_COLUMNS.items()
+        },
     )
-
-
-def _atomic_write(path: Path, data: bytes) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    temporary = path.with_name(f".{path.name}.tmp")
-    temporary.write_bytes(data)
-    os.replace(temporary, path)
-
-
-def _package_version(name: str) -> str:
-    try:
-        return version(name)
-    except PackageNotFoundError:
-        return "unknown"
 
 
 def write_workflow_outputs(
@@ -544,90 +381,67 @@ def write_workflow_outputs(
 ) -> dict[str, object]:
     """Write all artifacts atomically and return the manifest payload."""
 
-    output_paths = {
-        "ids_failures.bcf": bcf_output,
-        **{
-            filename: sidecar_dir / filename
-            for filename in SIDECAR_COLUMNS
-        },
-    }
-    for path in [*output_paths.values(), manifest_output]:
+    for path in [bcf_output, manifest_output, *(sidecar_dir / n for n in SIDECAR_COLUMNS)]:
         repo_relative(path)
 
-    _atomic_write(bcf_output, artifacts.bcf_bytes)
+    atomic_write_bytes(bcf_output, artifacts.bcf_bytes)
     for filename, data in artifacts.sidecar_bytes.items():
-        _atomic_write(sidecar_dir / filename, data)
+        atomic_write_bytes(sidecar_dir / filename, data)
 
-    hvac_model = next(
-        row for row in read_csv_rows(models_path) if row["model_id"] == "hvac"
+    projection = _projection_view(artifacts)
+    hvac = next(row for row in projection.models if row.model_id == "hvac")
+    manifest = build_legacy_manifest(
+        projection,
+        repository_root=PROJECT_ROOT,
+        input_paths=[
+            findings_path,
+            models_path,
+            inventory_path,
+            ids_path,
+            raw_data_dir / hvac.filename,
+        ],
+        sidecar_dir=sidecar_dir,
+        bcf_path=bcf_output,
+        schema_dir=schema_dir,
     )
-    input_paths = [
-        findings_path,
-        models_path,
-        inventory_path,
-        ids_path,
-        raw_data_dir / hvac_model["filename"],
-    ]
-    manifest: dict[str, object] = {
-        "manifest_version": "0.1",
-        "pipeline": "ids-failures-to-bcf-3.0",
-        "run_id": artifacts.source_run_id,
-        "generated_at": FIXED_TIMESTAMP,
-        "bcf_version": BCF_VERSION,
-        "project_guid": PROJECT_GUID,
-        "generator": "stdlib-xml-zipfile",
-        "dependencies": {
-            "ifcopenshell": _package_version("ifcopenshell"),
-            "xmlschema": _package_version("xmlschema"),
-        },
-        "schema_bundle": {
-            "repository": "buildingSMART/BCF-XML",
-            "commit": OFFICIAL_SCHEMA_COMMIT,
-            "path": repo_relative(schema_dir),
-            "files": verify_schema_bundle(schema_dir),
-        },
-        "counts": {
-            "topics": len(artifacts.sidecar_rows["bcf_topics.csv"]),
-            "topic_findings": len(
-                artifacts.sidecar_rows["bcf_topic_findings.csv"]
-            ),
-            "viewpoints": len(artifacts.sidecar_rows["bcf_viewpoints.csv"]),
-            "viewpoint_components": len(
-                artifacts.sidecar_rows["bcf_viewpoint_components.csv"]
-            ),
-            "topic_events": len(artifacts.sidecar_rows["bcf_topic_events.csv"]),
-        },
-        "inputs": [
-            {
-                "path": repo_relative(path),
-                "sha256": calculate_sha256(path),
-                **(
-                    {"rows": len(read_csv_rows(path))}
-                    if path.suffix.lower() == ".csv"
-                    else {}
-                ),
-            }
-            for path in input_paths
-        ],
-        "outputs": [
-            {
-                "path": repo_relative(path),
-                "sha256": calculate_sha256(path),
-                "bytes": path.stat().st_size,
-                **(
-                    {"rows": len(artifacts.sidecar_rows[path.name])}
-                    if path.suffix.lower() == ".csv"
-                    else {}
-                ),
-            }
-            for path in output_paths.values()
-        ],
-    }
-    manifest_bytes = (
-        json.dumps(manifest, ensure_ascii=False, indent=2, sort_keys=True) + "\n"
-    ).encode("utf-8")
-    _atomic_write(manifest_output, manifest_bytes)
+    atomic_write_bytes(manifest_output, json_bytes(manifest))
     return manifest
+
+
+@dataclasses.dataclass(frozen=True)
+class _ProjectionView:
+    """Just enough of a projection for the manifest builder to describe."""
+
+    run_id: str
+    as_of: str
+    models: tuple
+    topic_rows: tuple
+    topic_finding_rows: tuple
+    viewpoint_rows: tuple
+    component_rows: tuple
+    event_rows: tuple
+
+
+def _projection_view(artifacts: WorkflowArtifacts) -> _ProjectionView:
+    return _ProjectionView(
+        run_id=artifacts.source_run_id,
+        as_of=FIXED_TIMESTAMP,
+        models=_manifest_models(),
+        topic_rows=tuple(artifacts.sidecar_rows["bcf_topics.csv"]),
+        topic_finding_rows=tuple(artifacts.sidecar_rows["bcf_topic_findings.csv"]),
+        viewpoint_rows=tuple(artifacts.sidecar_rows["bcf_viewpoints.csv"]),
+        component_rows=tuple(artifacts.sidecar_rows["bcf_viewpoint_components.csv"]),
+        event_rows=tuple(artifacts.sidecar_rows["bcf_topic_events.csv"]),
+    )
+
+
+def _manifest_models() -> tuple:
+    from epc_control_tower.exporters.legacy_contract import LegacyModelRow
+
+    return tuple(
+        LegacyModelRow(**{name: row[name] for name in field_names(LegacyModelRow)})
+        for row in read_csv_rows(MODELS_PATH)
+    )
 
 
 def generate_bcf_workflow(

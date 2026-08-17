@@ -14,6 +14,7 @@ thing without knowing anything about IDS or BCF — is the only one left.
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from importlib.metadata import PackageNotFoundError, version
 from pathlib import Path
 
@@ -23,7 +24,12 @@ from .legacy_bcf import BCF_FILENAME
 from .legacy_contract import BCF_VERSION, PROJECT_GUID
 from .legacy_projection import LegacyProjection
 
-__all__ = ["MANIFEST_FILENAME", "build_legacy_manifest", "write_legacy_manifest"]
+__all__ = [
+    "MANIFEST_FILENAME",
+    "build_legacy_manifest",
+    "legacy_input_paths",
+    "write_legacy_manifest",
+]
 
 MANIFEST_FILENAME = "run_manifest.json"
 
@@ -64,30 +70,44 @@ def _relative(path: Path, repository_root: Path) -> str:
         raise ValueError(f"Output must stay inside the repository: {path}") from error
 
 
-def build_legacy_manifest(
+def legacy_input_paths(
     projection: LegacyProjection,
     *,
-    repository_root: Path,
     processed_dir: Path,
-    reports_dir: Path,
     raw_data_dir: Path,
     ruleset_path: Path,
-    schema_dir: Path,
-) -> dict[str, object]:
-    """Describe one legacy run: what it read, what it wrote, and under what."""
+) -> list[Path]:
+    """The published input list, in its published order."""
 
-    bcf_path = reports_dir / "bcf" / BCF_FILENAME
     subject_model = next(
         (row for row in projection.models if row.model_id == "hvac"),
         projection.models[0],
     )
-
-    input_paths = [
+    return [
         *(processed_dir / name for name in _INPUT_TABLES),
         ruleset_path,
         raw_data_dir / subject_model.filename,
     ]
-    output_paths = [bcf_path, *(processed_dir / name for name in _OUTPUT_TABLES)]
+
+
+def build_legacy_manifest(
+    projection: LegacyProjection,
+    *,
+    repository_root: Path,
+    input_paths: Sequence[Path],
+    sidecar_dir: Path,
+    bcf_path: Path,
+    schema_dir: Path,
+) -> dict[str, object]:
+    """Describe one legacy run: what it read, what it wrote, and under what.
+
+    Inputs and outputs are given separately rather than derived from one
+    directory, because they genuinely can live apart: a caller may rebuild the
+    archive from the published files while writing the result somewhere else,
+    and a manifest that claimed otherwise would name files it had not touched.
+    """
+
+    output_paths = [bcf_path, *(sidecar_dir / name for name in _OUTPUT_TABLES)]
 
     return {
         "manifest_version": "0.1",
