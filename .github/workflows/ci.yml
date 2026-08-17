@@ -1,8 +1,18 @@
 name: CI
 
 on:
+  # Feature branches too, not only main. The branch prefixes are the ones
+  # AGENTS.md already prescribes. Running the pipeline solely on main would
+  # mean a cross-platform determinism failure is discovered at merge time, by
+  # which point the work is finished and the diagnosis is expensive — which is
+  # the same shape of mistake as never running the pipeline in CI at all.
   push:
-    branches: [main]
+    branches:
+      - main
+      - "feat/**"
+      - "fix/**"
+      - "docs/**"
+      - "chore/**"
   pull_request:
     branches: [main]
 
