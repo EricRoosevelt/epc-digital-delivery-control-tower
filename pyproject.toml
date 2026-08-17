@@ -1,0 +1,55 @@
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "epc-digital-delivery-control-tower"
+version = "1.0.0"
+description = "Turn IFC model data and project-authored information requirements into traceable digital-delivery findings"
+readme = "README.md"
+license = "MIT"
+license-files = ["LICENSE"]
+requires-python = ">=3.11"
+authors = [{ name = "Eric" }]
+keywords = ["ifc", "openbim", "ids", "bcf", "buildingsmart", "epc"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Programming Language :: Python :: 3",
+    "Topic :: Scientific/Engineering",
+]
+
+# Kept byte-for-byte in step with requirements.txt. `python -m pip check`
+# is a CI gate, so the two must never drift.
+dependencies = [
+    "ifcopenshell==0.8.5",
+    "ifctester==0.8.5",
+    "pandas==3.0.5",
+    "xmlschema==4.3.2",
+]
+
+[project.optional-dependencies]
+dev = ["pytest==9.1.1"]
+
+[project.scripts]
+epc-ct = "epc_control_tower.cli:main"
+
+[tool.setuptools]
+# Explicit: `src/` holds the legacy shim scripts and must not be packaged,
+# and `tests/` is not a package at all.
+packages = [
+    "epc_control_tower",
+    "epc_control_tower.bcf",
+    "epc_control_tower.checkers",
+    "epc_control_tower.exporters",
+    "epc_control_tower.grouping",
+    "epc_control_tower.stages",
+]
+
+[tool.pytest.ini_options]
+# The existing suite imports `from src.validate_pbip import ...` with no
+# conftest.py and no src/__init__.py, so the repository root must be on
+# sys.path. `python -m pytest` did this implicitly; state it explicitly now
+# that a rootdir config file exists.
+pythonpath = ["."]
+testpaths = ["tests"]

@@ -1,0 +1,179 @@
+"""Explicit registration of checkers, grouping policies, and exporters.
+
+Registration is in-tree and by hand. That is a deliberate stopping point: a
+dynamic entry-point mechanism is a promise to third-party packages about names,
+versions, and compatibility, and making that promise before anything outside
+this repository depends on it would fix the wrong details. A fork adds its
+implementation to :func:`default_registry` and moves on; when external plugins
+actually exist, this is the one module that has to change.
+
+Routing happens here too. Each :class:`~.domain.Requirement` names the checker
+that evaluates it, and unknown or unsuitable names are rejected while planning
+rather than part-way through a run.
+"""
+
+from __future__ import annotations
+
+from collections.abc import Iterable, Sequence
+from dataclasses import dataclass, field
+
+from .domain import ComponentFingerprint, Model, Requirement
+from .protocols import Checker, Exporter, GroupingPolicy
+
+__all__ = ["Registry", "default_registry"]
+
+
+@dataclass
+class Registry:
+    checkers: dict[str, Checker] = field(default_factory=dict)
+    grouping_policies: dict[str, GroupingPolicy] = field(default_factory=dict)
+    exporters: dict[str, Exporter] = field(default_factory=dict)
+
+    # -- registration ------------------------------------------------------
+
+    def register_checker(self, checker: Checker) -> None:
+        if checker.id in self.checkers:
+            raise ValueError(f"Checker already registered: {checker.id}")
+        self.checkers[checker.id] = checker
+
+    def register_grouping_policy(self, policy: GroupingPolicy) -> None:
+        if policy.id in self.grouping_policies:
+            raise ValueError(f"Grouping policy already registered: {policy.id}")
+        self.grouping_policies[policy.id] = policy
+
+    def register_exporter(self, exporter: Exporter) -> None:
+        if exporter.id in self.exporters:
+            raise ValueError(f"Exporter already registered: {exporter.id}")
+        self.exporters[exporter.id] = exporter
+
+    # -- lookup ------------------------------------------------------------
+
+    def checker(self, checker_id: str) -> Checker:
+        try:
+            return self.checkers[checker_id]
+        except KeyError:
+            raise KeyError(
+                f"Unknown checker {checker_id!r}; registered: {sorted(self.checkers)}"
+            ) from None
+
+    def grouping_policy(self, policy_id: str) -> GroupingPolicy:
+        try:
+            return self.grouping_policies[policy_id]
+        except KeyError:
+            raise KeyError(
+                f"Unknown grouping policy {policy_id!r}; "
+                f"registered: {sorted(self.grouping_policies)}"
+            ) from None
+
+    def exporter(self, exporter_id: str) -> Exporter:
+        try:
+            return self.exporters[exporter_id]
+        except KeyError:
+            raise KeyError(
+                f"Unknown exporter {exporter_id!r}; registered: {sorted(self.exporters)}"
+            ) from None
+
+    # -- routing -----------------------------------------------------------
+
+    def route(
+        self,
+        requirements: Sequence[Requirement],
+    ) -> dict[str, tuple[Requirement, ...]]:
+        """Group requirements by the checker that will evaluate them.
+
+        Raises on an unregistered checker id, so a typo in a rule definition is
+        caught before any model is opened.
+        """
+
+        routed: dict[str, list[Requirement]] = {}
+        for requirement in requirements:
+            self.checker(requirement.checker)
+            routed.setdefault(requirement.checker, []).append(requirement)
+        return {
+            checker_id: tuple(items) for checker_id, items in sorted(routed.items())
+        }
+
+    def validate_plan(
+        self,
+        routed: dict[str, tuple[Requirement, ...]],
+        models: Iterable[Model],
+    ) -> None:
+        """Reject a plan its checkers cannot actually carry out.
+
+        Both checks run before any model is opened, so a rule routed to the
+        wrong checker — or a checker that does not speak the schema in front of
+        it — fails with a clear message rather than an obscure one from deep
+        inside a validation.
+
+        A checker that declares no capability of a given kind is treated as
+        making no claim, and is not second-guessed.
+        """
+
+        schemas = sorted({model.ifc_schema for model in models})
+        for checker_id, requirements in routed.items():
+            capabilities = self.checker(checker_id).capabilities
+
+            if capabilities.ifc_schemas:
+                unsupported = [
+                    schema for schema in schemas if schema not in capabilities.ifc_schemas
+                ]
+                if unsupported:
+                    raise ValueError(
+                        f"Checker {checker_id!r} does not support IFC schema(s) "
+                        f"{unsupported}; it supports {list(capabilities.ifc_schemas)}"
+                    )
+
+            if capabilities.facets:
+                for requirement in requirements:
+                    unsupported = [
+                        facet
+                        for facet in requirement.facet_kinds
+                        if facet not in capabilities.facets
+                    ]
+                    if unsupported:
+                        raise ValueError(
+                            f"Requirement {requirement.rule_id!r} needs facet(s) "
+                            f"{unsupported}, which checker {checker_id!r} does not "
+                            f"evaluate; it handles {list(capabilities.facets)}"
+                        )
+
+    def fingerprints(self, checker_ids: Iterable[str]) -> tuple[ComponentFingerprint, ...]:
+        """Fingerprint the given checkers for the validation identity."""
+
+        return tuple(
+            ComponentFingerprint(
+                component_id=checker.id,
+                version=checker.version,
+                config_sha256=checker.config_sha256(),
+            )
+            for checker in (self.checker(checker_id) for checker_id in sorted(checker_ids))
+        )
+
+    def exporter_fingerprints(
+        self, exporter_ids: Iterable[str]
+    ) -> tuple[ComponentFingerprint, ...]:
+        """Fingerprint the given exporters for the artifact bundle identity."""
+
+        return tuple(
+            ComponentFingerprint(
+                component_id=exporter.id,
+                version=exporter.version,
+                config_sha256=exporter.config_sha256(),
+            )
+            for exporter in (
+                self.exporter(exporter_id) for exporter_id in sorted(exporter_ids)
+            )
+        )
+
+
+def default_registry() -> Registry:
+    """Build a registry with everything this package ships.
+
+    Imports are local to keep module import order simple: implementations
+    import the protocols, and the registry imports the implementations.
+
+    This is the one place a fork adds its own checker, policy, or exporter.
+    """
+
+    registry = Registry()
+    return registry
