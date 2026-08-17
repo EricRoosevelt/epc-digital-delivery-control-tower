@@ -203,14 +203,17 @@ def execute(
     *,
     exporter_ids: Sequence[str] | None = None,
     registry: Registry | None = None,
-    reports_dir: Path | None = None,
 ) -> RunResult:
-    """Validate, group, and write — the whole thing, in order."""
+    """Validate, group, and write — the whole thing, in order.
 
-    result = build_bundle(config, registry=registry, reports_dir=reports_dir)
+    Where everything lands comes from the configuration and nowhere else. A
+    parameter that could redirect one output but not another would make it
+    possible to produce a half-redirected run, and a manifest describing it as
+    if it were whole.
+    """
+
+    result = build_bundle(config, registry=registry)
     roots = output_roots(config)
-    if reports_dir is not None:
-        roots["reports"] = reports_dir
 
     enabled = tuple(exporter_ids) if exporter_ids is not None else config.exporters
     exported = export(

@@ -128,11 +128,7 @@ def _command_run(arguments: argparse.Namespace) -> int:
 
     root = _repository_root(arguments.repository_root)
     config = load_run_config(root, arguments.config)
-    result = execute(
-        config,
-        exporter_ids=_selected_exporters(arguments, config),
-        reports_dir=arguments.reports_dir,
-    )
+    result = execute(config, exporter_ids=_selected_exporters(arguments, config))
     _report_run(result)
     return 0
 
@@ -155,6 +151,87 @@ def _command_export(arguments: argparse.Namespace) -> int:
         )
         return 2
     return _command_run(arguments)
+
+
+def _current_snapshot(config):
+    from .exporters.legacy_projection import project_bundle
+    from .pipeline import execute
+    from .snapshots import build_snapshot
+
+    result = execute(config)
+    artifacts = {}
+    for artifact in result.export.artifacts:
+        relative = artifact.path.resolve().relative_to(config.repository_root.resolve())
+        artifacts[relative.as_posix()] = artifact.sha256
+
+    return result, build_snapshot(
+        result.pipeline.bundle,
+        legacy_run_id=project_bundle(result.pipeline.bundle).run_id,
+        artifact_bundle_id=result.export.artifact_bundle_id,
+        artifacts=artifacts,
+    )
+
+
+def _command_snapshot(arguments: argparse.Namespace) -> int:
+    """Verify — or, with ceremony, refresh — the characterization snapshot."""
+
+    from .snapshots import (
+        changelog_mentions,
+        compare_snapshots,
+        load_snapshot,
+        snapshot_path,
+        write_snapshot,
+    )
+
+    root = _repository_root(arguments.repository_root)
+    config = load_run_config(root, arguments.config)
+    _result, current = _current_snapshot(config)
+    path = snapshot_path(root, str(current["contract_version"]))
+
+    if arguments.refresh:
+        if not arguments.contract_changed:
+            print(
+                "error: refreshing a snapshot means the published contract moved.\n"
+                "       Pass --contract-changed to say so.",
+                file=sys.stderr,
+            )
+            return 2
+        if not changelog_mentions(root, str(current["contract_version"])):
+            print(
+                f"error: {CHANGELOG_HINT} must describe contract "
+                f"{current['contract_version']} before its snapshot is refreshed.",
+                file=sys.stderr,
+            )
+            return 2
+        write_snapshot(path, current)
+        print(f"refreshed {path}")
+        return 0
+
+    try:
+        recorded = load_snapshot(path)
+    except FileNotFoundError as exc:
+        print(f"error: {exc}", file=sys.stderr)
+        return 1
+
+    differences = compare_snapshots(recorded, current)
+    if differences:
+        print(
+            f"The published contract no longer matches {path.name}:", file=sys.stderr
+        )
+        for difference in differences:
+            print(f"  - {difference}", file=sys.stderr)
+        print(
+            "\nIf this change is intended, record it in the CHANGELOG and run\n"
+            "  epc-ct snapshot --refresh --contract-changed",
+            file=sys.stderr,
+        )
+        return 1
+
+    print(f"{path.name} matches: {len(current['artifacts'])} artifact(s) unchanged")
+    return 0
+
+
+CHANGELOG_HINT = "CHANGELOG.md"
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -213,7 +290,6 @@ def build_parser() -> argparse.ArgumentParser:
         metavar="EXPORTER",
         help="Exporter id to run; repeat for several. Defaults to the configured set.",
     )
-    run.add_argument("--reports-dir", type=Path, default=None)
     run.set_defaults(handler=_command_run)
 
     export = subparsers.add_parser(
@@ -226,8 +302,28 @@ def build_parser() -> argparse.ArgumentParser:
         metavar="EXPORTER",
         help="Exporter id to run; repeat for several. Defaults to the configured set.",
     )
-    export.add_argument("--reports-dir", type=Path, default=None)
     export.set_defaults(handler=_command_export)
+
+    snapshot = subparsers.add_parser(
+        "snapshot",
+        help="Check the published contract against its recorded snapshot.",
+        description=(
+            "Verifies that a run still publishes what the recorded snapshot "
+            "says. Refreshing one is a deliberate act: it means the contract "
+            "moved, and the CHANGELOG has to say so first."
+        ),
+    )
+    snapshot.add_argument(
+        "--refresh",
+        action="store_true",
+        help="Rewrite the snapshot from the current run.",
+    )
+    snapshot.add_argument(
+        "--contract-changed",
+        action="store_true",
+        help="Acknowledge that the published contract genuinely moved.",
+    )
+    snapshot.set_defaults(handler=_command_snapshot)
 
     return parser
 

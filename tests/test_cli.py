@@ -39,7 +39,15 @@ class AdvertisedCommandsTests(unittest.TestCase):
         )
         self.assertEqual(
             sorted(subparsers.choices),
-            ["check", "components", "export", "projects", "run", "version"],
+            [
+                "check",
+                "components",
+                "export",
+                "projects",
+                "run",
+                "snapshot",
+                "version",
+            ],
         )
         for name, subparser in subparsers.choices.items():
             with self.subTest(command=name):
