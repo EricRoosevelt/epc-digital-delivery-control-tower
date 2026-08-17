@@ -27,6 +27,7 @@ from .identity import build_validation_run_id
 from .registry import Registry, default_registry
 from .rules import load_ruleset
 from .stages.check import check
+from .stages.geometry import compute_geometry
 from .stages.group import group
 from .stages.ingest import IngestResult, ingest
 from .stages.inventory import inventory
@@ -119,6 +120,15 @@ def build_bundle(
         as_of=config.as_of,
     )
 
+    # Only for elements an issue points at. Tessellating every element to
+    # produce a bounding box nobody asks for would be the expensive half of
+    # the run, spent on nothing.
+    geometry = compute_geometry(
+        [issue.element_key for issue in grouped.issues],
+        elements=elements,
+        model_paths=paths,
+    )
+
     run = ValidationRun(
         validation_run_id=validation_run_id,
         ruleset_id=ruleset.ruleset_id,
@@ -140,6 +150,7 @@ def build_bundle(
         findings=checked.findings,
         issues=grouped.issues,
         issue_events=grouped.events,
+        geometry=geometry,
     )
 
     if verify:

@@ -74,6 +74,7 @@ def validate_bundle(bundle: RunBundle, *, recompute_identity: bool = True) -> No
         ("finding_key", [f.finding_key for f in bundle.findings]),
         ("issue_key", [i.issue_key for i in bundle.issues]),
         ("event_key", [e.event_key for e in bundle.issue_events]),
+        ("geometry element_key", [g.element_key for g in bundle.geometry]),
     ):
         repeated = _duplicates(values)
         if repeated:
@@ -154,6 +155,15 @@ def validate_bundle(bundle: RunBundle, *, recompute_identity: bool = True) -> No
         if event.issue_key not in issue_keys:
             violations.append(
                 f"event {event.event_key}: orphaned, no issue {event.issue_key!r}"
+            )
+
+    # Geometry is sparse by design, so its absence says nothing. Geometry for
+    # an element the bundle does not contain, on the other hand, means a camera
+    # was placed by looking somewhere the register never went.
+    for geometry in bundle.geometry:
+        if geometry.element_key not in element_keys:
+            violations.append(
+                f"geometry: unknown element_key {geometry.element_key!r}"
             )
 
     # -- lifecycle state is derived, not asserted --------------------------

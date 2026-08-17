@@ -147,6 +147,7 @@ class CsvExporter:
 
     id = "csv"
     version = "1.0.0"
+    output_root_key = "processed"
 
     def config_sha256(self) -> str:
         return ""
@@ -197,6 +198,7 @@ class JsonExporter:
 
     id = "json"
     version = "1.0.0"
+    output_root_key = "processed"
 
     def config_sha256(self) -> str:
         return ""

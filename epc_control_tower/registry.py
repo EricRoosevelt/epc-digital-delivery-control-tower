@@ -181,8 +181,10 @@ def default_registry(config: RunConfig) -> Registry:
     This is the one place a fork adds its own checker, policy, or exporter.
     """
 
+    from .bcf.schema import default_schema_dir
     from .checkers.ids_checker import IdsChecker
     from .exporters.canonical import CsvExporter, JsonExporter
+    from .exporters.legacy_bcf import LegacyBcfExporter
     from .grouping.element import ElementGroupingPolicy
 
     registry = Registry()
@@ -190,4 +192,7 @@ def default_registry(config: RunConfig) -> Registry:
     registry.register_grouping_policy(ElementGroupingPolicy())
     registry.register_exporter(CsvExporter())
     registry.register_exporter(JsonExporter())
+    registry.register_exporter(
+        LegacyBcfExporter(schema_dir=default_schema_dir(config.repository_root))
+    )
     return registry

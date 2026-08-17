@@ -33,6 +33,7 @@ __all__ = [
     "ELEMENT_KEY_SEPARATOR",
     "ComponentFingerprint",
     "Element",
+    "ElementGeometry",
     "Execution",
     "Finding",
     "FindingStatus",
@@ -265,6 +266,39 @@ class Element:
         _require_text(self.ifc_class, "ifc_class")
         if self.pset_count < 0:
             raise ValueError(f"pset_count must not be negative: {self.pset_count}")
+
+
+@dataclass(frozen=True, slots=True)
+class ElementGeometry:
+    """Where an element is, as a world-coordinate bounding box in metres.
+
+    A separate entity rather than fields on :class:`Element` because it is
+    expensive to obtain — it means tessellating the element — and because most
+    of what this system does never needs it. Keeping it separate lets a run
+    compute geometry only for the elements something is going to point a
+    viewpoint at.
+
+    It is in the domain at all because an exporter that needed to reopen an IFC
+    file to place a camera would be reaching around the bundle boundary, and
+    the boundary is what makes exports reproducible.
+    """
+
+    element_key: str
+    aabb_min: tuple[float, float, float]
+    aabb_max: tuple[float, float, float]
+
+    def __post_init__(self) -> None:
+        _require_text(self.element_key, "element_key")
+        if len(self.aabb_min) != 3 or len(self.aabb_max) != 3:
+            raise ValueError(f"{self.element_key}: an AABB needs three axes")
+        for axis, (lower, upper) in enumerate(
+            zip(self.aabb_min, self.aabb_max, strict=True)
+        ):
+            if upper < lower:
+                raise ValueError(
+                    f"{self.element_key}: AABB axis {axis} is inverted "
+                    f"({lower} > {upper})"
+                )
 
 
 # ---------------------------------------------------------------------------
@@ -697,6 +731,10 @@ class RunBundle:
     findings: tuple[Finding, ...] = ()
     issues: tuple[Issue, ...] = ()
     issue_events: tuple[IssueEvent, ...] = ()
+    #: Bounding boxes, for the elements a run actually needed them for. Sparse
+    #: by design: geometry costs a tessellation each, and most elements never
+    #: get pointed at.
+    geometry: tuple[ElementGeometry, ...] = ()
 
     def project_by_id(self, project_id: str) -> Project:
         for project in self.projects:
@@ -718,3 +756,9 @@ class RunBundle:
 
     def events_for(self, issue_key: str) -> tuple[IssueEvent, ...]:
         return tuple(event for event in self.issue_events if event.issue_key == issue_key)
+
+    def geometry_for(self, element_key: str) -> ElementGeometry:
+        for geometry in self.geometry:
+            if geometry.element_key == element_key:
+                return geometry
+        raise KeyError(f"No geometry was computed for element: {element_key}")

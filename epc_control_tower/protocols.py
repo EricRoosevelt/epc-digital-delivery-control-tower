@@ -45,6 +45,7 @@ from .domain import (
 )
 
 __all__ = [
+    "OUTPUT_ROOT_KEYS",
     "Artifact",
     "CheckContext",
     "CheckOutcome",
@@ -169,6 +170,13 @@ class GroupingPolicy(Protocol):
     ) -> tuple[tuple[Issue, ...], tuple[IssueEvent, ...]]: ...
 
 
+#: Where a run puts its outputs. Two kinds, because the published contract has
+#: always had two: tabular data a dashboard reads, and reports a person opens.
+#: An exporter declares which it writes and the stage resolves the actual
+#: directory from configuration, so no exporter contains a path of its own.
+OUTPUT_ROOT_KEYS = ("processed", "reports")
+
+
 class Exporter(Protocol):
     """Writes a run's results somewhere.
 
@@ -179,6 +187,8 @@ class Exporter(Protocol):
 
     id: str
     version: str
+    #: Which of :data:`OUTPUT_ROOT_KEYS` this exporter writes under.
+    output_root_key: str
 
     def config_sha256(self) -> str: ...
 

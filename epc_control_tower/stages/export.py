@@ -14,7 +14,7 @@ where that becomes visible.
 
 from __future__ import annotations
 
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -55,11 +55,17 @@ def export(
     *,
     registry: Registry,
     exporter_ids: Sequence[str],
-    output_root: Path,
+    output_roots: Mapping[str, Path],
     repository_root: Path,
     manifest_dir: Path | None = None,
 ) -> ExportResult:
-    """Run each named exporter and record what the whole set produced."""
+    """Run each named exporter and record what the whole set produced.
+
+    ``output_roots`` maps each of :data:`~..protocols.OUTPUT_ROOT_KEYS` to a
+    directory. Exporters declare which kind of output they write and never
+    carry a path of their own, so where things land stays a configuration
+    decision rather than a constant buried in an exporter.
+    """
 
     ordered = sorted(set(exporter_ids))
     if not ordered:
@@ -75,7 +81,15 @@ def export(
     artifacts: list[Artifact] = []
     for exporter_id in ordered:
         exporter = registry.exporter(exporter_id)
-        artifacts.extend(exporter.export(bundle, output_root))
+        key = getattr(exporter, "output_root_key", "processed")
+        try:
+            root = output_roots[key]
+        except KeyError:
+            raise KeyError(
+                f"Exporter {exporter_id!r} writes {key!r} output, but no such "
+                f"root was configured; got {sorted(output_roots)}"
+            ) from None
+        artifacts.extend(exporter.export(bundle, root))
 
     artifacts.sort(key=lambda artifact: _relative(artifact.path, repository_root))
 

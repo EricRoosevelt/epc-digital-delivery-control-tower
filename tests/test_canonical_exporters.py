@@ -194,7 +194,7 @@ class ExportStageTests(unittest.TestCase):
                 self.result.bundle,
                 registry=self.result.registry,
                 exporter_ids=["csv", "json"],
-                output_root=scratch,
+                output_roots={"processed": scratch, "reports": scratch},
                 repository_root=PROJECT_ROOT,
                 manifest_dir=scratch,
             )
@@ -202,7 +202,7 @@ class ExportStageTests(unittest.TestCase):
                 self.result.bundle,
                 registry=self.result.registry,
                 exporter_ids=["csv"],
-                output_root=scratch,
+                output_roots={"processed": scratch, "reports": scratch},
                 repository_root=PROJECT_ROOT,
             )
 
@@ -222,7 +222,7 @@ class ExportStageTests(unittest.TestCase):
                     self.result.bundle,
                     registry=self.result.registry,
                     exporter_ids=["csv", "json"],
-                    output_root=scratch,
+                    output_roots={"processed": scratch, "reports": scratch},
                     repository_root=PROJECT_ROOT,
                     manifest_dir=scratch,
                 )
@@ -241,7 +241,7 @@ class ExportStageTests(unittest.TestCase):
                 self.result.bundle,
                 registry=self.result.registry,
                 exporter_ids=["csv", "json"],
-                output_root=scratch,
+                output_roots={"processed": scratch, "reports": scratch},
                 repository_root=PROJECT_ROOT,
                 manifest_dir=scratch,
             )
@@ -260,7 +260,7 @@ class ExportStageTests(unittest.TestCase):
                 self.result.bundle,
                 registry=self.result.registry,
                 exporter_ids=[],
-                output_root=PROJECT_ROOT,
+                output_roots={"processed": PROJECT_ROOT, "reports": PROJECT_ROOT},
                 repository_root=PROJECT_ROOT,
             )
 
@@ -273,7 +273,7 @@ class ExportStageTests(unittest.TestCase):
                     self.result.bundle,
                     registry=self.result.registry,
                     exporter_ids=["json"],
-                    output_root=outside,
+                    output_roots={"processed": outside, "reports": outside},
                     repository_root=PROJECT_ROOT,
                 )
         finally:
