@@ -182,9 +182,12 @@ def default_registry(config: RunConfig) -> Registry:
     """
 
     from .checkers.ids_checker import IdsChecker
+    from .exporters.canonical import CsvExporter, JsonExporter
     from .grouping.element import ElementGroupingPolicy
 
     registry = Registry()
     registry.register_checker(IdsChecker(config.resolved_ruleset_path()))
     registry.register_grouping_policy(ElementGroupingPolicy())
+    registry.register_exporter(CsvExporter())
+    registry.register_exporter(JsonExporter())
     return registry
