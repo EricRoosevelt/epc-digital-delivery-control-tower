@@ -11,7 +11,21 @@ permissions:
 
 jobs:
   validate:
-    runs-on: ubuntu-latest
+    # Both platforms, because the determinism this project claims is a
+    # cross-platform claim and has never been tested as one. `dc351c9` fixed CSV
+    # line endings that differed by platform and was never regressed on Windows;
+    # the published run_id turned out to be reproducible only under a CRLF
+    # checkout. A single-OS pipeline found neither.
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+
+    runs-on: ${{ matrix.os }}
+
+    defaults:
+      run:
+        shell: bash
 
     steps:
       - name: Check out repository
@@ -31,8 +45,49 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install -r requirements.txt -r requirements-dev.txt
 
+      # Checked before anything runs, because every comparison below depends on
+      # it. Under data contract 0.1 the published run_id is a SHA-256 over the
+      # IDS document's raw bytes; without this pin the file checks out with
+      # platform line endings, so a Linux runner computes a different run_id and
+      # silently re-keys all forty-seven findings.
+      - name: Verify the IDS byte pin survives checkout
+        run: |
+          if ! grep -qF 'ids/*.ids -text' .gitattributes; then
+            echo "::error::.gitattributes has lost 'ids/*.ids -text'."
+            echo "The published run_id is not reproducible across platforms without it."
+            exit 1
+          fi
+
+      - name: Lint
+        run: python -m ruff check .
+
       - name: Run regression suite
         run: python -m pytest -p no:cacheprovider tests -q
+
+      # The pipeline had never been run by continuous integration at all. Every
+      # artifact in this repository was produced by hand on one machine, which is
+      # how a wall-clock timestamp and a set iteration order stayed inside
+      # published reports for an entire release without anybody noticing.
+      - name: Regenerate every published artifact
+        run: python -m epc_control_tower.cli run
+
+      - name: Fail if anything the pipeline produces has changed
+        run: git diff --exit-code
+
+      - name: Fail if the pipeline produced anything untracked
+        run: |
+          untracked="$(git status --porcelain --untracked-files=all)"
+          if [ -n "$untracked" ]; then
+            echo "::error::The pipeline left the working tree dirty."
+            echo "$untracked"
+            exit 1
+          fi
+
+      # Byte equality against the recorded contract snapshot. Moving it requires
+      # a CHANGELOG entry and an explicit acknowledgement; see
+      # `epc-ct snapshot --help`.
+      - name: Check the published contract against its snapshot
+        run: python -m epc_control_tower.cli snapshot
 
       - name: Validate dashboard core contract
         run: python src/validate_dashboard.py --mode core

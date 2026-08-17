@@ -18,7 +18,6 @@ from epc_control_tower.determinism import CSV_BOM
 from epc_control_tower.domain import (
     Element,
     Finding,
-    Issue,
     IssueEvent,
     Model,
     Project,

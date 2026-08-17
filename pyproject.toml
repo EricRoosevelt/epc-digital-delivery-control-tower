@@ -29,7 +29,7 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-dev = ["pytest==9.1.1"]
+dev = ["pytest==9.1.1", "ruff==0.14.5"]
 
 [project.scripts]
 epc-ct = "epc_control_tower.cli:main"
@@ -45,6 +45,25 @@ packages = [
     "epc_control_tower.grouping",
     "epc_control_tower.stages",
 ]
+
+[tool.ruff]
+line-length = 96
+
+[tool.ruff.lint]
+# Pyflakes and pycodestyle. Deliberately not the wider rule set: the three
+# validators under src/ are Phase 5 work and have not been touched, so turning
+# on import sorting or syntax modernisation would mean rewriting files this
+# phase promised to leave alone.
+select = ["E", "F", "W"]
+
+[tool.ruff.lint.per-file-ignores]
+# Not yet refactored, and not this phase's business. The line-length rule is
+# suspended for them rather than the limit being raised for everybody, so the
+# exemption is visible and finite.
+"src/validate_bcf.py" = ["E501"]
+"src/validate_dashboard.py" = ["E501"]
+"src/validate_pbip.py" = ["E501"]
+"tests/test_validate_pbip.py" = ["E501"]
 
 [tool.pytest.ini_options]
 # The existing suite imports `from src.validate_pbip import ...` with no

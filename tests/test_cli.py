@@ -16,7 +16,7 @@ import json
 import unittest
 
 from epc_control_tower.cli import build_parser, main
-from helpers import shipped_reports_dir, writable_test_directory
+from helpers import writable_test_directory
 
 
 def run_cli(*argv: str) -> tuple[int, str, str]:

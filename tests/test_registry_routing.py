@@ -136,7 +136,10 @@ class RoutingTests(unittest.TestCase):
 
     def test_routing_is_ordered(self):
         routed = self.registry.route(
-            [make_requirement("R-002", checker="ids"), make_requirement("R-001", checker="federation")]
+            [
+                make_requirement("R-002", checker="ids"),
+                make_requirement("R-001", checker="federation"),
+            ]
         )
         self.assertEqual(list(routed), ["federation", "ids"])
 

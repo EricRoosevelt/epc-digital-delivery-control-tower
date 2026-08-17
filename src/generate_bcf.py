@@ -60,13 +60,11 @@ from epc_control_tower.domain import (  # noqa: E402
 from epc_control_tower.exporters.legacy_bcf import BCF_FILENAME, LegacyBcfExporter  # noqa: E402
 from epc_control_tower.exporters.legacy_contract import (  # noqa: E402
     ASSIGNEE,
-    BCF_VERSION,
     CREATION_AUTHOR,
     EVENT_SOURCE,
     EVENT_TYPE_CREATED,
     FIXED_TIMESTAMP,
     ORIGINATING_SYSTEM,
-    PROJECT_GUID,
     TOPIC_PRIORITY,
     TOPIC_STAGE,
     TOPIC_STATUS,

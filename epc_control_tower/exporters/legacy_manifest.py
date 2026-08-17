@@ -20,7 +20,6 @@ from pathlib import Path
 
 from ..bcf.schema import OFFICIAL_SCHEMA_COMMIT, verify_schema_bundle
 from ..determinism import atomic_write_bytes, json_bytes, read_csv_rows, sha256_file
-from .legacy_bcf import BCF_FILENAME
 from .legacy_contract import BCF_VERSION, PROJECT_GUID
 from .legacy_projection import LegacyProjection
 

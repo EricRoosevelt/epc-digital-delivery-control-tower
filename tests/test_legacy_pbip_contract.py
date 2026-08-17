@@ -74,7 +74,8 @@ class ByteEqualityTests(unittest.TestCase):
                 with self.subTest(table=artifact.path.name):
                     self.assertEqual(artifact.path.parent, scratch)
                     self.assertEqual(
-                        artifact.path.read_bytes(), (PROCESSED / artifact.path.name).read_bytes()
+                        artifact.path.read_bytes(),
+                        (PROCESSED / artifact.path.name).read_bytes(),
                     )
 
 
