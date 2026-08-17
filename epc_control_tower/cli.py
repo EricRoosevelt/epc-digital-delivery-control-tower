@@ -60,7 +60,8 @@ def _command_projects(arguments: argparse.Namespace) -> int:
 
 
 def _command_components(arguments: argparse.Namespace) -> int:
-    registry = default_registry()
+    root = _repository_root(arguments.repository_root)
+    registry = default_registry(load_run_config(root, arguments.config))
     for label, items in (
         ("checkers", registry.checkers),
         ("grouping policies", registry.grouping_policies),

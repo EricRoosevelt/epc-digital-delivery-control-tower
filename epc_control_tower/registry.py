@@ -17,6 +17,7 @@ from __future__ import annotations
 from collections.abc import Iterable, Sequence
 from dataclasses import dataclass, field
 
+from .config import RunConfig
 from .domain import ComponentFingerprint, Model, Requirement
 from .protocols import Checker, Exporter, GroupingPolicy
 
@@ -166,14 +167,22 @@ class Registry:
         )
 
 
-def default_registry() -> Registry:
+def default_registry(config: RunConfig) -> Registry:
     """Build a registry with everything this package ships.
 
     Imports are local to keep module import order simple: implementations
     import the protocols, and the registry imports the implementations.
 
+    Components are constructed here, configured from the run configuration, and
+    they do their own lazy loading — building a registry opens no files, so
+    listing what is available costs nothing and cannot fail on a missing
+    fixture.
+
     This is the one place a fork adds its own checker, policy, or exporter.
     """
 
+    from .checkers.ids_checker import IdsChecker
+
     registry = Registry()
+    registry.register_checker(IdsChecker(config.resolved_ruleset_path()))
     return registry
