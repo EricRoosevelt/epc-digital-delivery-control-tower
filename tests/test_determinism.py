@@ -134,6 +134,26 @@ class SourceDisciplineTests(unittest.TestCase):
                         "randomness outside the execution nonce",
                     )
 
+    def test_every_generated_text_format_declares_its_line_endings(self):
+        # The writers already emit LF everywhere. This checks that the
+        # guarantee is *declared* rather than resting on an implementation
+        # detail: without a .gitattributes entry a format falls back to
+        # `text=auto`, and a future writer using the platform default would put
+        # CRLF into the blob on Windows and break the byte comparison on Linux.
+        declared = (PROJECT_ROOT / ".gitattributes").read_text("utf-8")
+        generated_suffixes = {
+            path.suffix
+            for path in (PROJECT_ROOT / "data" / "processed").rglob("*")
+            if path.is_file()
+        } | {
+            path.suffix
+            for path in (PROJECT_ROOT / "reports").rglob("*")
+            if path.is_file() and path.suffix != ".bcf"  # a ZIP, and binary
+        }
+        for suffix in sorted(suffix for suffix in generated_suffixes if suffix):
+            with self.subTest(suffix=suffix):
+                self.assertIn(f"*{suffix} text eol=lf", declared)
+
     def test_no_archive_is_compressed(self):
         # Compression output depends on the zlib build, so a compressed archive
         # is not reproducible across machines.

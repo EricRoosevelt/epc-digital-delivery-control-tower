@@ -12,6 +12,16 @@
 *.pbism text eol=lf
 **/.platform text eol=lf
 
+# The generated IDS reports under reports/ids/ are the only HTML here, and the
+# checker already writes them with explicit LF on every platform. This line is
+# therefore not a fix — it is a declaration. Without it the guarantee rests on
+# an implementation detail of one exporter, and an editor, a formatter, or a
+# future writer that used the platform default would put CRLF into the blob on
+# Windows and quietly break the byte comparison that CI runs on Linux. The
+# other generated text formats are pinned for the same reason; HTML was simply
+# missed.
+*.html text eol=lf
+
 third_party/buildingsmart/bcf-xml/3.0/** -text
 third_party/speckle/powerbi-visual/2026.6.0/LICENSE -text
 
