@@ -185,6 +185,7 @@ def default_registry(config: RunConfig) -> Registry:
     from .checkers.ids_checker import IdsChecker
     from .exporters.canonical import CsvExporter, JsonExporter
     from .exporters.legacy_bcf import LegacyBcfExporter
+    from .exporters.legacy_pbip import LegacyPbipAdapter
     from .grouping.element import ElementGroupingPolicy
 
     registry = Registry()
@@ -195,4 +196,5 @@ def default_registry(config: RunConfig) -> Registry:
     registry.register_exporter(
         LegacyBcfExporter(schema_dir=default_schema_dir(config.repository_root))
     )
+    registry.register_exporter(LegacyPbipAdapter())
     return registry
