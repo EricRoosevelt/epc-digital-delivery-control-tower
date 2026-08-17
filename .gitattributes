@@ -14,3 +14,19 @@
 
 third_party/buildingsmart/bcf-xml/3.0/** -text
 third_party/speckle/powerbi-visual/2026.6.0/LICENSE -text
+
+# Legacy compatibility for data contract 0.1 only.
+#
+# The published v1.0.0 run_id is a SHA-256 over this file's raw bytes, taken
+# from a CRLF working copy. Left to `text=auto` the file checks out with
+# platform line endings, so the same commit yields a different run_id on Linux
+# than on Windows — and run_id feeds every finding key. Pinning the bytes keeps
+# the published baseline reproducible everywhere.
+#
+# This is a compatibility measure, not a statement about rule identity. Raw
+# text bytes are not the semantic identity of a rule set: reindenting a
+# document must not re-key a validation. The canonical design separates the
+# two — `source_blob_sha256` records which exact file was read, while the
+# normalized ruleset digest carries rule semantics and is what the new
+# validation_run_id derives from. This line retires with the legacy adapters.
+ids/*.ids -text
