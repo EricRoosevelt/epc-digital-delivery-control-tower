@@ -43,7 +43,7 @@ accompanied by their source paths and SHA-256 values.
 
 | Project | Version policy | License | Permitted use |
 |---|---|---|---|
-| [buildingSMART IDS Audit Tool](https://github.com/buildingSMART/IDS-Audit-tool) | Pin an exact release or commit when introduced | MIT | Future independent IDS audit gate; call the tool without copying its implementation. |
+| [buildingSMART IDS Audit Tool](https://github.com/buildingSMART/IDS-Audit-tool) | `ids-tool.CommandLine` 1.0.124 on NuGet; package SHA-256 `f0405a163c3e23c1fcd67a6f1b5397c4f618e2338adecb1de76a95d89e5d71ec` | MIT | Independent IDS syntax and content gate. Installed in CI as a pinned .NET global tool and invoked as an external process; no implementation is copied. Both rule documents under `ids/` are audited on every CI run, on both platforms. |
 | [ifcqa-tool](https://github.com/tommylee0923/ifcqa-tool) | Reference only; no pinned dependency | Verify before any adoption | Learn from run manifests, quality gates, and finding/issue separation; do not copy code. |
 | [Speckle Power BI](https://github.com/specklesystems/speckle-powerbi) | `v2026.6.0`, commit `3d6a9391b3b5576b0e49ef9e844763681695a299` | Visual directory LICENSE: Apache-2.0; package metadata says MIT | The report references the separately installed connector and visual. The signed-installer and installed-visual hashes are recorded, but the expired build artifact prevents a complete published inner-bundle hash chain, so no `.pqx`, `.pbiviz`, or expanded visual bundle is committed. |
 | [ifc4PowerBI](https://github.com/shift-construction/ifc4PowerBI) | Reference only | GPL; verify the exact upstream license before any use | Learn from Power Query and PBIX organization only; do not copy M code or package it with this project. |

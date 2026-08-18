@@ -17,6 +17,33 @@ of what moved exists before the expectation that says it did.
 
 ## Unreleased
 
+### An IDS document read by something that did not write it
+
+Both rule documents are now audited by
+[`ids-tool`](https://github.com/buildingSMART/IDS-Audit-tool) 1.0.124, a
+separate buildingSMART implementation in another language, on every CI run on
+both platforms. Until now an IDS document here was only ever read by IfcTester,
+which also wrote one of them — a closed loop that proves the two agree and
+nothing more.
+
+The conformance corpus had already shown what the loop misses. Three of its five
+divergences are documents whose value literal contradicts its declared data type
+— `42.0` where the type says IFCINTEGER — and IfcTester casts and reports a
+pass. `ids-tool` rejects all three with error 305. The two gates are
+complementary and neither substitutes for the other: one asks whether the
+document is valid, the other whether the answer about a model is right.
+
+Both of this project's documents pass clean. The tool is installed from NuGet at
+a pinned version and invoked as an external process; no code is copied.
+
+Locally the audit skips when `ids-tool` is absent, because not every contributor
+has a .NET SDK. In CI it may not: `EPC_REQUIRE_IDS_AUDIT=1` turns the skip into
+a failure, so an install that silently broke cannot leave the gate switched off
+while the build stays green. A test also runs the tool against a document known
+to be bad, so the gate is never merely assumed to work.
+
+Nothing published moves. The data contract stays at 1.1.
+
 ### Conformance against buildingSMART's own IDS test cases
 
 Every gate this project had was self-referential. Determinism tests assert that

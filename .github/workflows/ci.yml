@@ -55,6 +55,26 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install -r requirements.txt -r requirements-dev.txt
 
+      # An IDS document is currently read only by the library that wrote it,
+      # which proves the two agree and nothing else. `ids-tool` is a separate
+      # buildingSMART implementation, in another language, and it reads the
+      # document against the schema and the standard's content rules. The
+      # conformance corpus showed what that catches: three of the five cases
+      # where this project disagrees with the standard are documents whose value
+      # literal contradicts its declared data type, and IfcTester executes them
+      # and reports a pass. `ids-tool` rejects all three.
+      #
+      # Called as an external process at a pinned version. No code is copied.
+      # The tool targets net8.0, so the SDK is pinned to match rather than
+      # relying on roll-forward.
+      - name: Set up .NET for the IDS audit tool
+        uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: "8.0.x"
+
+      - name: Install the IDS audit tool
+        run: dotnet tool install --global ids-tool.CommandLine --version 1.0.124
+
       # Checked before anything runs, because every comparison below depends on
       # it. Under data contract 0.1 the published run_id is a SHA-256 over the
       # IDS document's raw bytes; without this pin the file checks out with
@@ -71,7 +91,14 @@ jobs:
       - name: Lint
         run: python -m ruff check .
 
+      # EPC_REQUIRE_IDS_AUDIT turns the IDS audit from a test that skips when
+      # its tool is absent into one that fails. Locally, skipping is right —
+      # not every contributor has a .NET SDK. Here the tool was just installed,
+      # so a skip would mean the install silently failed and the gate had
+      # quietly stopped running, which is the failure mode a gate must not have.
       - name: Run regression suite
+        env:
+          EPC_REQUIRE_IDS_AUDIT: "1"
         run: python -m pytest -p no:cacheprovider tests -q
 
       # The pipeline had never been run by continuous integration at all. Every

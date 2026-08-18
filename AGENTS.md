@@ -121,6 +121,17 @@ Without installing the package, `python -m epc_control_tower.cli …` does the
 same. The scripts under `src/` are shims kept for the published entry points
 and retire with the legacy adapters; new work goes in the package.
 
+One test needs a tool the test suite does not install. `tests/test_ids_syntax_audit.py`
+runs buildingSMART's `ids-tool` over the rule documents, and skips with
+instructions when it is absent:
+
+```bash
+dotnet tool install --global ids-tool.CommandLine --version 1.0.124
+```
+
+CI installs it and sets `EPC_REQUIRE_IDS_AUDIT=1`, which turns that skip into a
+failure — a gate that disappears when its tool is missing is not a gate.
+
 ## Conventions
 
 - Branch from `main`: `feat/`, `fix/`, `docs/`, `chore/`.

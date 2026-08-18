@@ -94,6 +94,20 @@ per-file SHA-256 values are recorded in
 `third_party/buildingsmart/ids/1.0/SOURCE.md` and `SHA256SUMS`, which the test
 suite verifies on every run.
 
+## buildingSMART IDS Audit Tool
+
+The test suite and continuous integration invoke
+[`ids-tool`](https://github.com/buildingSMART/IDS-Audit-tool)
+(`ids-tool.CommandLine` 1.0.124, package SHA-256
+`f0405a163c3e23c1fcd67a6f1b5397c4f618e2338adecb1de76a95d89e5d71ec`) as an
+external process to audit this project's IDS documents against the schema and
+the standard's content rules.
+
+Copyright buildingSMART International Ltd and contributors. Licensed under the
+MIT License. The tool is installed from NuGet as a .NET global tool and is not
+redistributed here; no part of its implementation is copied into this
+repository.
+
 ## Speckle Power BI Connector and 3D Visual
 
 The Control Tower report definition references the official
