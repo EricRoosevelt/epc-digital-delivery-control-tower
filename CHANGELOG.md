@@ -17,6 +17,46 @@ of what moved exists before the expectation that says it did.
 
 ## Unreleased
 
+### Conformance against buildingSMART's own IDS test cases
+
+Every gate this project had was self-referential. Determinism tests assert that
+two runs agree with each other; characterization tests assert that a run agrees
+with what a run produced last time. Neither can tell you whether the
+interpretation being frozen so carefully is the right one.
+
+199 `.ids`/`.ifc` pairs are now vendored from buildingSMART's implementer test
+cases — the `attribute`, `classification`, `partof` and `property` subsets — and
+run on every test run. **194 of 199 agree with the outcome the standard
+declares: 97.49%.**
+
+The five that do not are listed by name in `tests/test_ids_conformance.py`, each
+with the behaviour responsible. All five are IfcTester's, not this project's:
+three are lenient casting of an IDS value literal against its declared data type
+(`42.0` accepted where the standard says an IFCINTEGER value written with a
+decimal point makes the specification invalid), one is `cardinality="optional"`
+not covering an attribute that is present but null, and one is a crash reading
+IFC2X3 `IfcExtendedMaterialProperties`. On every case in the corpus this
+project's verdict is identical to the raw verdict IfcTester reported.
+
+Two limits are recorded as tests rather than left to be assumed. No case in the
+corpus has zero applicable elements, so the single normalization this project
+applies to a specification outcome — reporting "nothing to check" as N/A instead
+of as a pass — is never exercised, and the 97.49% says nothing about it. And a
+part of the corpus was generated from IfcTester's own expectations, so agreement
+on those cases is weaker evidence than agreement on the rest.
+
+The corpus is CC BY-ND 4.0 and is vendored verbatim under
+`third_party/buildingsmart/ids/1.0/`, with per-file digests in `SHA256SUMS`
+checked on every run and `.gitattributes` disabling text normalization for the
+directory. Every file was verified against its upstream Git blob hash at the
+pinned revision before being committed.
+
+These are conformance fixtures, not project fixtures. They live under
+`third_party/` so that project discovery, which globs `projects/*/project.toml`,
+cannot reach them; a test asserts it.
+
+Nothing published moves. The data contract stays at 1.1.
+
 ### Data contract 1.1 — rules become data
 
 A rule used to be a function call. `generate_ids.py` declared its seven

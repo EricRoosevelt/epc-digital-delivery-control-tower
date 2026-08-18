@@ -73,6 +73,27 @@ These files are retained byte-for-byte as the validation source of truth. They
 must not be reformatted, normalized, or modified. Source revision and file
 hashes are recorded alongside the vendored snapshot.
 
+## buildingSMART IDS 1.0 Implementer Test Cases
+
+Unmodified IDS implementer test cases under
+`third_party/buildingsmart/ids/1.0/testcases/` originate from the
+[buildingSMART IDS repository](https://github.com/buildingSMART/IDS), pinned at
+commit
+[`dba4549e57a3a98e725e086991e19800a76850b8`](https://github.com/buildingSMART/IDS/tree/dba4549e57a3a98e725e086991e19800a76850b8/Documentation/ImplementersDocumentation/TestCases).
+
+Copyright buildingSMART International Ltd. Licensed under the
+[Creative Commons Attribution-NoDerivatives 4.0 International License](https://creativecommons.org/licenses/by-nd/4.0/),
+whose text is retained verbatim in
+`third_party/buildingsmart/ids/1.0/LICENSE`.
+
+Four of the ten test case directories are vendored — `attribute`,
+`classification`, `partof` and `property` — as 199 `.ids`/`.ifc` pairs. They are
+retained byte-for-byte as an independent conformance judge and must not be
+reformatted, normalized, or modified. The pinned revision, what was taken, and
+per-file SHA-256 values are recorded in
+`third_party/buildingsmart/ids/1.0/SOURCE.md` and `SHA256SUMS`, which the test
+suite verifies on every run.
+
 ## Speckle Power BI Connector and 3D Visual
 
 The Control Tower report definition references the official
