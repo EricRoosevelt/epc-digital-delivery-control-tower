@@ -20,6 +20,11 @@ hvac::34Y6EIt3nDCAS1k$kPGOKm,hvac,34Y6EIt3nDCAS1k$kPGOKm,IfcAirTerminal,house fi
 hvac::38WbwIGD90nB_3T2BTU5Ed,hvac,38WbwIGD90nB_3T2BTU5Ed,IfcDuctSegment,building element,00 groundfloor,0
 hvac::3Fit2Fad92zf2f6aWdJtF5,hvac,3Fit2Fad92zf2f6aWdJtF5,IfcBuildingElementProxy,geo-reference,,0
 hvac::3dkFAzOGrAIuOzY_RdrdVv,hvac,3dkFAzOGrAIuOzY_RdrdVv,IfcChimney,house - chimney,00 groundfloor,0
+iso-reference-view.architecture::0tA4DSHd50le6Ov9Yu0I9X,iso-reference-view.architecture,0tA4DSHd50le6Ov9Yu0I9X,IfcWindow,Window for Test Example,Default Building Storey,1
+iso-reference-view.architecture::2bJiss68D6hvLKV8O1xmqJ,iso-reference-view.architecture,2bJiss68D6hvLKV8O1xmqJ,IfcOpeningElement,Opening Element for Test Example,Default Building Storey,0
+iso-reference-view.architecture::3ZYW59sxj8lei475l7EhLU,iso-reference-view.architecture,3ZYW59sxj8lei475l7EhLU,IfcWall,Wall for Test Example,Default Building Storey,1
+iso-reference-view.plumbing::0Zk2_ch2P32wrl1QuECi58,iso-reference-view.plumbing,0Zk2_ch2P32wrl1QuECi58,IfcSanitaryTerminal,,,0
+iso-reference-view.structural::2WUGYBphrFv8aLIFJCmiIk,iso-reference-view.structural,2WUGYBphrFv8aLIFJCmiIk,IfcColumn,Column #1,,0
 structural::0DyViLJJ175RvWQi1rE7a6,structural,0DyViLJJ175RvWQi1rE7a6,IfcWall,house - outer wall - house back,00 groundfloor,1
 structural::0Lvk$Qa81D5et3l3a4S9Vk,structural,0Lvk$Qa81D5et3l3a4S9Vk,IfcBeam,girder,,1
 structural::0fqX614OH1YO1Njdxms2$Q,structural,0fqX614OH1YO1Njdxms2$Q,IfcBeam,girder,,1

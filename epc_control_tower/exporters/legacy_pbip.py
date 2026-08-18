@@ -97,6 +97,12 @@ class LegacyPbipAdapter:
     version = "1.0.0"
     output_root_key = "processed"
 
+    def __init__(self, *, project_id: str | None = None) -> None:
+        #: The single project these files describe. See
+        #: :func:`~.legacy_projection.narrow_to_project` for why the published
+        #: contract has exactly one and why widening it is not an option.
+        self._project_id = project_id
+
     def config_sha256(self) -> str:
         return ""
 
@@ -105,7 +111,7 @@ class LegacyPbipAdapter:
     ) -> dict[str, bytes]:
         """Return the published files as bytes, without writing anything."""
 
-        projection = projection or project_bundle(bundle)
+        projection = projection or project_bundle(bundle, project_id=self._project_id)
         return {
             filename: _table_bytes(
                 getattr(projection, attribute),

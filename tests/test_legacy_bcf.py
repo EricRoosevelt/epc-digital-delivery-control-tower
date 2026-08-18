@@ -41,7 +41,12 @@ from epc_control_tower.determinism import sha256_bytes
 from epc_control_tower.exporters.legacy_bcf import LegacyBcfExporter
 from epc_control_tower.exporters.legacy_projection import project_bundle
 from epc_control_tower.legacy_identity import LEGACY_RUN_ID
-from helpers import PROJECT_ROOT, shipped_pipeline_result, writable_test_directory
+from helpers import (
+    LEGACY_PROJECT_ID,
+    PROJECT_ROOT,
+    shipped_pipeline_result,
+    writable_test_directory,
+)
 
 PUBLISHED_BCF = PROJECT_ROOT / "reports" / "bcf" / "ids_failures.bcf"
 PUBLISHED_BCF_SHA256 = (
@@ -56,8 +61,12 @@ class PublishedArchiveTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.result = shipped_pipeline_result()
-        cls.projection = project_bundle(cls.result.bundle)
-        cls.exporter = LegacyBcfExporter(schema_dir=SCHEMA_DIR)
+        cls.projection = project_bundle(
+            cls.result.bundle, project_id=LEGACY_PROJECT_ID
+        )
+        cls.exporter = LegacyBcfExporter(
+            schema_dir=SCHEMA_DIR, project_id=LEGACY_PROJECT_ID
+        )
         cls.data = cls.exporter.build_archive(cls.result.bundle, cls.projection)
 
     def test_the_archive_is_byte_identical_to_the_published_one(self):
@@ -92,7 +101,7 @@ class PublishedArchiveTests(unittest.TestCase):
         # Bounding boxes arrive in the bundle from their own stage. An exporter
         # that reached back to the IFC files could not be trusted to produce the
         # same bytes twice.
-        self.assertEqual(len(self.result.bundle.geometry), 3)
+        self.assertEqual(len(self.projection.topics), 3)
         for issue in self.result.bundle.issues:
             with self.subTest(issue=issue.issue_key):
                 self.result.bundle.geometry_for(issue.element_key)
@@ -105,6 +114,12 @@ class LegacyScopeTests(unittest.TestCase):
     def setUpClass(cls):
         cls.bundle = shipped_pipeline_result().bundle
 
+    @staticmethod
+    def _projection():
+        return project_bundle(
+            shipped_pipeline_result().bundle, project_id=LEGACY_PROJECT_ID
+        )
+
     def test_it_declares_the_rules_it_converts(self):
         from epc_control_tower.exporters.legacy_bcf import LEGACY_RULE_SCOPE
 
@@ -113,7 +128,7 @@ class LegacyScopeTests(unittest.TestCase):
     def test_a_failure_outside_that_scope_is_refused_rather_than_mislabelled(self):
         import dataclasses
 
-        projection = project_bundle(self.bundle)
+        projection = self._projection()
         topic = projection.topics[0]
         relabelled = dataclasses.replace(
             topic,
@@ -124,21 +139,25 @@ class LegacyScopeTests(unittest.TestCase):
         )
         mutated = dataclasses.replace(projection, topics=(relabelled,))
 
-        exporter = LegacyBcfExporter(schema_dir=SCHEMA_DIR)
+        exporter = LegacyBcfExporter(
+            schema_dir=SCHEMA_DIR, project_id=LEGACY_PROJECT_ID
+        )
         with self.assertRaisesRegex(ValueError, r"only converts project-assumed"):
             exporter.build_archive(self.bundle, mutated)
 
     def test_a_model_outside_that_scope_is_refused(self):
         import dataclasses
 
-        projection = project_bundle(self.bundle)
+        projection = self._projection()
         topic = projection.topics[0]
         elsewhere = dataclasses.replace(
             topic, model=dataclasses.replace(topic.model, filename="Other.ifc")
         )
         mutated = dataclasses.replace(projection, topics=(elsewhere,))
 
-        exporter = LegacyBcfExporter(schema_dir=SCHEMA_DIR)
+        exporter = LegacyBcfExporter(
+            schema_dir=SCHEMA_DIR, project_id=LEGACY_PROJECT_ID
+        )
         with self.assertRaisesRegex(ValueError, "is scoped to hvac/Building-Hvac.ifc"):
             exporter.build_archive(self.bundle, mutated)
 
@@ -234,7 +253,9 @@ class CameraTests(unittest.TestCase):
             camera_for_aabb(Aabb(minimum=(1.0, 1.0, 1.0), maximum=(1.0, 1.0, 1.0)))
 
     def test_the_published_viewpoints_still_frame_their_elements(self):
-        for topic in project_bundle(shipped_pipeline_result().bundle).topics:
+        for topic in project_bundle(
+            shipped_pipeline_result().bundle, project_id=LEGACY_PROJECT_ID
+        ).topics:
             with self.subTest(topic=topic.topic_guid):
                 verify_camera_frames_aabb(topic.aabb, topic.camera, tolerance=1e-12)
                 self.assertTrue(math.isfinite(topic.aabb.diagonal))

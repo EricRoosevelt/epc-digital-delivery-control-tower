@@ -21,6 +21,7 @@ from epc_control_tower.stages.inventory import inventory
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 PROCESSED = PROJECT_ROOT / "data" / "processed"
+PUBLISHED_PROJECT_ID = "pcert-sample"
 
 
 class StageFidelityTests(unittest.TestCase):
@@ -29,6 +30,14 @@ class StageFidelityTests(unittest.TestCase):
         config = load_run_config(PROJECT_ROOT)
         cls.manifests = load_project_manifests(
             config.project_manifests, repository_root=PROJECT_ROOT
+        )
+        # The published register describes one project. A second one now
+        # exists, so the assertions below say which they are about instead of
+        # relying on there being only one — which is what they always meant.
+        cls.manifests = tuple(
+            manifest
+            for manifest in cls.manifests
+            if manifest.project.project_id == PUBLISHED_PROJECT_ID
         )
         cls.result = ingest(cls.manifests)
         paths = {

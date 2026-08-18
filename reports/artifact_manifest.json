@@ -1,5 +1,5 @@
 {
-  "artifact_bundle_id": "bundle-97d278eebfaa7bfc",
+  "artifact_bundle_id": "bundle-9ec9e8dee54f553c",
   "artifacts": [
     {
       "bytes": 630,
@@ -32,46 +32,46 @@
       "sha256": "6e31593bf5b0a88ffb0bbd9ece7c509130206a244bce82709b507065f9b57bbf"
     },
     {
-      "bytes": 4300,
+      "bytes": 5083,
       "exporter": "csv",
       "path": "data/processed/canonical/elements.csv",
-      "sha256": "b46063dbdd7858d1c7a32392a17a1d56264ae03903d460271df4f94ec9d3b76c"
+      "sha256": "e28529b55e6e21888e1157c4afa473f0b0e844e19e2708fac0c6c228f2f0c1a0"
     },
     {
-      "bytes": 12698,
+      "bytes": 20596,
       "exporter": "csv",
       "path": "data/processed/canonical/findings.csv",
-      "sha256": "7bc11c168cd8d0080e4256c2f710e264dd497fceaaf1f112b202b3f7d7f2e03a"
+      "sha256": "38e7e830adaaca317e6fe8844608b4e7f028a8bc207959f681694106ff83f0e5"
     },
     {
       "bytes": 756,
       "exporter": "csv",
       "path": "data/processed/canonical/issue_events.csv",
-      "sha256": "a8229e2877b4abc3d7ea941b55ad191905e7be3e93713fdac603727c8d8c3481"
+      "sha256": "bd1b67c7c5db879bf959a0af2b497bb8724ba647e1ba0b2b0efd0cd8fdc1e5e8"
     },
     {
       "bytes": 469,
       "exporter": "csv",
       "path": "data/processed/canonical/issue_findings.csv",
-      "sha256": "97a98b2327e8c23f87c5a5f15ca22511ae21e476fee85f2fecb644dad500b2a5"
+      "sha256": "3f635f7e617257b67f9c66fcb3f32fc4cd567a3c3dd4502974934ef808b4b942"
     },
     {
       "bytes": 564,
       "exporter": "csv",
       "path": "data/processed/canonical/issues.csv",
-      "sha256": "176bf402b71499f18c33a40e796fac9bf77476ada39e7d82a7efcf770ef25c57"
+      "sha256": "24e2f599841c608bccf76c7d8b2a41b68a0e9d44bd3519eed9c5804afbbb2e5e"
     },
     {
-      "bytes": 1016,
+      "bytes": 2225,
       "exporter": "csv",
       "path": "data/processed/canonical/models.csv",
-      "sha256": "12347c6385bf2237e0fe81d6412aa069ecf577088201aa59f66d791260641674"
+      "sha256": "34534380d0456b5e7a87bac610f4543abb9e2ca5a753ac58bf348783a55e2941"
     },
     {
-      "bytes": 170,
+      "bytes": 352,
       "exporter": "csv",
       "path": "data/processed/canonical/projects.csv",
-      "sha256": "cce33f5049279a62719d7d783f66ea211564c7cf809c9253a81506efa71f7d84"
+      "sha256": "194e795a7a3d929ad51263a14970ec70e82f0016085ae6774811c1c7f4f8ab52"
     },
     {
       "bytes": 1586,
@@ -80,10 +80,10 @@
       "sha256": "64a2fa9c173631350d6c796fbdfe98e14836f4c2547e4775d42494c57128534a"
     },
     {
-      "bytes": 47847,
+      "bytes": 68371,
       "exporter": "json",
       "path": "data/processed/canonical/run.json",
-      "sha256": "501a319b5e3b32dea286a2c4aaeebacda586325a0e39d1666658f6f98c7c694c"
+      "sha256": "5bac8ab0bcb15cbab2c97e7bef5cf04bfe4b424d3f3e7b7330a52a92a1082a84"
     },
     {
       "bytes": 18462,
@@ -111,7 +111,7 @@
     }
   ],
   "as_of": "2026-08-13T00:00:00Z",
-  "contract_version": "0.1",
+  "contract_version": "1.0",
   "exporters": [
     {
       "config_sha256": "",
@@ -134,5 +134,5 @@
       "version": "1.0.0"
     }
   ],
-  "validation_run_id": "ids-v0.1-11b2daa02eab1031"
+  "validation_run_id": "ids-v0.1-8ca2fe4b24a76575"
 }

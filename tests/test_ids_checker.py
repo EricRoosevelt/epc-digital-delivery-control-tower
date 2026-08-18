@@ -34,7 +34,12 @@ from epc_control_tower.identity import (
     build_requirement_key,
     build_validation_run_id,
 )
-from helpers import PROJECT_ROOT, shipped_pipeline_result, writable_test_directory
+from helpers import (
+    PROJECT_ROOT,
+    published_bundle,
+    shipped_pipeline_result,
+    writable_test_directory,
+)
 
 IDS_PATH = PROJECT_ROOT / "ids" / "epc_delivery_requirements_v0.1.ids"
 COMMITTED_FINDINGS = PROJECT_ROOT / "data" / "processed" / "ids_findings.csv"
@@ -185,7 +190,10 @@ class FindingFidelityTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.result = shipped_pipeline_result()
-        cls.findings = cls.result.bundle.findings
+        # Narrowed to the project the committed findings describe; the run now
+        # covers a second project as well.
+        cls.bundle = published_bundle()
+        cls.findings = cls.bundle.findings
         cls.published = read_csv_rows(COMMITTED_FINDINGS)
 
     def test_the_published_counts_are_reproduced(self):
@@ -246,7 +254,7 @@ class FindingFidelityTests(unittest.TestCase):
         failures = [f for f in self.findings if f.status is FindingStatus.FAIL]
         self.assertEqual(len(failures), 6)
         for finding in failures:
-            requirement = self.result.ruleset.by_key(finding.requirement_key)
+            requirement = self.bundle.ruleset.by_key(finding.requirement_key)
             with self.subTest(finding=finding.finding_key):
                 self.assertTrue(requirement.rule_id.startswith("R-005"))
                 self.assertIs(finding.severity, Severity.WARNING)
@@ -282,7 +290,8 @@ class ReportDeterminismTests(unittest.TestCase):
                 )
 
         self.assertEqual(sorted(digests[0]), sorted(digests[1]))
-        self.assertEqual(len(digests[0]), 6)
+        # Two reports per model, over six models across both projects.
+        self.assertEqual(len(digests[0]), 12)
         self.assertEqual(digests[0], digests[1])
 
     def test_the_report_carries_the_logical_date_not_the_wall_clock(self):

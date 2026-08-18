@@ -80,9 +80,20 @@ class LegacyBcfExporter:
     version = "1.0.0"
     output_root_key = "reports"
 
-    def __init__(self, *, schema_dir: Path, subdirectory: str = "bcf") -> None:
+    def __init__(
+        self,
+        *,
+        schema_dir: Path,
+        subdirectory: str = "bcf",
+        project_id: str | None = None,
+    ) -> None:
         self._schema_dir = Path(schema_dir)
         self._subdirectory = subdirectory
+        #: The single project this archive covers, for the same reason the CSV
+        #: adapter has one. The topic GUIDs are derived from element keys, so an
+        #: archive spanning two projects would not merely gain topics — it would
+        #: republish the existing ones under a different run identity.
+        self._project_id = project_id
 
     def config_sha256(self) -> str:
         return ""
@@ -90,7 +101,7 @@ class LegacyBcfExporter:
     # -- export ------------------------------------------------------------
 
     def export(self, bundle: RunBundle, output_root: Path) -> tuple[Artifact, ...]:
-        projection = project_bundle(bundle)
+        projection = project_bundle(bundle, project_id=self._project_id)
         data = self.build_archive(bundle, projection)
         path = output_root / self._subdirectory / BCF_FILENAME
         atomic_write_bytes(path, data)
@@ -109,7 +120,7 @@ class LegacyBcfExporter:
         """Build the archive bytes without writing anything."""
 
         verify_schema_bundle(self._schema_dir)
-        projection = projection or project_bundle(bundle)
+        projection = projection or project_bundle(bundle, project_id=self._project_id)
         self._assert_legacy_scope(projection)
 
         entries = self.root_entries()

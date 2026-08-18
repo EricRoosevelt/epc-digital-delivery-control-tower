@@ -1,0 +1,16 @@
+# Run configuration. Deliberately small: constants that describe a project
+# belong in that project's manifest, constants that describe a rule belong on
+# the rule, and constants that merely record what a fixture contains belong in
+# tests. What is left is a handful of genuine runtime knobs.
+
+[run]
+# Which project the legacy writers publish.
+#
+# The eight CSV files under data/processed/ and the BCF archive under reports/
+# describe the PCERT sample project alone. That is a property of the frozen
+# contract: the tracked Power BI project asserts three models and thirty-nine
+# elements, and the committed acceptance evidence was captured against those
+# numbers. Adding a second project must not change any of it, so the legacy
+# writers are told which project they are for. This setting retires together
+# with the legacy adapters in Phase 5.
+legacy_project_id = "pcert-sample"

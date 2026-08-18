@@ -190,6 +190,24 @@ class RunResult:
     legacy_manifest_path: Path | None = None
 
 
+def _manifest_for_project(
+    manifests: Sequence[ProjectManifest],
+    project_id: str | None,
+) -> ProjectManifest:
+    if project_id is None:
+        if len(manifests) != 1:
+            raise ValueError(
+                "The legacy writers publish one project, but this run covers "
+                f"{sorted(m.project.project_id for m in manifests)}. Set "
+                "`legacy_project_id` in control-tower.toml."
+            )
+        return manifests[0]
+    for manifest in manifests:
+        if manifest.project.project_id == project_id:
+            return manifest
+    raise KeyError(f"No manifest for legacy project {project_id!r}")
+
+
 def output_roots(config: RunConfig) -> dict[str, Path]:
     """Where each kind of output goes, from configuration.
 
@@ -238,14 +256,21 @@ def execute(
     # both did.
     legacy_manifest_path: Path | None = None
     if {"legacy-bcf", "legacy-pbip"} <= set(enabled):
-        projection = project_bundle(result.bundle)
+        legacy_project_id = config.legacy_project_id or None
+        projection = project_bundle(result.bundle, project_id=legacy_project_id)
+        # The manifest names the IFC file the archive was built from, so it has
+        # to read the raw data directory of the project the legacy writers
+        # actually published — not whichever project happened to sort first.
+        legacy_manifest_source = _manifest_for_project(
+            result.manifests, legacy_project_id
+        )
         manifest = build_legacy_manifest(
             projection,
             repository_root=config.repository_root,
             input_paths=legacy_input_paths(
                 projection,
                 processed_dir=roots["processed"],
-                raw_data_dir=result.manifests[0].raw_data_dir,
+                raw_data_dir=legacy_manifest_source.raw_data_dir,
                 ruleset_path=config.resolved_ruleset_path(),
             ),
             sidecar_dir=roots["processed"],

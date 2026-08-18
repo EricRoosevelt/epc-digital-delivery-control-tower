@@ -120,6 +120,15 @@ class RunConfig:
     reports_dir: Path | None = None
     grouping_policy: str = "element"
     exporters: tuple[str, ...] = DEFAULT_EXPORTERS
+    #: Which project the legacy writers publish.
+    #:
+    #: The eight published CSV files and the BCF archive describe exactly one
+    #: project, and that is a property of the frozen contract rather than of the
+    #: pipeline. With one project configured this can be left unset; with
+    #: several it is required, because guessing would silently republish a
+    #: different contract under the same filenames. It retires with the legacy
+    #: adapters.
+    legacy_project_id: str = ""
 
     def resolved_processed_data_dir(self) -> Path:
         return self.processed_data_dir or self.repository_root / "data" / "processed"
@@ -308,4 +317,5 @@ def load_run_config(
         reports_dir=_optional_path("reports_dir"),
         grouping_policy=str(run_section.get("grouping_policy", "element")),
         exporters=tuple(str(item) for item in exporters),
+        legacy_project_id=str(run_section.get("legacy_project_id", "")),
     )

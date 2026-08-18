@@ -208,12 +208,23 @@ filename = "A.ifc"
 
 
 class RunConfigTests(unittest.TestCase):
-    def test_defaults_discover_the_shipped_project(self):
+    def test_defaults_discover_every_shipped_project(self):
+        # Discovery is a glob over projects/*/project.toml, so adding the
+        # second project needed no change here at all — which is the property
+        # this test exists to hold on to.
         config = load_run_config(PROJECT_ROOT)
         self.assertEqual(
-            [path.name for path in config.project_manifests], ["project.toml"]
+            [path.parent.name for path in config.project_manifests],
+            ["iso-reference-view", "pcert-sample"],
+        )
+        self.assertEqual(
+            {path.name for path in config.project_manifests}, {"project.toml"}
         )
         self.assertEqual(config.as_of, "2026-08-13T00:00:00Z")
+
+    def test_the_legacy_writers_are_told_which_project_they_publish(self):
+        config = load_run_config(PROJECT_ROOT)
+        self.assertEqual(config.legacy_project_id, "pcert-sample")
 
     def test_paths_resolve_below_the_repository_root(self):
         config = load_run_config(PROJECT_ROOT)

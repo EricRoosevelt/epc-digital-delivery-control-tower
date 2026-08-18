@@ -57,7 +57,7 @@ class AdvertisedCommandsTests(unittest.TestCase):
         code, out, _ = run_cli("version")
         self.assertEqual(code, 0)
         self.assertIn("epc-control-tower", out)
-        self.assertIn("data contract 0.1", out)
+        self.assertIn("data contract 1.0", out)
 
     def test_components_lists_what_is_registered(self):
         code, out, _ = run_cli("components")
@@ -82,7 +82,9 @@ class CheckCommandTests(unittest.TestCase):
             written = sorted(path.name for path in scratch.rglob("*") if path.is_file())
 
         self.assertEqual(code, 0)
-        self.assertIn("47 applicable", out.replace("31 of ", ""))
+        # Both projects: 47 findings from PCERT plus 27 from the reference-view
+        # samples, of which 33 are applicable.
+        self.assertIn("33 of 74 applicable", out)
         self.assertIn("3 issue(s)", out)
         # Checker reports are written; published artifacts are not.
         self.assertTrue(written)
@@ -155,7 +157,10 @@ def _config_pointing_at(scratch):
     path.write_text(
         "[run]\n"
         f'processed_data_dir = "{relative}/processed"\n'
-        f'reports_dir = "{relative}/reports"\n',
+        f'reports_dir = "{relative}/reports"\n'
+        # The run covers two projects; the legacy writers publish one of them,
+        # and which one is a decision the configuration has to state.
+        'legacy_project_id = "pcert-sample"\n',
         encoding="utf-8",
     )
     return path
@@ -172,7 +177,7 @@ class RunManifestTests(unittest.TestCase):
             )
 
         self.assertEqual(code, 0, err)
-        self.assertEqual(manifest["contract_version"], "0.1")
+        self.assertEqual(manifest["contract_version"], "1.0")
         self.assertEqual(
             sorted(entry["id"] for entry in manifest["exporters"]),
             ["csv", "json", "legacy-bcf", "legacy-pbip"],

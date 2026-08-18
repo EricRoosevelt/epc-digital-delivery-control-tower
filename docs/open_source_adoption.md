@@ -31,7 +31,8 @@ here does not mean its source code has been copied into this project.
 | [pytest](https://github.com/pytest-dev/pytest) | 9.1.1 | MIT | Development-only test runner. |
 | [buildingSMART BCF-XML](https://github.com/buildingSMART/BCF-XML/tree/release_3_0) | `release_3_0`; exact commit and hashes recorded with snapshot | CC BY-ND 4.0 | Normative source for BCF-XML 3.0. Only unmodified schemas are vendored under `third_party/buildingsmart/bcf-xml/3.0/`; Git text normalization is disabled there. |
 | [buildingSMART BCF-API](https://github.com/buildingSMART/BCF-API/tree/release_3_0) | `release_3_0` | CC BY-ND 4.0 | Standards reference for issue lifecycle and event semantics. No API schema or implementation is copied in Stage 3. |
-| [buildingSMART Sample-Test-Files](https://github.com/buildingSMART/Sample-Test-Files) | Source URLs and SHA-256 values in `models.csv` | CC BY 4.0 | Three unmodified IFC sample files are portfolio inputs, with attribution retained. |
+| [buildingSMART Sample-Test-Files](https://github.com/buildingSMART/Sample-Test-Files) — PCERT Sample Scene | Source URLs and SHA-256 values in `models.csv` | CC BY 4.0 | Three unmodified IFC sample files are portfolio inputs, with attribution retained. |
+| [buildingSMART Sample-Test-Files](https://github.com/buildingSMART/Sample-Test-Files) — ISO Spec Reference View 1.2 | Commit `cecf656112a54a0d8cdd8b06b9398bfea5163886`; per-file SHA-256 in `projects/iso-reference-view/project.toml` and `THIRD_PARTY_NOTICES.md` | CC BY 4.0 | Three further unmodified IFC 4 sample files form the second project fixture. Ingest verifies each hash on every run. |
 
 If BCF 3.0 test cases are added later, they must be copied unmodified from the
 same pinned BCF-XML revision, placed below the third-party namespace, and

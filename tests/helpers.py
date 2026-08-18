@@ -14,8 +14,15 @@ from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 
+#: The project the frozen published contract describes. A second project now
+#: exists, so tests that assert published numbers have to say which project
+#: they mean instead of relying on there being only one.
+LEGACY_PROJECT_ID = "pcert-sample"
+
 __all__ = [
+    "LEGACY_PROJECT_ID",
     "PROJECT_ROOT",
+    "published_bundle",
     "shipped_pipeline_result",
     "shipped_reports_dir",
     "shipped_run_config",
@@ -75,3 +82,17 @@ def shipped_pipeline_result():
     from epc_control_tower.pipeline import build_bundle
 
     return build_bundle(shipped_run_config(), reports_dir=shipped_reports_dir())
+
+
+@functools.cache
+def published_bundle():
+    """The shipped run, narrowed to the project the published contract covers.
+
+    Phase 1's characterization tests could say "47 findings" because there was
+    only one project. There are two now, so the same assertions have to name
+    the project they are about — which is what they always meant.
+    """
+
+    from epc_control_tower.exporters.legacy_projection import narrow_to_project
+
+    return narrow_to_project(shipped_pipeline_result().bundle, LEGACY_PROJECT_ID)

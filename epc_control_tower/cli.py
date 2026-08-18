@@ -166,7 +166,9 @@ def _current_snapshot(config):
 
     return result, build_snapshot(
         result.pipeline.bundle,
-        legacy_run_id=project_bundle(result.pipeline.bundle).run_id,
+        legacy_run_id=project_bundle(
+            result.pipeline.bundle, project_id=config.legacy_project_id or None
+        ).run_id,
         artifact_bundle_id=result.export.artifact_bundle_id,
         artifacts=artifacts,
     )

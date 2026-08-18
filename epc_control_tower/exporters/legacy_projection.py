@@ -27,6 +27,7 @@ second copy is how the BCF sidecars and the BCF archive would come to disagree.
 from __future__ import annotations
 
 from collections.abc import Sequence
+import dataclasses
 from dataclasses import dataclass
 
 from ..bcf.geometry import Aabb, Camera, camera_for_aabb
@@ -63,6 +64,7 @@ __all__ = [
     "LegacyProjection",
     "LegacyTopic",
     "issue_element_keys",
+    "narrow_to_project",
     "project_bundle",
     "project_register",
     "viewpoint_row",
@@ -241,8 +243,103 @@ def project_register(
     return model_rows, inventory_rows
 
 
-def project_bundle(bundle: RunBundle) -> LegacyProjection:
-    """Project a canonical bundle onto the published contract."""
+def narrow_to_project(bundle: RunBundle, project_id: str) -> RunBundle:
+    """Restrict a run to the one project the published contract describes.
+
+    **This is the scope decision, and it is deliberate rather than incidental.**
+
+    The eight published CSV files describe exactly one project. That is not a
+    coincidence to be generalised away: the Power BI project's nine TMDL tables
+    assert three models and thirty-nine elements, the committed acceptance
+    evidence was captured against those numbers, and neither is in scope to
+    change before Phase 5.
+
+    So when a run covers more than one project, the legacy writers publish one
+    of them and say which. The alternative — emitting everything — is not a
+    wider contract, it is a broken one: it was measured, and it changed all
+    eight CSV files, the BCF archive, and the published ``run_id``, while every
+    exporter still reported success. A contract that widens silently is worse
+    than one that refuses.
+
+    The narrowed bundle keeps its :class:`~..domain.ValidationRun` intact. The
+    validation genuinely covered every model, and rewriting the run to pretend
+    otherwise would mean publishing an identity that never happened. Only the
+    *projection* is narrowed; what was validated is still what was validated.
+    """
+
+    if not any(project.project_id == project_id for project in bundle.projects):
+        raise KeyError(
+            f"Legacy projection is scoped to project {project_id!r}, which this "
+            f"run does not contain; it has "
+            f"{sorted(p.project_id for p in bundle.projects)}"
+        )
+
+    model_keys = {
+        model.model_key for model in bundle.models if model.project_id == project_id
+    }
+    element_keys = {
+        element.element_key
+        for element in bundle.elements
+        if element.model_key in model_keys
+    }
+    findings = tuple(
+        finding for finding in bundle.findings if finding.project_id == project_id
+    )
+    finding_keys = {finding.finding_key for finding in findings}
+    issues = tuple(
+        issue for issue in bundle.issues if issue.project_id == project_id
+    )
+    issue_keys = {issue.issue_key for issue in issues}
+
+    return dataclasses.replace(
+        bundle,
+        projects=tuple(
+            project for project in bundle.projects if project.project_id == project_id
+        ),
+        models=tuple(
+            model for model in bundle.models if model.model_key in model_keys
+        ),
+        elements=tuple(
+            element for element in bundle.elements if element.element_key in element_keys
+        ),
+        findings=findings,
+        issues=tuple(
+            dataclasses.replace(
+                issue,
+                finding_keys=tuple(
+                    key for key in issue.finding_keys if key in finding_keys
+                ),
+            )
+            for issue in issues
+        ),
+        issue_events=tuple(
+            event for event in bundle.issue_events if event.issue_key in issue_keys
+        ),
+        geometry=tuple(
+            geometry
+            for geometry in bundle.geometry
+            if geometry.element_key in element_keys
+        ),
+    )
+
+
+def project_bundle(bundle: RunBundle, *, project_id: str | None = None) -> LegacyProjection:
+    """Project a canonical bundle onto the published contract.
+
+    ``project_id`` names the single project the published files describe. It may
+    be omitted only when the run contains exactly one project — with several,
+    guessing would silently republish a different contract, so it is required.
+    """
+
+    if project_id is not None:
+        bundle = narrow_to_project(bundle, project_id)
+    elif len(bundle.projects) > 1:
+        raise ValueError(
+            "The published contract describes one project, but this run covers "
+            f"{sorted(p.project_id for p in bundle.projects)}. Set "
+            "`legacy_project_id` in control-tower.toml to say which one the "
+            "legacy writers should publish."
+        )
 
     ids_version = bundle.ruleset.version
     run_id = legacy_run_id(

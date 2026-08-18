@@ -30,7 +30,12 @@ from epc_control_tower.domain import field_names
 from epc_control_tower.exporters.legacy_pbip import LEGACY_TABLES, LegacyPbipAdapter
 from epc_control_tower.exporters.legacy_projection import project_bundle
 from epc_control_tower.legacy_identity import LEGACY_RUN_ID
-from helpers import PROJECT_ROOT, shipped_pipeline_result, writable_test_directory
+from helpers import (
+    LEGACY_PROJECT_ID,
+    PROJECT_ROOT,
+    shipped_pipeline_result,
+    writable_test_directory,
+)
 
 PROCESSED = PROJECT_ROOT / "data" / "processed"
 
@@ -48,7 +53,8 @@ class ByteEqualityTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.result = shipped_pipeline_result()
-        cls.tables = LegacyPbipAdapter().build_tables(cls.result.bundle)
+        cls.adapter = LegacyPbipAdapter(project_id=LEGACY_PROJECT_ID)
+        cls.tables = cls.adapter.build_tables(cls.result.bundle)
 
     def test_all_eight_published_files_are_reproduced_byte_for_byte(self):
         self.assertEqual(len(self.tables), 8)
@@ -68,7 +74,7 @@ class ByteEqualityTests(unittest.TestCase):
 
     def test_writing_the_tables_lands_them_where_the_dashboard_reads_them(self):
         with writable_test_directory("legacy-pbip-write") as scratch:
-            artifacts = LegacyPbipAdapter().export(self.result.bundle, scratch)
+            artifacts = self.adapter.export(self.result.bundle, scratch)
             self.assertEqual(len(artifacts), 8)
             for artifact in artifacts:
                 with self.subTest(table=artifact.path.name):
@@ -85,7 +91,9 @@ class ProjectionPurityTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.result = shipped_pipeline_result()
-        cls.projection = project_bundle(cls.result.bundle)
+        cls.projection = project_bundle(
+            cls.result.bundle, project_id=LEGACY_PROJECT_ID
+        )
 
     def test_the_published_run_identity_comes_from_the_frozen_derivation(self):
         self.assertEqual(self.projection.run_id, LEGACY_RUN_ID)
@@ -96,7 +104,12 @@ class ProjectionPurityTests(unittest.TestCase):
         # identity they consume, because it now folds in each checker's version
         # and configuration. The published keys survive by feeding the old run
         # identity back in, not by keeping a second algorithm around.
-        canonical = {finding.finding_key for finding in self.result.bundle.findings}
+        published_project = {
+            f.finding_key
+            for f in self.result.bundle.findings
+            if f.project_id == LEGACY_PROJECT_ID
+        }
+        canonical = published_project
         published = {row.finding_key for row in self.projection.findings}
         self.assertEqual(len(canonical), len(published))
         self.assertEqual(canonical & published, set())
@@ -116,6 +129,7 @@ class ProjectionPurityTests(unittest.TestCase):
         # This is what lets the next phase add a project dimension without the
         # dashboard noticing.
         self.assertTrue(all(f.project_id for f in self.result.bundle.findings))
+        self.assertGreater(len({f.project_id for f in self.result.bundle.findings}), 1)
         for _filename, _attribute, row_type in LEGACY_TABLES:
             with self.subTest(row=row_type.__name__):
                 self.assertNotIn("project_id", field_names(row_type))
@@ -154,14 +168,17 @@ class LegacyManifestTests(unittest.TestCase):
         )
 
         result = shipped_pipeline_result()
-        projection = project_bundle(result.bundle)
+        projection = project_bundle(result.bundle, project_id=LEGACY_PROJECT_ID)
 
         with writable_test_directory("legacy-manifest") as scratch:
             processed = scratch / "processed"
             reports = scratch / "reports"
-            LegacyPbipAdapter().export(result.bundle, processed)
+            LegacyPbipAdapter(project_id=LEGACY_PROJECT_ID).export(
+                result.bundle, processed
+            )
             LegacyBcfExporter(
-                schema_dir=default_schema_dir(PROJECT_ROOT)
+                schema_dir=default_schema_dir(PROJECT_ROOT),
+                project_id=LEGACY_PROJECT_ID,
             ).export(result.bundle, reports)
 
             manifest = build_legacy_manifest(

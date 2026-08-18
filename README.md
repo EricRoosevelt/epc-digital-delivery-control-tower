@@ -329,6 +329,15 @@ Files used:
 * `Building-Structural.ifc`
 * `Building-Hvac.ifc`
 
+A second project uses three further unmodified samples from the same
+repository, the
+[IFC 4 ISO Spec Reference View 1.2 set](https://github.com/buildingSMART/Sample-Test-Files/tree/cecf656112a54a0d8cdd8b06b9398bfea5163886/IFC%204.0.2.1%20%28IFC%204%29/ISO%20Spec%20-%20ReferenceView_V1.2),
+pinned at commit `cecf656112a54a0d8cdd8b06b9398bfea5163886`:
+
+* `wall-with-opening-and-window.ifc`
+* `column-straight-rectangle-tessellation.ifc`
+* `basin-tessellation.ifc`
+
 Copyright buildingSMART International Ltd.
 
 The sample files are licensed under the

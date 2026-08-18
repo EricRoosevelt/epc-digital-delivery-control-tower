@@ -44,6 +44,23 @@ Copyright buildingSMART International Ltd. Licensed under the
 The project records each file's source URL and SHA-256 in
 `data/processed/models.csv`.
 
+The following files are unmodified public samples from the same repository,
+IFC 4 ISO Spec Reference View 1.2, pinned at commit
+[`cecf656112a54a0d8cdd8b06b9398bfea5163886`](https://github.com/buildingSMART/Sample-Test-Files/tree/cecf656112a54a0d8cdd8b06b9398bfea5163886/IFC%204.0.2.1%20%28IFC%204%29/ISO%20Spec%20-%20ReferenceView_V1.2):
+
+- `projects/iso-reference-view/wall-with-opening-and-window.ifc`
+  — SHA-256 `73b0e45d931d5dc13bfee5fdc7bd80f796526445458b2de74c4168d209097832`
+- `projects/iso-reference-view/column-straight-rectangle-tessellation.ifc`
+  — SHA-256 `58bb9b2cae96edf2c368de95f526650f3f282e4e7fc37c0065c501bdbeed00a1`
+- `projects/iso-reference-view/basin-tessellation.ifc`
+  — SHA-256 `7278769ec5ef35d388819d2f197519061c7f0f68dd43a733f333ddeb74578121`
+
+Copyright buildingSMART International Ltd. Licensed under the
+[Creative Commons Attribution 4.0 International License](https://creativecommons.org/licenses/by/4.0/).
+Each file's source URL and SHA-256 is also recorded in
+`projects/iso-reference-view/project.toml`, where ingest verifies the hash on
+every run and stops if a file has changed.
+
 ## buildingSMART BCF 3.0 Schemas
 
 Unmodified BCF-XML 3.0 schema files under

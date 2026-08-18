@@ -57,14 +57,51 @@ class RecordedSnapshotTests(unittest.TestCase):
         )
 
     def test_it_records_the_published_counts(self):
+        # Two projects: PCERT's three models and thirty-nine elements, plus the
+        # reference-view project's three models and five.
         counts = self.recorded["counts"]
-        self.assertEqual(counts["models"], 3)
-        self.assertEqual(counts["elements"], 39)
-        self.assertEqual(counts["findings"], 47)
-        self.assertEqual(counts["applicable"], 31)
+        self.assertEqual(counts["projects"], 2)
+        self.assertEqual(counts["models"], 6)
+        self.assertEqual(counts["elements"], 44)
+        self.assertEqual(counts["findings"], 74)
+        self.assertEqual(counts["applicable"], 33)
         self.assertEqual(counts["issues"], 3)
-        self.assertEqual(counts["by_status"], {"PASS": 25, "FAIL": 6, "N/A": 16})
+        self.assertEqual(counts["by_status"], {"PASS": 27, "FAIL": 6, "N/A": 41})
         self.assertEqual(self.recorded["ruleset"]["requirements"], 9)
+
+    def test_the_earlier_contract_is_kept_as_history(self):
+        # A snapshot is per contract version, so bumping adds a record rather
+        # than overwriting one. What 0.1 published stays readable.
+        earlier = load_snapshot(snapshot_path(PROJECT_ROOT, "0.1"))
+        self.assertEqual(earlier["contract_version"], "0.1")
+        self.assertEqual(earlier["counts"]["projects"], 1)
+        self.assertEqual(earlier["counts"]["findings"], 47)
+
+    def test_the_legacy_contract_did_not_move_when_the_canonical_one_did(self):
+        # The whole point of the bump: the canonical identity changed because
+        # the run covers six models now, while every byte the dashboard reads
+        # stayed where it was.
+        earlier = load_snapshot(snapshot_path(PROJECT_ROOT, "0.1"))
+        self.assertNotEqual(
+            earlier["validation_run_id"], self.recorded["validation_run_id"]
+        )
+        self.assertEqual(earlier["legacy_run_id"], self.recorded["legacy_run_id"])
+        for published in (
+            "data/processed/ids_findings.csv",
+            "data/processed/models.csv",
+            "data/processed/model_inventory.csv",
+            "data/processed/bcf_topics.csv",
+            "data/processed/bcf_topic_findings.csv",
+            "data/processed/bcf_topic_events.csv",
+            "data/processed/bcf_viewpoints.csv",
+            "data/processed/bcf_viewpoint_components.csv",
+            "reports/bcf/ids_failures.bcf",
+        ):
+            with self.subTest(artifact=published):
+                self.assertEqual(
+                    earlier["artifacts"][published],
+                    self.recorded["artifacts"][published],
+                )
 
     def test_it_records_the_published_digests(self):
         artifacts = self.recorded["artifacts"]

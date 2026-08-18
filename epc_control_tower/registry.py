@@ -193,8 +193,14 @@ def default_registry(config: RunConfig) -> Registry:
     registry.register_grouping_policy(ElementGroupingPolicy())
     registry.register_exporter(CsvExporter())
     registry.register_exporter(JsonExporter())
+    # The legacy writers are told which project they publish; everything else
+    # in this registry is project-agnostic.
+    legacy_project_id = config.legacy_project_id or None
     registry.register_exporter(
-        LegacyBcfExporter(schema_dir=default_schema_dir(config.repository_root))
+        LegacyBcfExporter(
+            schema_dir=default_schema_dir(config.repository_root),
+            project_id=legacy_project_id,
+        )
     )
-    registry.register_exporter(LegacyPbipAdapter())
+    registry.register_exporter(LegacyPbipAdapter(project_id=legacy_project_id))
     return registry

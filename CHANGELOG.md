@@ -17,6 +17,58 @@ of what moved exists before the expectation that says it did.
 
 ## Unreleased
 
+### Data contract 1.0
+
+**The canonical contract moved; the published legacy contract did not.**
+
+A second project joined the repository, so the canonical tables now describe
+two. The validation covers six models instead of three, which changes
+`validation_run_id`, and through it every canonical finding, issue and event
+key. `data/processed/canonical/` and `reports/artifact_manifest.json` all move.
+Snapshot: `docs/contracts/contract-1.0.json`.
+
+The eight files under `data/processed/` and the BCF archive under `reports/`
+are byte-identical to contract 0.1, including the published `run_id`
+`ids-v0.1-8706ef58303bfd11`, `ids_findings.csv` at `ea7d2fa2cd1690eb…` and
+`ids_failures.bcf` at `b3c6f51abc9647ef…`.
+
+#### Scope of the legacy projection — an explicit decision
+
+Those eight files describe **exactly one project**, and with two projects
+present something had to say which. The answer is a run-configuration setting,
+`legacy_project_id`, and it is deliberate rather than incidental:
+
+- **Emitting every project was measured, not assumed.** It changes all eight
+  CSV files, the BCF archive and the published `run_id` — and every exporter
+  still reports success. A contract that widens silently is worse than one that
+  refuses.
+- **The published contract is single-project by construction.** The tracked
+  Power BI project asserts three models and thirty-nine elements, and the
+  committed acceptance evidence was captured against those numbers. Making the
+  legacy files describe more than one project is Phase 5 work, not a side
+  effect of adding a fixture.
+- **It fails closed.** With one project the setting may be omitted. With
+  several and no setting, the legacy writers refuse and name the projects they
+  found, rather than guessing.
+- The narrowed projection keeps the run's own identity intact: the validation
+  genuinely covered every model, and rewriting that to match the projection
+  would publish an identity that never happened.
+
+This setting retires with the legacy adapters in Phase 5.
+
+### Added
+
+- A second project, `iso-reference-view`: three unmodified IFC4 samples from
+  the buildingSMART ISO Spec Reference View 1.2 set, pinned at commit
+  `cecf656`. Its models are deliberately called `architecture` and `structural`
+  — the same business codes the PCERT project uses — so that the
+  `model_key`/`model_id` split is exercised rather than merely described. Their
+  global keys become `iso-reference-view.architecture` and
+  `iso-reference-view.structural`, which cannot collide with PCERT's pinned
+  `architecture` and `structural`.
+- `control-tower.toml`, which had not been needed until a run had a choice to
+  make.
+
 ### Data contract 0.1
 
 Unchanged. The rearrangement into `epc_control_tower/` is a move of code, not

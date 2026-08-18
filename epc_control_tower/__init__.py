@@ -16,4 +16,11 @@ __version__ = "1.0.0"
 # Version of the published data contract (CSV/JSON column shapes and their
 # semantics). Bumping this is a deliberate, reviewable act: it requires a
 # CHANGELOG entry and an explicit characterization-snapshot refresh.
-CONTRACT_VERSION = "0.1"
+#
+# 1.0 is the first bump, and the mechanism's first real use. What moved is the
+# canonical contract: it now carries more than one project, so the validation
+# identity covers six models rather than three and every canonical table grew
+# rows. The legacy contract did not move at all — the eight published CSV files
+# and the BCF archive are byte-identical, because the legacy writers publish
+# one named project.
+CONTRACT_VERSION = "1.0"
