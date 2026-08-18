@@ -76,7 +76,7 @@ hashes are recorded alongside the vendored snapshot.
 ## buildingSMART IDS 1.0 Implementer Test Cases
 
 Unmodified IDS implementer test cases under
-`third_party/buildingsmart/ids/1.0/testcases/` originate from the
+`third_party/buildingsmart/ids/1.0/` originate from the
 [buildingSMART IDS repository](https://github.com/buildingSMART/IDS), pinned at
 commit
 [`dba4549e57a3a98e725e086991e19800a76850b8`](https://github.com/buildingSMART/IDS/tree/dba4549e57a3a98e725e086991e19800a76850b8/Documentation/ImplementersDocumentation/TestCases).

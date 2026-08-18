@@ -106,7 +106,6 @@ class IdsSyntaxAuditTests(unittest.TestCase):
             / "buildingsmart"
             / "ids"
             / "1.0"
-            / "testcases"
             / "property"
             / "invalid-integer_values_cannot_be_stored_with_decimal_3_4.ids"
         )

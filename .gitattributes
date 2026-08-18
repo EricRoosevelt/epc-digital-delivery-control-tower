@@ -24,7 +24,7 @@
 
 third_party/buildingsmart/bcf-xml/3.0/** -text
 third_party/buildingsmart/ids/1.0/LICENSE -text
-third_party/buildingsmart/ids/1.0/testcases/** -text
+third_party/buildingsmart/ids/1.0/*/** -text
 
 # Two kinds of file share that directory and need opposite rules. The vendored
 # cases above are pinned raw because a NoDerivatives license and a digest table

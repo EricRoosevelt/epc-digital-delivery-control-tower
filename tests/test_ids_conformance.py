@@ -58,7 +58,6 @@ from epc_control_tower.checkers.ids_checker import IdsChecker
 from helpers import PROJECT_ROOT
 
 VENDORED = PROJECT_ROOT / "third_party" / "buildingsmart" / "ids" / "1.0"
-TESTCASES = VENDORED / "testcases"
 
 #: Facet directories copied from upstream — one per IDS facet kind, which is
 #: exactly what `IdsChecker.capabilities` claims to evaluate. See `SOURCE.md`
@@ -183,7 +182,7 @@ def _cases() -> list[tuple[str, Path]]:
 
     found = []
     for subset in SUBSETS:
-        for path in sorted((TESTCASES / subset).glob("*.ids")):
+        for path in sorted((VENDORED / subset).glob("*.ids")):
             found.append((f"{subset}/{path.stem}", path))
     return found
 
@@ -284,7 +283,7 @@ class VendoredCorpusTests(unittest.TestCase):
         self.assertNotIn(b"\r\n", raw)
         self.assertEqual(
             hashlib.sha256(raw).hexdigest(),
-            "cb0ebc6d74eb697747dacec90cf4185accd167a14d6f3172f5d4b72c1a6f96bc",
+            "00d450bb1de238a63227f19101b81b1eb1467fa7cd1f1223ecddb0947958d729",
         )
 
     def test_every_case_is_a_document_and_a_model(self):
@@ -292,6 +291,34 @@ class VendoredCorpusTests(unittest.TestCase):
             with self.subTest(case=name):
                 self.assertTrue(path.with_suffix(".ifc").is_file())
                 self.assertIn(name.split("/")[1].split("-", 1)[0], {"pass", "fail", "invalid"})
+
+    def test_no_vendored_path_is_too_long_for_a_windows_checkout(self):
+        # Learned the expensive way. Two of these filenames are 127 characters,
+        # and with one more directory level above them `git checkout` failed on
+        # a GitHub windows-latest runner with "Filename too long" — before a
+        # single test ran. Renaming was not available: the license is
+        # NoDerivatives, so the names are upstream's.
+        #
+        # The runner's workspace prefix is fixed by the repository name, so the
+        # budget is a number rather than a guess. Asserting it here means the
+        # next widening of this corpus fails on a developer's machine, with a
+        # message that says what to do, instead of in CI with a git error.
+        runner_prefix = len(
+            "D:/a/epc-digital-delivery-control-tower/"
+            "epc-digital-delivery-control-tower/"
+        )
+        budget = 259 - runner_prefix
+        for path in sorted(VENDORED.rglob("*")):
+            if not path.is_file():
+                continue
+            relative = path.relative_to(PROJECT_ROOT).as_posix()
+            with self.subTest(file=relative):
+                self.assertLessEqual(
+                    len(relative),
+                    budget,
+                    "Too long for a Windows checkout. Shorten the directories "
+                    "above it; the filenames themselves may not be changed.",
+                )
 
     def test_the_corpus_is_not_discovered_as_a_project(self):
         # A conformance fixture is not a deliverable. If these ever showed up

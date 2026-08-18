@@ -31,12 +31,12 @@ use, not the ones the checker can evaluate.
 
 | Directory | Cases | `pass-` | `fail-` | `invalid-` |
 |---|---|---|---|---|
-| `testcases/attribute` | 56 | 30 | 15 | 11 |
-| `testcases/classification` | 27 | 17 | 10 | 0 |
-| `testcases/entity` | 33 | 18 | 9 | 6 |
-| `testcases/material` | 29 | 23 | 6 | 0 |
-| `testcases/partof` | 34 | 17 | 16 | 1 |
-| `testcases/property` | 82 | 44 | 32 | 6 |
+| `attribute/` | 56 | 30 | 15 | 11 |
+| `classification/` | 27 | 17 | 10 | 0 |
+| `entity/` | 33 | 18 | 9 | 6 |
+| `material/` | 29 | 23 | 6 | 0 |
+| `partof/` | 34 | 17 | 16 | 1 |
+| `property/` | 82 | 44 | 32 | 6 |
 | **Total** | **261** | **149** | **88** | **24** |
 
 Each case is a pair: an `.ids` document and the minimal `.ifc` model it is to
@@ -55,12 +55,27 @@ plus the upstream `LICENSE`. The manifest is checked on every test run by
 `tests/test_ids_conformance.py`, which fails if any vendored byte has moved.
 
 The manifest's own SHA-256 is
-`cb0ebc6d74eb697747dacec90cf4185accd167a14d6f3172f5d4b72c1a6f96bc`.
+`00d450bb1de238a63227f19101b81b1eb1467fa7cd1f1223ecddb0947958d729`.
 
 Every vendored file was additionally verified against its upstream Git blob
 SHA-1 at the pinned revision before being committed, which is a stronger check
 than a re-hash of what was downloaded: it confirms the bytes are the ones the
 upstream repository stores, not merely the ones an archive endpoint served.
+
+## Why the facet directories sit directly here
+
+Upstream nests them one level deeper, under `TestCases/`. That level is
+dropped, and the reason is not taste: two of the vendored filenames are 127
+characters long, and with the extra segment the full path on a GitHub
+`windows-latest` runner came to 261 characters. `git checkout` failed with
+*Filename too long* and the build never got as far as running anything.
+
+Renaming the files was not an option — a NoDerivatives license means the
+bytes and the names are the upstream ones — and dropping the two long cases
+would have made the corpus a selection rather than a facet directory. So the
+path above them got shorter instead. `tests/test_ids_conformance.py` asserts
+the remaining margin, so the next widening of this corpus finds out on a
+developer's machine rather than in CI.
 
 The test case files and upstream license must not be reformatted, normalized,
 or otherwise modified. The repository's `.gitattributes` disables text
