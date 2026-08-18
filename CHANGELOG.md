@@ -17,6 +17,47 @@ of what moved exists before the expectation that says it did.
 
 ## Unreleased
 
+### Scope of the legacy projection, part two — the rule set
+
+The published files were already scoped to one project. They are now also
+scoped to one **rule set version**, and the reason was measured before the
+decision was made.
+
+Adding a single rule to the current document, changing nothing else:
+
+| | without the scope | with it |
+|---|---|---|
+| published `finding_key`s still valid | **0 of 47** | 47 of 47 |
+| published artifacts rewritten | **7 of 9** | 0 of 9 |
+| `run_id` | `ids-v0.1-d039d40a90203cf4` | `ids-v0.1-8706ef58303bfd11` |
+
+Not *some* keys — all of them. The published `run_id` is a digest of the rule
+document's bytes, so any rule anywhere re-keys every finding everywhere.
+
+What makes that fatal rather than untidy is what it takes down with it:
+`docs/evidence/stage_3b/acceptance_manifest.json` pins those digests, and
+regenerating it means re-capturing five screenshots by hand in Power BI
+Desktop with Speckle credentials — a task explicitly deferred to Phase 5. So
+growing the rule library would have been blocked on a Phase 5 prerequisite.
+
+The published files therefore mean *what rule set 0.1 said about the PCERT
+project*. New rules go into a new version of the document and reach the
+canonical outputs only. Configured as `legacy_ruleset_path`, alongside
+`legacy_project_id`; both retire with the adapters.
+
+Two details worth recording. The scope **filters rather than re-evaluates** —
+the requirements it keeps were evaluated by the same run against the same
+models, so a rule whose *meaning* changed would still break byte equality
+loudly, which is the behaviour worth having. And published rows now take their
+metadata, including severity, from the frozen rule rather than the current one,
+so reclassifying a rule later cannot rewrite what an earlier version published.
+
+Alternatives considered and rejected: running the pipeline twice, once per rule
+set, splits the artifact manifest so it no longer describes *the* run; carrying
+several rule sets in one bundle is probably where this ends up eventually, but
+it restructures the domain, identity and validation layers, and Phase 3's
+subject is the rule library, not the identity model.
+
 ### Data contract 1.0
 
 **The canonical contract moved; the published legacy contract did not.**

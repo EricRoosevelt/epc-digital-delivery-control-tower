@@ -32,7 +32,15 @@ from dataclasses import dataclass
 
 from ..bcf.geometry import Aabb, Camera, camera_for_aabb
 from ..determinism import format_float
-from ..domain import Element, Finding, Model, Requirement, RunBundle
+from ..domain import (
+    Element,
+    Finding,
+    Model,
+    Requirement,
+    RuleSet,
+    RunBundle,
+    Severity,
+)
 from ..legacy_identity import (
     legacy_finding_key,
     legacy_run_id,
@@ -65,6 +73,7 @@ __all__ = [
     "LegacyTopic",
     "issue_element_keys",
     "narrow_to_project",
+    "narrow_to_ruleset",
     "project_bundle",
     "project_register",
     "viewpoint_row",
@@ -152,7 +161,11 @@ def _finding_row(
         status=str(finding.status),
         is_applicable=_boolean(finding.is_applicable),
         is_issue=_boolean(finding.is_issue),
-        severity=str(finding.severity),
+        # From the frozen rule, not from the finding. The finding carries the
+        # severity the *current* rule set assigns; the published file has to
+        # keep saying what rule set 0.1 said, even if a later version
+        # reclassifies the same rule.
+        severity=str(requirement.severity if finding.is_issue else Severity.INFO),
         ifc_class=element.ifc_class if element is not None else "",
         element_name=element.name if element is not None else "",
         expected=finding.expected,
@@ -323,12 +336,92 @@ def narrow_to_project(bundle: RunBundle, project_id: str) -> RunBundle:
     )
 
 
-def project_bundle(bundle: RunBundle, *, project_id: str | None = None) -> LegacyProjection:
+def narrow_to_ruleset(bundle: RunBundle, frozen: RuleSet) -> RunBundle:
+    """Restrict a run to the rules the published contract was built from.
+
+    **The second half of the scope decision, and it was measured before it was
+    made.** Adding a single rule to the document, changing nothing else,
+    destroys all forty-seven published ``finding_key`` values — not some of
+    them, all of them — and rewrites seven of the nine published artifacts. The
+    published ``run_id`` is a digest of the rule document's bytes, so any rule
+    anywhere re-keys every finding everywhere.
+
+    What makes that fatal rather than merely inconvenient is what it takes down
+    with it: ``docs/evidence/stage_3b/acceptance_manifest.json`` pins those
+    digests, and regenerating it means re-capturing screenshots by hand in
+    Power BI Desktop. Growing the rule library would therefore have been
+    blocked on a task explicitly deferred to Phase 5.
+
+    So the published files mean *what rule set 0.1 said about one project*.
+    Both halves are scope. New rules go into a new version of the document and
+    reach the canonical outputs only; the frozen document keeps publishing what
+    it always published.
+
+    This filters rather than re-evaluates. The requirements it keeps were
+    evaluated by the same run as everything else, against the same models —
+    ``requirement_key`` depends only on the rule and requirement identifiers,
+    so a rule set that still contains rule 0.1's rules still produces rule
+    0.1's findings. A rule whose *meaning* changed would produce a different
+    finding for the same key, and the byte-equality test would say so loudly,
+    which is the behaviour worth having.
+    """
+
+    frozen_keys = {requirement.requirement_key for requirement in frozen.requirements}
+    missing = sorted(
+        requirement.rule_id
+        for requirement in frozen.requirements
+        if requirement.requirement_key
+        not in {r.requirement_key for r in bundle.ruleset.requirements}
+    )
+    if missing:
+        raise ValueError(
+            "The published contract is built from rule set "
+            f"{frozen.ruleset_id} {frozen.version}, but this run's rule set no "
+            f"longer contains {sorted(set(missing))}. A published rule cannot be "
+            "removed or renamed while the legacy adapters exist."
+        )
+
+    findings = tuple(
+        finding
+        for finding in bundle.findings
+        if finding.requirement_key in frozen_keys
+    )
+    finding_keys = {finding.finding_key for finding in findings}
+    issues = tuple(
+        dataclasses.replace(
+            issue,
+            finding_keys=tuple(
+                key for key in issue.finding_keys if key in finding_keys
+            ),
+        )
+        for issue in bundle.issues
+        if any(key in finding_keys for key in issue.finding_keys)
+    )
+    issue_keys = {issue.issue_key for issue in issues}
+
+    return dataclasses.replace(
+        bundle,
+        ruleset=frozen,
+        findings=findings,
+        issues=issues,
+        issue_events=tuple(
+            event for event in bundle.issue_events if event.issue_key in issue_keys
+        ),
+    )
+
+
+def project_bundle(
+    bundle: RunBundle,
+    *,
+    project_id: str | None = None,
+    frozen_ruleset: RuleSet | None = None,
+) -> LegacyProjection:
     """Project a canonical bundle onto the published contract.
 
-    ``project_id`` names the single project the published files describe. It may
-    be omitted only when the run contains exactly one project — with several,
-    guessing would silently republish a different contract, so it is required.
+    ``project_id`` names the single project the published files describe, and
+    ``frozen_ruleset`` the single rule set version they were built from. Both
+    may be omitted only when the run offers no choice; with a choice available,
+    guessing would silently republish a different contract.
     """
 
     if project_id is not None:
@@ -341,10 +434,15 @@ def project_bundle(bundle: RunBundle, *, project_id: str | None = None) -> Legac
             "legacy writers should publish."
         )
 
+    if frozen_ruleset is not None:
+        bundle = narrow_to_ruleset(bundle, frozen_ruleset)
+
     ids_version = bundle.ruleset.version
     run_id = legacy_run_id(
         ids_version=ids_version,
-        ids_sha256=bundle.run.ruleset_source_blob_sha256,
+        # The frozen document's own bytes. Deriving this from the run's current
+        # rule set is what made every published key hostage to every new rule.
+        ids_sha256=bundle.ruleset.source_blob_sha256,
         models=[
             (model.model_id, model.provenance.content_sha256) for model in bundle.models
         ],

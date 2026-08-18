@@ -26,6 +26,7 @@ __all__ = [
     "shipped_pipeline_result",
     "shipped_reports_dir",
     "shipped_run_config",
+    "widened_ruleset_bundle",
     "writable_test_directory",
 ]
 
@@ -96,3 +97,61 @@ def published_bundle():
     from epc_control_tower.exporters.legacy_projection import narrow_to_project
 
     return narrow_to_project(shipped_pipeline_result().bundle, LEGACY_PROJECT_ID)
+
+
+@functools.cache
+def widened_ruleset_bundle():
+    """A run over a rule set with one rule more than the published one.
+
+    Returns ``(bundle, frozen_ruleset)``. Built by adding a specification to the
+    declared rules rather than by editing the shipped document, so the frozen
+    document on disk stays exactly what it was — which is the whole point of
+    the scope being tested.
+    """
+
+    import dataclasses
+    import sys
+
+    from ifctester import ids
+
+    from epc_control_tower.pipeline import build_bundle
+    from epc_control_tower.rules import load_ruleset
+
+    if str(PROJECT_ROOT / "src") not in sys.path:
+        sys.path.insert(0, str(PROJECT_ROOT / "src"))
+    from generate_ids import add_specification, build_document
+
+    scratch = shipped_reports_dir().parent / f".widened-{uuid.uuid4().hex}"
+    scratch.mkdir(mode=0o777)
+    atexit.register(shutil.rmtree, scratch, True)
+
+    document = build_document()
+    add_specification(
+        document=document,
+        identifier="R-006",
+        name="Windows must declare IsExternal",
+        entity_name="IFCWINDOW",
+        requirements=[
+            ids.Property(
+                propertySet="Pset_WindowCommon",
+                baseName="IsExternal",
+                dataType="IFCBOOLEAN",
+                cardinality="required",
+                instructions="Declare whether the window is external.",
+            )
+        ],
+        description="An eighth rule, used to test that adding one is safe.",
+    )
+    widened = scratch / "widened.ids"
+    document.to_xml(str(widened))
+
+    frozen_path = PROJECT_ROOT / "ids" / "epc_delivery_requirements_v0.1.ids"
+    config = dataclasses.replace(
+        shipped_run_config(),
+        ruleset_path=widened,
+        legacy_ruleset_path=frozen_path,
+        processed_data_dir=scratch / "processed",
+        reports_dir=scratch / "reports",
+    )
+    result = build_bundle(config, reports_dir=scratch / "reports")
+    return result.bundle, load_ruleset(frozen_path)

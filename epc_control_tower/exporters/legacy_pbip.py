@@ -29,7 +29,7 @@ from collections.abc import Sequence
 from pathlib import Path
 
 from ..determinism import atomic_write_bytes, sha256_bytes, write_csv_bytes
-from ..domain import RunBundle, field_names
+from ..domain import RuleSet, RunBundle, field_names
 from ..protocols import Artifact
 from .legacy_contract import (
     LegacyComponentRow,
@@ -97,11 +97,18 @@ class LegacyPbipAdapter:
     version = "1.0.0"
     output_root_key = "processed"
 
-    def __init__(self, *, project_id: str | None = None) -> None:
-        #: The single project these files describe. See
-        #: :func:`~.legacy_projection.narrow_to_project` for why the published
-        #: contract has exactly one and why widening it is not an option.
+    def __init__(
+        self,
+        *,
+        project_id: str | None = None,
+        frozen_ruleset: RuleSet | None = None,
+    ) -> None:
+        #: The single project these files describe, and the single rule set
+        #: version. See :func:`~.legacy_projection.narrow_to_project` and
+        #: :func:`~.legacy_projection.narrow_to_ruleset` for why the published
+        #: contract has exactly one of each, and what widening either costs.
         self._project_id = project_id
+        self._frozen_ruleset = frozen_ruleset
 
     def config_sha256(self) -> str:
         return ""
@@ -111,7 +118,11 @@ class LegacyPbipAdapter:
     ) -> dict[str, bytes]:
         """Return the published files as bytes, without writing anything."""
 
-        projection = projection or project_bundle(bundle, project_id=self._project_id)
+        projection = projection or project_bundle(
+            bundle,
+            project_id=self._project_id,
+            frozen_ruleset=self._frozen_ruleset,
+        )
         return {
             filename: _table_bytes(
                 getattr(projection, attribute),

@@ -187,20 +187,31 @@ def default_registry(config: RunConfig) -> Registry:
     from .exporters.legacy_bcf import LegacyBcfExporter
     from .exporters.legacy_pbip import LegacyPbipAdapter
     from .grouping.element import ElementGroupingPolicy
+    from .rules import load_ruleset
 
     registry = Registry()
     registry.register_checker(IdsChecker(config.resolved_ruleset_path()))
     registry.register_grouping_policy(ElementGroupingPolicy())
     registry.register_exporter(CsvExporter())
     registry.register_exporter(JsonExporter())
-    # The legacy writers are told which project they publish; everything else
-    # in this registry is project-agnostic.
+    # The legacy writers are told which project and which rule set version they
+    # publish. Everything else in this registry is agnostic to both.
     legacy_project_id = config.legacy_project_id or None
+    frozen_ruleset = (
+        load_ruleset(config.legacy_ruleset_path)
+        if config.legacy_ruleset_path is not None
+        else None
+    )
     registry.register_exporter(
         LegacyBcfExporter(
             schema_dir=default_schema_dir(config.repository_root),
             project_id=legacy_project_id,
+            frozen_ruleset=frozen_ruleset,
         )
     )
-    registry.register_exporter(LegacyPbipAdapter(project_id=legacy_project_id))
+    registry.register_exporter(
+        LegacyPbipAdapter(
+            project_id=legacy_project_id, frozen_ruleset=frozen_ruleset
+        )
+    )
     return registry

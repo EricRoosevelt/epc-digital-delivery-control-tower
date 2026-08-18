@@ -129,6 +129,15 @@ class RunConfig:
     #: different contract under the same filenames. It retires with the legacy
     #: adapters.
     legacy_project_id: str = ""
+    #: The frozen rule document the legacy writers publish.
+    #:
+    #: The published files mean "what rule set 0.1 said about one project".
+    #: Adding a rule to the *current* document must therefore not touch them —
+    #: and it would, catastrophically, since the published run_id is a digest
+    #: of the document's bytes and re-keys all forty-seven findings. Left unset
+    #: the legacy writers use whatever rule set the run used, which is correct
+    #: only while the two are the same document. Retires with the adapters.
+    legacy_ruleset_path: Path | None = None
 
     def resolved_processed_data_dir(self) -> Path:
         return self.processed_data_dir or self.repository_root / "data" / "processed"
@@ -318,4 +327,5 @@ def load_run_config(
         grouping_policy=str(run_section.get("grouping_policy", "element")),
         exporters=tuple(str(item) for item in exporters),
         legacy_project_id=str(run_section.get("legacy_project_id", "")),
+        legacy_ruleset_path=_optional_path("legacy_ruleset_path"),
     )

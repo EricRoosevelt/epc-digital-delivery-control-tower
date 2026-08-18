@@ -153,6 +153,14 @@ def _command_export(arguments: argparse.Namespace) -> int:
     return _command_run(arguments)
 
 
+def frozen_legacy_ruleset(config):
+    """The rule set version the legacy writers publish, if pinned separately."""
+
+    from .pipeline import _frozen_ruleset
+
+    return _frozen_ruleset(config)
+
+
 def _current_snapshot(config):
     from .exporters.legacy_projection import project_bundle
     from .pipeline import execute
@@ -167,7 +175,9 @@ def _current_snapshot(config):
     return result, build_snapshot(
         result.pipeline.bundle,
         legacy_run_id=project_bundle(
-            result.pipeline.bundle, project_id=config.legacy_project_id or None
+            result.pipeline.bundle,
+            project_id=config.legacy_project_id or None,
+            frozen_ruleset=frozen_legacy_ruleset(config),
         ).run_id,
         artifact_bundle_id=result.export.artifact_bundle_id,
         artifacts=artifacts,

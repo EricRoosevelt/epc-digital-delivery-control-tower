@@ -190,6 +190,14 @@ class RunResult:
     legacy_manifest_path: Path | None = None
 
 
+def _frozen_ruleset(config: RunConfig) -> RuleSet | None:
+    """The rule set the legacy writers publish, if it is pinned separately."""
+
+    if config.legacy_ruleset_path is None:
+        return None
+    return load_ruleset(config.legacy_ruleset_path)
+
+
 def _manifest_for_project(
     manifests: Sequence[ProjectManifest],
     project_id: str | None,
@@ -257,7 +265,11 @@ def execute(
     legacy_manifest_path: Path | None = None
     if {"legacy-bcf", "legacy-pbip"} <= set(enabled):
         legacy_project_id = config.legacy_project_id or None
-        projection = project_bundle(result.bundle, project_id=legacy_project_id)
+        projection = project_bundle(
+            result.bundle,
+            project_id=legacy_project_id,
+            frozen_ruleset=_frozen_ruleset(config),
+        )
         # The manifest names the IFC file the archive was built from, so it has
         # to read the raw data directory of the project the legacy writers
         # actually published — not whichever project happened to sort first.

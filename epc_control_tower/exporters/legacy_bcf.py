@@ -28,7 +28,7 @@ from xml.etree import ElementTree as ET
 from ..bcf.archive import build_deterministic_zip
 from ..bcf.schema import validate_xml_schemas, verify_schema_bundle, xml_bytes
 from ..determinism import atomic_write_bytes, format_float, sha256_bytes
-from ..domain import RunBundle
+from ..domain import RuleSet, RunBundle
 from ..protocols import Artifact
 from .legacy_contract import (
     ASSIGNEE,
@@ -86,6 +86,7 @@ class LegacyBcfExporter:
         schema_dir: Path,
         subdirectory: str = "bcf",
         project_id: str | None = None,
+        frozen_ruleset: RuleSet | None = None,
     ) -> None:
         self._schema_dir = Path(schema_dir)
         self._subdirectory = subdirectory
@@ -94,6 +95,7 @@ class LegacyBcfExporter:
         #: archive spanning two projects would not merely gain topics — it would
         #: republish the existing ones under a different run identity.
         self._project_id = project_id
+        self._frozen_ruleset = frozen_ruleset
 
     def config_sha256(self) -> str:
         return ""
@@ -101,7 +103,7 @@ class LegacyBcfExporter:
     # -- export ------------------------------------------------------------
 
     def export(self, bundle: RunBundle, output_root: Path) -> tuple[Artifact, ...]:
-        projection = project_bundle(bundle, project_id=self._project_id)
+        projection = self._project(bundle)
         data = self.build_archive(bundle, projection)
         path = output_root / self._subdirectory / BCF_FILENAME
         atomic_write_bytes(path, data)
@@ -120,7 +122,7 @@ class LegacyBcfExporter:
         """Build the archive bytes without writing anything."""
 
         verify_schema_bundle(self._schema_dir)
-        projection = projection or project_bundle(bundle, project_id=self._project_id)
+        projection = projection or self._project(bundle)
         self._assert_legacy_scope(projection)
 
         entries = self.root_entries()
@@ -133,6 +135,13 @@ class LegacyBcfExporter:
 
         validate_xml_schemas(entries, self._schema_dir)
         return build_deterministic_zip(entries)
+
+    def _project(self, bundle: RunBundle) -> LegacyProjection:
+        return project_bundle(
+            bundle,
+            project_id=self._project_id,
+            frozen_ruleset=self._frozen_ruleset,
+        )
 
     # -- legacy scope ------------------------------------------------------
 
