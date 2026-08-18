@@ -154,6 +154,30 @@ class SourceDisciplineTests(unittest.TestCase):
             with self.subTest(suffix=suffix):
                 self.assertIn(f"*{suffix} text eol=lf", declared)
 
+    def test_rule_documents_pin_their_bytes_one_way_or_the_other(self):
+        # ids/*.ids is deliberately exempt from git's text normalisation. Two
+        # different things follow from that, and conflating them is a mistake
+        # worth spelling out.
+        #
+        # The frozen document is CRLF *on purpose*: the published run_id is a
+        # digest of its raw bytes, taken from a CRLF working copy, so the
+        # exemption is what makes the published baseline reproducible on Linux.
+        #
+        # A generated document in the same directory has the opposite problem.
+        # IfcTester writes XML in text mode, so without an explicit choice the
+        # same rules compile to CRLF on Windows and LF elsewhere, and — with
+        # normalisation off — the regeneration gate then fails on whichever
+        # platform did not write the committed copy. It happened; this is the
+        # regression test.
+        frozen = PROJECT_ROOT / "ids" / "epc_delivery_requirements_v0.1.ids"
+        self.assertIn(b"\r\n", frozen.read_bytes(), "the frozen byte pin is gone")
+
+        for path in sorted((PROJECT_ROOT / "ids").glob("*.ids")):
+            if path == frozen:
+                continue
+            with self.subTest(document=path.name):
+                self.assertNotIn(b"\r\n", path.read_bytes())
+
     def test_no_archive_is_compressed(self):
         # Compression output depends on the zlib build, so a compressed archive
         # is not reproducible across machines.

@@ -259,7 +259,7 @@ def compile_rule_directory(path: Path, *, output_dir: Path | None = None) -> Ids
     target_dir = output_dir or (path.parent.parent / "ids")
     target_dir.mkdir(parents=True, exist_ok=True)
     compiled = target_dir / f"{definition.ruleset_id}_v{definition.version}.ids"
-    document.to_xml(str(compiled))
+    atomic_write_bytes(compiled, _serialise_document(document, target_dir))
 
     return IdsRuleSource(
         path=compiled,
@@ -270,6 +270,27 @@ def compile_rule_directory(path: Path, *, output_dir: Path | None = None) -> Ids
             {rule.title: rule.rule_id for rule in definition.rules}
         ),
     )
+
+
+def _serialise_document(document, scratch_dir: Path) -> bytes:
+    """Render an IDS document to bytes with line endings that do not vary.
+
+    IfcTester writes XML in text mode, so it emits CRLF on Windows and LF
+    elsewhere. That is normally invisible because git normalises text — but
+    ``.gitattributes`` deliberately disables normalisation for ``ids/*.ids``,
+    so that the frozen document's bytes survive a checkout on any platform.
+    A generated document in that directory therefore has to pin its own line
+    endings, or the same rules compile to different bytes on Linux than on
+    Windows and the regeneration gate fails on whichever platform did not write
+    them. This is the same hazard as the frozen document's, one level up.
+    """
+
+    scratch = scratch_dir / ".compile.tmp.ids"
+    try:
+        document.to_xml(str(scratch))
+        return scratch.read_bytes().replace(b"\r\n", b"\n")
+    finally:
+        scratch.unlink(missing_ok=True)
 
 
 def load_ids_rule_source(path: Path, *, ruleset_id: str = "ids") -> IdsRuleSource:
