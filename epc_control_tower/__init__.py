@@ -17,6 +17,12 @@ __version__ = "1.0.0"
 # semantics). Bumping this is a deliberate, reviewable act: it requires a
 # CHANGELOG entry and an explicit characterization-snapshot refresh.
 #
+# 1.2 is the first bump caused by the rule library being used rather than built.
+# Four rules were added — no package code, no test, four TOML files — and with
+# them the last three IDS facet kinds this project had never evaluated. Every
+# canonical table grew rows; the legacy contract did not move, for the same
+# reason it has not moved since 1.0.
+#
 # 1.1 moves the canonical contract again: the rules are declarative now, so the
 # rule set has a new id and version and the validation identity follows. The
 # legacy contract is unaffected, because it is scoped to the frozen rule set.
@@ -27,4 +33,4 @@ __version__ = "1.0.0"
 # rows. The legacy contract did not move at all — the eight published CSV files
 # and the BCF archive are byte-identical, because the legacy writers publish
 # one named project.
-CONTRACT_VERSION = "1.1"
+CONTRACT_VERSION = "1.2"

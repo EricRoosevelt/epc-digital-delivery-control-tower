@@ -158,5 +158,86 @@
                 </property>
             </requirements>
         </specification>
+        <specification name="Walls must declare their material" ifcVersion="IFC4" identifier="R-006" description="Checks whether every applicable IfcWall is associated with a material, layer set, or constituent set.">
+            <applicability minOccurs="0" maxOccurs="unbounded">
+                <entity>
+                    <name>
+                        <simpleValue>IFCWALL</simpleValue>
+                    </name>
+                </entity>
+            </applicability>
+            <requirements>
+                <material cardinality="required" instructions="Associate the wall with a material, material layer set, or constituent set." />
+            </requirements>
+        </specification>
+        <specification name="Columns must declare a meaningful predefined type" ifcVersion="IFC4" identifier="R-007" description="Checks whether every applicable IfcColumn declares a predefined type other than NOTDEFINED or USERDEFINED.">
+            <applicability minOccurs="0" maxOccurs="unbounded">
+                <entity>
+                    <name>
+                        <simpleValue>IFCCOLUMN</simpleValue>
+                    </name>
+                </entity>
+            </applicability>
+            <requirements>
+                <entity instructions="Declare COLUMN or PILASTER. NOTDEFINED states nothing.">
+                    <name>
+                        <simpleValue>IFCCOLUMN</simpleValue>
+                    </name>
+                    <predefinedType>
+                        <xs:restriction base="xs:string">
+                            <xs:enumeration value="COLUMN" />
+                            <xs:enumeration value="PILASTER" />
+                        </xs:restriction>
+                    </predefinedType>
+                </entity>
+            </requirements>
+        </specification>
+        <specification name="Beams must declare a meaningful predefined type" ifcVersion="IFC4" identifier="R-008" description="Checks whether every applicable IfcBeam declares a predefined type other than NOTDEFINED or USERDEFINED.">
+            <applicability minOccurs="0" maxOccurs="unbounded">
+                <entity>
+                    <name>
+                        <simpleValue>IFCBEAM</simpleValue>
+                    </name>
+                </entity>
+            </applicability>
+            <requirements>
+                <entity instructions="Declare the beam's type. A name string is not a predefined type.">
+                    <name>
+                        <simpleValue>IFCBEAM</simpleValue>
+                    </name>
+                    <predefinedType>
+                        <xs:restriction base="xs:string">
+                            <xs:enumeration value="BEAM" />
+                            <xs:enumeration value="JOIST" />
+                            <xs:enumeration value="HOLLOWCORE" />
+                            <xs:enumeration value="LINTEL" />
+                            <xs:enumeration value="SPANDREL" />
+                            <xs:enumeration value="T_BEAM" />
+                        </xs:restriction>
+                    </predefinedType>
+                </entity>
+            </requirements>
+        </specification>
+        <specification name="Walls must carry an element-level classification reference" ifcVersion="IFC4" identifier="R-009" description="Project-specific assumed EPC delivery requirement: classification recorded on the element, not only on the building.">
+            <applicability minOccurs="0" maxOccurs="unbounded">
+                <entity>
+                    <name>
+                        <simpleValue>IFCWALL</simpleValue>
+                    </name>
+                </entity>
+            </applicability>
+            <requirements>
+                <classification cardinality="required" instructions="Classify the wall itself, not only the building that contains it.">
+                    <value>
+                        <xs:restriction base="xs:string">
+                            <xs:pattern value="[A-Z]-[A-Z]{3}" />
+                        </xs:restriction>
+                    </value>
+                    <system>
+                        <simpleValue>CCI Construction</simpleValue>
+                    </system>
+                </classification>
+            </requirements>
+        </specification>
     </specifications>
 </ids>

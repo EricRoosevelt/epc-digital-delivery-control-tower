@@ -73,7 +73,26 @@ IDS_NAMESPACE = {"ids": "http://standards.buildingsmart.org/IDS"}
 
 #: Facet kinds this checker evaluates, in the vocabulary
 #: :class:`~..domain.Requirement` uses.
-SUPPORTED_FACETS = ("attribute", "partof", "property")
+#:
+#: All six IDS 1.0 defines. This tuple used to list three, which was not a
+#: statement about the checker at all — it was an inventory of the facets the
+#: rule library happened to use at the time. The distinction matters because
+#: the registry refuses to route a requirement whose facet a checker does not
+#: claim, so an under-claim does not merely mislead: it blocks a rule that
+#: would have worked. Writing a rule with a material facet was rejected for
+#: needing a capability IfcTester has implemented all along.
+#:
+#: The claim is now evidenced rather than asserted. buildingSMART's implementer
+#: test cases are vendored one directory per facet kind, and
+#: `tests/test_ids_conformance.py` runs all 261 of them on every test run.
+SUPPORTED_FACETS = (
+    "attribute",
+    "classification",
+    "entity",
+    "material",
+    "partof",
+    "property",
+)
 
 _PASS_REASON = "Requirement satisfied."
 _FAIL_REASON = "Requirement not satisfied."

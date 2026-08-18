@@ -232,8 +232,8 @@ class CanonicalGrainTests(unittest.TestCase):
         counts: dict[str, int] = {}
         for finding in self.bundle.findings:
             counts[finding.project_id] = counts.get(finding.project_id, 0) + 1
-        self.assertEqual(counts[LEGACY_PROJECT_ID], 47)
-        self.assertEqual(counts[SECOND_PROJECT_ID], 27)
+        self.assertEqual(counts[LEGACY_PROJECT_ID], 76)
+        self.assertEqual(counts[SECOND_PROJECT_ID], 39)
 
     def test_the_second_project_has_applicable_findings_not_only_na(self):
         applicable = [
@@ -241,10 +241,19 @@ class CanonicalGrainTests(unittest.TestCase):
             for f in self.bundle.findings
             if f.project_id == SECOND_PROJECT_ID and f.is_applicable
         ]
-        self.assertEqual(len(applicable), 2)
+        # Five rules now reach this project, where two did, and one of them
+        # fails. Until the rule library covered material, entity type and
+        # classification, the second project could only demonstrate that the
+        # pipeline ran over it — every rule that had anything to say was about
+        # ducts, beams or property sets these three samples do not contain.
+        self.assertEqual(len(applicable), 5)
         self.assertEqual(
             sorted(self.bundle.ruleset.by_key(f.requirement_key).rule_id for f in applicable),
-            ["R-001", "R-002"],
+            ["R-001", "R-002", "R-006", "R-007", "R-009"],
+        )
+        self.assertEqual(
+            sum(1 for f in applicable if f.is_issue),
+            1,
         )
 
 

@@ -38,12 +38,20 @@ class DeclaredRuleTests(unittest.TestCase):
         files = sorted(p.stem for p in RULES.glob("*.toml") if p.stem != "ruleset")
         self.assertEqual(files, [rule.rule_id for rule in self.definition.rules])
 
-    def test_the_declared_rules_reproduce_the_frozen_keys(self):
+    def test_the_declared_rules_still_contain_every_frozen_key(self):
         # The rule library must keep publishing the same requirements it
         # published before it was a library, or every downstream key moves.
+        #
+        # Containment, not equality. Equality was the right assertion for
+        # exactly as long as the library had not grown: it said "the rewrite
+        # changed nothing", which was the whole claim being made at the time.
+        # It is the wrong assertion now, because it would forbid adding a rule
+        # — and a rule library that cannot gain a rule is a hardcoded list with
+        # extra steps. What must never happen is a frozen key *leaving*, and
+        # that is what this now says.
         frozen = {r.requirement_key for r in frozen_ruleset().requirements}
         declared = {r.requirement_key for r in self.ruleset.requirements}
-        self.assertEqual(frozen, declared)
+        self.assertTrue(frozen <= declared, sorted(frozen - declared))
 
     def test_the_wording_of_each_requirement_is_unchanged(self):
         from epc_control_tower.checkers.ids_checker import load_ids_rule_source
@@ -113,7 +121,7 @@ class AddingARuleTests(unittest.TestCase):
 
             widened = load_ruleset(target)
 
-        self.assertEqual(len({r.rule_id for r in widened.requirements}), 8)
+        self.assertEqual(len({r.rule_id for r in widened.requirements}), 12)
         added = [r for r in widened.requirements if r.rule_id == "R-900"]
         self.assertEqual(len(added), 1)
         self.assertIs(added[0].severity, Severity.WARNING)

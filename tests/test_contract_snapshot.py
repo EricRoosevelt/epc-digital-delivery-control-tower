@@ -63,16 +63,16 @@ class RecordedSnapshotTests(unittest.TestCase):
         self.assertEqual(counts["projects"], 2)
         self.assertEqual(counts["models"], 6)
         self.assertEqual(counts["elements"], 44)
-        self.assertEqual(counts["findings"], 74)
-        self.assertEqual(counts["applicable"], 33)
-        self.assertEqual(counts["issues"], 3)
-        self.assertEqual(counts["by_status"], {"PASS": 27, "FAIL": 6, "N/A": 41})
-        self.assertEqual(self.recorded["ruleset"]["requirements"], 9)
+        self.assertEqual(counts["findings"], 115)
+        self.assertEqual(counts["applicable"], 58)
+        self.assertEqual(counts["issues"], 18)
+        self.assertEqual(counts["by_status"], {"PASS": 37, "FAIL": 21, "N/A": 57})
+        self.assertEqual(self.recorded["ruleset"]["requirements"], 13)
 
     def test_the_rule_set_is_the_declarative_one(self):
         self.assertEqual(self.recorded["ruleset"]["id"], "epc-delivery")
         self.assertEqual(self.recorded["ruleset"]["version"], "1.0")
-        self.assertEqual(self.recorded["ruleset"]["requirements"], 9)
+        self.assertEqual(self.recorded["ruleset"]["requirements"], 13)
 
     def test_the_earlier_contract_is_kept_as_history(self):
         # A snapshot is per contract version, so bumping adds a record rather

@@ -1,0 +1,25 @@
+rule_id = "R-008"
+title = "Beams must declare a meaningful predefined type"
+description = "Checks whether every applicable IfcBeam declares a predefined type other than NOTDEFINED or USERDEFINED."
+checker = "ids"
+severity = "ERROR"
+owner_role = "structural-lead"
+stage = "Design"
+discipline_scope = ["Structural"]
+citation = "ISO 19650-1:2018 §5.1 — information requirements must be identifiable."
+
+[[applicability]]
+facet = "entity"
+name = "IFCBEAM"
+
+# The IFC4 IfcBeamTypeEnum less NOTDEFINED and USERDEFINED. Whether a member is
+# a lintel, a joist, or a hollowcore unit changes how it is fabricated,
+# scheduled and inspected; a name string that happens to read "girder" carries
+# none of that to a downstream system.
+[[requirements]]
+facet = "entity"
+name = "IFCBEAM"
+instructions = "Declare the beam's type. A name string is not a predefined type."
+
+[requirements.predefinedType]
+enumeration = ["BEAM", "JOIST", "HOLLOWCORE", "LINTEL", "SPANDREL", "T_BEAM"]

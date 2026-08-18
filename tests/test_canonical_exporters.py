@@ -130,7 +130,21 @@ class ExportedShapeTests(unittest.TestCase):
 
     def test_a_tuple_field_becomes_one_cell(self):
         kinds = {row["facet_kinds"] for row in self.tables["requirements.csv"][1]}
-        self.assertEqual(kinds, {"attribute", "partof", "property"})
+        # All six IDS 1.0 facet kinds now appear. The set is asserted rather
+        # than its size because what is under test is that a tuple field
+        # survives export as one readable cell, and a stray delimiter would
+        # show up here as a value nobody declared.
+        self.assertEqual(
+            kinds,
+            {
+                "attribute",
+                "classification",
+                "entity",
+                "material",
+                "partof",
+                "property",
+            },
+        )
 
     def test_the_canonical_contract_is_kept_apart_from_the_published_one(self):
         for artifact in self.artifacts:

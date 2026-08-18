@@ -1,0 +1,33 @@
+rule_id = "R-009"
+title = "Walls must carry an element-level classification reference"
+description = "Project-specific assumed EPC delivery requirement: classification recorded on the element, not only on the building."
+checker = "ids"
+
+# A warning, for the same reason R-005 is one, and stated here rather than
+# derived from anything. Both supplied sample projects do classify — the PCERT
+# models carry a CCI Construction reference — but they carry it on IfcBuilding.
+# Element-level classification is what an asset register, a cost plan, or a
+# CAFM handover actually consumes, so an EPC project asks for it; buildingSMART
+# never promised it, so failing this is not a defect in the supplied model.
+severity = "WARNING"
+owner_role = "information-manager"
+stage = "Handover"
+discipline_scope = ["Architecture", "Structural"]
+citation = "Project-assumed EPC delivery requirement; not a buildingSMART obligation."
+
+[[applicability]]
+facet = "entity"
+name = "IFCWALL"
+
+# The value is a pattern rather than a literal, because a classification
+# requirement that named one code would be a rule about one wall. The shape is
+# what is being required: a CCI-style table letter, a hyphen, and a three-part
+# code — the form the supplied models already use at building level.
+[[requirements]]
+facet = "classification"
+system = "CCI Construction"
+cardinality = "required"
+instructions = "Classify the wall itself, not only the building that contains it."
+
+[requirements.value]
+pattern = "[A-Z]-[A-Z]{3}"

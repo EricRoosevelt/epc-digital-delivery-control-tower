@@ -80,18 +80,18 @@
     </header>
     <h2>Summary</h2>
     <div class="container">
-        <div class="pass percent" style="width: N/A%;">N/A%</div>
+        <div class="pass percent" style="width: 100%;">100%</div>
     </div>
     <p>
         <span class="item pass">Pass</span>
         <span class="item">
-            Specifications passed: <strong>7</strong> / <strong>7</strong>
+            Specifications passed: <strong>11</strong> / <strong>11</strong>
         </span>
         <span class="item">
-            Requirements passed: <strong>9</strong> / <strong>9</strong>
+            Requirements passed: <strong>13</strong> / <strong>13</strong>
         </span>
         <span class="item">
-            Checks passed: <strong>0</strong> / <strong>0</strong>
+            Checks passed: <strong>1</strong> / <strong>1</strong>
         </span>
     </p>
     <hr>
@@ -459,6 +459,224 @@
                                 <strong>Instructions</strong>
                             </p>
                             Provide the project-assumed EPC system code.
+                        </div>
+
+                    </details>
+                </li>
+            </ol>
+        </div>
+    </section>
+    <section class="specification is-skipped" style="clear: both; overflow: hidden;">
+        <div class="info">
+            <h2>Walls must declare their material</h2>
+            <p>Checks whether every applicable IfcWall is associated with a material, layer set, or constituent set.</p>
+
+            <div class="container">
+                <div class="
+                skipped
+
+                percent" style="width: 100%;">Skipped</div>
+            </div>
+            <p>
+                <span class="item skipped">Optional: Skipped</span>
+                <span class="item">
+                    Checks passed: <strong>0</strong> / <strong>0</strong>
+                </span>
+                <span class="item">
+                    Elements passed: <strong>0</strong> / <strong>0</strong>
+                </span>
+            </p>
+        </div>
+        <div class="results">
+            <p>
+                <strong>Applicability</strong>
+            </p>
+            <ul>
+                <li>All IFCWALL data</li>
+            </ul>
+            <p>
+                <strong>Requirements</strong>
+            </p>
+            <ol>
+                <li class="skipped">
+                    <details>
+                        <summary>
+                            Shall have a material
+                        </summary>
+                        <div class="instructions">
+                            <p>
+                                <strong>Instructions</strong>
+                            </p>
+                            Associate the wall with a material, material layer set, or constituent set.
+                        </div>
+
+                    </details>
+                </li>
+            </ol>
+        </div>
+    </section>
+    <section class="specification" style="clear: both; overflow: hidden;">
+        <div class="info">
+            <h2>Columns must declare a meaningful predefined type</h2>
+            <p>Checks whether every applicable IfcColumn declares a predefined type other than NOTDEFINED or USERDEFINED.</p>
+
+            <div class="container">
+                <div class="
+
+                pass
+                percent" style="width: 100%;">100%</div>
+            </div>
+            <p>
+                <span class="item pass">Optional: Pass</span>
+                <span class="item">
+                    Checks passed: <strong>1</strong> / <strong>1</strong>
+                </span>
+                <span class="item">
+                    Elements passed: <strong>1</strong> / <strong>1</strong>
+                </span>
+            </p>
+        </div>
+        <div class="results">
+            <p>
+                <strong>Applicability</strong>
+            </p>
+            <ul>
+                <li>All IFCCOLUMN data</li>
+            </ul>
+            <p>
+                <strong>Requirements</strong>
+            </p>
+            <ol>
+                <li class="pass">
+                    <details>
+                        <summary>
+                            Shall be IFCCOLUMN data of type {&#x27;enumeration&#x27;: [&#x27;COLUMN&#x27;, &#x27;PILASTER&#x27;]}
+                        </summary>
+                        <div class="instructions">
+                            <p>
+                                <strong>Instructions</strong>
+                            </p>
+                            Declare COLUMN or PILASTER. NOTDEFINED states nothing.
+                        </div>
+
+                        <table class="pass">
+                            <thead>
+                                <tr>
+                                    <th>Class</th>
+                                    <th>PredefinedType</th>
+                                    <th>Name</th>
+                                    <th>Description</th>
+                                    <th>GlobalId</th>
+                                    <th>Tag</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>IfcColumn</td>
+                                    <td>COLUMN</td>
+                                    <td>Column #1</td>
+                                    <td>None</td>
+                                    <td>2WUGYBphrFv8aLIFJCmiIk</td>
+                                    <td>None</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </details>
+                </li>
+            </ol>
+        </div>
+    </section>
+    <section class="specification is-skipped" style="clear: both; overflow: hidden;">
+        <div class="info">
+            <h2>Beams must declare a meaningful predefined type</h2>
+            <p>Checks whether every applicable IfcBeam declares a predefined type other than NOTDEFINED or USERDEFINED.</p>
+
+            <div class="container">
+                <div class="
+                skipped
+
+                percent" style="width: 100%;">Skipped</div>
+            </div>
+            <p>
+                <span class="item skipped">Optional: Skipped</span>
+                <span class="item">
+                    Checks passed: <strong>0</strong> / <strong>0</strong>
+                </span>
+                <span class="item">
+                    Elements passed: <strong>0</strong> / <strong>0</strong>
+                </span>
+            </p>
+        </div>
+        <div class="results">
+            <p>
+                <strong>Applicability</strong>
+            </p>
+            <ul>
+                <li>All IFCBEAM data</li>
+            </ul>
+            <p>
+                <strong>Requirements</strong>
+            </p>
+            <ol>
+                <li class="skipped">
+                    <details>
+                        <summary>
+                            Shall be IFCBEAM data of type {&#x27;enumeration&#x27;: [&#x27;BEAM&#x27;, &#x27;JOIST&#x27;, &#x27;HOLLOWCORE&#x27;, &#x27;LINTEL&#x27;, &#x27;SPANDREL&#x27;, &#x27;T_BEAM&#x27;]}
+                        </summary>
+                        <div class="instructions">
+                            <p>
+                                <strong>Instructions</strong>
+                            </p>
+                            Declare the beam&#x27;s type. A name string is not a predefined type.
+                        </div>
+
+                    </details>
+                </li>
+            </ol>
+        </div>
+    </section>
+    <section class="specification is-skipped" style="clear: both; overflow: hidden;">
+        <div class="info">
+            <h2>Walls must carry an element-level classification reference</h2>
+            <p>Project-specific assumed EPC delivery requirement: classification recorded on the element, not only on the building.</p>
+
+            <div class="container">
+                <div class="
+                skipped
+
+                percent" style="width: 100%;">Skipped</div>
+            </div>
+            <p>
+                <span class="item skipped">Optional: Skipped</span>
+                <span class="item">
+                    Checks passed: <strong>0</strong> / <strong>0</strong>
+                </span>
+                <span class="item">
+                    Elements passed: <strong>0</strong> / <strong>0</strong>
+                </span>
+            </p>
+        </div>
+        <div class="results">
+            <p>
+                <strong>Applicability</strong>
+            </p>
+            <ul>
+                <li>All IFCWALL data</li>
+            </ul>
+            <p>
+                <strong>Requirements</strong>
+            </p>
+            <ol>
+                <li class="skipped">
+                    <details>
+                        <summary>
+                            Shall have a CCI Construction reference of {&#x27;pattern&#x27;: &#x27;[A-Z]-[A-Z]{3}&#x27;}
+                        </summary>
+                        <div class="instructions">
+                            <p>
+                                <strong>Instructions</strong>
+                            </p>
+                            Classify the wall itself, not only the building that contains it.
                         </div>
 
                     </details>

@@ -16,21 +16,28 @@ the branch name records only how it was resolved.
 
 ## What is vendored
 
-Four of the ten test case directories, chosen because they are the facet kinds
-this project's rule library either uses today or is about to: `attribute`,
-`classification`, `partof`, and `property`. The remaining directories —
-`entity`, `material`, `restriction`, `tolerance`, `ids`, and the two
-documentation files — are deliberately not copied. Vendoring the whole suite
-would quadruple what this repository carries under a NoDerivatives license for
-coverage it cannot yet act on.
+Six of the nine test case directories — one per IDS facet kind. The three left
+behind are `restriction` and `tolerance`, which test value semantics rather
+than a facet, and `ids`, which tests document-level metadata; the two
+documentation files are also not copied. Under a NoDerivatives license the rule
+applied was to take what this project's checker actually claims to evaluate and
+no more.
+
+The six here are exactly the six facet kinds `IdsChecker.capabilities` declares.
+That is the point of taking all of them: a capability claim with no external
+evidence behind it is an assertion, and this repository already had one — the
+capability tuple used to list the three facets the rule library happened to
+use, not the ones the checker can evaluate.
 
 | Directory | Cases | `pass-` | `fail-` | `invalid-` |
 |---|---|---|---|---|
 | `testcases/attribute` | 56 | 30 | 15 | 11 |
 | `testcases/classification` | 27 | 17 | 10 | 0 |
+| `testcases/entity` | 33 | 18 | 9 | 6 |
+| `testcases/material` | 29 | 23 | 6 | 0 |
 | `testcases/partof` | 34 | 17 | 16 | 1 |
 | `testcases/property` | 82 | 44 | 32 | 6 |
-| **Total** | **199** | **108** | **73** | **18** |
+| **Total** | **261** | **149** | **88** | **24** |
 
 Each case is a pair: an `.ids` document and the minimal `.ifc` model it is to
 be run against. The filename prefix states the outcome the standard expects,
@@ -43,12 +50,12 @@ prefix as *must not report a pass* rather than as a specific status.
 ## SHA-256
 
 Per-file digests are recorded in `SHA256SUMS`, one line per file in
-`sha256sum` format, sorted by path. There are 399 entries: 398 test case files
+`sha256sum` format, sorted by path. There are 523 entries: 522 test case files
 plus the upstream `LICENSE`. The manifest is checked on every test run by
 `tests/test_ids_conformance.py`, which fails if any vendored byte has moved.
 
 The manifest's own SHA-256 is
-`948e80fef0432b0e70389e3a6e10d4b9a28ff761edf773ea02c59731aab2068a`.
+`cb0ebc6d74eb697747dacec90cf4185accd167a14d6f3172f5d4b72c1a6f96bc`.
 
 Every vendored file was additionally verified against its upstream Git blob
 SHA-1 at the pinned revision before being committed, which is a stronger check

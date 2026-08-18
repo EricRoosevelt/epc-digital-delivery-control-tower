@@ -1,5 +1,5 @@
 {
-  "artifact_bundle_id": "bundle-fb073517bd6ad98a",
+  "artifact_bundle_id": "bundle-ee1c2dcc62f53793",
   "artifacts": [
     {
       "bytes": 630,
@@ -38,28 +38,28 @@
       "sha256": "e28529b55e6e21888e1157c4afa473f0b0e844e19e2708fac0c6c228f2f0c1a0"
     },
     {
-      "bytes": 21262,
+      "bytes": 33395,
       "exporter": "csv",
       "path": "data/processed/canonical/findings.csv",
-      "sha256": "05625b37a15d7cc479998b3362dcce0f5f4e31014e96f86f99c45a96fdce7ae8"
+      "sha256": "d0672905ffbf1817113629ee64f451bb0ec2d03eddf37ebfaeb834dbfbc4832e"
     },
     {
-      "bytes": 756,
+      "bytes": 4025,
       "exporter": "csv",
       "path": "data/processed/canonical/issue_events.csv",
-      "sha256": "17f9441d1bf64db7ed5ed5b8b0d3f193bd195f818b5f2a8cf31312754f38ceb3"
+      "sha256": "2fb83386f07e35ae7b9862623cfc5027f766b17379f35562905305022d82208a"
     },
     {
-      "bytes": 469,
+      "bytes": 1579,
       "exporter": "csv",
       "path": "data/processed/canonical/issue_findings.csv",
-      "sha256": "3267e622d7a702f2f041afad64b70a13d0aeb06d3a8cc5fa368be9ab98370a20"
+      "sha256": "f7b885b411131b7eaf29f5d629a9bed91ee896288fe8c9a4063177aa01f8df9d"
     },
     {
-      "bytes": 591,
+      "bytes": 3145,
       "exporter": "csv",
       "path": "data/processed/canonical/issues.csv",
-      "sha256": "9c9f092a9dddfdef980da1ed6bd2d456829ca16f3ad4925643117739c061cf73"
+      "sha256": "77a1f9c51b930bf62df2e78967d42987a86c8b0af4099ba60de9872bcbb8772a"
     },
     {
       "bytes": 2225,
@@ -74,16 +74,16 @@
       "sha256": "194e795a7a3d929ad51263a14970ec70e82f0016085ae6774811c1c7f4f8ab52"
     },
     {
-      "bytes": 2414,
+      "bytes": 3533,
       "exporter": "csv",
       "path": "data/processed/canonical/requirements.csv",
-      "sha256": "f51e2e3df6284a1753de9008b94b6a1090cb49723305e6cd848a9ff9783a2389"
+      "sha256": "e29c9d8b28ab0d6c0b10318169a30b0932c60b1089317f3b9b47b2769c5607dd"
     },
     {
-      "bytes": 69846,
+      "bytes": 111989,
       "exporter": "json",
       "path": "data/processed/canonical/run.json",
-      "sha256": "c00cf91dc4c619ee25f699585a9df44c5a3e65d8405d8e5142c6a2d85e38e531"
+      "sha256": "dc73ab5a96a892b5da71d84f9ab84c539fd69e7d5820aa594c79651a3fa0351e"
     },
     {
       "bytes": 18462,
@@ -111,7 +111,7 @@
     }
   ],
   "as_of": "2026-08-13T00:00:00Z",
-  "contract_version": "1.1",
+  "contract_version": "1.2",
   "exporters": [
     {
       "config_sha256": "",
@@ -134,5 +134,5 @@
       "version": "1.0.0"
     }
   ],
-  "validation_run_id": "epc-delivery-v1.0-b6f9d9abf7eadd6e"
+  "validation_run_id": "epc-delivery-v1.0-652f27ad295b7bbc"
 }

@@ -182,15 +182,22 @@ class ShippedFixtureGroupingTests(unittest.TestCase):
     def setUpClass(cls):
         cls.bundle = shipped_pipeline_result().bundle
 
-    def test_the_shipped_fixture_produces_three_issues_over_six_findings(self):
-        self.assertEqual(len(self.bundle.issues), 3)
+    def test_the_shipped_fixture_produces_eighteen_issues_over_21_findings(self):
+        self.assertEqual(len(self.bundle.issues), 18)
         self.assertEqual(
-            sum(len(issue.finding_keys) for issue in self.bundle.issues), 6
+            sum(len(issue.finding_keys) for issue in self.bundle.issues), 21
         )
-        self.assertEqual({len(i.finding_keys) for i in self.bundle.issues}, {2})
+        # Two sizes now, where the previous implementation *required* exactly
+        # two findings per topic and raised otherwise. Three duct segments each
+        # miss two EPC properties; the fifteen new failures are one requirement
+        # each. This is the census the old code mistook for a law.
+        self.assertEqual(
+            sorted(len(i.finding_keys) for i in self.bundle.issues),
+            [1] * 15 + [2] * 3,
+        )
 
     def test_every_issue_is_open_with_one_opening_event(self):
-        self.assertEqual(len(self.bundle.issue_events), 3)
+        self.assertEqual(len(self.bundle.issue_events), 18)
         for issue in self.bundle.issues:
             with self.subTest(issue=issue.issue_key):
                 history = self.bundle.events_for(issue.issue_key)
@@ -204,10 +211,21 @@ class ShippedFixtureGroupingTests(unittest.TestCase):
         failing = {f.finding_key for f in self.bundle.findings if f.is_issue}
         self.assertEqual(grouped, failing)
 
-    def test_all_three_issues_are_on_the_one_model_that_has_failures(self):
-        # A fact about this fixture, not a rule the code enforces: the previous
-        # implementation raised unless the failures were in Building-Hvac.ifc.
-        self.assertEqual({issue.model_key for issue in self.bundle.issues}, {"hvac"})
+    def test_issues_now_span_four_models_and_both_projects(self):
+        # A fact about this fixture, not a rule the code enforces — and the
+        # clearest illustration of why it must not be one. The previous
+        # implementation raised unless every failure was in Building-Hvac.ifc.
+        # Failures are in four models across two projects now, and the only
+        # thing that had to change for that to be allowed was this expectation.
+        self.assertEqual(
+            {issue.model_key for issue in self.bundle.issues},
+            {
+                "architecture",
+                "hvac",
+                "iso-reference-view.architecture",
+                "structural",
+            },
+        )
 
 
 if __name__ == "__main__":

@@ -17,6 +17,111 @@ of what moved exists before the expectation that says it did.
 
 ## Unreleased
 
+### Data contract 1.2 — the rule library gains four rules and three facet kinds
+
+The library was built in the previous entry. This is the first time it was
+*used*, and the measure of whether it worked is what had to be edited to add a
+rule.
+
+**Four new rules are four new TOML files.** No rule-handling code was written:
+nothing parses them specially, nothing routes them specially, no test knows
+their identifiers. Two other things did have to change, and neither is rule
+plumbing:
+
+- one line in `IdsChecker.capabilities`, because the checker had been
+  under-claiming what it can evaluate — see below, it is a finding in its own
+  right;
+- the characterization counts, in six test files. Those are supposed to move
+  when what the pipeline publishes moves. Moving them deliberately, with the
+  contract bumped and this entry written first, is the ceremony working, not a
+  hole in the claim.
+
+| | before | after |
+|---|---:|---:|
+| rules | 7 | 11 |
+| IDS facet kinds evaluated | 3 | 6 of 6 |
+| value restrictions used | none | enumeration, pattern |
+| findings, PCERT project | 47 | 76 |
+| findings, ISO reference-view project | 27 | 39 |
+| ISO reference-view: applicable, not N/A | 2 | 5 |
+| issues | 3 | 18 |
+
+The four:
+
+- **R-006** — walls must declare a material. The first `material` facet. It
+  passes in both projects, which is the point: the second project could
+  previously only demonstrate that the pipeline ran over it, because every rule
+  that had anything to say was about ducts, beams, or property sets its three
+  samples do not contain.
+- **R-007** — columns must declare a predefined type of `COLUMN` or `PILASTER`.
+  The first `entity` facet in requirement position, and the first value
+  restriction: an enumeration, because `IfcColumnTypeEnum` also admits
+  `NOTDEFINED` and `USERDEFINED` and both are ways of not answering.
+- **R-008** — beams must likewise declare theirs. Six PCERT beams fail it. They
+  are named `girder` and carry no predefined type, so nothing downstream can
+  tell a girder from a lintel; the name string is for a human reading a model
+  tree, not for a schedule.
+- **R-009** — walls must carry an element-level classification reference. The
+  first `classification` facet and the first `pattern` restriction. Declared
+  `WARNING`, for the same reason R-005 is: both sample projects do classify,
+  but on `IfcBuilding`, and element-level classification is what an asset
+  register or a CAFM handover consumes. An EPC project asks for it;
+  buildingSMART never promised it, so failing this is not a defect in the
+  supplied model. The rule file says so.
+
+### The capability tuple was an inventory, not a claim
+
+`IdsChecker.capabilities.facets` listed three facet kinds. That was never a
+statement about the checker — IfcTester has implemented all six all along — it
+was a list of what the rule library happened to use. The distinction is not
+cosmetic: the registry refuses to route a requirement whose facet a checker does
+not claim, so writing R-006 failed with *"needs facet(s) `['material']`, which
+checker `'ids'` does not evaluate"*. An under-claimed capability does not
+mislead a reader; it blocks a rule that would have worked.
+
+It now lists all six, and the claim is evidenced rather than asserted: the
+vendored buildingSMART corpus was widened from four facet directories to six —
+one per facet kind — and all 261 cases run on every test run.
+
+### What widening the corpus found
+
+**255 of 261 conform: 97.70%**, and the sixth divergence is ours.
+
+`IdsChecker._specification_status` maps zero applicable elements to `N/A`
+unconditionally. That is right for a specification whose applicability is
+optional, and it is the rule that keeps this project from reporting "nothing to
+check" as compliance. It is wrong for a specification whose applicability is
+*required*: `entity/fail-in_ifc2x3_there_must_be_an_airterminal…` says an
+IfcAirTerminal must exist, the model has none, IfcTester fails it, and we report
+`N/A`. A rule about something that should be there and is not is silently
+downgraded to "does not apply".
+
+It is recorded and left standing rather than hot-fixed, because the fix is not a
+status mapping. A `FAIL` carries an `element_key` — `domain.Finding` enforces it
+— and there is no element to point at when the finding is that an element is
+absent. That is the same modelling decision the cross-model completeness checker
+needs, and it is made once, there, rather than twice.
+
+No rule in this repository can reach it: `compile_document` emits `minOccurs=0`
+for every specification, so their applicability is optional and `N/A` is the
+correct reading of every one. A test asserts that, so the exemption stops
+holding the moment it stops being true.
+
+The first version of the conformance file asserted the opposite of all this —
+that our normalization changed no verdict anywhere. It was true only because the
+corpus was then four facet kinds wide and none of them reached the rule. The
+claim survived exactly as long as the evidence was too narrow to test it.
+
+### Unchanged
+
+The eight published CSVs and the BCF archive are byte-identical, and
+`run_id ids-v0.1-8706ef58303bfd11` still resolves. Four new rules, and not one
+of the forty-seven published finding keys moved — which is what the rule set
+scope introduced two entries ago exists to guarantee, now demonstrated rather
+than measured on a synthetic eighth rule.
+
+Snapshot: `docs/contracts/contract-1.2.json`.
+
 ### An IDS document read by something that did not write it
 
 Both rule documents are now audited by
