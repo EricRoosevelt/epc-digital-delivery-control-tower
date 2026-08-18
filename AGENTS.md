@@ -88,9 +88,18 @@ Some rules of thumb that follow from the shape:
   - what the *fixture happens to contain* (counts, digests) → tests and
     `docs/contracts/`, never production code
   Genuine runtime knobs — output locations, which exporters run, which grouping
-  policy, the logical `as_of` — go in an optional `control-tower.toml` at the
-  repository root. There are a handful, and keeping it that small is the point:
-  a settings file that accepts everything explains nothing.
+  policy, the logical `as_of`, and which project the legacy writers publish —
+  go in `control-tower.toml` at the repository root. There are a handful, and
+  keeping it that small is the point: a settings file that accepts everything
+  explains nothing.
+
+**Adding a project should not touch this package.** Drop a directory under
+`projects/` with a `project.toml` and the models beside it; discovery is a glob.
+Give each model a `model_id` that means something inside the project — two
+projects may both have an `architecture` — and leave `model_key` alone unless
+you are pinning a published identity, because it is derived as
+`<project_id>.<model_id>` and is what every join and every `element_key` is
+built from.
 
 Two exporters are named `Legacy…` because they still know things a general
 implementation should not: `LegacyBcfExporter` knows the R-005 rule family and
