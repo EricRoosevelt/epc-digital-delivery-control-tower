@@ -143,6 +143,10 @@ class ExportedShapeTests(unittest.TestCase):
                 "material",
                 "partof",
                 "property",
+                # Not an IDS facet. The rule library serves two checkers now,
+                # and this column carries whatever vocabulary the checker that
+                # owns a requirement speaks.
+                "shared-across-models",
             },
         )
 

@@ -1,0 +1,29 @@
+rule_id = "R-010"
+title = "Every model must share a coordination reference with its siblings"
+description = "Checks whether each discipline model carries at least one setout reference that another model of the same project also carries."
+
+# Not IDS, and not by preference. IDS validates one model against one document:
+# every facet it has asks a question about an element and answers it from that
+# element's own file. "The same object must also appear over there" has no
+# expression in it, because the document never sees a second model. This is the
+# rule that made the Checker protocol earn its keep.
+checker = "completeness"
+
+severity = "ERROR"
+owner_role = "model-coordination"
+stage = "Coordination"
+discipline_scope = ["Architecture", "Structural", "HVAC", "Plumbing"]
+citation = "ISO 19650-1:2018 §5.3 — a federated information model requires a common coordinate reference."
+
+[[applicability]]
+facet = "entity"
+name = "IFCBUILDINGELEMENTPROXY"
+
+# The names the project has agreed on for its shared setout references. They
+# belong in a rule file rather than in the checker for the same reason every
+# other project constant does: another project will have agreed on different
+# ones, and should not have to edit Python to say so.
+[[requirements]]
+facet = "shared-across-models"
+name_pattern = "^(origin|geo-reference)$"
+instructions = "Carry the project's agreed setout references in every discipline model."

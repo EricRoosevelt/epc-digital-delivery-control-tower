@@ -265,8 +265,12 @@ class FindingFidelityTests(unittest.TestCase):
         # value survives only inside the legacy adapter.
         run = self.result.bundle.run
         self.assertNotEqual(run.validation_run_id, "ids-v0.1-8706ef58303bfd11")
+        # Two checkers now contribute to the identity, which is the shape
+        # that made splitting it worth doing: a run is identified by every
+        # implementation that had a say in it, not by one privileged one.
         self.assertEqual(
-            [f.component_id for f in run.checker_fingerprints], ["ids"]
+            [f.component_id for f in run.checker_fingerprints],
+            ["completeness", "ids"],
         )
         # The run's rules are declarative now, so there is no single source
         # document to hash. Provenance for a directory of rules is the rule set

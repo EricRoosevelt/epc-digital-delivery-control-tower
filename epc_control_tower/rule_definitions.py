@@ -40,7 +40,9 @@ from .domain import Requirement, RuleSet, Severity
 from .identity import build_requirement_key, build_ruleset_normalized_digest
 
 __all__ = [
+    "COMPLETENESS_KINDS",
     "FACET_KINDS",
+    "REQUIREMENT_KINDS",
     "RuleDefinition",
     "RuleSetDefinition",
     "compile_document",
@@ -57,6 +59,21 @@ FACET_KINDS = (
     "partof",
     "property",
 )
+
+#: What a rule routed to the completeness checker may require. A separate
+#: vocabulary, because it is a different language: these are questions about a
+#: set of models, and IDS has no way to ask one. Keeping them in the same list
+#: as the IDS facets would have implied a document could carry them.
+COMPLETENESS_KINDS = ("shared-across-models",)
+
+#: Which requirement vocabulary each checker speaks. A rule naming a checker
+#: that is not here is rejected when the library loads: a rule the pipeline
+#: cannot route is a rule that would otherwise be silently skipped, and a
+#: silently skipped delivery requirement is the worst outcome available.
+REQUIREMENT_KINDS = {
+    "ids": FACET_KINDS,
+    "completeness": COMPLETENESS_KINDS,
+}
 
 RULESET_FILENAME = "ruleset.toml"
 
@@ -195,7 +212,12 @@ class RuleSetDefinition:
     rules: tuple[RuleDefinition, ...] = field(default=())
 
 
-def _facets(entries, source: Path, label: str) -> tuple[FacetDefinition, ...]:
+def _facets(
+    entries,
+    source: Path,
+    label: str,
+    allowed: tuple[str, ...] = FACET_KINDS,
+) -> tuple[FacetDefinition, ...]:
     if not isinstance(entries, list) or not entries:
         raise ValueError(f"{source}: at least one [[{label}]] entry is required")
     facets = []
@@ -204,10 +226,10 @@ def _facets(entries, source: Path, label: str) -> tuple[FacetDefinition, ...]:
             raise ValueError(f"{source}: each [[{label}]] entry must be a table")
         declared = dict(entry)
         kind = str(declared.pop("facet", "")).lower()
-        if kind not in FACET_KINDS:
+        if kind not in allowed:
             raise ValueError(
                 f"{source}: {label} declares facet {kind!r}; expected one of "
-                f"{list(FACET_KINDS)}"
+                f"{list(allowed)}"
             )
         facets.append(FacetDefinition(kind=kind, values=declared))
     return tuple(facets)
@@ -237,6 +259,13 @@ def load_rule_definitions(directory: Path) -> RuleSetDefinition:
             raise ValueError(f"{path}: duplicate rule_id {rule_id!r}")
         seen.add(rule_id)
 
+        checker = str(document.get("checker", "ids"))
+        if checker not in REQUIREMENT_KINDS:
+            raise ValueError(
+                f"{path}: rule is routed to checker {checker!r}; this library knows "
+                f"{sorted(REQUIREMENT_KINDS)}"
+            )
+
         severity_name = str(document.get("severity", "ERROR")).upper()
         try:
             severity = Severity[severity_name]
@@ -255,9 +284,12 @@ def load_rule_definitions(directory: Path) -> RuleSetDefinition:
                     document.get("applicability", []), path, "applicability"
                 ),
                 requirements=_facets(
-                    document.get("requirements", []), path, "requirements"
+                    document.get("requirements", []),
+                    path,
+                    "requirements",
+                    REQUIREMENT_KINDS[checker],
                 ),
-                checker=str(document.get("checker", "ids")),
+                checker=checker,
                 severity=severity,
                 owner_role=str(document.get("owner_role", "")),
                 stage=str(document.get("stage", "")),
@@ -291,6 +323,11 @@ def compile_document(definition: RuleSetDefinition):
     All three come out of one pass because they have to agree: the label
     IfcTester will report, the key derived from that label, and the sentence
     published as ``expected`` are three views of the same declared facet.
+
+    The rule set covers **every** rule; the document covers only the ones
+    routed to the IDS checker. Compiling a completeness rule into an IDS
+    document would be writing a sentence in a language that cannot express it,
+    and IfcTester would then evaluate a specification nobody meant it to see.
     """
 
     from .checkers.ids_checker import requirement_label
@@ -307,6 +344,14 @@ def compile_document(definition: RuleSetDefinition):
     expectations: dict[str, str] = {}
 
     for rule in definition.rules:
+        if rule.checker != "ids":
+            for requirement in _foreign_requirements(rule):
+                requirements.append(requirement)
+                expectations[requirement.requirement_key] = (
+                    requirement.requirement_label
+                )
+            continue
+
         specification = ids.Specification(
             name=rule.title,
             identifier=rule.rule_id,
@@ -367,6 +412,49 @@ def compile_document(definition: RuleSetDefinition):
         requirements=tuple(requirements),
     )
     return document, ruleset, expectations
+
+
+def _foreign_requirements(rule: RuleDefinition) -> list[Requirement]:
+    """Requirements for a rule some other checker evaluates.
+
+    The identifier is the declared kind, so it is stable, readable, and — like
+    an IDS requirement's — derived rather than typed by the rule author. Two
+    requirements of the same kind in one rule would share a key, so that is
+    rejected here rather than discovered later as a collision.
+
+    The checker's parameters stay in the rule file and the checker reads them
+    from there, exactly as the IDS checker reads its facets back out of the
+    document it compiled. A requirement carries identity and metadata; it is
+    not a payload every checker has to agree on the shape of.
+    """
+
+    built: list[Requirement] = []
+    seen: set[str] = set()
+    for facet in rule.requirements:
+        if facet.kind in seen:
+            raise ValueError(
+                f"{rule.rule_id}: two {facet.kind!r} requirements would share a key"
+            )
+        seen.add(facet.kind)
+        built.append(
+            Requirement(
+                requirement_key=build_requirement_key(rule.rule_id, facet.kind),
+                rule_id=rule.rule_id,
+                requirement_id=facet.kind,
+                specification_label=f"{rule.rule_id}: {rule.title}",
+                requirement_label=str(
+                    facet.values.get("instructions") or facet.kind
+                ),
+                checker=rule.checker,
+                facet_kinds=(facet.kind,),
+                severity=rule.severity,
+                owner_role=rule.owner_role,
+                stage=rule.stage,
+                discipline_scope=rule.discipline_scope,
+                citation=rule.citation,
+            )
+        )
+    return built
 
 
 def declared_rule_ids(definition: RuleSetDefinition) -> Sequence[str]:

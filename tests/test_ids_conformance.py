@@ -17,13 +17,24 @@ Three things are asserted, in order of what they are worth:
    conformance rate against a corpus that has drifted measures nothing.
 2. Each case's verdict matches its filename prefix, with a short, explicit list
    of the cases that do not — every one classified and blamed by name.
-3. Exactly where this project's own normalization departs from what IfcTester
-   reported. It does so once, and that once is a bug: see
-   :class:`ScopeTests`. The first version of this file asserted the opposite —
-   that our normalization changed nothing — and it was true only because the
-   corpus was then four facet kinds wide and none of them reached the rule. The
-   claim survived precisely as long as the evidence was too narrow to test it,
-   which is the argument for widening it.
+3. Exactly what this project's own normalization does to what IfcTester
+   reported — see :class:`ScopeTests`.
+
+Point 3 has been asserted three times and meant something different each time,
+which is the most useful thing this file has to say about evidence. Its first
+version said our normalization changed no verdict; that was true, but only
+because the corpus was then four facet kinds wide and no case reached the rule.
+Widening it to all six produced a case that did, and the rule turned out to
+conflate *nothing applied* with *nothing exists*, reporting `N/A` where the
+standard — and IfcTester — expect a failure. The rule now consults the
+specification's cardinality, and point 3 reads the same as it did originally
+while resting on something entirely different.
+
+What it still cannot say is whether the rule is *right*, only that it is not
+wrong here. Its whole reason for existing is a case the corpus does not
+contain: a specification whose applicability is optional and matched nothing,
+which IfcTester reports as a pass and which this project reports as N/A so that
+"nothing to check" never counts towards a published pass rate.
 
 **These are conformance fixtures, not project fixtures.** They live under
 `third_party/` precisely so that `discover_project_manifests`, which globs
@@ -72,20 +83,19 @@ SUBSETS = (
 )
 
 #: Total cases and the number that agree with the standard, pinned so that both
-#: a regression and an upstream fix are visible rather than silent. 255/261 is
-#: 97.70%.
+#: a regression and an upstream fix are visible rather than silent. 256/261 is
+#: 98.08%.
 TOTAL_CASES = 261
-CONFORMING_CASES = 255
+CONFORMING_CASES = 256
 
 
 #: Every case whose verdict does not match its filename prefix, with the
 #: verdict actually observed and what is responsible for it.
 #:
-#: The point of writing them out is that "97% conformant" is not a finding —
-#: *which* 3% is. Each entry below was traced to a specific line of behaviour.
-#: Five are IfcTester's. **One is ours**, and it was invisible until the corpus
-#: was widened to every facet kind — which is the strongest argument available
-#: for having widened it.
+#: The point of writing them out is that "98% conformant" is not a finding —
+#: *which* 2% is. Each entry below was traced to a specific line of behaviour,
+#: and all five that remain are IfcTester's. The sixth was ours, and it is
+#: gone: see :class:`ScopeTests`.
 KNOWN_DIVERGENCES = {
     # --- IfcTester casts IDS value literals instead of typing them ----------
     #
@@ -144,35 +154,6 @@ KNOWN_DIVERGENCES = {
         "ifctester",
         "AttributeError inside IfcTester: IFC2X3 IfcExtendedMaterialProperties "
         "stores ExtendedProperties, not Properties.",
-    ),
-    # --- ours: "nothing applied" and "nothing exists" are not the same -----
-    #
-    # `IdsChecker._specification_status` maps zero applicable elements to N/A
-    # unconditionally. That is right for a specification whose applicability is
-    # optional — counting "nothing to check" as compliance would inflate every
-    # pass rate this project publishes, which is why the rule exists. It is
-    # wrong for a specification whose applicability is *required*: this case
-    # says an IfcAirTerminal must exist, the model has none, IfcTester fails it,
-    # and we report N/A. A rule about something that should be there and is not
-    # is silently downgraded to "does not apply".
-    #
-    # Left standing rather than patched here, because the fix is not a status
-    # mapping — it is a modelling decision. A FAIL carries an `element_key`
-    # (`domain.Finding` enforces it), and there is no element to point at when
-    # the finding is that an element is absent. That decision belongs with the
-    # cross-model completeness checker, which needs the same fourth shape for
-    # the same reason, and is made there rather than in two places.
-    #
-    # None of this repository's own rules are affected: `compile_document`
-    # emits `minOccurs=0` for every specification, so their applicability is
-    # optional and N/A is the correct reading of every one of them.
-    "entity/fail-in_ifc2x3_there_must_be_an_airterminal_per_the_type"
-    "_mapping_table_2_2": (
-        "N/A",
-        "ours",
-        "specification cardinality is 'required' and no element matched, so "
-        "the standard expects a failure; our zero-applicable rule reports N/A "
-        "without consulting cardinality.",
     ),
 }
 
@@ -370,11 +351,11 @@ class ConformanceTests(unittest.TestCase):
         self.assertEqual(conforming, CONFORMING_CASES)
 
     def test_each_divergence_is_attributed(self):
-        # Five of the six are IfcTester's. The sixth is this project's, and
-        # naming it is the point: a conformance report that only ever blames
-        # its dependencies is not a conformance report.
+        # All five that remain are IfcTester's — which is a claim this file
+        # has earned rather than assumed, having previously listed one of
+        # ours and been the thing that found it.
         blame = sorted(entry[1] for entry in KNOWN_DIVERGENCES.values())
-        self.assertEqual(blame, ["ifctester"] * 5 + ["ours"])
+        self.assertEqual(blame, ["ifctester"] * 5)
 
 
 class ScopeTests(unittest.TestCase):
@@ -385,27 +366,36 @@ class ScopeTests(unittest.TestCase):
         cls.verdicts = _verdicts()
 
     #: The one case in the corpus that reaches the zero-applicable rule, and
-    #: therefore the only external evidence there is about it.
+    #: therefore the only external evidence there is about it. Its
+    #: applicability is *required* and no element matched, so the standard
+    #: expects a failure.
     ZERO_APPLICABLE = (
         "entity/fail-in_ifc2x3_there_must_be_an_airterminal_per_the_type"
         "_mapping_table_2_2"
     )
 
-    def test_our_normalization_changes_exactly_one_verdict(self):
-        # Everywhere else this project simply reports what IfcTester found. The
-        # single place it decides something of its own is the place it is
-        # currently wrong, which is worth knowing precisely.
+    def test_our_normalization_changes_no_verdict_in_this_corpus(self):
+        # True again, and this time understood. It was true in the first
+        # version of this file because the corpus could not reach the rule at
+        # all. It is true now because the rule agrees with IfcTester on every
+        # case the corpus contains — including the one that reaches it, where
+        # IfcTester also reports a failure and where we used to report N/A.
+        #
+        # The rule still exists and still matters. IfcTester reports a *pass*
+        # for a specification whose applicability is optional and matched
+        # nothing, and counting that as compliance would inflate every pass
+        # rate this project publishes. The corpus simply has no such case, so
+        # it cannot see the difference — which is what the next test says out
+        # loud rather than leaving to be inferred from a green tick.
         for name, result in sorted(self.verdicts.items()):
             with self.subTest(case=name):
-                if name == self.ZERO_APPLICABLE:
-                    self.assertNotEqual(result["ours"], result["raw"])
-                else:
-                    self.assertEqual(result["ours"], result["raw"])
+                self.assertEqual(result["ours"], result["raw"])
 
     def test_only_one_case_exercises_the_zero_applicable_rule(self):
         # The evidence base for that rule is one case out of 261, and saying so
         # is part of reporting it honestly. Everything the corpus can tell us
-        # about the N/A normalization it tells us here.
+        # about the N/A normalization it tells us here — which was enough to
+        # find the defect, and is not enough to call the rule proven.
         reached = [
             name
             for name, result in self.verdicts.items()
@@ -413,11 +403,11 @@ class ScopeTests(unittest.TestCase):
         ]
         self.assertEqual(reached, [self.ZERO_APPLICABLE])
 
-    def test_this_projects_own_rules_never_reach_that_bug(self):
-        # The bug needs a specification whose applicability is required. Every
-        # specification compiled from `rules/` declares `minOccurs=0`, so none
-        # of them can hit it — which is why the divergence is recorded and
-        # scheduled rather than hot-fixed.
+    def test_this_projects_own_rules_have_optional_applicability(self):
+        # Every specification compiled from `rules/` declares `minOccurs=0`, so
+        # for this project's own rules N/A remains the correct reading of an
+        # empty match. The fix above changes nothing this repository publishes;
+        # it matters for the rule set somebody forking this brings with them.
         from epc_control_tower.rule_definitions import (
             compile_document,
             load_rule_definitions,

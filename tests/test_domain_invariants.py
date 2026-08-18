@@ -162,9 +162,27 @@ class FindingInvariantTests(unittest.TestCase):
                 element_key="hvac::GUID",
             )
 
-    def test_applicable_finding_needs_an_element(self):
-        with self.assertRaisesRegex(ValueError, "needs an element"):
+    def test_a_passing_finding_needs_the_element_it_checked(self):
+        # A pass says a specific thing was checked and was correct, so there
+        # is always something to name.
+        with self.assertRaisesRegex(ValueError, "must name the element"):
             make_finding(element_key="")
+
+    def test_a_failure_may_be_about_something_that_is_not_there(self):
+        # The fourth shape. A finding names the smallest thing that exists
+        # and that a person can go and look at; when a whole model is missing
+        # a required thing, that is the model. The alternative was to mint an
+        # element key for something never modelled, which this project treats
+        # the same way it treats an invented `actual` value: not at all.
+        finding = make_finding(
+            status=FindingStatus.FAIL,
+            is_applicable=True,
+            is_issue=True,
+            severity=Severity.ERROR,
+            element_key="",
+        )
+        self.assertEqual(finding.element_key, "")
+        self.assertTrue(finding.model_key)
 
     def test_element_must_belong_to_the_finding_s_model(self):
         with self.assertRaisesRegex(ValueError, "does not belong to model"):

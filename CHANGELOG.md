@@ -17,6 +17,112 @@ of what moved exists before the expectation that says it did.
 
 ## Unreleased
 
+### Data contract 1.3 — a second checker, and what a finding points at
+
+`Checker` has been a protocol since Phase 1 with exactly one implementation,
+which is another way of saying it had not been shown to be a seam. There are two
+now, and the second was chosen to be a rule IDS **cannot state at all** rather
+than one it states awkwardly.
+
+IDS validates one model against one document. Every facet it has asks a question
+about an element and answers it from that element's own file; there is no
+construct for "and the same must be true over there", because the document never
+sees a second model. `CheckerCapabilities.requires_federated_context` was
+declared in Phase 1 for exactly this and had never been used.
+
+**R-010** — every discipline model must carry at least one coordination
+reference that a sibling model also carries. It is the precondition of
+federation: models with no common point cannot be overlaid, and clash detection
+over them means nothing. The shipped fixture answers differently per project and
+both answers are true. The PCERT models share an `origin` and a `geo-reference`
+proxy, so they federate — three passes, each naming the shared element it found.
+The ISO reference-view models are three unrelated buildingSMART samples that
+happen to share a directory, and they share nothing — three failures.
+
+### The decision: what `element_key` is for a finding about a missing thing
+
+Made explicitly, because the alternative was for a default to establish itself
+by accident. The rule:
+
+> **A finding names the smallest thing that exists and that a person can go and
+> look at.**
+
+Usually that is an element, *including* when the finding is about an absence:
+"this space has no terminal" points at the space, which exists, is already in the
+element register, and is where a coordinator would actually go. Some absences
+have no such context — "this model carries no shared setout reference" — and
+there the smallest existing thing is the model. `element_key` is then empty.
+
+`Finding` therefore has a fourth legal shape: `FAIL`, applicable, an issue, and
+no element. What was rejected, and why:
+
+- **Mint a key for the element that should have been there.** Keeps the table at
+  three shapes and every join unconditional, and puts a row in the element
+  register for something that does not exist. This is the same fabrication the
+  project already refuses when it publishes `actual` empty rather than guessing
+  at a value it cannot observe. A missing wall with a UUID is worse than an
+  honest blank.
+- **Report it as N/A.** Silently downgrades "what this required is not here" to
+  "this did not apply". That was not a hypothetical: it is the bug the previous
+  entry recorded.
+
+`PASS` stays strict, and by decision rather than omission: a pass says a specific
+thing was checked and was correct, so there is always something to name. Only a
+failure can be about nothing. R-010 shows both halves — its passes name the
+shared element, its failures name only the model.
+
+Three things had to learn the new shape, and each is a place the old one was
+assumed rather than stated:
+
+- **Grouping.** `ElementGroupingPolicy` refused to group an issue with no
+  element. It now groups by *subject*: the element when there is one, the model
+  otherwise. Element keys always begin with their model key and a separator, so
+  the two can never collide. Without this, three real failures would have
+  reached no issue at all, and a failure nobody is told about is the worst
+  outcome available.
+- **Geometry.** Nothing to tessellate, no viewpoint to frame; the pipeline
+  filters element-less issues out rather than teaching that stage about blanks.
+- **The rule library.** It served one checker. `compile_document` now compiles
+  only IDS rules into the IDS document — writing a completeness rule into one
+  would be a sentence in a language that cannot hold it — while the rule set
+  still covers every rule. A rule naming a checker the library does not know is
+  rejected when it loads, because a rule that cannot be routed would otherwise
+  be silently skipped.
+
+### The N/A normalization is fixed, and conformance rises to 98.08%
+
+The previous entry recorded a divergence of ours and deferred it, on the grounds
+that the fix was a modelling decision rather than a status mapping. The decision
+is above, so: `_specification_status` now consults the specification's
+cardinality. Applicability that is *required* and matched nothing is a failure,
+not an N/A.
+
+**256 of 261** buildingSMART cases now agree with the standard, and all five
+remaining divergences are IfcTester's.
+
+Nothing this repository publishes moves because of it — `compile_document` emits
+`minOccurs=0` for every specification, so this project's own applicability is
+always optional, and a test says so. It matters for the rule set somebody forking
+this project brings with them.
+
+The conformance file's third claim has now been asserted three times and meant
+something different each time. First: our normalization changes no verdict —
+true, but only because the corpus was four facet kinds wide and no case reached
+the rule. Then: it changes one, and that one is wrong. Now: it changes none
+again, resting on something entirely different. What the corpus still cannot say
+is whether the rule is *right*, only that it is not wrong here; the case it
+exists for — optional applicability matching nothing, which IfcTester calls a
+pass — is not in the corpus at all.
+
+### Unchanged
+
+The eight published CSVs and the BCF archive are byte-identical, and
+`run_id ids-v0.1-8706ef58303bfd11` still resolves. A second checker, a fourth
+finding shape, and a change to how issues are grouped, and not one of the
+forty-seven published finding keys moved.
+
+Snapshot: `docs/contracts/contract-1.3.json`.
+
 ### Data contract 1.2 — the rule library gains four rules and three facet kinds
 
 The library was built in the previous entry. This is the first time it was

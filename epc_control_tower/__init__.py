@@ -17,6 +17,11 @@ __version__ = "1.0.0"
 # semantics). Bumping this is a deliberate, reviewable act: it requires a
 # CHANGELOG entry and an explicit characterization-snapshot refresh.
 #
+# 1.3 is the first contract with more than one checker in it. A cross-model
+# completeness checker answers a question IDS cannot ask, and answering it
+# required deciding what element a finding names when the finding is that
+# something is not there. `Finding` gained a fourth legal shape as a result.
+#
 # 1.2 is the first bump caused by the rule library being used rather than built.
 # Four rules were added — no package code, no test, four TOML files — and with
 # them the last three IDS facet kinds this project had never evaluated. Every
@@ -33,4 +38,4 @@ __version__ = "1.0.0"
 # rows. The legacy contract did not move at all — the eight published CSV files
 # and the BCF archive are byte-identical, because the legacy writers publish
 # one named project.
-CONTRACT_VERSION = "1.2"
+CONTRACT_VERSION = "1.3"

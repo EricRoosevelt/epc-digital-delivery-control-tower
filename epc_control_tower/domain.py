@@ -486,7 +486,7 @@ class Execution:
 class Finding:
     """One requirement outcome — the pivot type of the whole system.
 
-    Only three shapes are meaningful, and they are enforced rather than
+    Only four shapes are meaningful, and they are enforced rather than
     assumed:
 
     ===================  ==============  ==========  ===========  ===========
@@ -494,11 +494,37 @@ class Finding:
     ===================  ==============  ==========  ===========  ===========
     ``PASS``             True            False       ``INFO``     set
     ``FAIL``             True            True        not ``INFO`` set
+    ``FAIL``             True            True        not ``INFO`` empty
     ``N/A``              False           False       ``INFO``     empty
     ===================  ==============  ==========  ===========  ===========
 
     The ``N/A`` row is specification-level: no element was applicable, so there
     is no element to point at.
+
+    The second ``FAIL`` row is a finding about something that is **not there**,
+    and the rule governing it is this:
+
+        A finding names the smallest thing that exists and that a person can go
+        and look at.
+
+    Usually that is an element, including when the finding is about an absence:
+    "this space has no terminal" points at the space, which exists, is already
+    in the element register, and is where a coordinator would go. But some
+    absences have no such context — "this model carries no setout reference
+    shared with its siblings", or an IDS specification whose applicability is
+    required and matched nothing at all. There the smallest existing thing is
+    the model, and ``element_key`` is empty.
+
+    The alternative was to mint a key for the element that should have been
+    there. It would have kept the table at three rows and every join
+    unconditional, and it would have put a row in the element register for a
+    thing that does not exist — the same fabrication this project refuses when
+    it publishes ``actual`` empty rather than guessing at a value it cannot
+    observe. A missing wall with a UUID is worse than an honest blank.
+
+    ``PASS`` stays strict, and not by omission: a pass is a statement that some
+    specific thing was checked and was correct, so there is always something to
+    name. Only a failure can be about nothing.
     """
 
     finding_key: str
@@ -545,8 +571,11 @@ class Finding:
                 f"got {self.severity}"
             )
 
-        if applicable and not self.element_key:
-            raise ValueError(f"{self.finding_key}: an applicable finding needs an element")
+        if applicable and not self.element_key and not should_be_issue:
+            raise ValueError(
+                f"{self.finding_key}: a passing finding must name the element it "
+                f"checked; only a failure can be about something that is absent"
+            )
         if not applicable and self.element_key:
             raise ValueError(
                 f"{self.finding_key}: an N/A finding is specification-level and "

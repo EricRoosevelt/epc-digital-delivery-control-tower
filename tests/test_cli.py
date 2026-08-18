@@ -57,7 +57,7 @@ class AdvertisedCommandsTests(unittest.TestCase):
         code, out, _ = run_cli("version")
         self.assertEqual(code, 0)
         self.assertIn("epc-control-tower", out)
-        self.assertIn("data contract 1.2", out)
+        self.assertIn("data contract 1.3", out)
 
     def test_components_lists_what_is_registered(self):
         code, out, _ = run_cli("components")
@@ -82,11 +82,10 @@ class CheckCommandTests(unittest.TestCase):
             written = sorted(path.name for path in scratch.rglob("*") if path.is_file())
 
         self.assertEqual(code, 0)
-        # Both projects: 76 findings from PCERT plus 39 from the reference-view
-        # samples, of which 58 are applicable. The rule library grew from seven
-        # rules to eleven, which is what moved these numbers.
-        self.assertIn("58 of 115 applicable", out)
-        self.assertIn("18 issue(s)", out)
+        # Both projects: 79 findings from PCERT plus 42 from the reference-view
+        # samples, of which 64 are applicable. Twelve rules across two checkers.
+        self.assertIn("64 of 121 applicable", out)
+        self.assertIn("21 issue(s)", out)
         # Checker reports are written; published artifacts are not.
         self.assertTrue(written)
         for name in written:
@@ -178,7 +177,7 @@ class RunManifestTests(unittest.TestCase):
             )
 
         self.assertEqual(code, 0, err)
-        self.assertEqual(manifest["contract_version"], "1.2")
+        self.assertEqual(manifest["contract_version"], "1.3")
         self.assertEqual(
             sorted(entry["id"] for entry in manifest["exporters"]),
             ["csv", "json", "legacy-bcf", "legacy-pbip"],

@@ -121,7 +121,7 @@ class AddingARuleTests(unittest.TestCase):
 
             widened = load_ruleset(target)
 
-        self.assertEqual(len({r.rule_id for r in widened.requirements}), 12)
+        self.assertEqual(len({r.rule_id for r in widened.requirements}), 13)
         added = [r for r in widened.requirements if r.rule_id == "R-900"]
         self.assertEqual(len(added), 1)
         self.assertIs(added[0].severity, Severity.WARNING)

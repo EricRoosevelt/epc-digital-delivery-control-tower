@@ -20,7 +20,9 @@ Five behaviours of IfcTester 0.8.5 are accommodated deliberately and must not be
    generated report survives a whitespace check.
 4. A specification with zero applicable elements is reported as *passing*.
    Counting that as compliance would inflate every pass rate, so it is
-   normalised to ``N/A`` and excluded from the applicable denominator.
+   normalised to ``N/A`` and excluded from the applicable denominator — unless
+   the specification's applicability is *required*, in which case matching
+   nothing is precisely how it fails. See :meth:`IdsChecker._specification_status`.
 5. Validation accumulates passing elements in ``set`` objects and stamps each
    report with ``datetime.now()``. Both are pinned before a report is written —
    see :func:`_order_deterministically` — because an artifact this repository
@@ -97,6 +99,10 @@ SUPPORTED_FACETS = (
 _PASS_REASON = "Requirement satisfied."
 _FAIL_REASON = "Requirement not satisfied."
 _NOT_APPLICABLE_REASON = "No applicable elements exist in this model."
+_NOTHING_MATCHED_REASON = (
+    "The specification requires at least one matching element and this model "
+    "has none."
+)
 
 
 # ---------------------------------------------------------------------------
@@ -559,11 +565,28 @@ class IdsChecker:
         IfcTester reports zero applicable elements as a pass. Reporting that as
         compliance would inflate every pass rate this project publishes, so it
         becomes its own status and leaves the applicable denominator.
+
+        But "nothing applied" and "nothing exists" are not the same thing, and
+        this used to treat them as one. A specification whose applicability is
+        *required* asserts that something must be in the model; matching nothing
+        is how it fails, not a sign it does not apply. buildingSMART's own test
+        cases caught this — ``entity/fail-in_ifc2x3_there_must_be_an_air…``
+        expects a failure and got ``N/A`` — and it stayed invisible until the
+        vendored corpus was widened to cover every facet kind.
+
+        No rule in this repository could reach it: ``compile_document`` emits
+        ``minOccurs=0`` for every specification it writes, so this project's own
+        applicability is always optional. It was still worth fixing, because a
+        rule set this checker did not compile is exactly what somebody forking
+        this project brings with them.
         """
 
         total_applicable = int(specification.get("total_applicable", 0) or 0)
-        if specification.get("is_skipped") or total_applicable == 0:
+        if specification.get("is_skipped"):
             return FindingStatus.NOT_APPLICABLE
+        if total_applicable == 0:
+            required = str(specification.get("cardinality", "")).lower() == "required"
+            return FindingStatus.FAIL if required else FindingStatus.NOT_APPLICABLE
         return FindingStatus.PASS if specification.get("status") else FindingStatus.FAIL
 
     def _normalise(
@@ -589,7 +612,27 @@ class IdsChecker:
             requirements = specification.get("requirements") or []
             status = self._specification_status(specification)
 
-            if status is FindingStatus.NOT_APPLICABLE:
+            # Both element-less outcomes are reported the same way — one
+            # finding per requirement, naming no element — because in both
+            # cases there is no element to name. They differ in what they say:
+            # one is "this did not apply", the other is "what this required is
+            # not in the model at all". See `domain.Finding` for why the second
+            # is a failure with a blank rather than a failure with a fabricated
+            # element key.
+            if status in (FindingStatus.NOT_APPLICABLE, FindingStatus.FAIL) and not (
+                specification.get("applicable_entities")
+            ):
+                reason = (
+                    _NOT_APPLICABLE_REASON
+                    if status is FindingStatus.NOT_APPLICABLE
+                    else _NOTHING_MATCHED_REASON
+                )
+                # A specification with no requirement facets at all — legal IDS,
+                # meaning "these elements must exist" and nothing more — yields
+                # no finding, because a finding is an outcome *for a
+                # requirement* and there is none to report against. The status
+                # above is still correct and still reaches the conformance
+                # tests; what is missing is somewhere to hang it in this model.
                 for reported in requirements:
                     requirement = source.requirement_for(rule_id, reported["label"])
                     if requirement.requirement_key not in wanted:
@@ -601,8 +644,8 @@ class IdsChecker:
                             requirement=requirement,
                             source=source,
                             element=None,
-                            status=FindingStatus.NOT_APPLICABLE,
-                            reason=_NOT_APPLICABLE_REASON,
+                            status=status,
+                            reason=reason,
                         )
                     )
                 continue

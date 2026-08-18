@@ -182,10 +182,10 @@ class ShippedFixtureGroupingTests(unittest.TestCase):
     def setUpClass(cls):
         cls.bundle = shipped_pipeline_result().bundle
 
-    def test_the_shipped_fixture_produces_eighteen_issues_over_21_findings(self):
-        self.assertEqual(len(self.bundle.issues), 18)
+    def test_the_shipped_fixture_produces_21_issues_over_24_findings(self):
+        self.assertEqual(len(self.bundle.issues), 21)
         self.assertEqual(
-            sum(len(issue.finding_keys) for issue in self.bundle.issues), 21
+            sum(len(issue.finding_keys) for issue in self.bundle.issues), 24
         )
         # Two sizes now, where the previous implementation *required* exactly
         # two findings per topic and raised otherwise. Three duct segments each
@@ -193,11 +193,11 @@ class ShippedFixtureGroupingTests(unittest.TestCase):
         # each. This is the census the old code mistook for a law.
         self.assertEqual(
             sorted(len(i.finding_keys) for i in self.bundle.issues),
-            [1] * 15 + [2] * 3,
+            [1] * 18 + [2] * 3,
         )
 
     def test_every_issue_is_open_with_one_opening_event(self):
-        self.assertEqual(len(self.bundle.issue_events), 18)
+        self.assertEqual(len(self.bundle.issue_events), 21)
         for issue in self.bundle.issues:
             with self.subTest(issue=issue.issue_key):
                 history = self.bundle.events_for(issue.issue_key)
@@ -211,7 +211,7 @@ class ShippedFixtureGroupingTests(unittest.TestCase):
         failing = {f.finding_key for f in self.bundle.findings if f.is_issue}
         self.assertEqual(grouped, failing)
 
-    def test_issues_now_span_four_models_and_both_projects(self):
+    def test_issues_now_span_every_model_in_both_projects(self):
         # A fact about this fixture, not a rule the code enforces — and the
         # clearest illustration of why it must not be one. The previous
         # implementation raised unless every failure was in Building-Hvac.ifc.
@@ -223,8 +223,17 @@ class ShippedFixtureGroupingTests(unittest.TestCase):
                 "architecture",
                 "hvac",
                 "iso-reference-view.architecture",
+                "iso-reference-view.plumbing",
+                "iso-reference-view.structural",
                 "structural",
             },
+        )
+        # Three of them name no element at all. An issue about a model that
+        # carries no shared setout reference has nothing to point at inside
+        # that model, and grouping had to learn that before those failures
+        # could reach an issue rather than being dropped.
+        self.assertEqual(
+            sum(1 for issue in self.bundle.issues if not issue.element_key), 3
         )
 
 

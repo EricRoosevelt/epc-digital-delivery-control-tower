@@ -109,6 +109,13 @@ class PublishedArchiveTests(unittest.TestCase):
         self.assertEqual(len(self.projection.topics), 3)
         for issue in self.result.bundle.issues:
             with self.subTest(issue=issue.issue_key):
+                if not issue.element_key:
+                    # A model-level issue is about something absent, so
+                    # there is no element to tessellate and no viewpoint to
+                    # frame. The pipeline does not compute a box for one,
+                    # which is the point of asserting it here: the exporter
+                    # gets nothing, and still does not go looking.
+                    continue
                 self.result.bundle.geometry_for(issue.element_key)
 
 

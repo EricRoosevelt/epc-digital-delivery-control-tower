@@ -182,6 +182,7 @@ def default_registry(config: RunConfig) -> Registry:
     """
 
     from .bcf.schema import default_schema_dir
+    from .checkers.completeness import CompletenessChecker
     from .checkers.ids_checker import IdsChecker
     from .exporters.canonical import CsvExporter, JsonExporter
     from .exporters.legacy_bcf import LegacyBcfExporter
@@ -191,6 +192,10 @@ def default_registry(config: RunConfig) -> Registry:
 
     registry = Registry()
     registry.register_checker(IdsChecker(config.resolved_ruleset_path()))
+    # Two checkers, which is the first time this registry has had to be one.
+    # Both are handed the same rule library and take from it the rules that
+    # name them; neither knows the other exists.
+    registry.register_checker(CompletenessChecker(config.resolved_ruleset_path()))
     registry.register_grouping_policy(ElementGroupingPolicy())
     registry.register_exporter(CsvExporter())
     registry.register_exporter(JsonExporter())

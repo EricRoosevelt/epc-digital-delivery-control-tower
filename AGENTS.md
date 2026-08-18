@@ -93,6 +93,29 @@ Some rules of thumb that follow from the shape:
   keeping it that small is the point: a settings file that accepts everything
   explains nothing.
 
+**Adding a rule should not touch this package either.** A rule is one TOML file
+under `rules/<ruleset>/`, carrying its own severity, owner role, stage,
+discipline scope and citation. `checker = "ids"` compiles it into the IDS
+document that `ids/` holds as a build product; `checker = "completeness"` routes
+it to the cross-model checker instead and never reaches that document. A rule
+naming a checker the library does not know is rejected when the library loads,
+because a delivery requirement the pipeline silently declines to evaluate is the
+worst outcome available.
+
+A checker-specific parameter — `CompletenessChecker`'s `name_pattern`, say —
+stays in the rule file, and the checker reads it back from there. A
+`Requirement` carries identity and metadata, not a payload every checker would
+have to agree on the shape of.
+
+**A finding may be about something that is not there**, and what it names then
+is a decision, not a default. The rule: *a finding names the smallest thing that
+exists and that a person can go and look at.* Usually an element, including for
+an absence — "this space has no terminal" points at the space. When no element
+can stand for it, the model: `element_key` is empty and the finding is
+model-level. Nothing is ever minted for a thing that was not modelled. A pass is
+stricter and stays so: it says a specific thing was checked and was correct, so
+it always names that thing. See `domain.Finding` for the four legal shapes.
+
 **Adding a project should not touch this package.** Drop a directory under
 `projects/` with a `project.toml` and the models beside it; discovery is a glob.
 Give each model a `model_id` that means something inside the project — two

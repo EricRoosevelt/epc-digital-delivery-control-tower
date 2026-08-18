@@ -232,8 +232,8 @@ class CanonicalGrainTests(unittest.TestCase):
         counts: dict[str, int] = {}
         for finding in self.bundle.findings:
             counts[finding.project_id] = counts.get(finding.project_id, 0) + 1
-        self.assertEqual(counts[LEGACY_PROJECT_ID], 76)
-        self.assertEqual(counts[SECOND_PROJECT_ID], 39)
+        self.assertEqual(counts[LEGACY_PROJECT_ID], 79)
+        self.assertEqual(counts[SECOND_PROJECT_ID], 42)
 
     def test_the_second_project_has_applicable_findings_not_only_na(self):
         applicable = [
@@ -246,15 +246,16 @@ class CanonicalGrainTests(unittest.TestCase):
         # classification, the second project could only demonstrate that the
         # pipeline ran over it — every rule that had anything to say was about
         # ducts, beams or property sets these three samples do not contain.
-        self.assertEqual(len(applicable), 5)
+        self.assertEqual(len(applicable), 8)
         self.assertEqual(
-            sorted(self.bundle.ruleset.by_key(f.requirement_key).rule_id for f in applicable),
-            ["R-001", "R-002", "R-006", "R-007", "R-009"],
+            sorted({self.bundle.ruleset.by_key(f.requirement_key).rule_id for f in applicable}),
+            ["R-001", "R-002", "R-006", "R-007", "R-009", "R-010"],
         )
-        self.assertEqual(
-            sum(1 for f in applicable if f.is_issue),
-            1,
-        )
+        # Four failures, three of them from the completeness checker: these
+        # three files are unrelated buildingSMART samples that share no setout
+        # reference, so as a federated set they do not federate. That is a true
+        # statement about the fixture and the reason the rule is worth having.
+        self.assertEqual(sum(1 for f in applicable if f.is_issue), 4)
 
 
 

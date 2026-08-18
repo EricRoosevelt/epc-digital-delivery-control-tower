@@ -1,10 +1,17 @@
-"""Grouping by element: one issue per element that has something wrong with it.
+"""Grouping by subject: one issue per thing that has something wrong with it.
 
 What counts as *one actionable issue* is a project decision, not a property of
 the pipeline. Per element is the answer this project has always used — somebody
 walks up to a duct segment and fixes everything wrong with it at once — but per
 requirement, per model or per discipline are all defensible, which is why this
 is a policy behind a protocol rather than a loop in the exporter.
+
+"Per element" is now stated more exactly as *per subject*: the element a
+finding names, or the model, when the finding is that something is absent and
+there is no element to name. See :class:`~..domain.Finding` for why such a
+finding exists at all. Grouping by element alone would have left those failures
+in no issue, and a failure that reaches no issue is a failure nobody is told
+about — which is a far worse outcome than a slightly wider policy.
 
 Two things the previous implementation did are deliberately not reproduced.
 
@@ -44,7 +51,12 @@ TOPIC_CREATED_PAYLOAD_VERSION = 1
 
 
 class ElementGroupingPolicy:
-    """One issue per element carrying at least one issue-bearing finding."""
+    """One issue per subject carrying at least one issue-bearing finding.
+
+    The id stays ``element`` because it is published: it is written into every
+    issue row and into the issue key itself, so renaming it would move keys
+    that name nothing new.
+    """
 
     id = "element"
 
@@ -68,25 +80,24 @@ class ElementGroupingPolicy:
         for finding in findings:
             if not finding.is_issue:
                 continue
-            if not finding.element_key:
-                # Only an applicable finding can fail, and an applicable
-                # finding always names an element — but this policy groups *on*
-                # the element, so it says so rather than inventing a bucket.
-                raise ValueError(
-                    f"{finding.finding_key}: cannot group an issue with no element"
-                )
-            grouped.setdefault(finding.element_key, []).append(finding)
+            # The element when there is one, the model when the finding is that
+            # something is missing and no element can stand for it. The two can
+            # never collide: an element_key always begins with its model_key and
+            # a separator, so it is never equal to a bare model_key.
+            grouped.setdefault(finding.element_key or finding.model_key, []).append(
+                finding
+            )
 
         issues: list[Issue] = []
         events: list[IssueEvent] = []
 
-        for element_key in sorted(grouped):
-            members = sorted(grouped[element_key], key=lambda item: item.finding_key)
+        for subject in sorted(grouped):
+            members = sorted(grouped[subject], key=lambda item: item.finding_key)
             first = members[0]
             issue_key = build_issue_key(
                 validation_run_id=validation_run_id,
                 grouping_policy=self.id,
-                group_ref=element_key,
+                group_ref=subject,
             )
 
             event = IssueEvent(
@@ -105,7 +116,7 @@ class ElementGroupingPolicy:
                 payload_version=TOPIC_CREATED_PAYLOAD_VERSION,
                 typed_payload=TopicCreatedPayload(
                     finding_count=len(members),
-                    title=element_key,
+                    title=subject,
                 ),
             )
             events.append(event)
@@ -116,7 +127,10 @@ class ElementGroupingPolicy:
                     validation_run_id=validation_run_id,
                     project_id=first.project_id,
                     model_key=first.model_key,
-                    element_key=element_key,
+                    # Empty for a model-level issue, which is the same blank the
+                    # findings carry and means the same thing: there is no
+                    # element, not that one was omitted.
+                    element_key=first.element_key,
                     grouping_policy=self.id,
                     finding_keys=tuple(item.finding_key for item in members),
                     # Derived from the history just built, never asserted

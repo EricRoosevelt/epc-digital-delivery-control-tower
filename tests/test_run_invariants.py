@@ -74,7 +74,7 @@ class ShippedBundleInvariantTests(unittest.TestCase):
                 if finding.element_key:
                     self.assertIn(finding.element_key, element_keys)
 
-    def test_a_finding_only_takes_one_of_three_shapes(self):
+    def test_a_finding_only_takes_one_of_four_shapes(self):
         for finding in self.bundle.findings:
             with self.subTest(finding=finding.finding_key):
                 if finding.status is FindingStatus.NOT_APPLICABLE:
@@ -91,7 +91,10 @@ class ShippedBundleInvariantTests(unittest.TestCase):
                     self.assertTrue(finding.is_applicable)
                     self.assertTrue(finding.is_issue)
                     self.assertIsNot(finding.severity, Severity.INFO)
-                    self.assertTrue(finding.element_key)
+                    # A failure may name an element or, when it is about
+                    # something that is not there, only its model. Both are
+                    # legal; a failure with neither is not.
+                    self.assertTrue(finding.model_key)
 
     def test_every_issue_state_folds_out_of_its_own_history(self):
         for issue in self.bundle.issues:

@@ -139,8 +139,14 @@ def build_bundle(
     # Only for elements an issue points at. Tessellating every element to
     # produce a bounding box nobody asks for would be the expensive half of
     # the run, spent on nothing.
+    #
+    # A model-level issue points at no element — it is about something that is
+    # absent — so there is nothing to tessellate and nothing for a viewpoint to
+    # frame. Filtering here rather than teaching the geometry stage about blank
+    # keys keeps that stage's contract simple: every key it is given is an
+    # element it must find.
     geometry = compute_geometry(
-        [issue.element_key for issue in grouped.issues],
+        [issue.element_key for issue in grouped.issues if issue.element_key],
         elements=elements,
         model_paths=paths,
     )
