@@ -1,0 +1,35 @@
+rule_id = "R-005A"
+title = "Duct segments need assumed EPC metadata"
+description = "Project-specific assumed EPC delivery requirement for IfcDuctSegment elements."
+checker = "ids"
+
+# A warning, not an error, and now because the rule says so rather than
+# because its identifier starts with "R-005". This states an information
+# requirement the project assumes; it is not an obligation the buildingSMART
+# sample files were ever meant to satisfy, so failing it is not a defect in
+# the supplied model.
+severity = "WARNING"
+owner_role = "model-coordination"
+stage = "Coordination"
+discipline_scope = ["HVAC"]
+citation = "Project-assumed EPC delivery requirement; not a buildingSMART obligation."
+
+[[applicability]]
+facet = "entity"
+name = "IFCDUCTSEGMENT"
+
+[[requirements]]
+facet = "property"
+propertySet = "EPC_Delivery"
+baseName = "AssetTag"
+dataType = "IFCLABEL"
+cardinality = "required"
+instructions = "Provide the project-assumed EPC asset tag."
+
+[[requirements]]
+facet = "property"
+propertySet = "EPC_Delivery"
+baseName = "SystemCode"
+dataType = "IFCLABEL"
+cardinality = "required"
+instructions = "Provide the project-assumed EPC system code."

@@ -25,6 +25,7 @@ __all__ = [
     "published_bundle",
     "shipped_pipeline_result",
     "shipped_reports_dir",
+    "frozen_ruleset",
     "shipped_run_config",
     "widened_ruleset_bundle",
     "writable_test_directory",
@@ -94,9 +95,31 @@ def published_bundle():
     the project they are about — which is what they always meant.
     """
 
-    from epc_control_tower.exporters.legacy_projection import narrow_to_project
+    from epc_control_tower.exporters.legacy_projection import (
+        narrow_to_project,
+        narrow_to_ruleset,
+    )
 
-    return narrow_to_project(shipped_pipeline_result().bundle, LEGACY_PROJECT_ID)
+    return narrow_to_ruleset(
+        narrow_to_project(shipped_pipeline_result().bundle, LEGACY_PROJECT_ID),
+        frozen_ruleset(),
+    )
+
+
+@functools.cache
+def frozen_ruleset():
+    """The rule set version the published contract was built from.
+
+    The run's rule set has moved on — it is a directory of declarative rules
+    now — so anything asserting published numbers has to name the frozen one,
+    exactly as it has to name the project.
+    """
+
+    from epc_control_tower.rules import load_ruleset
+
+    return load_ruleset(
+        PROJECT_ROOT / "ids" / "epc_delivery_requirements_v0.1.ids"
+    )
 
 
 @functools.cache

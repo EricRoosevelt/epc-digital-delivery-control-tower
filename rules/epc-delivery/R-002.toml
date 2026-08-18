@@ -1,0 +1,21 @@
+rule_id = "R-002"
+title = "Walls must declare IsExternal"
+description = "Checks the presence and IFC data type of Pset_WallCommon.IsExternal."
+checker = "ids"
+severity = "ERROR"
+owner_role = "architecture-lead"
+stage = "Design"
+discipline_scope = ["Architecture"]
+citation = "IFC4 Pset_WallCommon."
+
+[[applicability]]
+facet = "entity"
+name = "IFCWALL"
+
+[[requirements]]
+facet = "property"
+propertySet = "Pset_WallCommon"
+baseName = "IsExternal"
+dataType = "IFCBOOLEAN"
+cardinality = "required"
+instructions = "Declare whether the wall is external."

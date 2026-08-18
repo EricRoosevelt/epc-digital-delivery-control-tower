@@ -17,10 +17,14 @@ __version__ = "1.0.0"
 # semantics). Bumping this is a deliberate, reviewable act: it requires a
 # CHANGELOG entry and an explicit characterization-snapshot refresh.
 #
+# 1.1 moves the canonical contract again: the rules are declarative now, so the
+# rule set has a new id and version and the validation identity follows. The
+# legacy contract is unaffected, because it is scoped to the frozen rule set.
+#
 # 1.0 is the first bump, and the mechanism's first real use. What moved is the
 # canonical contract: it now carries more than one project, so the validation
 # identity covers six models rather than three and every canonical table grew
 # rows. The legacy contract did not move at all — the eight published CSV files
 # and the BCF archive are byte-identical, because the legacy writers publish
 # one named project.
-CONTRACT_VERSION = "1.0"
+CONTRACT_VERSION = "1.1"

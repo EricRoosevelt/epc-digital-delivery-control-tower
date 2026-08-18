@@ -4,6 +4,10 @@
 # tests. What is left is a handful of genuine runtime knobs.
 
 [run]
+# The rule library. A directory of declarative rules, one TOML file per rule;
+# the IDS document under ids/ is compiled from it by every run.
+ruleset_path = "rules/epc-delivery"
+
 # Which project the legacy writers publish.
 #
 # The eight CSV files under data/processed/ and the BCF archive under reports/

@@ -69,6 +69,11 @@ class RecordedSnapshotTests(unittest.TestCase):
         self.assertEqual(counts["by_status"], {"PASS": 27, "FAIL": 6, "N/A": 41})
         self.assertEqual(self.recorded["ruleset"]["requirements"], 9)
 
+    def test_the_rule_set_is_the_declarative_one(self):
+        self.assertEqual(self.recorded["ruleset"]["id"], "epc-delivery")
+        self.assertEqual(self.recorded["ruleset"]["version"], "1.0")
+        self.assertEqual(self.recorded["ruleset"]["requirements"], 9)
+
     def test_the_earlier_contract_is_kept_as_history(self):
         # A snapshot is per contract version, so bumping adds a record rather
         # than overwriting one. What 0.1 published stays readable.

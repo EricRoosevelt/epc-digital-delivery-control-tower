@@ -268,7 +268,11 @@ class FindingFidelityTests(unittest.TestCase):
         self.assertEqual(
             [f.component_id for f in run.checker_fingerprints], ["ids"]
         )
-        self.assertEqual(run.ruleset_source_blob_sha256, sha256_file(IDS_PATH))
+        # The run's rules are declarative now, so there is no single source
+        # document to hash. Provenance for a directory of rules is the rule set
+        # digest, which is computed from what the rules say.
+        self.assertEqual(run.ruleset_source_blob_sha256, "")
+        self.assertRegex(run.ruleset_normalized_digest, r"^[0-9a-f]{64}$")
 
 
 class ReportDeterminismTests(unittest.TestCase):

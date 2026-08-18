@@ -32,6 +32,7 @@ from epc_control_tower.exporters.legacy_projection import project_bundle
 from epc_control_tower.legacy_identity import LEGACY_RUN_ID
 from helpers import (
     LEGACY_PROJECT_ID,
+    frozen_ruleset,
     PROJECT_ROOT,
     shipped_pipeline_result,
     writable_test_directory,
@@ -53,7 +54,9 @@ class ByteEqualityTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.result = shipped_pipeline_result()
-        cls.adapter = LegacyPbipAdapter(project_id=LEGACY_PROJECT_ID)
+        cls.adapter = LegacyPbipAdapter(
+            project_id=LEGACY_PROJECT_ID, frozen_ruleset=frozen_ruleset()
+        )
         cls.tables = cls.adapter.build_tables(cls.result.bundle)
 
     def test_all_eight_published_files_are_reproduced_byte_for_byte(self):
@@ -92,7 +95,9 @@ class ProjectionPurityTests(unittest.TestCase):
     def setUpClass(cls):
         cls.result = shipped_pipeline_result()
         cls.projection = project_bundle(
-            cls.result.bundle, project_id=LEGACY_PROJECT_ID
+            cls.result.bundle,
+            project_id=LEGACY_PROJECT_ID,
+            frozen_ruleset=frozen_ruleset(),
         )
 
     def test_the_published_run_identity_comes_from_the_frozen_derivation(self):
@@ -104,12 +109,9 @@ class ProjectionPurityTests(unittest.TestCase):
         # identity they consume, because it now folds in each checker's version
         # and configuration. The published keys survive by feeding the old run
         # identity back in, not by keeping a second algorithm around.
-        published_project = {
-            f.finding_key
-            for f in self.result.bundle.findings
-            if f.project_id == LEGACY_PROJECT_ID
-        }
-        canonical = published_project
+        from helpers import published_bundle
+
+        canonical = {f.finding_key for f in published_bundle().findings}
         published = {row.finding_key for row in self.projection.findings}
         self.assertEqual(len(canonical), len(published))
         self.assertEqual(canonical & published, set())
@@ -168,17 +170,22 @@ class LegacyManifestTests(unittest.TestCase):
         )
 
         result = shipped_pipeline_result()
-        projection = project_bundle(result.bundle, project_id=LEGACY_PROJECT_ID)
+        projection = project_bundle(
+            result.bundle,
+            project_id=LEGACY_PROJECT_ID,
+            frozen_ruleset=frozen_ruleset(),
+        )
 
         with writable_test_directory("legacy-manifest") as scratch:
             processed = scratch / "processed"
             reports = scratch / "reports"
-            LegacyPbipAdapter(project_id=LEGACY_PROJECT_ID).export(
-                result.bundle, processed
-            )
+            LegacyPbipAdapter(
+                project_id=LEGACY_PROJECT_ID, frozen_ruleset=frozen_ruleset()
+            ).export(result.bundle, processed)
             LegacyBcfExporter(
                 schema_dir=default_schema_dir(PROJECT_ROOT),
                 project_id=LEGACY_PROJECT_ID,
+                frozen_ruleset=frozen_ruleset(),
             ).export(result.bundle, reports)
 
             manifest = build_legacy_manifest(

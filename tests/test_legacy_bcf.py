@@ -43,6 +43,7 @@ from epc_control_tower.exporters.legacy_projection import project_bundle
 from epc_control_tower.legacy_identity import LEGACY_RUN_ID
 from helpers import (
     LEGACY_PROJECT_ID,
+    frozen_ruleset,
     PROJECT_ROOT,
     shipped_pipeline_result,
     writable_test_directory,
@@ -62,10 +63,14 @@ class PublishedArchiveTests(unittest.TestCase):
     def setUpClass(cls):
         cls.result = shipped_pipeline_result()
         cls.projection = project_bundle(
-            cls.result.bundle, project_id=LEGACY_PROJECT_ID
+            cls.result.bundle,
+            project_id=LEGACY_PROJECT_ID,
+            frozen_ruleset=frozen_ruleset(),
         )
         cls.exporter = LegacyBcfExporter(
-            schema_dir=SCHEMA_DIR, project_id=LEGACY_PROJECT_ID
+            schema_dir=SCHEMA_DIR,
+            project_id=LEGACY_PROJECT_ID,
+            frozen_ruleset=frozen_ruleset(),
         )
         cls.data = cls.exporter.build_archive(cls.result.bundle, cls.projection)
 
@@ -117,7 +122,9 @@ class LegacyScopeTests(unittest.TestCase):
     @staticmethod
     def _projection():
         return project_bundle(
-            shipped_pipeline_result().bundle, project_id=LEGACY_PROJECT_ID
+            shipped_pipeline_result().bundle,
+            project_id=LEGACY_PROJECT_ID,
+            frozen_ruleset=frozen_ruleset(),
         )
 
     def test_it_declares_the_rules_it_converts(self):
@@ -140,7 +147,9 @@ class LegacyScopeTests(unittest.TestCase):
         mutated = dataclasses.replace(projection, topics=(relabelled,))
 
         exporter = LegacyBcfExporter(
-            schema_dir=SCHEMA_DIR, project_id=LEGACY_PROJECT_ID
+            schema_dir=SCHEMA_DIR,
+            project_id=LEGACY_PROJECT_ID,
+            frozen_ruleset=frozen_ruleset(),
         )
         with self.assertRaisesRegex(ValueError, r"only converts project-assumed"):
             exporter.build_archive(self.bundle, mutated)
@@ -156,7 +165,9 @@ class LegacyScopeTests(unittest.TestCase):
         mutated = dataclasses.replace(projection, topics=(elsewhere,))
 
         exporter = LegacyBcfExporter(
-            schema_dir=SCHEMA_DIR, project_id=LEGACY_PROJECT_ID
+            schema_dir=SCHEMA_DIR,
+            project_id=LEGACY_PROJECT_ID,
+            frozen_ruleset=frozen_ruleset(),
         )
         with self.assertRaisesRegex(ValueError, "is scoped to hvac/Building-Hvac.ifc"):
             exporter.build_archive(self.bundle, mutated)
@@ -254,7 +265,9 @@ class CameraTests(unittest.TestCase):
 
     def test_the_published_viewpoints_still_frame_their_elements(self):
         for topic in project_bundle(
-            shipped_pipeline_result().bundle, project_id=LEGACY_PROJECT_ID
+            shipped_pipeline_result().bundle,
+            project_id=LEGACY_PROJECT_ID,
+            frozen_ruleset=frozen_ruleset(),
         ).topics:
             with self.subTest(topic=topic.topic_guid):
                 verify_camera_frames_aabb(topic.aabb, topic.camera, tolerance=1e-12)

@@ -1,5 +1,5 @@
 {
-  "artifact_bundle_id": "bundle-9ec9e8dee54f553c",
+  "artifact_bundle_id": "bundle-fb073517bd6ad98a",
   "artifacts": [
     {
       "bytes": 630,
@@ -38,28 +38,28 @@
       "sha256": "e28529b55e6e21888e1157c4afa473f0b0e844e19e2708fac0c6c228f2f0c1a0"
     },
     {
-      "bytes": 20596,
+      "bytes": 21262,
       "exporter": "csv",
       "path": "data/processed/canonical/findings.csv",
-      "sha256": "38e7e830adaaca317e6fe8844608b4e7f028a8bc207959f681694106ff83f0e5"
+      "sha256": "05625b37a15d7cc479998b3362dcce0f5f4e31014e96f86f99c45a96fdce7ae8"
     },
     {
       "bytes": 756,
       "exporter": "csv",
       "path": "data/processed/canonical/issue_events.csv",
-      "sha256": "bd1b67c7c5db879bf959a0af2b497bb8724ba647e1ba0b2b0efd0cd8fdc1e5e8"
+      "sha256": "17f9441d1bf64db7ed5ed5b8b0d3f193bd195f818b5f2a8cf31312754f38ceb3"
     },
     {
       "bytes": 469,
       "exporter": "csv",
       "path": "data/processed/canonical/issue_findings.csv",
-      "sha256": "3f635f7e617257b67f9c66fcb3f32fc4cd567a3c3dd4502974934ef808b4b942"
+      "sha256": "3267e622d7a702f2f041afad64b70a13d0aeb06d3a8cc5fa368be9ab98370a20"
     },
     {
-      "bytes": 564,
+      "bytes": 591,
       "exporter": "csv",
       "path": "data/processed/canonical/issues.csv",
-      "sha256": "24e2f599841c608bccf76c7d8b2a41b68a0e9d44bd3519eed9c5804afbbb2e5e"
+      "sha256": "9c9f092a9dddfdef980da1ed6bd2d456829ca16f3ad4925643117739c061cf73"
     },
     {
       "bytes": 2225,
@@ -74,16 +74,16 @@
       "sha256": "194e795a7a3d929ad51263a14970ec70e82f0016085ae6774811c1c7f4f8ab52"
     },
     {
-      "bytes": 1586,
+      "bytes": 2414,
       "exporter": "csv",
       "path": "data/processed/canonical/requirements.csv",
-      "sha256": "64a2fa9c173631350d6c796fbdfe98e14836f4c2547e4775d42494c57128534a"
+      "sha256": "f51e2e3df6284a1753de9008b94b6a1090cb49723305e6cd848a9ff9783a2389"
     },
     {
-      "bytes": 68371,
+      "bytes": 69846,
       "exporter": "json",
       "path": "data/processed/canonical/run.json",
-      "sha256": "5bac8ab0bcb15cbab2c97e7bef5cf04bfe4b424d3f3e7b7330a52a92a1082a84"
+      "sha256": "c00cf91dc4c619ee25f699585a9df44c5a3e65d8405d8e5142c6a2d85e38e531"
     },
     {
       "bytes": 18462,
@@ -111,7 +111,7 @@
     }
   ],
   "as_of": "2026-08-13T00:00:00Z",
-  "contract_version": "1.0",
+  "contract_version": "1.1",
   "exporters": [
     {
       "config_sha256": "",
@@ -134,5 +134,5 @@
       "version": "1.0.0"
     }
   ],
-  "validation_run_id": "ids-v0.1-8ca2fe4b24a76575"
+  "validation_run_id": "epc-delivery-v1.0-b6f9d9abf7eadd6e"
 }

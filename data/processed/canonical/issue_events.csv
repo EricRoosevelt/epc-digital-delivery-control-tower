@@ -1,4 +1,4 @@
 ﻿event_key,issue_key,sequence,occurred_at,event_type,from_state,to_state,actor_role,payload_version,typed_payload,actor_ref
-32f7607c-c305-591f-a033-2c4b01941203,292d0c2e-5905-58b3-bf51-622d5f0323cc,1,2026-08-13T00:00:00Z,topic_created,,Open,model-coordination,1,"{""finding_count"":""2"",""title"":""hvac::23uPJWDfXEcwHH3kdFgV9c""}",
-e40dbf26-7408-5ead-864b-0d5e4d40b060,6b636037-5c9c-565d-baf4-87afd4988168,1,2026-08-13T00:00:00Z,topic_created,,Open,model-coordination,1,"{""finding_count"":""2"",""title"":""hvac::38WbwIGD90nB_3T2BTU5Ed""}",
-e69e3c3e-3ff5-5418-903a-4f8293ad46d0,b94e50f4-96b9-5d2e-9baa-7361bd8faf46,1,2026-08-13T00:00:00Z,topic_created,,Open,model-coordination,1,"{""finding_count"":""2"",""title"":""hvac::34Y6EIt3nDCAS1k$kPGOKm""}",
+1ffb5a56-b7c8-5a81-8235-4c742bb2ab4b,2e542a73-1503-5b6e-bf33-3b77e7a1508c,1,2026-08-13T00:00:00Z,topic_created,,Open,model-coordination,1,"{""finding_count"":""2"",""title"":""hvac::38WbwIGD90nB_3T2BTU5Ed""}",
+fa923215-ccb5-5a97-99ac-5abf6f0c326a,51c65181-6960-5120-99bb-ca353859b9ac,1,2026-08-13T00:00:00Z,topic_created,,Open,model-coordination,1,"{""finding_count"":""2"",""title"":""hvac::23uPJWDfXEcwHH3kdFgV9c""}",
+175a6f89-5e83-57c3-9759-eb54714b4668,82d5273a-279e-592e-b784-f597a75985fb,1,2026-08-13T00:00:00Z,topic_created,,Open,model-coordination,1,"{""finding_count"":""2"",""title"":""hvac::34Y6EIt3nDCAS1k$kPGOKm""}",

@@ -6,9 +6,10 @@ loads a rule set here — it needs the requirements to compute the validation
 identity and to route work — and never learns how any particular checker
 evaluates them. A checker that needs its source document again reads it itself.
 
-Dispatch is on the document's extension. There is exactly one format today;
-this exists so that adding the declarative rule definitions of the next phase
-is a new branch here rather than a change to every caller.
+Dispatch is on what the path is. A directory holds declarative rule
+definitions — one TOML file per rule, carrying the metadata a delivery
+requirement actually has. A ``.ids`` file is a rule document in buildingSMART's
+own format, which is still how the frozen published rule set is read.
 """
 
 from __future__ import annotations
@@ -22,6 +23,14 @@ __all__ = ["load_ruleset"]
 
 def load_ruleset(path: Path, *, ruleset_id: str = "ids") -> RuleSet:
     """Read a rule document and return the rule set it declares."""
+
+    if path.is_dir():
+        from .rule_definitions import compile_document, load_rule_definitions
+
+        _document, ruleset, _expectations = compile_document(
+            load_rule_definitions(path)
+        )
+        return ruleset
 
     suffix = path.suffix.lower()
     if suffix == ".ids":

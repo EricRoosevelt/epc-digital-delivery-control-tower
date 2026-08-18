@@ -1,0 +1,22 @@
+rule_id = "R-004A"
+title = "Duct segments need spatial assignment"
+description = "Checks whether each IfcDuctSegment is directly contained in an IfcSpace or IfcBuildingStorey."
+checker = "ids"
+severity = "ERROR"
+owner_role = "mep-lead"
+stage = "Coordination"
+discipline_scope = ["HVAC"]
+citation = "ISO 19650-1:2018 §5.4 — deliverables must be spatially locatable."
+
+[[applicability]]
+facet = "entity"
+name = "IFCDUCTSEGMENT"
+
+[[requirements]]
+facet = "partof"
+relation = "IFCRELCONTAINEDINSPATIALSTRUCTURE"
+cardinality = "required"
+instructions = "Assign the HVAC element directly to an IfcSpace or IfcBuildingStorey."
+
+[requirements.name]
+enumeration = ["IFCSPACE", "IFCBUILDINGSTOREY"]

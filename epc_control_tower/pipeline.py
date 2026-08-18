@@ -283,7 +283,12 @@ def execute(
                 projection,
                 processed_dir=roots["processed"],
                 raw_data_dir=legacy_manifest_source.raw_data_dir,
-                ruleset_path=config.resolved_ruleset_path(),
+                # The frozen document, not the run's rule source. The
+                # manifest records what the published archive was built from,
+                # and that is rule set 0.1 — the current rules may be a
+                # directory of TOML files, which has no hash to record.
+                ruleset_path=config.legacy_ruleset_path
+                or config.resolved_ruleset_path(),
             ),
             sidecar_dir=roots["processed"],
             bcf_path=roots["reports"] / "bcf" / BCF_FILENAME,

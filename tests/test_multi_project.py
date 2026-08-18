@@ -36,6 +36,7 @@ from epc_control_tower.exporters.legacy_projection import (
 from epc_control_tower.validation import BundleInvariantError, validate_bundle
 from helpers import (
     LEGACY_PROJECT_ID,
+    frozen_ruleset,
     PROJECT_ROOT,
     published_bundle,
     shipped_pipeline_result,
@@ -263,8 +264,17 @@ class LegacyScopeTests(unittest.TestCase):
         self.assertEqual(len(narrowed.findings), 47)
         self.assertEqual(len(narrowed.issues), 3)
 
-    def test_a_narrowed_bundle_still_satisfies_every_invariant(self):
-        validate_bundle(published_bundle())
+    def test_a_project_narrowed_bundle_still_satisfies_every_invariant(self):
+        # Narrowing by project leaves a bundle that is still a coherent run.
+        # Narrowing by *rule set* deliberately does not: it replaces the rule
+        # set with the frozen one, which no longer matches the identity the run
+        # recorded, because that is exactly what publishing an older contract
+        # means. Only the first is a run bundle.
+        from epc_control_tower.exporters.legacy_projection import narrow_to_project
+
+        validate_bundle(
+            narrow_to_project(shipped_pipeline_result().bundle, LEGACY_PROJECT_ID)
+        )
 
     def test_narrowing_keeps_the_run_identity_it_actually_had(self):
         # The validation genuinely covered six models. Rewriting the run to
@@ -288,9 +298,9 @@ class LegacyScopeTests(unittest.TestCase):
             narrow_to_project(self.bundle, "no-such-project")
 
     def test_the_second_project_is_absent_from_every_published_file(self):
-        tables = LegacyPbipAdapter(project_id=LEGACY_PROJECT_ID).build_tables(
-            self.bundle
-        )
+        tables = LegacyPbipAdapter(
+            project_id=LEGACY_PROJECT_ID, frozen_ruleset=frozen_ruleset()
+        ).build_tables(self.bundle)
         for filename, data in tables.items():
             with self.subTest(table=filename):
                 self.assertNotIn(SECOND_PROJECT_ID, data.decode("utf-8-sig"))
@@ -298,10 +308,10 @@ class LegacyScopeTests(unittest.TestCase):
     def test_emitting_every_project_would_have_changed_the_published_files(self):
         # Measured, not assumed. This is the outcome the scope decision exists
         # to prevent, and it would have been silent.
-        published = LegacyPbipAdapter(project_id=LEGACY_PROJECT_ID).build_tables(
-            self.bundle
-        )
-        widened = LegacyPbipAdapter().build_tables(
+        published = LegacyPbipAdapter(
+            project_id=LEGACY_PROJECT_ID, frozen_ruleset=frozen_ruleset()
+        ).build_tables(self.bundle)
+        widened = LegacyPbipAdapter(frozen_ruleset=frozen_ruleset()).build_tables(
             dataclasses.replace(
                 self.bundle,
                 projects=tuple(

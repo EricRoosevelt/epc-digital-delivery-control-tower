@@ -1,0 +1,19 @@
+rule_id = "R-001"
+title = "Walls must have a name"
+description = "Checks whether every applicable IfcWall provides its IFC Name attribute."
+checker = "ids"
+severity = "ERROR"
+owner_role = "architecture-lead"
+stage = "Design"
+discipline_scope = ["Architecture"]
+citation = "ISO 19650-1:2018 §5.1 — information requirements must be identifiable."
+
+[[applicability]]
+facet = "entity"
+name = "IFCWALL"
+
+[[requirements]]
+facet = "attribute"
+name = "Name"
+cardinality = "required"
+instructions = "Provide a non-empty IFC Name."
