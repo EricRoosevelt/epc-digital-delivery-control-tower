@@ -24,7 +24,7 @@ from epc_control_tower.grouping.element import ElementGroupingPolicy
 from epc_control_tower.identity import build_finding_key, build_issue_key
 from epc_control_tower.registry import Registry
 from epc_control_tower.stages.group import group
-from helpers import shipped_pipeline_result
+from helpers import declared_rules_plus_one, shipped_pipeline_result
 
 RUN_ID = "ids-v0.1-test"
 AS_OF = "2026-08-13T00:00:00Z"
@@ -235,6 +235,70 @@ class ShippedFixtureGroupingTests(unittest.TestCase):
         self.assertEqual(
             sum(1 for issue in self.bundle.issues if not issue.element_key), 3
         )
+
+
+class IssueIdentityStabilityTests(unittest.TestCase):
+    """What an issue key survives, and what it does not.
+
+    Measured rather than argued, because the answer decides whether a future
+    cross-run issue ledger can be keyed on ``issue_key`` at all — and the
+    intuitive answer is wrong.
+
+    ``build_issue_key`` takes ``validation_run_id``, and that id folds in the
+    rule set. So adding a rule re-keys every issue in the project, including
+    issues the new rule has nothing to do with. The rule added here is
+    deliberately inert: it fails nothing, fixes nothing, and changes not one
+    finding. Every key moves anyway.
+    """
+
+    @classmethod
+    def setUpClass(cls):
+        cls.before = shipped_pipeline_result().bundle
+        cls.after = declared_rules_plus_one()
+
+    def test_the_extra_rule_changes_no_answer(self):
+        # Establishes that the next test is measuring identity and nothing else.
+        self.assertEqual(
+            sum(1 for f in self.before.findings if f.is_issue),
+            sum(1 for f in self.after.findings if f.is_issue),
+        )
+        self.assertEqual(len(self.before.issues), len(self.after.issues))
+
+    def test_the_same_subjects_are_present_in_both_runs(self):
+        def subjects(bundle):
+            return {
+                (issue.project_id, issue.model_key, issue.element_key)
+                for issue in bundle.issues
+            }
+
+        self.assertEqual(subjects(self.before), subjects(self.after))
+
+    def test_not_one_issue_key_survives_adding_a_rule(self):
+        # The measurement. 0 of 21, with every subject unchanged: the identical
+        # duct segment, with the identical failure, is a different issue.
+        before = {issue.issue_key for issue in self.before.issues}
+        after = {issue.issue_key for issue in self.after.issues}
+        self.assertEqual(len(before), len(after))
+        self.assertEqual(before & after, set())
+
+    def test_the_subject_of_an_issue_is_stable_even_though_its_key_is_not(self):
+        # And this is the way out, recorded here because it is the design the
+        # ledger phase needs rather than a detail of this test. Project, model
+        # and element are the same strings across both runs. An identity built
+        # from those — with the requirement, not the run — would survive rule
+        # set evolution, which is precisely when an ageing figure has to survive
+        # in order to mean anything.
+        def by_subject(bundle):
+            return {
+                (issue.project_id, issue.model_key, issue.element_key): issue.issue_key
+                for issue in bundle.issues
+            }
+
+        before, after = by_subject(self.before), by_subject(self.after)
+        self.assertEqual(set(before), set(after))
+        for subject in sorted(before):
+            with self.subTest(subject=subject):
+                self.assertNotEqual(before[subject], after[subject])
 
 
 if __name__ == "__main__":

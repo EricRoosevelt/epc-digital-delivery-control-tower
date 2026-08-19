@@ -17,6 +17,96 @@ of what moved exists before the expectation that says it did.
 
 ## Unreleased
 
+### Two decisions recorded before the work that depends on them
+
+Both are written down first on purpose. One is a criterion that becomes
+worthless the moment it is chosen after seeing the result it judges; the other
+is a finding that would read as an excuse if it appeared only after the feature
+it rules out.
+
+#### What makes a field on a rule legitimate
+
+Phase 4 replaces `LegacyBcfExporter` with a pure one, and the published archive
+`b3c6f51abc96…` may not move. Measured against the live bundle, the metadata
+cannot currently produce it: `Issue.priority`, `Issue.stage` and `Issue.due` are
+all empty, `assignee_role` comes from a constant on the grouping policy rather
+than from any rule, and there is no priority field anywhere in the rule schema.
+
+The obvious repair — add whatever fields make the bytes match — would move the
+hardcoding rather than remove it, and would be indistinguishable from having
+removed it once the hash goes green. So the test is fixed now, before the
+comparison is run:
+
+> **A field on a rule is legitimate if and only if somebody forking this
+> project, writing their own rules for their own building, would set it for
+> their own reasons. If its only use is to reproduce one archive in this
+> repository, it is padding.**
+
+Applied to the constants currently in `legacy_contract.py`, before any hash was
+computed:
+
+| Constant | Verdict | Home |
+|---|---|---|
+| `Priority` `"Medium"` | legitimate | rule metadata — every delivery ranks its requirements, and severity is not priority: an ERROR nobody will fix this month outranks nothing |
+| `Stage` `"Coordination"` | legitimate | already on the rule; needs carrying onto the issue |
+| `AssignedTo` | legitimate as a **role** | already on the rule as `owner_role`; the `@example.invalid` address is a rendering, not a fact |
+| `Labels` `("HVAC","IDS","ProjectAssumption")` | legitimate | rule metadata — a fork labels its own topics; `HVAC` is already `discipline_scope` |
+| `TopicType` `"Issue"` | not rule metadata | run configuration — a property of how this project files issues, identical for every rule |
+| `CreationAuthor` | not rule metadata | run configuration — who is writing the archive |
+| BCF project name and GUID | not rule metadata | run configuration — the published archive names the *tool*, not the project, and no `Project` in any manifest is called `EPC Digital Delivery Control Tower` |
+| The topic description prose | **undecided until measured** | it is R-005-family wording; whether a rule field for it is legitimate or padding is exactly the question the criterion above will have to answer |
+
+The last row is left open deliberately. Naming the doubtful case in advance is
+what stops the criterion from being applied only to the easy ones.
+
+#### Why a cross-run issue ledger is a phase, not a feature
+
+`ageing`, `overdue` and `burndown` were listed together as things Phase 4
+unlocks. Only one of them is reachable, and the reason the other two are not is
+worth more than the feature would have been.
+
+Measured on the shipped run: 21 issues, 21 events, **one** distinct timestamp,
+**one** event type. Ageing is `as_of − opened_at`, and both are the same logical
+instant, so ageing is identically zero for every issue and always will be from a
+single run. Burndown needs a series and there is one point. `overdue` is
+different in kind — it needs a `due`, which is a deterministic function of
+`as_of` and rule metadata — so `due` and `overdue` land in Phase 4 and the other
+two do not.
+
+The obvious fix is to persist issue state across runs and key it on `issue_key`.
+That does not work, and the measurement says so:
+
+| | shipped run | one inert rule added |
+|---|---:|---:|
+| issues | 21 | 21 |
+| failing findings | 24 | 24 |
+| subjects `(project, model, element)` | identical | identical |
+| **`issue_key`s surviving** | — | **0 of 21** |
+
+The added rule fails nothing and fixes nothing — every window in the fixture
+already declares `IsExternal` — so not one answer changed. Every key changed
+anyway, because `build_issue_key` takes `validation_run_id`, and that folds in
+the rule set.
+
+So a ledger keyed on `issue_key` would treat every issue as brand new on the day
+a rule is added. Rule sets grow — that is what the whole of Phase 3 was about —
+and an ageing figure that resets whenever the rule library moves fails precisely
+in the situation it exists to describe: a long-running project whose
+requirements are still being written.
+
+**What the ledger phase actually needs is therefore not persistence but a
+run-free identity for the subject of an issue** — something like
+`(project_id, element_key, requirement_key)`, which the measurement above shows
+is stable across exactly the change that destroys `issue_key`. That is a
+question for the identity model, of the same kind as the three-way split in
+Phase 1, and it has consequences that a storage feature does not: a second key
+space to keep unique, a decision about what happens when an element is remodelled
+and its `GlobalId` changes, and a rule for what a subject means once the
+requirement it names is deleted from the library.
+
+Pinned as `IssueIdentityStabilityTests` in `tests/test_grouping.py`, so the
+finding stays true rather than merely having been observed once.
+
 ### Data contract 1.4 — the rule set gets a version that means something
 
 `rules/epc-delivery/ruleset.toml` said `version = "1.0"` for three contracts

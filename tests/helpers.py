@@ -27,6 +27,7 @@ __all__ = [
     "shipped_reports_dir",
     "frozen_ruleset",
     "shipped_run_config",
+    "declared_rules_plus_one",
     "widened_ruleset_bundle",
     "writable_test_directory",
 ]
@@ -178,3 +179,64 @@ def widened_ruleset_bundle():
     )
     result = build_bundle(config, reports_dir=scratch / "reports")
     return result.bundle, load_ruleset(frozen_path)
+
+
+#: A rule that finds nothing in this fixture: every window already declares
+#: ``IsExternal``. Used to measure what adding a rule costs when it changes no
+#: answer at all, so that anything which moves moved because the rule set moved.
+_INERT_RULE = """rule_id = "R-011"
+title = "Windows must declare IsExternal"
+description = "An extra rule, used to measure what adding one costs."
+checker = "ids"
+severity = "WARNING"
+owner_role = "architecture-lead"
+stage = "Design"
+discipline_scope = ["Architecture"]
+citation = "IFC4 Pset_WindowCommon."
+
+[[applicability]]
+facet = "entity"
+name = "IFCWINDOW"
+
+[[requirements]]
+facet = "property"
+propertySet = "Pset_WindowCommon"
+baseName = "IsExternal"
+dataType = "IFCBOOLEAN"
+cardinality = "required"
+instructions = "Declare whether the window is external."
+"""
+
+
+@functools.cache
+def declared_rules_plus_one():
+    """The shipped run again, with one more declarative rule in the library.
+
+    The extra rule is deliberately inert — it fails nothing and fixes nothing —
+    so that whatever differs between this bundle and the shipped one differs
+    because the rule set moved, not because the answers did.
+    """
+
+    import dataclasses
+
+    from epc_control_tower.pipeline import build_bundle
+
+    scratch = PROJECT_ROOT / "tests" / f".plus-one-{uuid.uuid4().hex}"
+    scratch.mkdir(mode=0o777)
+    atexit.register(shutil.rmtree, scratch, True)
+
+    # Nested to mirror the repository layout, and not for tidiness: a rule
+    # directory compiles its IDS document to `<dir>/../../ids`, so a copy placed
+    # one level shallower writes the build product into `tests/` and leaves the
+    # working tree dirty — which CI fails on, correctly.
+    rules = scratch / "rules" / "epc-delivery"
+    shutil.copytree(PROJECT_ROOT / "rules" / "epc-delivery", rules)
+    (rules / "R-011.toml").write_text(_INERT_RULE, encoding="utf-8")
+
+    config = dataclasses.replace(
+        shipped_run_config(),
+        ruleset_path=rules,
+        processed_data_dir=scratch / "processed",
+        reports_dir=scratch / "reports",
+    )
+    return build_bundle(config, reports_dir=scratch / "reports").bundle
