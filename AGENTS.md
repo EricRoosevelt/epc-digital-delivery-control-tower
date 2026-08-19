@@ -49,6 +49,25 @@ rules below are the few that will silently break it if ignored.
    commissioned, or adopted by any company or client. Describing the problem as
    coming from real EPC delivery experience is fine.
 
+6. **Measure what doing nothing costs, before deciding.** When a change could
+   move or widen something already published, do not reason about it — run it
+   and write down what actually happened. Twice now that measurement has been
+   the whole argument, and in both cases the code reported success while
+   quietly doing the wrong thing:
+
+   - Adding a second project, with no scope on the legacy writers: all eight
+     published CSVs changed and `models.csv` grew a second `architecture` row,
+     while all four exporters reported success.
+   - Adding one rule, with no scope on the rule set version: **0 of 47**
+     published finding keys survived, because the published `run_id` digests
+     the rule document. Growing the rule library would have been blocked on
+     re-capturing five Power BI screenshots by hand — a Phase 5 task.
+
+   Neither was visible by reading the code, and a silent default is the worst
+   outcome available: it decides for you and leaves no record. Pin the
+   counterfactual as a test afterwards, so the decision keeps being true rather
+   than merely having been made once.
+
 ## Where to extend
 
 The pipeline has three seams, and a fork should be adding an implementation to
