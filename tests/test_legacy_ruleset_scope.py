@@ -64,8 +64,8 @@ class WideningTheRuleSetTests(unittest.TestCase):
 
     def test_the_widened_run_really_does_carry_more_rules(self):
         # If this stops being true the rest of the file proves nothing.
-        self.assertEqual(len({r.rule_id for r in self.widened.ruleset.requirements}), 8)
-        self.assertGreater(len(self.widened.findings), 74)
+        self.assertEqual(len({r.rule_id for r in self.widened.ruleset.requirements}), 13)
+        self.assertGreater(len(self.widened.findings), 121)
 
     def test_without_the_scope_every_published_key_is_destroyed(self):
         unscoped = project_bundle(self.widened, project_id=LEGACY_PROJECT_ID)

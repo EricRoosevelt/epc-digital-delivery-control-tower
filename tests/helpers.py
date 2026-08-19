@@ -125,54 +125,34 @@ def frozen_ruleset():
 
 @functools.cache
 def widened_ruleset_bundle():
-    """A run over a rule set with one rule more than the published one.
+    """A run over a rule library with one rule more than the shipped one.
 
-    Returns ``(bundle, frozen_ruleset)``. Built by adding a specification to the
-    declared rules rather than by editing the shipped document, so the frozen
-    document on disk stays exactly what it was — which is the whole point of
-    the scope being tested.
+    Returns ``(bundle, frozen_ruleset)``. The extra rule is added the way a
+    rule is actually added — a TOML file in the library — rather than by
+    swapping the whole library for a hand-built IDS document. That distinction
+    started mattering the moment rules could carry priority, stage and labels:
+    a bare `.ids` rule set has nowhere to state them, so a fixture built that
+    way would drop the metadata and the published archive would change for a
+    reason that has nothing to do with the scope being tested.
     """
 
     import dataclasses
-    import sys
-
-    from ifctester import ids
 
     from epc_control_tower.pipeline import build_bundle
     from epc_control_tower.rules import load_ruleset
 
-    if str(PROJECT_ROOT / "src") not in sys.path:
-        sys.path.insert(0, str(PROJECT_ROOT / "src"))
-    from generate_ids import add_specification, build_document
-
-    scratch = shipped_reports_dir().parent / f".widened-{uuid.uuid4().hex}"
+    scratch = PROJECT_ROOT / "tests" / f".widened-{uuid.uuid4().hex}"
     scratch.mkdir(mode=0o777)
     atexit.register(shutil.rmtree, scratch, True)
 
-    document = build_document()
-    add_specification(
-        document=document,
-        identifier="R-006",
-        name="Windows must declare IsExternal",
-        entity_name="IFCWINDOW",
-        requirements=[
-            ids.Property(
-                propertySet="Pset_WindowCommon",
-                baseName="IsExternal",
-                dataType="IFCBOOLEAN",
-                cardinality="required",
-                instructions="Declare whether the window is external.",
-            )
-        ],
-        description="An eighth rule, used to test that adding one is safe.",
-    )
-    widened = scratch / "widened.ids"
-    document.to_xml(str(widened))
+    rules = scratch / "rules" / "epc-delivery"
+    shutil.copytree(PROJECT_ROOT / "rules" / "epc-delivery", rules)
+    (rules / "R-011.toml").write_text(_INERT_RULE, encoding="utf-8")
 
     frozen_path = PROJECT_ROOT / "ids" / "epc_delivery_requirements_v0.1.ids"
     config = dataclasses.replace(
         shipped_run_config(),
-        ruleset_path=widened,
+        ruleset_path=rules,
         legacy_ruleset_path=frozen_path,
         processed_data_dir=scratch / "processed",
         reports_dir=scratch / "reports",

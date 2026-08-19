@@ -194,6 +194,8 @@ class RuleDefinition:
     stage: str = ""
     discipline_scope: tuple[str, ...] = ()
     citation: str = ""
+    priority: str = ""
+    labels: tuple[str, ...] = ()
     ifc_version: tuple[str, ...] = ("IFC4",)
 
     @property
@@ -209,6 +211,7 @@ class RuleSetDefinition:
     description: str = ""
     purpose: str = ""
     milestone: str = ""
+    milestones: tuple[tuple[str, str], ...] = ()
     rules: tuple[RuleDefinition, ...] = field(default=())
 
 
@@ -297,6 +300,8 @@ def load_rule_definitions(directory: Path) -> RuleSetDefinition:
                     str(item) for item in document.get("discipline_scope", [])
                 ),
                 citation=str(document.get("citation", "")),
+                priority=str(document.get("priority", "")),
+                labels=tuple(str(item) for item in document.get("labels", [])),
                 ifc_version=tuple(
                     str(item) for item in document.get("ifc_version", ["IFC4"])
                 ),
@@ -313,6 +318,12 @@ def load_rule_definitions(directory: Path) -> RuleSetDefinition:
         description=str(section.get("description", "")),
         purpose=str(section.get("purpose", "")),
         milestone=str(section.get("milestone", "")),
+        milestones=tuple(
+            sorted(
+                (str(stage), str(due))
+                for stage, due in dict(meta.get("milestones", {})).items()
+            )
+        ),
         rules=tuple(rules),
     )
 
@@ -393,6 +404,8 @@ def compile_document(definition: RuleSetDefinition):
                     stage=rule.stage,
                     discipline_scope=rule.discipline_scope,
                     citation=rule.citation,
+                    priority=rule.priority,
+                    labels=rule.labels,
                 )
             )
             expectations[key] = (
@@ -408,8 +421,10 @@ def compile_document(definition: RuleSetDefinition):
             ruleset_id=definition.ruleset_id,
             version=definition.version,
             requirements=requirements,
+            milestones=definition.milestones,
         ),
         requirements=tuple(requirements),
+        milestones=definition.milestones,
     )
     return document, ruleset, expectations
 
@@ -452,6 +467,8 @@ def _foreign_requirements(rule: RuleDefinition) -> list[Requirement]:
                 stage=rule.stage,
                 discipline_scope=rule.discipline_scope,
                 citation=rule.citation,
+                priority=rule.priority,
+                labels=rule.labels,
             )
         )
     return built

@@ -60,11 +60,13 @@ from epc_control_tower.domain import (  # noqa: E402
 from epc_control_tower.exporters.legacy_bcf import BCF_FILENAME, LegacyBcfExporter  # noqa: E402
 from epc_control_tower.exporters.legacy_contract import (  # noqa: E402
     ASSIGNEE,
+    ASSIGNEE_ROLE,
     CREATION_AUTHOR,
     EVENT_SOURCE,
     EVENT_TYPE_CREATED,
     FIXED_TIMESTAMP,
     ORIGINATING_SYSTEM,
+    TOPIC_LABELS,
     TOPIC_PRIORITY,
     TOPIC_STAGE,
     TOPIC_STATUS,
@@ -253,11 +255,20 @@ def build_workflow_artifacts(
                 findings=tuple(rows),
                 aabb=aabb,
                 camera=camera_for_aabb(aabb),
+                # Stated here because this path has no rules to read them from:
+                # it builds topics straight from the published CSVs, against the
+                # frozen `.ids` document, and IDS 1.0 has nowhere to record a
+                # priority, a stage, an owner or a label. The package pipeline
+                # takes all four from rule metadata.
+                assignee_role=ASSIGNEE_ROLE,
+                priority=TOPIC_PRIORITY,
+                stage=TOPIC_STAGE,
+                labels=TOPIC_LABELS,
             )
         )
 
     exporter = LegacyBcfExporter(schema_dir=schema_dir)
-    entries = exporter.root_entries()
+    entries = exporter.root_entries(topics)
     sidecar_rows: dict[str, list[dict[str, object]]] = {
         name: [] for name in SIDECAR_COLUMNS
     }

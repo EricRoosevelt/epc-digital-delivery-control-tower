@@ -340,6 +340,16 @@ class Requirement:
     stage: str = ""
     discipline_scope: tuple[str, ...] = ()
     citation: str = ""
+    #: How urgently a failure of this rule should be worked, which is not
+    #: the same question as ``severity``. Severity says how wrong the model
+    #: is; priority says when somebody will get to it. An ERROR nobody will
+    #: reach until handover outranks nothing, and a WARNING blocking a
+    #: coordination meeting on Friday outranks a great deal.
+    priority: str = ""
+    #: Free labels the issue inherits. A project files its own topics its
+    #: own way, so this is the rule author's, not a vocabulary this package
+    #: defines.
+    labels: tuple[str, ...] = ()
 
     def __post_init__(self) -> None:
         _require_text(self.requirement_key, "requirement_key")
@@ -385,6 +395,15 @@ class RuleSet:
     normalized_digest: str
     source_blob_sha256: str = ""
     requirements: tuple[Requirement, ...] = ()
+    #: When each delivery stage's information is due, as ``(stage, date)``
+    #: pairs. A *programme date*, not an offset from when a run happened.
+    #:
+    #: That distinction is the whole reason `overdue` can be answered at
+    #: all. An offset from the opening event would put every due date in the
+    #: future of the only moment this system has, so nothing could ever be
+    #: overdue. A programme says coordination information was due on a date,
+    #: and the logical `as_of` is either past it or not.
+    milestones: tuple[tuple[str, str], ...] = ()
 
     def __post_init__(self) -> None:
         _require_slug(self.ruleset_id, "ruleset_id")
@@ -397,6 +416,14 @@ class RuleSet:
         duplicates = sorted({key for key in keys if keys.count(key) > 1})
         if duplicates:
             raise ValueError(f"Duplicate requirement_key values: {duplicates}")
+
+    def milestone_for(self, stage: str) -> str:
+        """When this stage's information is due, or empty if unstated."""
+
+        for name, date in self.milestones:
+            if name == stage:
+                return date
+        return ""
 
     def by_key(self, requirement_key: str) -> Requirement:
         for requirement in self.requirements:
@@ -681,6 +708,12 @@ class Issue:
     priority: str = ""
     stage: str = ""
     due: str = ""
+    labels: tuple[str, ...] = ()
+    #: Derived from ``due`` and the run's logical ``as_of``, the same way
+    #: ``lifecycle_state`` is derived from the event stream: recorded so a
+    #: dashboard does not have to recompute it, and checked against its
+    #: inputs so it cannot drift from them.
+    is_overdue: bool = False
 
     def __post_init__(self) -> None:
         _require_text(self.issue_key, "issue_key")

@@ -17,6 +17,13 @@ __version__ = "1.0.0"
 # semantics). Bumping this is a deliberate, reviewable act: it requires a
 # CHANGELOG entry and an explicit characterization-snapshot refresh.
 #
+# 1.5 is Phase 4: a pure BCF exporter, the legacy one stripped of every rule
+# id and filename it knew, and issue metadata that comes from the rules
+# rather than from four constants in a module. The published archive is
+# reproduced from that metadata byte for byte, which is the measurement that
+# says the design holds. `due` and `overdue` land; ageing and burndown do not,
+# for reasons recorded two entries above.
+#
 # 1.4 moves because the rule set's own version finally moved. It stood at 1.0
 # for three contracts while the rules went from seven to twelve, so the tag
 # named three different rule sets. It is 2.0 now, and a refresh refuses if a
@@ -43,4 +50,4 @@ __version__ = "1.0.0"
 # rows. The legacy contract did not move at all — the eight published CSV files
 # and the BCF archive are byte-identical, because the legacy writers publish
 # one named project.
-CONTRACT_VERSION = "1.4"
+CONTRACT_VERSION = "1.5"

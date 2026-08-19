@@ -143,12 +143,24 @@ you are pinning a published identity, because it is derived as
 `<project_id>.<model_id>` and is what every join and every `element_key` is
 built from.
 
-Two exporters are named `Legacy…` because they still know things a general
-implementation should not: `LegacyBcfExporter` knows the R-005 rule family and
-the HVAC model, and `LegacyPbipAdapter` reproduces frozen identity derivations.
-Both are pure projections of the canonical model, both are pinned by
-byte-equality tests, and both retire on schedule. Do not extend them; add
-alongside.
+Two exporters are named `Legacy…`, and the reason is now the same for both:
+they reproduce **frozen identity derivations**. `LegacyPbipAdapter` always did.
+`LegacyBcfExporter` used to also know the R-005 rule family and the HVAC model,
+and no longer does — priority, stage, labels and the assignee's role come from
+rule metadata, and the published archive is rebuilt from that metadata byte for
+byte. What keeps it is that the published archive's `ReferenceLink`s carry
+legacy finding keys, which no amount of metadata can produce.
+
+`BcfExporter` is the general one: issues and their history in, BCF out, no rule
+ids and no filenames. Both are pure projections of the canonical model, both
+are pinned by byte-equality tests, and both `Legacy…` writers retire together
+in Phase 5. Do not extend them; add alongside.
+
+A **scope** on an exporter is not the same thing as rule-awareness, and the
+distinction is worth keeping straight when you read those two. Narrowing to one
+project and one frozen rule set version says *which slice of the run is
+published*; asking "is this rule R-005A?" says what a rule means. The first is
+legitimate and stays; the second is what Phase 4 removed.
 
 ### Running it
 

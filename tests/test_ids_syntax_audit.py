@@ -40,7 +40,7 @@ IDS_DIR = PROJECT_ROOT / "ids"
 #: compiled from `rules/epc-delivery/` by every run.
 DOCUMENTS = (
     "epc_delivery_requirements_v0.1.ids",
-    "epc-delivery_v2.0.ids",
+    "epc-delivery_v2.1.ids",
 )
 
 #: `ids-tool` exits 0 for a clean audit and a non-zero status per error class

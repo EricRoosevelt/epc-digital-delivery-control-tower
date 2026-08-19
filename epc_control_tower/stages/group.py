@@ -16,7 +16,13 @@ from __future__ import annotations
 from collections.abc import Sequence
 from dataclasses import dataclass
 
-from ..domain import Finding, Issue, IssueEvent, derive_lifecycle_state
+from ..domain import (
+    Finding,
+    Issue,
+    IssueEvent,
+    Requirement,
+    derive_lifecycle_state,
+)
 from ..registry import Registry
 
 __all__ = ["GroupResult", "group"]
@@ -35,10 +41,21 @@ def group(
     policy_id: str,
     validation_run_id: str,
     as_of: str,
+    requirements: Sequence[Requirement] = (),
+    milestones: Sequence[tuple[str, str]] = (),
 ) -> GroupResult:
     policy = registry.grouping_policy(policy_id)
+    # A policy that wants rule metadata is handed it; one that does not can
+    # ignore it. Passing the requirements rather than letting the policy load
+    # them keeps grouping a pure function of the bundle it is given.
     issues, events = policy.group(
-        findings, validation_run_id=validation_run_id, as_of=as_of
+        findings,
+        validation_run_id=validation_run_id,
+        as_of=as_of,
+        requirements={
+            requirement.requirement_key: requirement for requirement in requirements
+        },
+        milestones=dict(milestones),
     )
 
     events_by_issue: dict[str, list[IssueEvent]] = {}

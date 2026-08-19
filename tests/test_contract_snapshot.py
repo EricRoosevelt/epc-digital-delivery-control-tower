@@ -71,7 +71,7 @@ class RecordedSnapshotTests(unittest.TestCase):
 
     def test_the_rule_set_is_the_declarative_one(self):
         self.assertEqual(self.recorded["ruleset"]["id"], "epc-delivery")
-        self.assertEqual(self.recorded["ruleset"]["version"], "2.0")
+        self.assertEqual(self.recorded["ruleset"]["version"], "2.1")
         self.assertEqual(self.recorded["ruleset"]["requirements"], 14)
 
     def test_the_earlier_contract_is_kept_as_history(self):
@@ -273,14 +273,14 @@ class RuleSetVersionTests(unittest.TestCase):
             meta = target / "ruleset.toml"
             meta.write_text(
                 meta.read_text(encoding="utf-8").replace(
-                    'version = "2.0"', 'version = "2.1"'
+                    'version = "2.1"', 'version = "2.2"'
                 ),
                 encoding="utf-8",
             )
             after = load_ruleset(target)
 
-        self.assertEqual(before.version, "2.0")
-        self.assertEqual(after.version, "2.1")
+        self.assertEqual(before.version, "2.1")
+        self.assertEqual(after.version, "2.2")
         self.assertNotEqual(before.normalized_digest, after.normalized_digest)
         # The requirements themselves are untouched, so their keys do not move.
         # Only what is built *on top of* the rule set does.

@@ -32,12 +32,14 @@ from ..legacy_identity import legacy_finding_key
 
 __all__ = [
     "ASSIGNEE",
+    "ASSIGNEE_ROLE",
     "BCF_VERSION",
     "CREATION_AUTHOR",
     "FINDING_URN_PREFIX",
     "FIXED_TIMESTAMP",
     "PROJECT_GUID",
     "PROJECT_NAME",
+    "ROLE_DOMAIN",
     "TOPIC_LABELS",
     "TOPIC_PRIORITY",
     "TOPIC_STAGE",
@@ -64,11 +66,24 @@ BCF_VERSION = "3.0"
 PROJECT_NAME = "EPC Digital Delivery Control Tower"
 PROJECT_GUID = uuid5_from_values("bcf-project", [PROJECT_NAME])
 CREATION_AUTHOR = "control-tower@example.invalid"
-ASSIGNEE = "model-coordination@example.invalid"
+#: The domain a role is rendered into. The role itself comes from the rule
+#: now; only the suffix is a property of how this archive addresses people.
+ROLE_DOMAIN = "example.invalid"
+
+#: Frozen values of the published contract. **The exporters no longer read
+#: these** — priority, stage, labels and the assignee's role all come from rule
+#: metadata now, and the published archive is reproduced from that metadata
+#: byte for byte. They survive because `src/*.py` re-exports them and the
+#: pre-existing BCF workflow tests import them through that shim, and those
+#: tests are not this refactor's to edit. They retire with the shims.
+ASSIGNEE_ROLE = "model-coordination"
+ASSIGNEE = f"{ASSIGNEE_ROLE}@{ROLE_DOMAIN}"
 FINDING_URN_PREFIX = "urn:epc-digital-delivery:finding:"
 
 TOPIC_TYPE = "Issue"
 TOPIC_STATUS = "Open"
+
+#: Also frozen, also no longer read by any exporter. See the note on ASSIGNEE.
 TOPIC_PRIORITY = "Medium"
 TOPIC_STAGE = "Coordination"
 TOPIC_LABELS = ("HVAC", "IDS", "ProjectAssumption")

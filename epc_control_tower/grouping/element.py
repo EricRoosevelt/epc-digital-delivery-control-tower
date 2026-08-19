@@ -30,13 +30,15 @@ ageing, overdue and burndown answerable later instead of unrepresentable.
 
 from __future__ import annotations
 
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
 
 from ..domain import (
     Finding,
     Issue,
     IssueEvent,
     IssueState,
+    Requirement,
+    Severity,
     TopicCreatedPayload,
     derive_lifecycle_state,
 )
@@ -49,6 +51,26 @@ __all__ = ["ElementGroupingPolicy"]
 #: it is reading and a producer cannot leak whatever it had in scope.
 TOPIC_CREATED_PAYLOAD_VERSION = 1
 
+#: Worst first. `Severity` is a `StrEnum`, so its members sort
+#: alphabetically — ERROR before WARNING by luck rather than by meaning —
+#: and relying on that would put INFO between them the moment a fourth level
+#: appeared.
+_SEVERITY_RANK = {
+    Severity.ERROR: 3,
+    Severity.WARNING: 2,
+    Severity.INFO: 1,
+}
+
+
+def _labels(requirement: Requirement) -> tuple[str, ...]:
+    """Disciplines the rule binds, then the labels it declares."""
+
+    seen: list[str] = []
+    for label in (*requirement.discipline_scope, *requirement.labels):
+        if label and label not in seen:
+            seen.append(label)
+    return tuple(seen)
+
 
 class ElementGroupingPolicy:
     """One issue per subject carrying at least one issue-bearing finding.
@@ -60,14 +82,51 @@ class ElementGroupingPolicy:
 
     id = "element"
 
-    #: The role accountable for an issue this policy raises.
+    #: Used only when a finding's requirement names no owner. A role, not a
+    #: person: roles are what rule metadata carries, and a directory of
+    #: parties is a whole dimension this project does not need in order to
+    #: make an issue actionable.
     #:
-    #: A role, not a person: roles are what rule metadata can carry, and a
-    #: directory of parties is a whole dimension this project does not need in
-    #: order to make an issue actionable. It is a constant here only because
-    #: IDS 1.0 has nowhere to state it; when declarative rules land it comes
-    #: from the rule.
+    #: It was the *only* source of an assignee until the rules could state
+    #: one. Every issue in the shipped fixture took its value from here,
+    #: which meant the published BCF archive's AssignedTo was a constant in
+    #: this file wearing the costume of a derivation.
     default_actor_role = "model-coordination"
+
+    @staticmethod
+    def _deciding(
+        members: Sequence[Finding],
+        requirements: Mapping[str, Requirement],
+    ) -> Requirement | None:
+        """Which requirement's metadata an issue takes.
+
+        An issue can gather failures of several rules against one element,
+        and they may disagree about who owns it and how urgent it is. The
+        answer has to be one value and it has to be the same value on every
+        run, so it is chosen by a stated order rather than by whichever
+        finding happened to come first: **the most severe failure decides,
+        ties broken by requirement key.**
+
+        That is a real decision, not a tie-break formality. It says the
+        worst thing wrong with an element determines who is called and how
+        soon — which is how a coordinator actually triages, and the opposite
+        of averaging several rules into a priority nobody set.
+        """
+
+        ranked = sorted(
+            (
+                requirement
+                for requirement in (
+                    requirements.get(member.requirement_key) for member in members
+                )
+                if requirement is not None
+            ),
+            key=lambda item: (
+                -_SEVERITY_RANK.get(item.severity, 0),
+                item.requirement_key,
+            ),
+        )
+        return ranked[0] if ranked else None
 
     def group(
         self,
@@ -75,7 +134,11 @@ class ElementGroupingPolicy:
         *,
         validation_run_id: str,
         as_of: str,
+        requirements: Mapping[str, Requirement] | None = None,
+        milestones: Mapping[str, str] | None = None,
     ) -> tuple[tuple[Issue, ...], tuple[IssueEvent, ...]]:
+        by_key = dict(requirements or {})
+        programme = dict(milestones or {})
         grouped: dict[str, list[Finding]] = {}
         for finding in findings:
             if not finding.is_issue:
@@ -94,6 +157,8 @@ class ElementGroupingPolicy:
         for subject in sorted(grouped):
             members = sorted(grouped[subject], key=lambda item: item.finding_key)
             first = members[0]
+            deciding = self._deciding(members, by_key)
+            due = programme.get(deciding.stage, "") if deciding is not None else ""
             issue_key = build_issue_key(
                 validation_run_id=validation_run_id,
                 grouping_policy=self.id,
@@ -112,7 +177,11 @@ class ElementGroupingPolicy:
                 event_type=TopicCreatedPayload.event_type,
                 from_state=None,
                 to_state=IssueState.OPEN,
-                actor_role=self.default_actor_role,
+                actor_role=(
+                    deciding.owner_role
+                    if deciding is not None and deciding.owner_role
+                    else self.default_actor_role
+                ),
                 payload_version=TOPIC_CREATED_PAYLOAD_VERSION,
                 typed_payload=TopicCreatedPayload(
                     finding_count=len(members),
@@ -136,7 +205,25 @@ class ElementGroupingPolicy:
                     # Derived from the history just built, never asserted
                     # independently of it.
                     lifecycle_state=derive_lifecycle_state([event]),
-                    assignee_role=self.default_actor_role,
+                    # From the rule now, not from a constant on this class.
+                    assignee_role=(
+                        deciding.owner_role
+                        if deciding is not None and deciding.owner_role
+                        else self.default_actor_role
+                    ),
+                    priority=deciding.priority if deciding is not None else "",
+                    stage=deciding.stage if deciding is not None else "",
+                    due=due,
+                    # Not a clock reading. `as_of` is the run's logical date and
+                    # `due` is a programme date, so this is a comparison between
+                    # two configured values and reproduces exactly.
+                    is_overdue=bool(due) and as_of > due,
+                    # Discipline first, then the rule's own labels: a
+                    # discipline is already a field, so repeating it in
+                    # `labels` would be two places to keep in step.
+                    labels=(
+                        _labels(deciding) if deciding is not None else ()
+                    ),
                 )
             )
 

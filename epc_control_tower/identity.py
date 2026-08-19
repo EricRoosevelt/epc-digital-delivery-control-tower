@@ -109,6 +109,7 @@ def build_ruleset_normalized_digest(
     ruleset_id: str,
     version: str,
     requirements: Iterable[Requirement],
+    milestones: Iterable[tuple[str, str]] = (),
 ) -> str:
     """Digest what a rule set *says*, independent of how it was written.
 
@@ -129,6 +130,9 @@ def build_ruleset_normalized_digest(
     document = {
         "ruleset_id": ruleset_id,
         "version": version,
+        "milestones": [
+            {"stage": stage, "due": due} for stage, due in sorted(milestones)
+        ],
         "requirements": [
             {
                 "rule_id": requirement.rule_id,
@@ -143,6 +147,8 @@ def build_ruleset_normalized_digest(
                 "stage": requirement.stage,
                 "discipline_scope": sorted(requirement.discipline_scope),
                 "citation": requirement.citation,
+                "priority": requirement.priority,
+                "labels": list(requirement.labels),
             }
             for requirement in sorted(
                 requirements, key=lambda item: (item.rule_id, item.requirement_id)

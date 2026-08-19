@@ -17,6 +17,107 @@ of what moved exists before the expectation that says it did.
 
 ## Unreleased
 
+### Data contract 1.5 — BCF from metadata, and a due date with no clock
+
+#### The measurement the criterion was written for
+
+Two entries ago a test was fixed in advance: *a field on a rule is legitimate if
+and only if somebody forking this project would set it for their own reasons.*
+Two fields passed it — `priority` and `labels` — and were added. Then the
+comparison was run.
+
+**`LegacyBcfExporter` now reproduces `b3c6f51abc96…` byte for byte with its
+priority, stage, labels and assignee all coming from rule metadata**, and with
+`LEGACY_RULE_SCOPE`, `LEGACY_MODEL_SCOPE` and `_assert_legacy_scope` deleted. It
+no longer contains the string `R-005`, `Building-Hvac`, or `hvac`. That was the
+whole of Phase 4's claim about this file, and it is measured rather than
+asserted: a test greps the module, and another relabels a topic to a different
+rule and watches it convert instead of raise.
+
+One thing was changed *after* seeing a diff, and it is named here rather than
+buried: the `Users` list is ordered assignees-then-author, not alphabetically.
+That is a sort order, not a field, so the criterion does not apply to it — but
+the honest record is that alphabetical was written first and the published
+archive is what revealed the convention.
+
+#### What a pure exporter still cannot do, and why it is not about metadata
+
+`BcfExporter` ships alongside, writing `reports/bcf/issues.bcf` from issues and
+their history with no rule ids, no filenames and no counts in it. It does not
+replace the legacy one, and the reason is worth stating precisely because it is
+*not* the reason the plan expected:
+
+Everything metadata-shaped matched on the first run — topic GUIDs, viewpoint
+GUIDs, priority, stage, labels, assignee, the extensions vocabulary, the camera,
+the project block, all byte-identical. What did not match was identity and
+prose. The published archive's `ReferenceLink`s carry **legacy** finding keys,
+derived from the frozen `ids-v0.1-8706ef58303bfd11` run id; the canonical keys
+for the same three elements have **zero** overlap with them. No amount of rule
+metadata fixes that, because it is not a metadata question — the archive is a
+legacy-identity artifact.
+
+So `LegacyBcfExporter` retires in Phase 5 with `LegacyPbipAdapter`, for the same
+reason as `LegacyPbipAdapter`, which is a better reason than the one the plan
+gave. The rule-awareness the plan wanted gone is gone.
+
+The undecided row in the criterion table resolves the same way. A per-rule
+description note would have been legitimate, but it is not what stands between
+the two archives: the published `Title` and `Description` are sentences composed
+for the R-005 family and they sit on top of legacy keys regardless. Adding
+fields to reproduce them would have been padding by the stated test, so they
+were not added.
+
+#### A topic about something that is not there
+
+Three issues name no element. Their topics carry no `<Viewpoints>` element at
+all — BCF 3.0 permits that (`markup.xsd`, `minOccurs="0"`) while requiring a
+camera *inside* any `VisualizationInfo` it does have. A viewpoint has to point
+somewhere and there is nowhere to point.
+
+The alternatives were measured against the same rule Phase 3 settled: framing
+the whole model would aim a camera at a place where nothing is wrong, and
+dropping the topic would drop a real failure out of the deliverable.
+
+#### `due` and `overdue`
+
+`[milestones]` in `ruleset.toml` states when each delivery stage's information
+is due, and an issue takes the milestone for its stage. **12 of 21 issues are
+overdue**, from two configured dates and no clock anywhere.
+
+The shape matters and was got wrong first: a due date as an *offset* from the
+opening event puts every deadline in the future of the only moment this system
+has, so nothing could ever be late. A programme states a date; the logical
+`as_of` is past it or not. `is_overdue` is recorded on the issue and checked
+against `as_of` and `due` by `validate_bundle`, the same treatment
+`lifecycle_state` gets and for the same reason.
+
+`ageing` and `burndown` are still not answerable, and the entry two above says
+why in detail: they need more than one moment, and the obvious repair is blocked
+on issue identity rather than on storage.
+
+#### Also
+
+- Optional BCF elements are omitted when empty rather than written blank. Not
+  tidiness: a rule set read from a bare `.ids` document has no priority, stage
+  or labels — IDS 1.0 has nowhere to put them — and empty elements make an
+  archive the schema rejects. Found by the widening fixture, which is now built
+  by adding a TOML file to the library rather than by swapping the library for a
+  hand-built IDS document, because the latter silently drops all the metadata
+  and would have made the rule-set scope look broken when it is not.
+- `GroupingPolicy.group` takes the requirements behind the findings, so a policy
+  can answer the questions an issue has and a finding does not. When several
+  rules fail on one element, **the most severe decides** the owner, priority and
+  stage, ties broken by requirement key — a stated order, because a coordinator
+  triages by the worst thing wrong and because the answer has to be the same on
+  every run.
+
+#### Unchanged
+
+The eight published CSVs and `ids_failures.bcf` are byte-identical, and
+`run_id ids-v0.1-8706ef58303bfd11` still resolves.
+
+Snapshot: `docs/contracts/contract-1.5.json`.
+
 ### Two decisions recorded before the work that depends on them
 
 Both are written down first on purpose. One is a criterion that becomes

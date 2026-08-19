@@ -186,6 +186,19 @@ def validate_bundle(bundle: RunBundle, *, recompute_identity: bool = True) -> No
 
     # -- identity is recomputed, not trusted -------------------------------
 
+    for issue in bundle.issues:
+        # `is_overdue` is derived, so it is checked against its inputs rather
+        # than trusted — the same treatment `lifecycle_state` gets, and for the
+        # same reason: a recorded derivation nobody re-checks is a second source
+        # of truth waiting to disagree with the first.
+        expected_overdue = bool(issue.due) and bundle.run.as_of > issue.due
+        if issue.is_overdue != expected_overdue:
+            violations.append(
+                f"issue {issue.issue_key}: is_overdue={issue.is_overdue} but "
+                f"as_of {bundle.run.as_of!r} against due {issue.due!r} derives "
+                f"{expected_overdue}"
+            )
+
     if recompute_identity:
         # The rule set's semantic digest is recomputed from the requirements it
         # actually carries, so a bundle cannot claim rules it does not contain.
@@ -193,6 +206,7 @@ def validate_bundle(bundle: RunBundle, *, recompute_identity: bool = True) -> No
             ruleset_id=bundle.ruleset.ruleset_id,
             version=bundle.ruleset.version,
             requirements=bundle.ruleset.requirements,
+            milestones=bundle.ruleset.milestones,
         )
         if expected_digest != bundle.ruleset.normalized_digest:
             violations.append(

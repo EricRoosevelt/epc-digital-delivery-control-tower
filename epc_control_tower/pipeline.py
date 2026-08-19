@@ -134,6 +134,8 @@ def build_bundle(
         policy_id=config.grouping_policy,
         validation_run_id=validation_run_id,
         as_of=config.as_of,
+        requirements=ruleset.requirements,
+        milestones=ruleset.milestones,
     )
 
     # Only for elements an issue points at. Tessellating every element to

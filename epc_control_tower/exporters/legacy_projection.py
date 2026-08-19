@@ -49,13 +49,11 @@ from ..legacy_identity import (
     legacy_viewpoint_guid,
 )
 from .legacy_contract import (
-    ASSIGNEE,
     CREATION_AUTHOR,
     EVENT_SOURCE,
     EVENT_TYPE_CREATED,
     ORIGINATING_SYSTEM,
-    TOPIC_PRIORITY,
-    TOPIC_STAGE,
+    ROLE_DOMAIN,
     TOPIC_STATUS,
     TOPIC_TYPE,
     LegacyComponentRow,
@@ -88,6 +86,16 @@ def _boolean(value: bool) -> str:
     return "true" if value else "false"
 
 
+def _address(role: str) -> str:
+    """Render a role as the address BCF and the published CSVs carry.
+
+    ``.invalid`` is reserved by RFC 2606 so that it cannot resolve, which is
+    the point: the contract wants a mailbox and this project has a role.
+    """
+
+    return f"{role}@{ROLE_DOMAIN}" if role else ""
+
+
 @dataclass(frozen=True, slots=True)
 class LegacyTopic:
     """One published BCF topic, with everything both writers need.
@@ -104,6 +112,14 @@ class LegacyTopic:
     findings: tuple[LegacyFindingRow, ...]
     aabb: Aabb
     camera: Camera
+    #: Carried from the issue rather than read from a constant. These four
+    #: were module-level literals until the rules could state them, which
+    #: meant the published archive's priority, stage, labels and assignee
+    #: were decisions nobody had written down as decisions.
+    assignee_role: str = ""
+    priority: str = ""
+    stage: str = ""
+    labels: tuple[str, ...] = ()
 
     @property
     def title(self) -> str:
@@ -498,11 +514,11 @@ def project_bundle(
             topic_type=TOPIC_TYPE,
             topic_status=TOPIC_STATUS,
             title=topic.title,
-            priority=TOPIC_PRIORITY,
+            priority=topic.priority,
             creation_date=bundle.run.as_of,
             creation_author=CREATION_AUTHOR,
-            assigned_to=ASSIGNEE,
-            stage=TOPIC_STAGE,
+            assigned_to=_address(topic.assignee_role),
+            stage=topic.stage,
             model_id=topic.model.model_id,
             element_key=topic.element_key,
             global_id=topic.element.global_id,
@@ -615,6 +631,10 @@ def _project_topics(
                 findings=tuple(rows),
                 aabb=aabb,
                 camera=camera_for_aabb(aabb),
+                assignee_role=issue.assignee_role,
+                priority=issue.priority,
+                stage=issue.stage,
+                labels=issue.labels,
             )
         )
 

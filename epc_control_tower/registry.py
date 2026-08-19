@@ -184,6 +184,7 @@ def default_registry(config: RunConfig) -> Registry:
     from .bcf.schema import default_schema_dir
     from .checkers.completeness import CompletenessChecker
     from .checkers.ids_checker import IdsChecker
+    from .exporters.bcf import BcfExporter
     from .exporters.canonical import CsvExporter, JsonExporter
     from .exporters.legacy_bcf import LegacyBcfExporter
     from .exporters.legacy_pbip import LegacyPbipAdapter
@@ -206,6 +207,17 @@ def default_registry(config: RunConfig) -> Registry:
         load_ruleset(config.legacy_ruleset_path)
         if config.legacy_ruleset_path is not None
         else None
+    )
+    registry.register_exporter(
+        BcfExporter(
+            schema_dir=default_schema_dir(config.repository_root),
+            project_name=config.bcf_project_name,
+            creation_author=config.bcf_creation_author,
+            topic_type=config.bcf_topic_type,
+            role_domain=config.bcf_role_domain,
+            project_id=legacy_project_id,
+            frozen_ruleset=frozen_ruleset,
+        )
     )
     registry.register_exporter(
         LegacyBcfExporter(

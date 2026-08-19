@@ -14,6 +14,16 @@ stage = "Coordination"
 discipline_scope = ["HVAC"]
 citation = "Project-assumed EPC delivery requirement; not a buildingSMART obligation."
 
+# Priority is not severity. Severity says how wrong the model is; priority says
+# when somebody gets to it. These are WARNINGs — the project assumes the
+# requirement, it is not a defect in the supplied model — but they block the
+# coordination stage, so they are not the thing to do last either.
+priority = "Medium"
+
+# Labels the topic carries. `HVAC` is not repeated here: it is already
+# `discipline_scope`, and the issue composes discipline first, then these.
+labels = ["IDS", "ProjectAssumption"]
+
 [[applicability]]
 facet = "entity"
 name = "IFCDUCTSEGMENT"

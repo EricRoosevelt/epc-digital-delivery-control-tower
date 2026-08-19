@@ -17,6 +17,7 @@ from __future__ import annotations
 
 import io
 import math
+import pathlib
 import unittest
 import zipfile
 
@@ -134,12 +135,29 @@ class LegacyScopeTests(unittest.TestCase):
             frozen_ruleset=frozen_ruleset(),
         )
 
-    def test_it_declares_the_rules_it_converts(self):
-        from epc_control_tower.exporters.legacy_bcf import LEGACY_RULE_SCOPE
+    def test_it_no_longer_knows_which_rules_it_converts(self):
+        # Both scope assertions are gone, and their absence is the whole of
+        # Phase 4's claim about this file. It refused anything that was not
+        # R-005A or R-005B in the HVAC model, and that refusal was correct at
+        # the time: the priority, stage, labels and assignee it wrote were four
+        # constants chosen for that one rule family, so any other topic would
+        # have carried metadata that was simply wrong.
+        #
+        # They come from the rule now, so there is nothing left to be specific
+        # about.
+        import epc_control_tower.exporters.legacy_bcf as module
 
-        self.assertEqual(sorted(LEGACY_RULE_SCOPE), ["R-005A", "R-005B"])
+        self.assertFalse(hasattr(module, "LEGACY_RULE_SCOPE"))
+        self.assertFalse(hasattr(module, "LEGACY_MODEL_SCOPE"))
+        source = pathlib.Path(module.__file__).read_text("utf-8")
+        for forbidden in ("R-005", "Building-Hvac", '"hvac"'):
+            with self.subTest(knowledge=forbidden):
+                self.assertNotIn(forbidden, source)
 
-    def test_a_failure_outside_that_scope_is_refused_rather_than_mislabelled(self):
+    def test_a_topic_from_any_rule_now_converts(self):
+        # The counterpart: relabelling a topic's findings to another rule used
+        # to raise. It produces an archive now, because nothing in the writer
+        # depends on which rule it was.
         import dataclasses
 
         projection = self._projection()
@@ -158,26 +176,33 @@ class LegacyScopeTests(unittest.TestCase):
             project_id=LEGACY_PROJECT_ID,
             frozen_ruleset=frozen_ruleset(),
         )
-        with self.assertRaisesRegex(ValueError, r"only converts project-assumed"):
-            exporter.build_archive(self.bundle, mutated)
+        data = exporter.build_archive(self.bundle, mutated)
+        self.assertTrue(data)
 
-    def test_a_model_outside_that_scope_is_refused(self):
+    def test_what_it_writes_comes_from_the_issue_not_from_a_constant(self):
+        # The published values, traced back to where they now live. If any of
+        # these reverted to a module constant the archive would still be byte
+        # identical, so this asserts the *source* rather than the value.
         import dataclasses
 
         projection = self._projection()
         topic = projection.topics[0]
-        elsewhere = dataclasses.replace(
-            topic, model=dataclasses.replace(topic.model, filename="Other.ifc")
-        )
-        mutated = dataclasses.replace(projection, topics=(elsewhere,))
+        self.assertEqual(topic.priority, "Medium")
+        self.assertEqual(topic.stage, "Coordination")
+        self.assertEqual(topic.assignee_role, "model-coordination")
+        self.assertEqual(topic.labels, ("HVAC", "IDS", "ProjectAssumption"))
 
         exporter = LegacyBcfExporter(
             schema_dir=SCHEMA_DIR,
             project_id=LEGACY_PROJECT_ID,
             frozen_ruleset=frozen_ruleset(),
         )
-        with self.assertRaisesRegex(ValueError, "is scoped to hvac/Building-Hvac.ifc"):
-            exporter.build_archive(self.bundle, mutated)
+        changed = dataclasses.replace(
+            projection,
+            topics=(dataclasses.replace(topic, priority="Low"),),
+        )
+        markup = exporter.markup(changed.topics[0], self.bundle.run.as_of).decode()
+        self.assertIn("<Priority>Low</Priority>", markup)
 
     def test_the_dropped_cardinality_assertions_are_really_gone(self):
         # The previous implementation raised unless it found exactly six

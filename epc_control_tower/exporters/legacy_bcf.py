@@ -1,8 +1,8 @@
 """The BCF 3.0 exporter as it exists today — legacy, and named so.
 
 The name is not modesty. This implementation still knows things a BCF exporter
-has no business knowing: that the failures it converts belong to the R-005
-family, and that they are in the HVAC model. Those checks are reproduced from
+had no business knowing: which rule family the failures it converts belong to,
+and which model they are in. Those checks are reproduced from
 the previous implementation deliberately, because the published archive is what
 they produced and Phase 1's job is to move code without moving bytes. A pure
 ``BcfExporter`` that consumes issues and events and has no opinion about rule
@@ -22,6 +22,7 @@ could not be trusted to produce the same bytes twice.
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from pathlib import Path
 from xml.etree import ElementTree as ET
 
@@ -31,15 +32,12 @@ from ..determinism import atomic_write_bytes, format_float, sha256_bytes
 from ..domain import RuleSet, RunBundle
 from ..protocols import Artifact
 from .legacy_contract import (
-    ASSIGNEE,
     BCF_VERSION,
     CREATION_AUTHOR,
     FINDING_URN_PREFIX,
     PROJECT_GUID,
     PROJECT_NAME,
-    TOPIC_LABELS,
-    TOPIC_PRIORITY,
-    TOPIC_STAGE,
+    ROLE_DOMAIN,
     TOPIC_STATUS,
     TOPIC_TYPE,
 )
@@ -49,16 +47,15 @@ __all__ = ["BCF_FILENAME", "LegacyBcfExporter"]
 
 BCF_FILENAME = "ids_failures.bcf"
 
-#: Rule families this converter is prepared to turn into topics.
-#:
-#: A pure BCF exporter would not have this list; it would take whatever issues
-#: grouping handed it. It is retained because the published archive's contents
-#: depend on it, and it goes when the issue lifecycle can carry the priority and
-#: labels that are currently constants below.
-LEGACY_RULE_SCOPE = frozenset({"R-005A", "R-005B"})
 
-#: The one model the published archive covers.
-LEGACY_MODEL_SCOPE = ("hvac", "Building-Hvac.ifc")
+def _address(role: str) -> str:
+    """Render a role as the address BCF insists on.
+
+    ``.invalid`` is reserved by RFC 2606 precisely so that it cannot resolve,
+    which is the point: BCF wants a mailbox and this project has a role.
+    """
+
+    return f"{role}@{ROLE_DOMAIN}" if role else ""
 
 
 def _child(parent: ET.Element, tag: str, text: object) -> ET.Element:
@@ -123,9 +120,8 @@ class LegacyBcfExporter:
 
         verify_schema_bundle(self._schema_dir)
         projection = projection or self._project(bundle)
-        self._assert_legacy_scope(projection)
 
-        entries = self.root_entries()
+        entries = self.root_entries(projection.topics)
         for topic in projection.topics:
             entries[f"{topic.topic_guid}/"] = b""
             entries[f"{topic.topic_guid}/markup.bcf"] = self.markup(topic, bundle.run.as_of)
@@ -143,60 +139,45 @@ class LegacyBcfExporter:
             frozen_ruleset=self._frozen_ruleset,
         )
 
-    # -- legacy scope ------------------------------------------------------
-
-    def _assert_legacy_scope(self, projection: LegacyProjection) -> None:
-        """Refuse work this converter was never written to do.
-
-        Rule-aware and model-aware, and that is the point of the name. The
-        published archive's labels, priority and stage are constants chosen for
-        one rule family in one discipline, so converting anything else would
-        produce topics whose metadata is simply wrong. Better to say so than to
-        emit them.
-
-        This is what Phase 4 removes: once priority, stage and assignee come
-        from rule metadata, there is nothing left here to be specific about.
-        """
-
-        for topic in projection.topics:
-            outside = sorted(
-                {
-                    row.specification_id
-                    for row in topic.findings
-                    if row.specification_id not in LEGACY_RULE_SCOPE
-                }
-            )
-            if outside:
-                raise ValueError(
-                    f"{self.id} only converts project-assumed "
-                    f"{sorted(LEGACY_RULE_SCOPE)} failures, got {outside}"
-                )
-
-            model_id, filename = LEGACY_MODEL_SCOPE
-            if topic.model.model_id != model_id or topic.model.filename != filename:
-                raise ValueError(
-                    f"{self.id} is scoped to {model_id}/{filename}, got "
-                    f"{topic.model.model_id}/{topic.model.filename}"
-                )
-
     # -- XML ---------------------------------------------------------------
 
     @staticmethod
-    def root_entries() -> dict[str, bytes]:
+    def root_entries(topics: Sequence[LegacyTopic] = ()) -> dict[str, bytes]:
+        """The archive-level files.
+
+        The extension vocabulary is collected from the topics rather than
+        listed as constants. It produces the same three lists for the
+        published archive — measured, not assumed — and it is the only
+        version that stays correct when a rule declares a different
+        priority or label.
+        """
+
         version_root = ET.Element("Version", {"VersionId": BCF_VERSION})
 
         project_root = ET.Element("ProjectInfo")
         project = ET.SubElement(project_root, "Project", {"ProjectId": PROJECT_GUID})
         _child(project, "Name", PROJECT_NAME)
 
+        priorities = sorted({t.priority for t in topics if t.priority})
+        stages = sorted({t.stage for t in topics if t.stage})
+        labels = sorted({label for t in topics for label in t.labels})
+        # Assignees first, then whoever wrote the archive. Not alphabetical:
+        # the published order puts the people who receive work ahead of the
+        # tool that filed it, which is the more useful reading and is what this
+        # list has always meant. (Noted plainly: alphabetical was tried first
+        # and the diff against the published archive is what revealed the
+        # convention.)
+        assignees = sorted({_address(t.assignee_role) for t in topics if t.assignee_role})
+        users = [*assignees, *([CREATION_AUTHOR] if CREATION_AUTHOR not in assignees else [])]
+
         extensions_root = ET.Element("Extensions")
         for group_name, item_name, values in (
             ("TopicTypes", "TopicType", [TOPIC_TYPE]),
             ("TopicStatuses", "TopicStatus", [TOPIC_STATUS]),
-            ("Priorities", "Priority", [TOPIC_PRIORITY]),
-            ("TopicLabels", "TopicLabel", list(TOPIC_LABELS)),
-            ("Users", "User", [ASSIGNEE, CREATION_AUTHOR]),
-            ("Stages", "Stage", [TOPIC_STAGE]),
+            ("Priorities", "Priority", priorities),
+            ("TopicLabels", "TopicLabel", labels),
+            ("Users", "User", users),
+            ("Stages", "Stage", stages),
         ):
             group = ET.SubElement(extensions_root, group_name)
             for value in values:
@@ -235,14 +216,23 @@ class LegacyBcfExporter:
             _child(links, "ReferenceLink", FINDING_URN_PREFIX + row.finding_key)
 
         _child(markup_topic, "Title", topic.title)
-        _child(markup_topic, "Priority", TOPIC_PRIORITY)
-        labels = ET.SubElement(markup_topic, "Labels")
-        for label in TOPIC_LABELS:
-            _child(labels, "Label", label)
+        # Every one of these is `minOccurs="0"` and typed `NonEmptyOrBlankString`,
+        # so an absent value is omitted rather than written empty. It matters for
+        # more than tidiness: a rule set read from a bare `.ids` document carries
+        # no priority, stage or labels at all — IDS 1.0 has nowhere to put them —
+        # and writing empty elements makes an archive the schema rejects.
+        if topic.priority:
+            _child(markup_topic, "Priority", topic.priority)
+        if topic.labels:
+            labels = ET.SubElement(markup_topic, "Labels")
+            for label in topic.labels:
+                _child(labels, "Label", label)
         _child(markup_topic, "CreationDate", as_of)
         _child(markup_topic, "CreationAuthor", CREATION_AUTHOR)
-        _child(markup_topic, "AssignedTo", ASSIGNEE)
-        _child(markup_topic, "Stage", TOPIC_STAGE)
+        if topic.assignee_role:
+            _child(markup_topic, "AssignedTo", _address(topic.assignee_role))
+        if topic.stage:
+            _child(markup_topic, "Stage", topic.stage)
 
         requirements = ", ".join(row.requirement for row in topic.findings)
         _child(

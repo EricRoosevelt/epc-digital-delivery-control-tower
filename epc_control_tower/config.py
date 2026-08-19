@@ -46,7 +46,7 @@ DEFAULT_CONFIG_FILENAME = "control-tower.toml"
 #: Everything that writes a tracked artifact, so that a default run regenerates
 #: the repository in full and continuous integration can simply check that
 #: nothing changed.
-DEFAULT_EXPORTERS = ("csv", "json", "legacy-bcf", "legacy-pbip")
+DEFAULT_EXPORTERS = ("bcf", "csv", "json", "legacy-bcf", "legacy-pbip")
 
 _SHA256 = re.compile(r"^[0-9a-f]{64}$")
 
@@ -138,6 +138,25 @@ class RunConfig:
     #: the legacy writers use whatever rule set the run used, which is correct
     #: only while the two are the same document. Retires with the adapters.
     legacy_ruleset_path: Path | None = None
+    #: How issues are rendered as BCF topics.
+    #:
+    #: These are here rather than on a rule because they are the same for
+    #: every rule in every rule set: who is writing the archive, what the
+    #: archive calls itself, and how a role becomes the address BCF insists
+    #: on. A fork changes them once, not per requirement.
+    #:
+    #: ``bcf_project_name`` is the name of the *BCF project*, which is not
+    #: the name of any ``Project`` in a manifest. The published archive calls
+    #: itself after the tool, and the BCF project GUID is derived from this
+    #: string, so it is configuration rather than something to look up.
+    bcf_project_name: str = "EPC Digital Delivery Control Tower"
+    bcf_creation_author: str = "control-tower@example.invalid"
+    bcf_topic_type: str = "Issue"
+    #: A role is what a rule can state; BCF wants an address. This is the
+    #: domain appended to a role to make one, and no part of it is a claim
+    #: that the address exists — `.invalid` is reserved precisely so that it
+    #: cannot.
+    bcf_role_domain: str = "example.invalid"
 
     def resolved_processed_data_dir(self) -> Path:
         return self.processed_data_dir or self.repository_root / "data" / "processed"
@@ -298,6 +317,7 @@ def load_run_config(
 
     document = _read_toml(config_path)
     run_section = document.get("run", {})
+    bcf_section = document.get("bcf", {})
     if not isinstance(run_section, dict):
         raise ValueError(f"{config_path}: [run] must be a table")
 
@@ -320,6 +340,14 @@ def load_run_config(
     return RunConfig(
         repository_root=repository_root,
         as_of=str(run_section.get("as_of", "2026-08-13T00:00:00Z")),
+        bcf_project_name=str(
+            bcf_section.get("project_name", "EPC Digital Delivery Control Tower")
+        ),
+        bcf_creation_author=str(
+            bcf_section.get("creation_author", "control-tower@example.invalid")
+        ),
+        bcf_topic_type=str(bcf_section.get("topic_type", "Issue")),
+        bcf_role_domain=str(bcf_section.get("role_domain", "example.invalid")),
         ruleset_path=_optional_path("ruleset_path"),
         project_manifests=manifests,
         processed_data_dir=_optional_path("processed_data_dir"),

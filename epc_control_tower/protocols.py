@@ -28,7 +28,7 @@ now; see :mod:`~.registry`.
 
 from __future__ import annotations
 
-from collections.abc import Iterable, Sequence
+from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Protocol
@@ -157,7 +157,18 @@ class Checker(Protocol):
 
 
 class GroupingPolicy(Protocol):
-    """Turns findings into actionable issues and their opening history."""
+    """Turns findings into actionable issues and their opening history.
+
+    ``requirements`` maps requirement key to the rule metadata behind it. A
+    policy needs it to answer the questions an issue has and a finding does not
+    — who owns this, how urgent is it, which stage does it belong to — because
+    those are properties of the *rule*, and a finding carries only the key of
+    the requirement it is about. Handing the mapping in rather than letting a
+    policy load the rule set keeps grouping a pure function of what it is given.
+
+    It is keyword-only with a default so that a policy which does not care
+    about metadata does not have to mention it.
+    """
 
     id: str
 
@@ -167,6 +178,8 @@ class GroupingPolicy(Protocol):
         *,
         validation_run_id: str,
         as_of: str,
+        requirements: Mapping[str, Requirement] | None = None,
+        milestones: Mapping[str, str] | None = None,
     ) -> tuple[tuple[Issue, ...], tuple[IssueEvent, ...]]: ...
 
 

@@ -1,5 +1,5 @@
 {
-  "contract_version": "1.4",
+  "contract_version": "1.5",
   "elements": [
     {
       "element_key": "architecture::0OfZwWc8j9QP5uX8xPTxDH",
@@ -403,7 +403,7 @@
       "actual": "",
       "element_key": "",
       "expected": "LoadBearing data shall be provided in the dataset Pset_BeamCommon",
-      "finding_key": "4f757e78-6e41-5894-8eaf-d27f3f115f78",
+      "finding_key": "c59fca52-1aaa-53f2-9b8d-3e6e3bba0f8a",
       "is_applicable": "false",
       "is_issue": "false",
       "model_key": "iso-reference-view.architecture",
@@ -412,13 +412,13 @@
       "requirement_key": "0041a575-0031-56c2-a9a3-642dc399b84e",
       "severity": "INFO",
       "status": "N/A",
-      "validation_run_id": "epc-delivery-v2.0-445a0e1fe3a57f9d"
+      "validation_run_id": "epc-delivery-v2.1-0094f08f7dcbc692"
     },
     {
       "actual": "",
       "element_key": "",
       "expected": "An element must have an IFCRELCONTAINEDINSPATIALSTRUCTURE relationship with an {'enumeration': ['IFCSPACE', 'IFCBUILDINGSTOREY']}",
-      "finding_key": "cd1449f0-ce72-5bb8-bd35-d3a901ab5a39",
+      "finding_key": "905759b2-4f64-5e7c-a056-f435d36f17e9",
       "is_applicable": "false",
       "is_issue": "false",
       "model_key": "iso-reference-view.architecture",
@@ -427,13 +427,13 @@
       "requirement_key": "2ead0930-568e-5d49-9708-716c5c740846",
       "severity": "INFO",
       "status": "N/A",
-      "validation_run_id": "epc-delivery-v2.0-445a0e1fe3a57f9d"
+      "validation_run_id": "epc-delivery-v2.1-0094f08f7dcbc692"
     },
     {
       "actual": "",
       "element_key": "iso-reference-view.architecture::3ZYW59sxj8lei475l7EhLU",
       "expected": "Shall have a material",
-      "finding_key": "53b488a0-fcd2-53fb-8809-587e64b64ee7",
+      "finding_key": "8fd12a0b-a539-5337-883e-32a96fe998e1",
       "is_applicable": "true",
       "is_issue": "false",
       "model_key": "iso-reference-view.architecture",
@@ -442,13 +442,13 @@
       "requirement_key": "3d87ff1f-cc75-5e96-b83a-95709a015713",
       "severity": "INFO",
       "status": "PASS",
-      "validation_run_id": "epc-delivery-v2.0-445a0e1fe3a57f9d"
+      "validation_run_id": "epc-delivery-v2.1-0094f08f7dcbc692"
     },
     {
       "actual": "",
       "element_key": "",
       "expected": "An element must have an IFCRELCONTAINEDINSPATIALSTRUCTURE relationship with an {'enumeration': ['IFCSPACE', 'IFCBUILDINGSTOREY']}",
-      "finding_key": "6ce02824-3209-5457-8d01-43afd6e9c715",
+      "finding_key": "5249ca21-7d5f-525a-a74c-3a4df4f19abe",
       "is_applicable": "false",
       "is_issue": "false",
       "model_key": "iso-reference-view.architecture",
@@ -457,13 +457,13 @@
       "requirement_key": "491a4a0b-9b4a-5f77-b90d-31a7dc8beb44",
       "severity": "INFO",
       "status": "N/A",
-      "validation_run_id": "epc-delivery-v2.0-445a0e1fe3a57f9d"
+      "validation_run_id": "epc-delivery-v2.1-0094f08f7dcbc692"
     },
     {
       "actual": "",
       "element_key": "iso-reference-view.architecture::3ZYW59sxj8lei475l7EhLU",
       "expected": "Shall have a CCI Construction reference of {'pattern': '[A-Z]-[A-Z]{3}'}",
-      "finding_key": "b69689f6-e93c-52c6-b746-7df28907106d",
+      "finding_key": "403b973a-c6a7-53bf-9d16-20dcb1dd9f3b",
       "is_applicable": "true",
       "is_issue": "true",
       "model_key": "iso-reference-view.architecture",
@@ -472,13 +472,13 @@
       "requirement_key": "4b7491ef-98a2-5976-aa1d-2b8b765688eb",
       "severity": "WARNING",
       "status": "FAIL",
-      "validation_run_id": "epc-delivery-v2.0-445a0e1fe3a57f9d"
+      "validation_run_id": "epc-delivery-v2.1-0094f08f7dcbc692"
     },
     {
       "actual": "",
       "element_key": "iso-reference-view.architecture::3ZYW59sxj8lei475l7EhLU",
       "expected": "IsExternal data shall be provided in the dataset Pset_WallCommon",
-      "finding_key": "bcbee1ee-519a-5b09-a54e-5870fedaa328",
+      "finding_key": "97d9307c-93c0-5b29-9a66-aed28ca11e19",
       "is_applicable": "true",
       "is_issue": "false",
       "model_key": "iso-reference-view.architecture",
@@ -487,13 +487,13 @@
       "requirement_key": "5dd2e8a6-985f-5a56-9462-77a2765b7ef4",
       "severity": "INFO",
       "status": "PASS",
-      "validation_run_id": "epc-delivery-v2.0-445a0e1fe3a57f9d"
+      "validation_run_id": "epc-delivery-v2.1-0094f08f7dcbc692"
     },
     {
       "actual": "",
       "element_key": "iso-reference-view.architecture::3ZYW59sxj8lei475l7EhLU",
       "expected": "The Name shall be provided",
-      "finding_key": "e4350e12-f47c-540c-a329-8ac40b96457a",
+      "finding_key": "95b276a4-b9be-5a95-8911-10b20ea4d738",
       "is_applicable": "true",
       "is_issue": "false",
       "model_key": "iso-reference-view.architecture",
@@ -502,13 +502,13 @@
       "requirement_key": "63e9c0f9-4cb5-5b50-9f4b-456fc6f25c41",
       "severity": "INFO",
       "status": "PASS",
-      "validation_run_id": "epc-delivery-v2.0-445a0e1fe3a57f9d"
+      "validation_run_id": "epc-delivery-v2.1-0094f08f7dcbc692"
     },
     {
       "actual": "",
       "element_key": "",
       "expected": "AssetTag data shall be provided in the dataset EPC_Delivery",
-      "finding_key": "e12369bf-328b-5fe7-92df-f733549288aa",
+      "finding_key": "0be0e456-a43d-5598-a5c0-a1b64b64aaf9",
       "is_applicable": "false",
       "is_issue": "false",
       "model_key": "iso-reference-view.architecture",
@@ -517,13 +517,13 @@
       "requirement_key": "842a37c7-3183-5fce-ab45-b93c37ec7a08",
       "severity": "INFO",
       "status": "N/A",
-      "validation_run_id": "epc-delivery-v2.0-445a0e1fe3a57f9d"
+      "validation_run_id": "epc-delivery-v2.1-0094f08f7dcbc692"
     },
     {
       "actual": "",
       "element_key": "",
       "expected": "SystemCode data shall be provided in the dataset EPC_Delivery",
-      "finding_key": "b8644f3d-6960-52ea-af17-285b78bb2226",
+      "finding_key": "264ae5a1-8ff5-51ea-855f-840902a822be",
       "is_applicable": "false",
       "is_issue": "false",
       "model_key": "iso-reference-view.architecture",
@@ -532,13 +532,13 @@
       "requirement_key": "9321298b-4a9f-5a3e-9d10-6668b736d465",
       "severity": "INFO",
       "status": "N/A",
-      "validation_run_id": "epc-delivery-v2.0-445a0e1fe3a57f9d"
+      "validation_run_id": "epc-delivery-v2.1-0094f08f7dcbc692"
     },
     {
       "actual": "",
       "element_key": "",
       "expected": "AssetTag data shall be provided in the dataset EPC_Delivery",
-      "finding_key": "9f4b4d17-4629-57d4-ba7f-6ff99c8d5574",
+      "finding_key": "9aaaa996-f147-598f-9794-f21ed0638b10",
       "is_applicable": "false",
       "is_issue": "false",
       "model_key": "iso-reference-view.architecture",
@@ -547,13 +547,13 @@
       "requirement_key": "a1402559-dcfc-5af4-a222-3a13eaf2b161",
       "severity": "INFO",
       "status": "N/A",
-      "validation_run_id": "epc-delivery-v2.0-445a0e1fe3a57f9d"
+      "validation_run_id": "epc-delivery-v2.1-0094f08f7dcbc692"
     },
     {
       "actual": "",
       "element_key": "",
       "expected": "Carry the project's agreed setout references in every discipline model.",
-      "finding_key": "eaa65cb5-e775-5260-93d1-3dafc830a9c3",
+      "finding_key": "ef4c7bee-ab41-517c-bf1d-82f71923ab77",
       "is_applicable": "true",
       "is_issue": "true",
       "model_key": "iso-reference-view.architecture",
@@ -562,13 +562,13 @@
       "requirement_key": "acb11f11-bf18-5516-a6f2-21e451a6e410",
       "severity": "ERROR",
       "status": "FAIL",
-      "validation_run_id": "epc-delivery-v2.0-445a0e1fe3a57f9d"
+      "validation_run_id": "epc-delivery-v2.1-0094f08f7dcbc692"
     },
     {
       "actual": "",
       "element_key": "",
       "expected": "Shall be IFCCOLUMN data of type {'enumeration': ['COLUMN', 'PILASTER']}",
-      "finding_key": "cc4d4d72-26de-59ae-8e40-c71ce6698617",
+      "finding_key": "dc7864d9-9f69-50f8-a4e8-4499097154ba",
       "is_applicable": "false",
       "is_issue": "false",
       "model_key": "iso-reference-view.architecture",
@@ -577,13 +577,13 @@
       "requirement_key": "f6b0edb7-ca35-596a-b72e-42f21ed1419a",
       "severity": "INFO",
       "status": "N/A",
-      "validation_run_id": "epc-delivery-v2.0-445a0e1fe3a57f9d"
+      "validation_run_id": "epc-delivery-v2.1-0094f08f7dcbc692"
     },
     {
       "actual": "",
       "element_key": "",
       "expected": "Shall be IFCBEAM data of type {'enumeration': ['BEAM', 'JOIST', 'HOLLOWCORE', 'LINTEL', 'SPANDREL', 'T_BEAM']}",
-      "finding_key": "cb57843b-b842-5581-998d-4da35e8daeb0",
+      "finding_key": "7e3972d5-c53b-54c9-846e-c02860e823c4",
       "is_applicable": "false",
       "is_issue": "false",
       "model_key": "iso-reference-view.architecture",
@@ -592,13 +592,13 @@
       "requirement_key": "fd3742bc-adf3-55ea-a220-d7b7c82df6d6",
       "severity": "INFO",
       "status": "N/A",
-      "validation_run_id": "epc-delivery-v2.0-445a0e1fe3a57f9d"
+      "validation_run_id": "epc-delivery-v2.1-0094f08f7dcbc692"
     },
     {
       "actual": "",
       "element_key": "",
       "expected": "SystemCode data shall be provided in the dataset EPC_Delivery",
-      "finding_key": "b9b4269e-494c-5d6d-829d-3eaeb84875a1",
+      "finding_key": "4d317857-54c1-5b5d-b06e-e004082f0b44",
       "is_applicable": "false",
       "is_issue": "false",
       "model_key": "iso-reference-view.architecture",
@@ -607,13 +607,13 @@
       "requirement_key": "fd49c300-7ef6-5a8d-825f-53210dd579fe",
       "severity": "INFO",
       "status": "N/A",
-      "validation_run_id": "epc-delivery-v2.0-445a0e1fe3a57f9d"
+      "validation_run_id": "epc-delivery-v2.1-0094f08f7dcbc692"
     },
     {
       "actual": "",
       "element_key": "",
       "expected": "LoadBearing data shall be provided in the dataset Pset_BeamCommon",
-      "finding_key": "7752a096-fa2a-598f-92e6-e2b4461d014b",
+      "finding_key": "49f203c8-ff06-5d5f-8a0d-4ac5d306e013",
       "is_applicable": "false",
       "is_issue": "false",
       "model_key": "iso-reference-view.plumbing",
@@ -622,13 +622,13 @@
       "requirement_key": "0041a575-0031-56c2-a9a3-642dc399b84e",
       "severity": "INFO",
       "status": "N/A",
-      "validation_run_id": "epc-delivery-v2.0-445a0e1fe3a57f9d"
+      "validation_run_id": "epc-delivery-v2.1-0094f08f7dcbc692"
     },
     {
       "actual": "",
       "element_key": "",
       "expected": "An element must have an IFCRELCONTAINEDINSPATIALSTRUCTURE relationship with an {'enumeration': ['IFCSPACE', 'IFCBUILDINGSTOREY']}",
-      "finding_key": "41b6f44b-ba8c-5daa-834a-da2fcccf2490",
+      "finding_key": "1d2ad03e-b000-5813-ae6a-b075e93132dc",
       "is_applicable": "false",
       "is_issue": "false",
       "model_key": "iso-reference-view.plumbing",
@@ -637,13 +637,13 @@
       "requirement_key": "2ead0930-568e-5d49-9708-716c5c740846",
       "severity": "INFO",
       "status": "N/A",
-      "validation_run_id": "epc-delivery-v2.0-445a0e1fe3a57f9d"
+      "validation_run_id": "epc-delivery-v2.1-0094f08f7dcbc692"
     },
     {
       "actual": "",
       "element_key": "",
       "expected": "Shall have a material",
-      "finding_key": "470b610f-58ca-57e1-8f5b-9d7acfc63cbc",
+      "finding_key": "b8e1cfa2-ba4d-5050-91d5-1907150b6e77",
       "is_applicable": "false",
       "is_issue": "false",
       "model_key": "iso-reference-view.plumbing",
@@ -652,13 +652,13 @@
       "requirement_key": "3d87ff1f-cc75-5e96-b83a-95709a015713",
       "severity": "INFO",
       "status": "N/A",
-      "validation_run_id": "epc-delivery-v2.0-445a0e1fe3a57f9d"
+      "validation_run_id": "epc-delivery-v2.1-0094f08f7dcbc692"
     },
     {
       "actual": "",
       "element_key": "",
       "expected": "An element must have an IFCRELCONTAINEDINSPATIALSTRUCTURE relationship with an {'enumeration': ['IFCSPACE', 'IFCBUILDINGSTOREY']}",
-      "finding_key": "fd62221f-7d87-5ae2-b33d-25faa4f8925c",
+      "finding_key": "54cab038-a0e5-5467-a2b4-0bb0429be0f1",
       "is_applicable": "false",
       "is_issue": "false",
       "model_key": "iso-reference-view.plumbing",
@@ -667,13 +667,13 @@
       "requirement_key": "491a4a0b-9b4a-5f77-b90d-31a7dc8beb44",
       "severity": "INFO",
       "status": "N/A",
-      "validation_run_id": "epc-delivery-v2.0-445a0e1fe3a57f9d"
+      "validation_run_id": "epc-delivery-v2.1-0094f08f7dcbc692"
     },
     {
       "actual": "",
       "element_key": "",
       "expected": "Shall have a CCI Construction reference of {'pattern': '[A-Z]-[A-Z]{3}'}",
-      "finding_key": "ff974cb9-da8d-5328-8d61-ced6c44d00c8",
+      "finding_key": "b41f67c5-a014-5ef2-ba2b-f7cec788d0b0",
       "is_applicable": "false",
       "is_issue": "false",
       "model_key": "iso-reference-view.plumbing",
@@ -682,13 +682,13 @@
       "requirement_key": "4b7491ef-98a2-5976-aa1d-2b8b765688eb",
       "severity": "INFO",
       "status": "N/A",
-      "validation_run_id": "epc-delivery-v2.0-445a0e1fe3a57f9d"
+      "validation_run_id": "epc-delivery-v2.1-0094f08f7dcbc692"
     },
     {
       "actual": "",
       "element_key": "",
       "expected": "IsExternal data shall be provided in the dataset Pset_WallCommon",
-      "finding_key": "bcdfcca3-0680-5ee3-8395-ec7ed799282d",
+      "finding_key": "2c94cc4a-0676-5236-a5fe-f32d209e4505",
       "is_applicable": "false",
       "is_issue": "false",
       "model_key": "iso-reference-view.plumbing",
@@ -697,13 +697,13 @@
       "requirement_key": "5dd2e8a6-985f-5a56-9462-77a2765b7ef4",
       "severity": "INFO",
       "status": "N/A",
-      "validation_run_id": "epc-delivery-v2.0-445a0e1fe3a57f9d"
+      "validation_run_id": "epc-delivery-v2.1-0094f08f7dcbc692"
     },
     {
       "actual": "",
       "element_key": "",
       "expected": "The Name shall be provided",
-      "finding_key": "7fc2e9f0-18e1-5993-acc5-59b41fb06787",
+      "finding_key": "d03fdcb2-b3d4-56f8-8c3b-d20d03a7430c",
       "is_applicable": "false",
       "is_issue": "false",
       "model_key": "iso-reference-view.plumbing",
@@ -712,13 +712,13 @@
       "requirement_key": "63e9c0f9-4cb5-5b50-9f4b-456fc6f25c41",
       "severity": "INFO",
       "status": "N/A",
-      "validation_run_id": "epc-delivery-v2.0-445a0e1fe3a57f9d"
+      "validation_run_id": "epc-delivery-v2.1-0094f08f7dcbc692"
     },
     {
       "actual": "",
       "element_key": "",
       "expected": "AssetTag data shall be provided in the dataset EPC_Delivery",
-      "finding_key": "bc2cbdfa-b6f8-55c9-8141-6865df1d3a33",
+      "finding_key": "7ce40136-6b39-54e0-93b8-653833a81b3e",
       "is_applicable": "false",
       "is_issue": "false",
       "model_key": "iso-reference-view.plumbing",
@@ -727,13 +727,13 @@
       "requirement_key": "842a37c7-3183-5fce-ab45-b93c37ec7a08",
       "severity": "INFO",
       "status": "N/A",
-      "validation_run_id": "epc-delivery-v2.0-445a0e1fe3a57f9d"
+      "validation_run_id": "epc-delivery-v2.1-0094f08f7dcbc692"
     },
     {
       "actual": "",
       "element_key": "",
       "expected": "SystemCode data shall be provided in the dataset EPC_Delivery",
-      "finding_key": "5e09e863-8fbe-52a2-85f5-250ec7807d7f",
+      "finding_key": "4e7aab2a-4738-59ce-b571-3ff4225da476",
       "is_applicable": "false",
       "is_issue": "false",
       "model_key": "iso-reference-view.plumbing",
@@ -742,13 +742,13 @@
       "requirement_key": "9321298b-4a9f-5a3e-9d10-6668b736d465",
       "severity": "INFO",
       "status": "N/A",
-      "validation_run_id": "epc-delivery-v2.0-445a0e1fe3a57f9d"
+      "validation_run_id": "epc-delivery-v2.1-0094f08f7dcbc692"
     },
     {
       "actual": "",
       "element_key": "",
       "expected": "AssetTag data shall be provided in the dataset EPC_Delivery",
-      "finding_key": "24b7c99a-d9ca-546a-ad17-02c648df7387",
+      "finding_key": "b2ffbca3-c6bd-5f05-857a-fba1adb327dd",
       "is_applicable": "false",
       "is_issue": "false",
       "model_key": "iso-reference-view.plumbing",
@@ -757,13 +757,13 @@
       "requirement_key": "a1402559-dcfc-5af4-a222-3a13eaf2b161",
       "severity": "INFO",
       "status": "N/A",
-      "validation_run_id": "epc-delivery-v2.0-445a0e1fe3a57f9d"
+      "validation_run_id": "epc-delivery-v2.1-0094f08f7dcbc692"
     },
     {
       "actual": "",
       "element_key": "",
       "expected": "Carry the project's agreed setout references in every discipline model.",
-      "finding_key": "d0e58769-d98e-5b39-bea5-3248a904e129",
+      "finding_key": "cf20c927-a9d7-53e4-a9fb-7c757dfbe6b7",
       "is_applicable": "true",
       "is_issue": "true",
       "model_key": "iso-reference-view.plumbing",
@@ -772,13 +772,13 @@
       "requirement_key": "acb11f11-bf18-5516-a6f2-21e451a6e410",
       "severity": "ERROR",
       "status": "FAIL",
-      "validation_run_id": "epc-delivery-v2.0-445a0e1fe3a57f9d"
+      "validation_run_id": "epc-delivery-v2.1-0094f08f7dcbc692"
     },
     {
       "actual": "",
       "element_key": "",
       "expected": "Shall be IFCCOLUMN data of type {'enumeration': ['COLUMN', 'PILASTER']}",
-      "finding_key": "e470c1d4-67b0-5025-bd32-83a2b0cc76e6",
+      "finding_key": "1caa288f-8a81-5402-a926-ee8c7dc22160",
       "is_applicable": "false",
       "is_issue": "false",
       "model_key": "iso-reference-view.plumbing",
@@ -787,13 +787,13 @@
       "requirement_key": "f6b0edb7-ca35-596a-b72e-42f21ed1419a",
       "severity": "INFO",
       "status": "N/A",
-      "validation_run_id": "epc-delivery-v2.0-445a0e1fe3a57f9d"
+      "validation_run_id": "epc-delivery-v2.1-0094f08f7dcbc692"
     },
     {
       "actual": "",
       "element_key": "",
       "expected": "Shall be IFCBEAM data of type {'enumeration': ['BEAM', 'JOIST', 'HOLLOWCORE', 'LINTEL', 'SPANDREL', 'T_BEAM']}",
-      "finding_key": "25decea9-0ef4-5ec0-a4d7-1ec69435a41d",
+      "finding_key": "67246e6a-7220-5ab3-bf15-f0e487930407",
       "is_applicable": "false",
       "is_issue": "false",
       "model_key": "iso-reference-view.plumbing",
@@ -802,13 +802,13 @@
       "requirement_key": "fd3742bc-adf3-55ea-a220-d7b7c82df6d6",
       "severity": "INFO",
       "status": "N/A",
-      "validation_run_id": "epc-delivery-v2.0-445a0e1fe3a57f9d"
+      "validation_run_id": "epc-delivery-v2.1-0094f08f7dcbc692"
     },
     {
       "actual": "",
       "element_key": "",
       "expected": "SystemCode data shall be provided in the dataset EPC_Delivery",
-      "finding_key": "992d627f-61a7-58ab-8483-a091c59c42ec",
+      "finding_key": "3e373757-805d-5b6b-99df-1c3c5c0902c1",
       "is_applicable": "false",
       "is_issue": "false",
       "model_key": "iso-reference-view.plumbing",
@@ -817,13 +817,13 @@
       "requirement_key": "fd49c300-7ef6-5a8d-825f-53210dd579fe",
       "severity": "INFO",
       "status": "N/A",
-      "validation_run_id": "epc-delivery-v2.0-445a0e1fe3a57f9d"
+      "validation_run_id": "epc-delivery-v2.1-0094f08f7dcbc692"
     },
     {
       "actual": "",
       "element_key": "",
       "expected": "LoadBearing data shall be provided in the dataset Pset_BeamCommon",
-      "finding_key": "4ab40ef1-63e2-5fff-9587-f9a3190a4a16",
+      "finding_key": "7305fb26-90a3-55c0-94cc-d2b682aa79bf",
       "is_applicable": "false",
       "is_issue": "false",
       "model_key": "iso-reference-view.structural",
@@ -832,13 +832,13 @@
       "requirement_key": "0041a575-0031-56c2-a9a3-642dc399b84e",
       "severity": "INFO",
       "status": "N/A",
-      "validation_run_id": "epc-delivery-v2.0-445a0e1fe3a57f9d"
+      "validation_run_id": "epc-delivery-v2.1-0094f08f7dcbc692"
     },
     {
       "actual": "",
       "element_key": "",
       "expected": "An element must have an IFCRELCONTAINEDINSPATIALSTRUCTURE relationship with an {'enumeration': ['IFCSPACE', 'IFCBUILDINGSTOREY']}",
-      "finding_key": "2a177569-b66d-5894-afac-57a1c4011529",
+      "finding_key": "d0b61624-e668-5859-84c1-b483c355188c",
       "is_applicable": "false",
       "is_issue": "false",
       "model_key": "iso-reference-view.structural",
@@ -847,13 +847,13 @@
       "requirement_key": "2ead0930-568e-5d49-9708-716c5c740846",
       "severity": "INFO",
       "status": "N/A",
-      "validation_run_id": "epc-delivery-v2.0-445a0e1fe3a57f9d"
+      "validation_run_id": "epc-delivery-v2.1-0094f08f7dcbc692"
     },
     {
       "actual": "",
       "element_key": "",
       "expected": "Shall have a material",
-      "finding_key": "61b4af50-6542-562a-b834-bfdb761b0eb3",
+      "finding_key": "4d81f337-a5b5-5960-bc50-64908923aac6",
       "is_applicable": "false",
       "is_issue": "false",
       "model_key": "iso-reference-view.structural",
@@ -862,13 +862,13 @@
       "requirement_key": "3d87ff1f-cc75-5e96-b83a-95709a015713",
       "severity": "INFO",
       "status": "N/A",
-      "validation_run_id": "epc-delivery-v2.0-445a0e1fe3a57f9d"
+      "validation_run_id": "epc-delivery-v2.1-0094f08f7dcbc692"
     },
     {
       "actual": "",
       "element_key": "",
       "expected": "An element must have an IFCRELCONTAINEDINSPATIALSTRUCTURE relationship with an {'enumeration': ['IFCSPACE', 'IFCBUILDINGSTOREY']}",
-      "finding_key": "debf72e5-7f36-5281-aa91-d1423efbb6d3",
+      "finding_key": "4f7f61f4-ca4c-5ff7-9447-840761f1253f",
       "is_applicable": "false",
       "is_issue": "false",
       "model_key": "iso-reference-view.structural",
@@ -877,13 +877,13 @@
       "requirement_key": "491a4a0b-9b4a-5f77-b90d-31a7dc8beb44",
       "severity": "INFO",
       "status": "N/A",
-      "validation_run_id": "epc-delivery-v2.0-445a0e1fe3a57f9d"
+      "validation_run_id": "epc-delivery-v2.1-0094f08f7dcbc692"
     },
     {
       "actual": "",
       "element_key": "",
       "expected": "Shall have a CCI Construction reference of {'pattern': '[A-Z]-[A-Z]{3}'}",
-      "finding_key": "ddf4ac91-5c36-5da7-8b75-048108fefe68",
+      "finding_key": "752f29d3-7eaa-52cb-9260-d11cbb6d5fa2",
       "is_applicable": "false",
       "is_issue": "false",
       "model_key": "iso-reference-view.structural",
@@ -892,13 +892,13 @@
       "requirement_key": "4b7491ef-98a2-5976-aa1d-2b8b765688eb",
       "severity": "INFO",
       "status": "N/A",
-      "validation_run_id": "epc-delivery-v2.0-445a0e1fe3a57f9d"
+      "validation_run_id": "epc-delivery-v2.1-0094f08f7dcbc692"
     },
     {
       "actual": "",
       "element_key": "",
       "expected": "IsExternal data shall be provided in the dataset Pset_WallCommon",
-      "finding_key": "4e1e9079-0cd2-5ac1-9c31-42a36e475c82",
+      "finding_key": "cf3976ec-a4ad-5a91-94e4-57bba6db58ce",
       "is_applicable": "false",
       "is_issue": "false",
       "model_key": "iso-reference-view.structural",
@@ -907,13 +907,13 @@
       "requirement_key": "5dd2e8a6-985f-5a56-9462-77a2765b7ef4",
       "severity": "INFO",
       "status": "N/A",
-      "validation_run_id": "epc-delivery-v2.0-445a0e1fe3a57f9d"
+      "validation_run_id": "epc-delivery-v2.1-0094f08f7dcbc692"
     },
     {
       "actual": "",
       "element_key": "",
       "expected": "The Name shall be provided",
-      "finding_key": "eb4e396d-908a-5f86-89ff-70c863788257",
+      "finding_key": "2cb05cd9-2676-5739-8044-48ebf50f5a63",
       "is_applicable": "false",
       "is_issue": "false",
       "model_key": "iso-reference-view.structural",
@@ -922,13 +922,13 @@
       "requirement_key": "63e9c0f9-4cb5-5b50-9f4b-456fc6f25c41",
       "severity": "INFO",
       "status": "N/A",
-      "validation_run_id": "epc-delivery-v2.0-445a0e1fe3a57f9d"
+      "validation_run_id": "epc-delivery-v2.1-0094f08f7dcbc692"
     },
     {
       "actual": "",
       "element_key": "",
       "expected": "AssetTag data shall be provided in the dataset EPC_Delivery",
-      "finding_key": "a7df50aa-42c8-5fd3-87b7-97780ec23543",
+      "finding_key": "bba32988-125a-5a96-b80d-65f38722f523",
       "is_applicable": "false",
       "is_issue": "false",
       "model_key": "iso-reference-view.structural",
@@ -937,13 +937,13 @@
       "requirement_key": "842a37c7-3183-5fce-ab45-b93c37ec7a08",
       "severity": "INFO",
       "status": "N/A",
-      "validation_run_id": "epc-delivery-v2.0-445a0e1fe3a57f9d"
+      "validation_run_id": "epc-delivery-v2.1-0094f08f7dcbc692"
     },
     {
       "actual": "",
       "element_key": "",
       "expected": "SystemCode data shall be provided in the dataset EPC_Delivery",
-      "finding_key": "f28a1be4-9724-5379-88bf-caebb31f6cae",
+      "finding_key": "51d421df-0263-59c1-9470-649dd3808ebd",
       "is_applicable": "false",
       "is_issue": "false",
       "model_key": "iso-reference-view.structural",
@@ -952,13 +952,13 @@
       "requirement_key": "9321298b-4a9f-5a3e-9d10-6668b736d465",
       "severity": "INFO",
       "status": "N/A",
-      "validation_run_id": "epc-delivery-v2.0-445a0e1fe3a57f9d"
+      "validation_run_id": "epc-delivery-v2.1-0094f08f7dcbc692"
     },
     {
       "actual": "",
       "element_key": "",
       "expected": "AssetTag data shall be provided in the dataset EPC_Delivery",
-      "finding_key": "f00a80e5-66f7-51bc-b9e7-a5cba2394c5b",
+      "finding_key": "0d867e03-e86c-583c-8fef-71ca5237f0cc",
       "is_applicable": "false",
       "is_issue": "false",
       "model_key": "iso-reference-view.structural",
@@ -967,13 +967,13 @@
       "requirement_key": "a1402559-dcfc-5af4-a222-3a13eaf2b161",
       "severity": "INFO",
       "status": "N/A",
-      "validation_run_id": "epc-delivery-v2.0-445a0e1fe3a57f9d"
+      "validation_run_id": "epc-delivery-v2.1-0094f08f7dcbc692"
     },
     {
       "actual": "",
       "element_key": "",
       "expected": "Carry the project's agreed setout references in every discipline model.",
-      "finding_key": "152d0158-4a01-5e48-8c47-13f7c5b49e0b",
+      "finding_key": "482b5ce9-8872-5dde-a87a-9e30273dbdfb",
       "is_applicable": "true",
       "is_issue": "true",
       "model_key": "iso-reference-view.structural",
@@ -982,13 +982,13 @@
       "requirement_key": "acb11f11-bf18-5516-a6f2-21e451a6e410",
       "severity": "ERROR",
       "status": "FAIL",
-      "validation_run_id": "epc-delivery-v2.0-445a0e1fe3a57f9d"
+      "validation_run_id": "epc-delivery-v2.1-0094f08f7dcbc692"
     },
     {
       "actual": "",
       "element_key": "iso-reference-view.structural::2WUGYBphrFv8aLIFJCmiIk",
       "expected": "Shall be IFCCOLUMN data of type {'enumeration': ['COLUMN', 'PILASTER']}",
-      "finding_key": "41b26d8d-f855-560c-8232-e572e915d7cf",
+      "finding_key": "0e02685e-ecf0-558f-969b-8f22a34348e0",
       "is_applicable": "true",
       "is_issue": "false",
       "model_key": "iso-reference-view.structural",
@@ -997,13 +997,13 @@
       "requirement_key": "f6b0edb7-ca35-596a-b72e-42f21ed1419a",
       "severity": "INFO",
       "status": "PASS",
-      "validation_run_id": "epc-delivery-v2.0-445a0e1fe3a57f9d"
+      "validation_run_id": "epc-delivery-v2.1-0094f08f7dcbc692"
     },
     {
       "actual": "",
       "element_key": "",
       "expected": "Shall be IFCBEAM data of type {'enumeration': ['BEAM', 'JOIST', 'HOLLOWCORE', 'LINTEL', 'SPANDREL', 'T_BEAM']}",
-      "finding_key": "980633a4-26ba-5381-92fa-78507077eab4",
+      "finding_key": "0e95512c-c135-5e60-928e-74ef9eef1375",
       "is_applicable": "false",
       "is_issue": "false",
       "model_key": "iso-reference-view.structural",
@@ -1012,13 +1012,13 @@
       "requirement_key": "fd3742bc-adf3-55ea-a220-d7b7c82df6d6",
       "severity": "INFO",
       "status": "N/A",
-      "validation_run_id": "epc-delivery-v2.0-445a0e1fe3a57f9d"
+      "validation_run_id": "epc-delivery-v2.1-0094f08f7dcbc692"
     },
     {
       "actual": "",
       "element_key": "",
       "expected": "SystemCode data shall be provided in the dataset EPC_Delivery",
-      "finding_key": "ad305579-a614-5fd0-8432-8e573b02b976",
+      "finding_key": "fdf39a8a-f73f-5d18-ba47-11a518cf73b9",
       "is_applicable": "false",
       "is_issue": "false",
       "model_key": "iso-reference-view.structural",
@@ -1027,13 +1027,13 @@
       "requirement_key": "fd49c300-7ef6-5a8d-825f-53210dd579fe",
       "severity": "INFO",
       "status": "N/A",
-      "validation_run_id": "epc-delivery-v2.0-445a0e1fe3a57f9d"
+      "validation_run_id": "epc-delivery-v2.1-0094f08f7dcbc692"
     },
     {
       "actual": "",
       "element_key": "",
       "expected": "LoadBearing data shall be provided in the dataset Pset_BeamCommon",
-      "finding_key": "42fc92ea-30b7-5aff-9224-3318a0daf0df",
+      "finding_key": "08888a78-28d0-587e-9fec-7a753df15a6b",
       "is_applicable": "false",
       "is_issue": "false",
       "model_key": "architecture",
@@ -1042,13 +1042,13 @@
       "requirement_key": "0041a575-0031-56c2-a9a3-642dc399b84e",
       "severity": "INFO",
       "status": "N/A",
-      "validation_run_id": "epc-delivery-v2.0-445a0e1fe3a57f9d"
+      "validation_run_id": "epc-delivery-v2.1-0094f08f7dcbc692"
     },
     {
       "actual": "",
       "element_key": "",
       "expected": "An element must have an IFCRELCONTAINEDINSPATIALSTRUCTURE relationship with an {'enumeration': ['IFCSPACE', 'IFCBUILDINGSTOREY']}",
-      "finding_key": "c372b415-26db-5fd5-8a19-a8340b4e03a7",
+      "finding_key": "1821fa5f-fe0e-5b26-8dd3-e6c5266f9132",
       "is_applicable": "false",
       "is_issue": "false",
       "model_key": "architecture",
@@ -1057,13 +1057,13 @@
       "requirement_key": "2ead0930-568e-5d49-9708-716c5c740846",
       "severity": "INFO",
       "status": "N/A",
-      "validation_run_id": "epc-delivery-v2.0-445a0e1fe3a57f9d"
+      "validation_run_id": "epc-delivery-v2.1-0094f08f7dcbc692"
     },
     {
       "actual": "",
       "element_key": "architecture::0OfZwWc8j9QP5uX8xPTxDH",
       "expected": "Shall have a material",
-      "finding_key": "680f5640-8b86-5d27-81b2-e073a544b96c",
+      "finding_key": "d833d3b6-4223-5b23-96d1-67ba8a86a256",
       "is_applicable": "true",
       "is_issue": "false",
       "model_key": "architecture",
@@ -1072,13 +1072,13 @@
       "requirement_key": "3d87ff1f-cc75-5e96-b83a-95709a015713",
       "severity": "INFO",
       "status": "PASS",
-      "validation_run_id": "epc-delivery-v2.0-445a0e1fe3a57f9d"
+      "validation_run_id": "epc-delivery-v2.1-0094f08f7dcbc692"
     },
     {
       "actual": "",
       "element_key": "architecture::1AQAupaRP1txwK1AGiN61V",
       "expected": "Shall have a material",
-      "finding_key": "cdff3bb3-57c3-522d-85bc-a77741f0c9dd",
+      "finding_key": "74b93b93-5e50-586f-b94c-1c91e698a106",
       "is_applicable": "true",
       "is_issue": "false",
       "model_key": "architecture",
@@ -1087,13 +1087,13 @@
       "requirement_key": "3d87ff1f-cc75-5e96-b83a-95709a015713",
       "severity": "INFO",
       "status": "PASS",
-      "validation_run_id": "epc-delivery-v2.0-445a0e1fe3a57f9d"
+      "validation_run_id": "epc-delivery-v2.1-0094f08f7dcbc692"
     },
     {
       "actual": "",
       "element_key": "architecture::1uS5vfZPn9R8PlAaVd73on",
       "expected": "Shall have a material",
-      "finding_key": "994c69af-baec-5094-9a00-0a8c5fd937b1",
+      "finding_key": "bb357c4b-318c-57b7-ae28-dea7607c8201",
       "is_applicable": "true",
       "is_issue": "false",
       "model_key": "architecture",
@@ -1102,13 +1102,13 @@
       "requirement_key": "3d87ff1f-cc75-5e96-b83a-95709a015713",
       "severity": "INFO",
       "status": "PASS",
-      "validation_run_id": "epc-delivery-v2.0-445a0e1fe3a57f9d"
+      "validation_run_id": "epc-delivery-v2.1-0094f08f7dcbc692"
     },
     {
       "actual": "",
       "element_key": "architecture::3wdauVJT5Fx9drrREiDqA$",
       "expected": "Shall have a material",
-      "finding_key": "3e26ac03-8511-5fb3-b76f-eea819706d69",
+      "finding_key": "3854f633-4359-5dd0-8ba6-af3330b45fb2",
       "is_applicable": "true",
       "is_issue": "false",
       "model_key": "architecture",
@@ -1117,13 +1117,13 @@
       "requirement_key": "3d87ff1f-cc75-5e96-b83a-95709a015713",
       "severity": "INFO",
       "status": "PASS",
-      "validation_run_id": "epc-delivery-v2.0-445a0e1fe3a57f9d"
+      "validation_run_id": "epc-delivery-v2.1-0094f08f7dcbc692"
     },
     {
       "actual": "",
       "element_key": "",
       "expected": "An element must have an IFCRELCONTAINEDINSPATIALSTRUCTURE relationship with an {'enumeration': ['IFCSPACE', 'IFCBUILDINGSTOREY']}",
-      "finding_key": "04a908b8-deca-5716-bd2b-192e78143b20",
+      "finding_key": "257baada-18ed-5cc3-ab03-b137f423e884",
       "is_applicable": "false",
       "is_issue": "false",
       "model_key": "architecture",
@@ -1132,13 +1132,13 @@
       "requirement_key": "491a4a0b-9b4a-5f77-b90d-31a7dc8beb44",
       "severity": "INFO",
       "status": "N/A",
-      "validation_run_id": "epc-delivery-v2.0-445a0e1fe3a57f9d"
+      "validation_run_id": "epc-delivery-v2.1-0094f08f7dcbc692"
     },
     {
       "actual": "",
       "element_key": "architecture::0OfZwWc8j9QP5uX8xPTxDH",
       "expected": "Shall have a CCI Construction reference of {'pattern': '[A-Z]-[A-Z]{3}'}",
-      "finding_key": "c1e2e556-b912-5d9f-aa8c-23316730b476",
+      "finding_key": "e98682b1-a4a0-57de-865e-2480c29d133b",
       "is_applicable": "true",
       "is_issue": "true",
       "model_key": "architecture",
@@ -1147,13 +1147,13 @@
       "requirement_key": "4b7491ef-98a2-5976-aa1d-2b8b765688eb",
       "severity": "WARNING",
       "status": "FAIL",
-      "validation_run_id": "epc-delivery-v2.0-445a0e1fe3a57f9d"
+      "validation_run_id": "epc-delivery-v2.1-0094f08f7dcbc692"
     },
     {
       "actual": "",
       "element_key": "architecture::1AQAupaRP1txwK1AGiN61V",
       "expected": "Shall have a CCI Construction reference of {'pattern': '[A-Z]-[A-Z]{3}'}",
-      "finding_key": "efc78427-d995-57a2-8237-9c4c697d60d8",
+      "finding_key": "7ee4c783-89e5-5ae9-b51e-1174b02f4755",
       "is_applicable": "true",
       "is_issue": "true",
       "model_key": "architecture",
@@ -1162,13 +1162,13 @@
       "requirement_key": "4b7491ef-98a2-5976-aa1d-2b8b765688eb",
       "severity": "WARNING",
       "status": "FAIL",
-      "validation_run_id": "epc-delivery-v2.0-445a0e1fe3a57f9d"
+      "validation_run_id": "epc-delivery-v2.1-0094f08f7dcbc692"
     },
     {
       "actual": "",
       "element_key": "architecture::1uS5vfZPn9R8PlAaVd73on",
       "expected": "Shall have a CCI Construction reference of {'pattern': '[A-Z]-[A-Z]{3}'}",
-      "finding_key": "2733d608-bf27-51b5-b35f-cddd88bb4cee",
+      "finding_key": "3a65a05a-193e-5b62-9cec-96c4cb323f1c",
       "is_applicable": "true",
       "is_issue": "true",
       "model_key": "architecture",
@@ -1177,13 +1177,13 @@
       "requirement_key": "4b7491ef-98a2-5976-aa1d-2b8b765688eb",
       "severity": "WARNING",
       "status": "FAIL",
-      "validation_run_id": "epc-delivery-v2.0-445a0e1fe3a57f9d"
+      "validation_run_id": "epc-delivery-v2.1-0094f08f7dcbc692"
     },
     {
       "actual": "",
       "element_key": "architecture::3wdauVJT5Fx9drrREiDqA$",
       "expected": "Shall have a CCI Construction reference of {'pattern': '[A-Z]-[A-Z]{3}'}",
-      "finding_key": "4588cb49-5372-531d-bbb1-8739e9cf9a3d",
+      "finding_key": "f00d4690-6c49-5526-9cb8-270a59a56bb7",
       "is_applicable": "true",
       "is_issue": "true",
       "model_key": "architecture",
@@ -1192,13 +1192,13 @@
       "requirement_key": "4b7491ef-98a2-5976-aa1d-2b8b765688eb",
       "severity": "WARNING",
       "status": "FAIL",
-      "validation_run_id": "epc-delivery-v2.0-445a0e1fe3a57f9d"
+      "validation_run_id": "epc-delivery-v2.1-0094f08f7dcbc692"
     },
     {
       "actual": "",
       "element_key": "architecture::0OfZwWc8j9QP5uX8xPTxDH",
       "expected": "IsExternal data shall be provided in the dataset Pset_WallCommon",
-      "finding_key": "0e272ec3-d1c7-5608-aee9-b8991e465a59",
+      "finding_key": "9d5c1788-0fb0-581d-8dc5-1b9721a4a08f",
       "is_applicable": "true",
       "is_issue": "false",
       "model_key": "architecture",
@@ -1207,13 +1207,13 @@
       "requirement_key": "5dd2e8a6-985f-5a56-9462-77a2765b7ef4",
       "severity": "INFO",
       "status": "PASS",
-      "validation_run_id": "epc-delivery-v2.0-445a0e1fe3a57f9d"
+      "validation_run_id": "epc-delivery-v2.1-0094f08f7dcbc692"
     },
     {
       "actual": "",
       "element_key": "architecture::1AQAupaRP1txwK1AGiN61V",
       "expected": "IsExternal data shall be provided in the dataset Pset_WallCommon",
-      "finding_key": "3bedb157-d1ba-5593-a93a-582e8b750a89",
+      "finding_key": "38ab8320-eb53-5d01-9140-45907543c20c",
       "is_applicable": "true",
       "is_issue": "false",
       "model_key": "architecture",
@@ -1222,13 +1222,13 @@
       "requirement_key": "5dd2e8a6-985f-5a56-9462-77a2765b7ef4",
       "severity": "INFO",
       "status": "PASS",
-      "validation_run_id": "epc-delivery-v2.0-445a0e1fe3a57f9d"
+      "validation_run_id": "epc-delivery-v2.1-0094f08f7dcbc692"
     },
     {
       "actual": "",
       "element_key": "architecture::1uS5vfZPn9R8PlAaVd73on",
       "expected": "IsExternal data shall be provided in the dataset Pset_WallCommon",
-      "finding_key": "bae30a3d-ff12-5830-8278-b97f1d7524d9",
+      "finding_key": "8aff60a5-1523-56b0-8367-d4c6fe2f0080",
       "is_applicable": "true",
       "is_issue": "false",
       "model_key": "architecture",
@@ -1237,13 +1237,13 @@
       "requirement_key": "5dd2e8a6-985f-5a56-9462-77a2765b7ef4",
       "severity": "INFO",
       "status": "PASS",
-      "validation_run_id": "epc-delivery-v2.0-445a0e1fe3a57f9d"
+      "validation_run_id": "epc-delivery-v2.1-0094f08f7dcbc692"
     },
     {
       "actual": "",
       "element_key": "architecture::3wdauVJT5Fx9drrREiDqA$",
       "expected": "IsExternal data shall be provided in the dataset Pset_WallCommon",
-      "finding_key": "7be1996d-0e7c-533b-a976-3d1804953822",
+      "finding_key": "e6ea215c-ce36-553f-ac00-342ddbeb6396",
       "is_applicable": "true",
       "is_issue": "false",
       "model_key": "architecture",
@@ -1252,13 +1252,13 @@
       "requirement_key": "5dd2e8a6-985f-5a56-9462-77a2765b7ef4",
       "severity": "INFO",
       "status": "PASS",
-      "validation_run_id": "epc-delivery-v2.0-445a0e1fe3a57f9d"
+      "validation_run_id": "epc-delivery-v2.1-0094f08f7dcbc692"
     },
     {
       "actual": "",
       "element_key": "architecture::0OfZwWc8j9QP5uX8xPTxDH",
       "expected": "The Name shall be provided",
-      "finding_key": "96231277-22c1-5d31-9b90-0edc734a3b73",
+      "finding_key": "7ad33a18-6cb0-5c9f-a941-0dc092d88f20",
       "is_applicable": "true",
       "is_issue": "false",
       "model_key": "architecture",
@@ -1267,13 +1267,13 @@
       "requirement_key": "63e9c0f9-4cb5-5b50-9f4b-456fc6f25c41",
       "severity": "INFO",
       "status": "PASS",
-      "validation_run_id": "epc-delivery-v2.0-445a0e1fe3a57f9d"
+      "validation_run_id": "epc-delivery-v2.1-0094f08f7dcbc692"
     },
     {
       "actual": "",
       "element_key": "architecture::1AQAupaRP1txwK1AGiN61V",
       "expected": "The Name shall be provided",
-      "finding_key": "eba946c4-bd9e-5404-b946-8b711330ae13",
+      "finding_key": "e2b7d95e-6c47-5ee6-9e11-d161dba5caff",
       "is_applicable": "true",
       "is_issue": "false",
       "model_key": "architecture",
@@ -1282,13 +1282,13 @@
       "requirement_key": "63e9c0f9-4cb5-5b50-9f4b-456fc6f25c41",
       "severity": "INFO",
       "status": "PASS",
-      "validation_run_id": "epc-delivery-v2.0-445a0e1fe3a57f9d"
+      "validation_run_id": "epc-delivery-v2.1-0094f08f7dcbc692"
     },
     {
       "actual": "",
       "element_key": "architecture::1uS5vfZPn9R8PlAaVd73on",
       "expected": "The Name shall be provided",
-      "finding_key": "aa65b5b4-e6ff-580e-a435-8820d5eacca7",
+      "finding_key": "42dedba5-e83c-5c84-88a2-1ab7e9870a9e",
       "is_applicable": "true",
       "is_issue": "false",
       "model_key": "architecture",
@@ -1297,13 +1297,13 @@
       "requirement_key": "63e9c0f9-4cb5-5b50-9f4b-456fc6f25c41",
       "severity": "INFO",
       "status": "PASS",
-      "validation_run_id": "epc-delivery-v2.0-445a0e1fe3a57f9d"
+      "validation_run_id": "epc-delivery-v2.1-0094f08f7dcbc692"
     },
     {
       "actual": "",
       "element_key": "architecture::3wdauVJT5Fx9drrREiDqA$",
       "expected": "The Name shall be provided",
-      "finding_key": "106e53e7-78e4-5284-9ffa-c345a087b9b4",
+      "finding_key": "7fdc8090-4199-54c4-a1ab-aa0c2c18649a",
       "is_applicable": "true",
       "is_issue": "false",
       "model_key": "architecture",
@@ -1312,13 +1312,13 @@
       "requirement_key": "63e9c0f9-4cb5-5b50-9f4b-456fc6f25c41",
       "severity": "INFO",
       "status": "PASS",
-      "validation_run_id": "epc-delivery-v2.0-445a0e1fe3a57f9d"
+      "validation_run_id": "epc-delivery-v2.1-0094f08f7dcbc692"
     },
     {
       "actual": "",
       "element_key": "",
       "expected": "AssetTag data shall be provided in the dataset EPC_Delivery",
-      "finding_key": "31882783-e86b-5a65-9ee5-f2d52756a63d",
+      "finding_key": "bb6982d1-ee08-568c-b226-f5d0ff675ec2",
       "is_applicable": "false",
       "is_issue": "false",
       "model_key": "architecture",
@@ -1327,13 +1327,13 @@
       "requirement_key": "842a37c7-3183-5fce-ab45-b93c37ec7a08",
       "severity": "INFO",
       "status": "N/A",
-      "validation_run_id": "epc-delivery-v2.0-445a0e1fe3a57f9d"
+      "validation_run_id": "epc-delivery-v2.1-0094f08f7dcbc692"
     },
     {
       "actual": "",
       "element_key": "",
       "expected": "SystemCode data shall be provided in the dataset EPC_Delivery",
-      "finding_key": "52a2ec3c-a962-5f83-9b93-3b2a03e55bec",
+      "finding_key": "42131949-dd52-564e-8a2d-56731c28b910",
       "is_applicable": "false",
       "is_issue": "false",
       "model_key": "architecture",
@@ -1342,13 +1342,13 @@
       "requirement_key": "9321298b-4a9f-5a3e-9d10-6668b736d465",
       "severity": "INFO",
       "status": "N/A",
-      "validation_run_id": "epc-delivery-v2.0-445a0e1fe3a57f9d"
+      "validation_run_id": "epc-delivery-v2.1-0094f08f7dcbc692"
     },
     {
       "actual": "",
       "element_key": "",
       "expected": "AssetTag data shall be provided in the dataset EPC_Delivery",
-      "finding_key": "30b5ee7a-9754-51b6-9fd3-6861bcdb4c0a",
+      "finding_key": "ec16937a-39ef-552f-8bb8-90145790b020",
       "is_applicable": "false",
       "is_issue": "false",
       "model_key": "architecture",
@@ -1357,13 +1357,13 @@
       "requirement_key": "a1402559-dcfc-5af4-a222-3a13eaf2b161",
       "severity": "INFO",
       "status": "N/A",
-      "validation_run_id": "epc-delivery-v2.0-445a0e1fe3a57f9d"
+      "validation_run_id": "epc-delivery-v2.1-0094f08f7dcbc692"
     },
     {
       "actual": "",
       "element_key": "architecture::2F44QMqSH3TOkM$SZoqCBe",
       "expected": "Carry the project's agreed setout references in every discipline model.",
-      "finding_key": "4f5e808d-ed7f-5e41-aa6c-d742f3f5a1ed",
+      "finding_key": "daa0b927-2e08-5008-9410-29394b2e22b6",
       "is_applicable": "true",
       "is_issue": "false",
       "model_key": "architecture",
@@ -1372,13 +1372,13 @@
       "requirement_key": "acb11f11-bf18-5516-a6f2-21e451a6e410",
       "severity": "INFO",
       "status": "PASS",
-      "validation_run_id": "epc-delivery-v2.0-445a0e1fe3a57f9d"
+      "validation_run_id": "epc-delivery-v2.1-0094f08f7dcbc692"
     },
     {
       "actual": "",
       "element_key": "",
       "expected": "Shall be IFCCOLUMN data of type {'enumeration': ['COLUMN', 'PILASTER']}",
-      "finding_key": "82b8ba2e-82c8-5173-8ae8-87c47813683f",
+      "finding_key": "f7fde4f5-9d64-5373-853e-e0e41318c607",
       "is_applicable": "false",
       "is_issue": "false",
       "model_key": "architecture",
@@ -1387,13 +1387,13 @@
       "requirement_key": "f6b0edb7-ca35-596a-b72e-42f21ed1419a",
       "severity": "INFO",
       "status": "N/A",
-      "validation_run_id": "epc-delivery-v2.0-445a0e1fe3a57f9d"
+      "validation_run_id": "epc-delivery-v2.1-0094f08f7dcbc692"
     },
     {
       "actual": "",
       "element_key": "",
       "expected": "Shall be IFCBEAM data of type {'enumeration': ['BEAM', 'JOIST', 'HOLLOWCORE', 'LINTEL', 'SPANDREL', 'T_BEAM']}",
-      "finding_key": "55a6de8d-2f63-59de-9a5f-9bb0a541d91c",
+      "finding_key": "bba78150-a2b6-512d-b6ca-e12fc46c762e",
       "is_applicable": "false",
       "is_issue": "false",
       "model_key": "architecture",
@@ -1402,13 +1402,13 @@
       "requirement_key": "fd3742bc-adf3-55ea-a220-d7b7c82df6d6",
       "severity": "INFO",
       "status": "N/A",
-      "validation_run_id": "epc-delivery-v2.0-445a0e1fe3a57f9d"
+      "validation_run_id": "epc-delivery-v2.1-0094f08f7dcbc692"
     },
     {
       "actual": "",
       "element_key": "",
       "expected": "SystemCode data shall be provided in the dataset EPC_Delivery",
-      "finding_key": "265982a3-11cb-5f19-9533-d2860d9ec0a7",
+      "finding_key": "cf10450b-dcc7-5e48-8b0a-6a53768b5879",
       "is_applicable": "false",
       "is_issue": "false",
       "model_key": "architecture",
@@ -1417,13 +1417,13 @@
       "requirement_key": "fd49c300-7ef6-5a8d-825f-53210dd579fe",
       "severity": "INFO",
       "status": "N/A",
-      "validation_run_id": "epc-delivery-v2.0-445a0e1fe3a57f9d"
+      "validation_run_id": "epc-delivery-v2.1-0094f08f7dcbc692"
     },
     {
       "actual": "",
       "element_key": "",
       "expected": "LoadBearing data shall be provided in the dataset Pset_BeamCommon",
-      "finding_key": "c5f317cc-98d0-5b78-b5f1-130efc6de7c3",
+      "finding_key": "f63bf4f9-e07a-58a0-abf2-36ace3d86ddf",
       "is_applicable": "false",
       "is_issue": "false",
       "model_key": "hvac",
@@ -1432,13 +1432,13 @@
       "requirement_key": "0041a575-0031-56c2-a9a3-642dc399b84e",
       "severity": "INFO",
       "status": "N/A",
-      "validation_run_id": "epc-delivery-v2.0-445a0e1fe3a57f9d"
+      "validation_run_id": "epc-delivery-v2.1-0094f08f7dcbc692"
     },
     {
       "actual": "",
       "element_key": "hvac::23uPJWDfXEcwHH3kdFgV9c",
       "expected": "An element must have an IFCRELCONTAINEDINSPATIALSTRUCTURE relationship with an {'enumeration': ['IFCSPACE', 'IFCBUILDINGSTOREY']}",
-      "finding_key": "9e6fc761-e1de-5181-97f8-99fb429dec3e",
+      "finding_key": "634934cf-5b0c-533a-a335-38797314143f",
       "is_applicable": "true",
       "is_issue": "false",
       "model_key": "hvac",
@@ -1447,13 +1447,13 @@
       "requirement_key": "2ead0930-568e-5d49-9708-716c5c740846",
       "severity": "INFO",
       "status": "PASS",
-      "validation_run_id": "epc-delivery-v2.0-445a0e1fe3a57f9d"
+      "validation_run_id": "epc-delivery-v2.1-0094f08f7dcbc692"
     },
     {
       "actual": "",
       "element_key": "hvac::34Y6EIt3nDCAS1k$kPGOKm",
       "expected": "An element must have an IFCRELCONTAINEDINSPATIALSTRUCTURE relationship with an {'enumeration': ['IFCSPACE', 'IFCBUILDINGSTOREY']}",
-      "finding_key": "a5e61cc0-4541-5c19-a37c-293bf4054729",
+      "finding_key": "99d14a38-dcf7-5d3a-9650-5e2dbb32281c",
       "is_applicable": "true",
       "is_issue": "false",
       "model_key": "hvac",
@@ -1462,13 +1462,13 @@
       "requirement_key": "2ead0930-568e-5d49-9708-716c5c740846",
       "severity": "INFO",
       "status": "PASS",
-      "validation_run_id": "epc-delivery-v2.0-445a0e1fe3a57f9d"
+      "validation_run_id": "epc-delivery-v2.1-0094f08f7dcbc692"
     },
     {
       "actual": "",
       "element_key": "",
       "expected": "Shall have a material",
-      "finding_key": "feb6b5c3-8d44-5464-80ec-84d2a3d6e933",
+      "finding_key": "9c9fc61f-0464-5bcc-b3f4-7208a0a68626",
       "is_applicable": "false",
       "is_issue": "false",
       "model_key": "hvac",
@@ -1477,13 +1477,13 @@
       "requirement_key": "3d87ff1f-cc75-5e96-b83a-95709a015713",
       "severity": "INFO",
       "status": "N/A",
-      "validation_run_id": "epc-delivery-v2.0-445a0e1fe3a57f9d"
+      "validation_run_id": "epc-delivery-v2.1-0094f08f7dcbc692"
     },
     {
       "actual": "",
       "element_key": "hvac::38WbwIGD90nB_3T2BTU5Ed",
       "expected": "An element must have an IFCRELCONTAINEDINSPATIALSTRUCTURE relationship with an {'enumeration': ['IFCSPACE', 'IFCBUILDINGSTOREY']}",
-      "finding_key": "25cb0ac6-dbde-547d-89af-12eca6cc12ed",
+      "finding_key": "7a35f263-d9ee-579c-8f65-7408e7e825b1",
       "is_applicable": "true",
       "is_issue": "false",
       "model_key": "hvac",
@@ -1492,13 +1492,13 @@
       "requirement_key": "491a4a0b-9b4a-5f77-b90d-31a7dc8beb44",
       "severity": "INFO",
       "status": "PASS",
-      "validation_run_id": "epc-delivery-v2.0-445a0e1fe3a57f9d"
+      "validation_run_id": "epc-delivery-v2.1-0094f08f7dcbc692"
     },
     {
       "actual": "",
       "element_key": "",
       "expected": "Shall have a CCI Construction reference of {'pattern': '[A-Z]-[A-Z]{3}'}",
-      "finding_key": "7acd21cc-c891-55b2-b35e-bb5e82273a50",
+      "finding_key": "c51fad36-b01b-56c1-aeb7-a01b9f3fd5dc",
       "is_applicable": "false",
       "is_issue": "false",
       "model_key": "hvac",
@@ -1507,13 +1507,13 @@
       "requirement_key": "4b7491ef-98a2-5976-aa1d-2b8b765688eb",
       "severity": "INFO",
       "status": "N/A",
-      "validation_run_id": "epc-delivery-v2.0-445a0e1fe3a57f9d"
+      "validation_run_id": "epc-delivery-v2.1-0094f08f7dcbc692"
     },
     {
       "actual": "",
       "element_key": "",
       "expected": "IsExternal data shall be provided in the dataset Pset_WallCommon",
-      "finding_key": "120c89c4-02d9-5f5c-95e4-b47bfd0a273f",
+      "finding_key": "bbcd8096-fc12-5f4e-9d16-b63b1afbbaf9",
       "is_applicable": "false",
       "is_issue": "false",
       "model_key": "hvac",
@@ -1522,13 +1522,13 @@
       "requirement_key": "5dd2e8a6-985f-5a56-9462-77a2765b7ef4",
       "severity": "INFO",
       "status": "N/A",
-      "validation_run_id": "epc-delivery-v2.0-445a0e1fe3a57f9d"
+      "validation_run_id": "epc-delivery-v2.1-0094f08f7dcbc692"
     },
     {
       "actual": "",
       "element_key": "",
       "expected": "The Name shall be provided",
-      "finding_key": "b8c64c58-8c4c-5da8-9170-b4c70ae0d35d",
+      "finding_key": "b0e65419-3a2e-55e7-ad70-3087c5e20735",
       "is_applicable": "false",
       "is_issue": "false",
       "model_key": "hvac",
@@ -1537,13 +1537,13 @@
       "requirement_key": "63e9c0f9-4cb5-5b50-9f4b-456fc6f25c41",
       "severity": "INFO",
       "status": "N/A",
-      "validation_run_id": "epc-delivery-v2.0-445a0e1fe3a57f9d"
+      "validation_run_id": "epc-delivery-v2.1-0094f08f7dcbc692"
     },
     {
       "actual": "",
       "element_key": "hvac::38WbwIGD90nB_3T2BTU5Ed",
       "expected": "AssetTag data shall be provided in the dataset EPC_Delivery",
-      "finding_key": "8cdaf5e5-98b4-54f1-a086-7d9d8f48d1c0",
+      "finding_key": "8330922a-951e-5c32-b73b-b60c856cb15d",
       "is_applicable": "true",
       "is_issue": "true",
       "model_key": "hvac",
@@ -1552,13 +1552,13 @@
       "requirement_key": "842a37c7-3183-5fce-ab45-b93c37ec7a08",
       "severity": "WARNING",
       "status": "FAIL",
-      "validation_run_id": "epc-delivery-v2.0-445a0e1fe3a57f9d"
+      "validation_run_id": "epc-delivery-v2.1-0094f08f7dcbc692"
     },
     {
       "actual": "",
       "element_key": "hvac::38WbwIGD90nB_3T2BTU5Ed",
       "expected": "SystemCode data shall be provided in the dataset EPC_Delivery",
-      "finding_key": "03d7f6aa-055e-5ba8-924b-d7b4b48b3698",
+      "finding_key": "5ce8d2a5-e906-574e-af5e-9a13dd61086a",
       "is_applicable": "true",
       "is_issue": "true",
       "model_key": "hvac",
@@ -1567,13 +1567,13 @@
       "requirement_key": "9321298b-4a9f-5a3e-9d10-6668b736d465",
       "severity": "WARNING",
       "status": "FAIL",
-      "validation_run_id": "epc-delivery-v2.0-445a0e1fe3a57f9d"
+      "validation_run_id": "epc-delivery-v2.1-0094f08f7dcbc692"
     },
     {
       "actual": "",
       "element_key": "hvac::23uPJWDfXEcwHH3kdFgV9c",
       "expected": "AssetTag data shall be provided in the dataset EPC_Delivery",
-      "finding_key": "9142fd60-b5eb-596d-8e3f-f1a658d52ce5",
+      "finding_key": "ab41b5d1-7b6a-51c2-9f89-8a469130cd44",
       "is_applicable": "true",
       "is_issue": "true",
       "model_key": "hvac",
@@ -1582,13 +1582,13 @@
       "requirement_key": "a1402559-dcfc-5af4-a222-3a13eaf2b161",
       "severity": "WARNING",
       "status": "FAIL",
-      "validation_run_id": "epc-delivery-v2.0-445a0e1fe3a57f9d"
+      "validation_run_id": "epc-delivery-v2.1-0094f08f7dcbc692"
     },
     {
       "actual": "",
       "element_key": "hvac::34Y6EIt3nDCAS1k$kPGOKm",
       "expected": "AssetTag data shall be provided in the dataset EPC_Delivery",
-      "finding_key": "899ed68d-5aa9-5a95-ae0b-e34bb1787748",
+      "finding_key": "da8aa5bc-1c6d-584e-8a0b-9eef9ac359ca",
       "is_applicable": "true",
       "is_issue": "true",
       "model_key": "hvac",
@@ -1597,13 +1597,13 @@
       "requirement_key": "a1402559-dcfc-5af4-a222-3a13eaf2b161",
       "severity": "WARNING",
       "status": "FAIL",
-      "validation_run_id": "epc-delivery-v2.0-445a0e1fe3a57f9d"
+      "validation_run_id": "epc-delivery-v2.1-0094f08f7dcbc692"
     },
     {
       "actual": "",
       "element_key": "hvac::2F44QMqSH3TOkM$SZoqCBe",
       "expected": "Carry the project's agreed setout references in every discipline model.",
-      "finding_key": "e52386aa-ce33-5f1e-8485-8798c311d954",
+      "finding_key": "d6c9aea4-ef70-53f9-8381-3921bb981c95",
       "is_applicable": "true",
       "is_issue": "false",
       "model_key": "hvac",
@@ -1612,13 +1612,13 @@
       "requirement_key": "acb11f11-bf18-5516-a6f2-21e451a6e410",
       "severity": "INFO",
       "status": "PASS",
-      "validation_run_id": "epc-delivery-v2.0-445a0e1fe3a57f9d"
+      "validation_run_id": "epc-delivery-v2.1-0094f08f7dcbc692"
     },
     {
       "actual": "",
       "element_key": "",
       "expected": "Shall be IFCCOLUMN data of type {'enumeration': ['COLUMN', 'PILASTER']}",
-      "finding_key": "a968d73d-17f4-5f91-991b-b8f7609f5f72",
+      "finding_key": "0f9ad596-8587-5cc3-a101-907ad2a32ead",
       "is_applicable": "false",
       "is_issue": "false",
       "model_key": "hvac",
@@ -1627,13 +1627,13 @@
       "requirement_key": "f6b0edb7-ca35-596a-b72e-42f21ed1419a",
       "severity": "INFO",
       "status": "N/A",
-      "validation_run_id": "epc-delivery-v2.0-445a0e1fe3a57f9d"
+      "validation_run_id": "epc-delivery-v2.1-0094f08f7dcbc692"
     },
     {
       "actual": "",
       "element_key": "",
       "expected": "Shall be IFCBEAM data of type {'enumeration': ['BEAM', 'JOIST', 'HOLLOWCORE', 'LINTEL', 'SPANDREL', 'T_BEAM']}",
-      "finding_key": "53f0a050-b914-5028-ba9d-bbfee32ccdfc",
+      "finding_key": "574e43e4-872a-5b1c-b99e-189c9706408c",
       "is_applicable": "false",
       "is_issue": "false",
       "model_key": "hvac",
@@ -1642,13 +1642,13 @@
       "requirement_key": "fd3742bc-adf3-55ea-a220-d7b7c82df6d6",
       "severity": "INFO",
       "status": "N/A",
-      "validation_run_id": "epc-delivery-v2.0-445a0e1fe3a57f9d"
+      "validation_run_id": "epc-delivery-v2.1-0094f08f7dcbc692"
     },
     {
       "actual": "",
       "element_key": "hvac::23uPJWDfXEcwHH3kdFgV9c",
       "expected": "SystemCode data shall be provided in the dataset EPC_Delivery",
-      "finding_key": "c411b008-5d46-5fd0-8eb8-51669a6b5818",
+      "finding_key": "5138c0c5-b713-5bb6-bf8c-b6218b46ab2a",
       "is_applicable": "true",
       "is_issue": "true",
       "model_key": "hvac",
@@ -1657,13 +1657,13 @@
       "requirement_key": "fd49c300-7ef6-5a8d-825f-53210dd579fe",
       "severity": "WARNING",
       "status": "FAIL",
-      "validation_run_id": "epc-delivery-v2.0-445a0e1fe3a57f9d"
+      "validation_run_id": "epc-delivery-v2.1-0094f08f7dcbc692"
     },
     {
       "actual": "",
       "element_key": "hvac::34Y6EIt3nDCAS1k$kPGOKm",
       "expected": "SystemCode data shall be provided in the dataset EPC_Delivery",
-      "finding_key": "f37b2b09-30ee-5c33-9e5b-4280eb4cc0e2",
+      "finding_key": "df4d11e2-4e64-5f20-84a9-3e598094f1ab",
       "is_applicable": "true",
       "is_issue": "true",
       "model_key": "hvac",
@@ -1672,13 +1672,13 @@
       "requirement_key": "fd49c300-7ef6-5a8d-825f-53210dd579fe",
       "severity": "WARNING",
       "status": "FAIL",
-      "validation_run_id": "epc-delivery-v2.0-445a0e1fe3a57f9d"
+      "validation_run_id": "epc-delivery-v2.1-0094f08f7dcbc692"
     },
     {
       "actual": "",
       "element_key": "structural::0Lvk$Qa81D5et3l3a4S9Vk",
       "expected": "LoadBearing data shall be provided in the dataset Pset_BeamCommon",
-      "finding_key": "11bae8ac-4711-5471-ad28-291a65758931",
+      "finding_key": "3f9c92b0-0d21-581c-9cc7-665f4c35bc42",
       "is_applicable": "true",
       "is_issue": "false",
       "model_key": "structural",
@@ -1687,13 +1687,13 @@
       "requirement_key": "0041a575-0031-56c2-a9a3-642dc399b84e",
       "severity": "INFO",
       "status": "PASS",
-      "validation_run_id": "epc-delivery-v2.0-445a0e1fe3a57f9d"
+      "validation_run_id": "epc-delivery-v2.1-0094f08f7dcbc692"
     },
     {
       "actual": "",
       "element_key": "structural::0fqX614OH1YO1Njdxms2$Q",
       "expected": "LoadBearing data shall be provided in the dataset Pset_BeamCommon",
-      "finding_key": "671fc86e-d14b-508b-bf7d-8bccce38d9b9",
+      "finding_key": "a6037d4b-0fc6-5e90-9472-167f1aac0438",
       "is_applicable": "true",
       "is_issue": "false",
       "model_key": "structural",
@@ -1702,13 +1702,13 @@
       "requirement_key": "0041a575-0031-56c2-a9a3-642dc399b84e",
       "severity": "INFO",
       "status": "PASS",
-      "validation_run_id": "epc-delivery-v2.0-445a0e1fe3a57f9d"
+      "validation_run_id": "epc-delivery-v2.1-0094f08f7dcbc692"
     },
     {
       "actual": "",
       "element_key": "structural::0rh7bRO0L9fg1NzgGKU$Ut",
       "expected": "LoadBearing data shall be provided in the dataset Pset_BeamCommon",
-      "finding_key": "ff0801f4-06a1-5cab-87fd-d1b6deb5321b",
+      "finding_key": "39baa330-d9e8-506e-a29f-ab2e5234c222",
       "is_applicable": "true",
       "is_issue": "false",
       "model_key": "structural",
@@ -1717,13 +1717,13 @@
       "requirement_key": "0041a575-0031-56c2-a9a3-642dc399b84e",
       "severity": "INFO",
       "status": "PASS",
-      "validation_run_id": "epc-delivery-v2.0-445a0e1fe3a57f9d"
+      "validation_run_id": "epc-delivery-v2.1-0094f08f7dcbc692"
     },
     {
       "actual": "",
       "element_key": "structural::2ddLgAnQf4mBfh5IpUp54U",
       "expected": "LoadBearing data shall be provided in the dataset Pset_BeamCommon",
-      "finding_key": "b1377ce2-de88-55b0-9a86-3008165324be",
+      "finding_key": "a76950e0-5307-5051-aa3c-cff75b98a2d7",
       "is_applicable": "true",
       "is_issue": "false",
       "model_key": "structural",
@@ -1732,13 +1732,13 @@
       "requirement_key": "0041a575-0031-56c2-a9a3-642dc399b84e",
       "severity": "INFO",
       "status": "PASS",
-      "validation_run_id": "epc-delivery-v2.0-445a0e1fe3a57f9d"
+      "validation_run_id": "epc-delivery-v2.1-0094f08f7dcbc692"
     },
     {
       "actual": "",
       "element_key": "structural::2fjJuPht9EIQaZQYZfC1Op",
       "expected": "LoadBearing data shall be provided in the dataset Pset_BeamCommon",
-      "finding_key": "0f3793c4-020e-519d-b3fb-4f09c2deca82",
+      "finding_key": "8eb75abc-55fe-5fbe-9df1-c30a48db9f9d",
       "is_applicable": "true",
       "is_issue": "false",
       "model_key": "structural",
@@ -1747,13 +1747,13 @@
       "requirement_key": "0041a575-0031-56c2-a9a3-642dc399b84e",
       "severity": "INFO",
       "status": "PASS",
-      "validation_run_id": "epc-delivery-v2.0-445a0e1fe3a57f9d"
+      "validation_run_id": "epc-delivery-v2.1-0094f08f7dcbc692"
     },
     {
       "actual": "",
       "element_key": "structural::3roxUKbVv98xiUcl22_T07",
       "expected": "LoadBearing data shall be provided in the dataset Pset_BeamCommon",
-      "finding_key": "20d54eea-76ad-5879-bcc4-75431e54d1e5",
+      "finding_key": "59f5c8c9-03d5-50a6-a7dd-eb9f535ff84a",
       "is_applicable": "true",
       "is_issue": "false",
       "model_key": "structural",
@@ -1762,13 +1762,13 @@
       "requirement_key": "0041a575-0031-56c2-a9a3-642dc399b84e",
       "severity": "INFO",
       "status": "PASS",
-      "validation_run_id": "epc-delivery-v2.0-445a0e1fe3a57f9d"
+      "validation_run_id": "epc-delivery-v2.1-0094f08f7dcbc692"
     },
     {
       "actual": "",
       "element_key": "",
       "expected": "An element must have an IFCRELCONTAINEDINSPATIALSTRUCTURE relationship with an {'enumeration': ['IFCSPACE', 'IFCBUILDINGSTOREY']}",
-      "finding_key": "0ee5ef49-1930-54dc-8904-fbb14eb8826e",
+      "finding_key": "f0d092ca-a51a-55d9-a1a5-380e792c99e4",
       "is_applicable": "false",
       "is_issue": "false",
       "model_key": "structural",
@@ -1777,13 +1777,13 @@
       "requirement_key": "2ead0930-568e-5d49-9708-716c5c740846",
       "severity": "INFO",
       "status": "N/A",
-      "validation_run_id": "epc-delivery-v2.0-445a0e1fe3a57f9d"
+      "validation_run_id": "epc-delivery-v2.1-0094f08f7dcbc692"
     },
     {
       "actual": "",
       "element_key": "structural::0DyViLJJ175RvWQi1rE7a6",
       "expected": "Shall have a material",
-      "finding_key": "a57e4e90-28f6-52d5-8104-82cbb3987c20",
+      "finding_key": "790063ef-4a76-5be3-b9c1-654f22bdc210",
       "is_applicable": "true",
       "is_issue": "false",
       "model_key": "structural",
@@ -1792,13 +1792,13 @@
       "requirement_key": "3d87ff1f-cc75-5e96-b83a-95709a015713",
       "severity": "INFO",
       "status": "PASS",
-      "validation_run_id": "epc-delivery-v2.0-445a0e1fe3a57f9d"
+      "validation_run_id": "epc-delivery-v2.1-0094f08f7dcbc692"
     },
     {
       "actual": "",
       "element_key": "structural::2gTJhghMT81QThk15l2VwR",
       "expected": "Shall have a material",
-      "finding_key": "71771c7a-ce24-589e-a2b4-a76707c57c27",
+      "finding_key": "2a8ab90e-d764-5bfe-9270-6780d28f3217",
       "is_applicable": "true",
       "is_issue": "false",
       "model_key": "structural",
@@ -1807,13 +1807,13 @@
       "requirement_key": "3d87ff1f-cc75-5e96-b83a-95709a015713",
       "severity": "INFO",
       "status": "PASS",
-      "validation_run_id": "epc-delivery-v2.0-445a0e1fe3a57f9d"
+      "validation_run_id": "epc-delivery-v2.1-0094f08f7dcbc692"
     },
     {
       "actual": "",
       "element_key": "structural::3SGBcf7Lv0r80vKtUCgOpf",
       "expected": "Shall have a material",
-      "finding_key": "9a604fe5-b606-54d1-ba08-c3ab4811034b",
+      "finding_key": "182ff531-9e1e-5ad9-b8b6-f9a21b97342c",
       "is_applicable": "true",
       "is_issue": "false",
       "model_key": "structural",
@@ -1822,13 +1822,13 @@
       "requirement_key": "3d87ff1f-cc75-5e96-b83a-95709a015713",
       "severity": "INFO",
       "status": "PASS",
-      "validation_run_id": "epc-delivery-v2.0-445a0e1fe3a57f9d"
+      "validation_run_id": "epc-delivery-v2.1-0094f08f7dcbc692"
     },
     {
       "actual": "",
       "element_key": "structural::3oNJ9yHi5FJuFnK8yg68Yt",
       "expected": "Shall have a material",
-      "finding_key": "92f0345f-50cf-5e20-9d46-6583a1db480d",
+      "finding_key": "66dfc26a-9445-5c18-bf79-2162fe8d6230",
       "is_applicable": "true",
       "is_issue": "false",
       "model_key": "structural",
@@ -1837,13 +1837,13 @@
       "requirement_key": "3d87ff1f-cc75-5e96-b83a-95709a015713",
       "severity": "INFO",
       "status": "PASS",
-      "validation_run_id": "epc-delivery-v2.0-445a0e1fe3a57f9d"
+      "validation_run_id": "epc-delivery-v2.1-0094f08f7dcbc692"
     },
     {
       "actual": "",
       "element_key": "",
       "expected": "An element must have an IFCRELCONTAINEDINSPATIALSTRUCTURE relationship with an {'enumeration': ['IFCSPACE', 'IFCBUILDINGSTOREY']}",
-      "finding_key": "bcd56a8b-5fed-5c8a-b842-00e321c24e05",
+      "finding_key": "62b604cc-1a6e-561d-addb-82e750ce13ce",
       "is_applicable": "false",
       "is_issue": "false",
       "model_key": "structural",
@@ -1852,13 +1852,13 @@
       "requirement_key": "491a4a0b-9b4a-5f77-b90d-31a7dc8beb44",
       "severity": "INFO",
       "status": "N/A",
-      "validation_run_id": "epc-delivery-v2.0-445a0e1fe3a57f9d"
+      "validation_run_id": "epc-delivery-v2.1-0094f08f7dcbc692"
     },
     {
       "actual": "",
       "element_key": "structural::0DyViLJJ175RvWQi1rE7a6",
       "expected": "Shall have a CCI Construction reference of {'pattern': '[A-Z]-[A-Z]{3}'}",
-      "finding_key": "ed3bf8b9-6e38-5d4d-8397-a85d66336f7d",
+      "finding_key": "34b5b702-3e4b-5aec-be20-23cc6d35bb8a",
       "is_applicable": "true",
       "is_issue": "true",
       "model_key": "structural",
@@ -1867,13 +1867,13 @@
       "requirement_key": "4b7491ef-98a2-5976-aa1d-2b8b765688eb",
       "severity": "WARNING",
       "status": "FAIL",
-      "validation_run_id": "epc-delivery-v2.0-445a0e1fe3a57f9d"
+      "validation_run_id": "epc-delivery-v2.1-0094f08f7dcbc692"
     },
     {
       "actual": "",
       "element_key": "structural::2gTJhghMT81QThk15l2VwR",
       "expected": "Shall have a CCI Construction reference of {'pattern': '[A-Z]-[A-Z]{3}'}",
-      "finding_key": "14175615-f6ab-505b-a15e-564f5e398dd7",
+      "finding_key": "032b4d37-b9cc-5566-9c28-674ca7847728",
       "is_applicable": "true",
       "is_issue": "true",
       "model_key": "structural",
@@ -1882,13 +1882,13 @@
       "requirement_key": "4b7491ef-98a2-5976-aa1d-2b8b765688eb",
       "severity": "WARNING",
       "status": "FAIL",
-      "validation_run_id": "epc-delivery-v2.0-445a0e1fe3a57f9d"
+      "validation_run_id": "epc-delivery-v2.1-0094f08f7dcbc692"
     },
     {
       "actual": "",
       "element_key": "structural::3SGBcf7Lv0r80vKtUCgOpf",
       "expected": "Shall have a CCI Construction reference of {'pattern': '[A-Z]-[A-Z]{3}'}",
-      "finding_key": "e5a003c0-617d-5854-8352-e6fd840f927a",
+      "finding_key": "b8e3b9ec-dd0d-50b9-ad9a-3ee46e04c1fc",
       "is_applicable": "true",
       "is_issue": "true",
       "model_key": "structural",
@@ -1897,13 +1897,13 @@
       "requirement_key": "4b7491ef-98a2-5976-aa1d-2b8b765688eb",
       "severity": "WARNING",
       "status": "FAIL",
-      "validation_run_id": "epc-delivery-v2.0-445a0e1fe3a57f9d"
+      "validation_run_id": "epc-delivery-v2.1-0094f08f7dcbc692"
     },
     {
       "actual": "",
       "element_key": "structural::3oNJ9yHi5FJuFnK8yg68Yt",
       "expected": "Shall have a CCI Construction reference of {'pattern': '[A-Z]-[A-Z]{3}'}",
-      "finding_key": "0149a3fa-553b-569f-b2e5-a98e95b97ca6",
+      "finding_key": "997ef6cf-070a-5cc1-a15b-c1a6f10ed892",
       "is_applicable": "true",
       "is_issue": "true",
       "model_key": "structural",
@@ -1912,13 +1912,13 @@
       "requirement_key": "4b7491ef-98a2-5976-aa1d-2b8b765688eb",
       "severity": "WARNING",
       "status": "FAIL",
-      "validation_run_id": "epc-delivery-v2.0-445a0e1fe3a57f9d"
+      "validation_run_id": "epc-delivery-v2.1-0094f08f7dcbc692"
     },
     {
       "actual": "",
       "element_key": "structural::0DyViLJJ175RvWQi1rE7a6",
       "expected": "IsExternal data shall be provided in the dataset Pset_WallCommon",
-      "finding_key": "dc9ab5d8-05af-5216-a208-587db0ff54d7",
+      "finding_key": "6554a1d9-60c7-5df2-a39b-a3a6cff18f01",
       "is_applicable": "true",
       "is_issue": "false",
       "model_key": "structural",
@@ -1927,13 +1927,13 @@
       "requirement_key": "5dd2e8a6-985f-5a56-9462-77a2765b7ef4",
       "severity": "INFO",
       "status": "PASS",
-      "validation_run_id": "epc-delivery-v2.0-445a0e1fe3a57f9d"
+      "validation_run_id": "epc-delivery-v2.1-0094f08f7dcbc692"
     },
     {
       "actual": "",
       "element_key": "structural::2gTJhghMT81QThk15l2VwR",
       "expected": "IsExternal data shall be provided in the dataset Pset_WallCommon",
-      "finding_key": "4f62bc77-9fa8-553c-9f05-98f249cbfbfd",
+      "finding_key": "d6bd2bba-0ab6-564c-84f4-04938b21485e",
       "is_applicable": "true",
       "is_issue": "false",
       "model_key": "structural",
@@ -1942,13 +1942,13 @@
       "requirement_key": "5dd2e8a6-985f-5a56-9462-77a2765b7ef4",
       "severity": "INFO",
       "status": "PASS",
-      "validation_run_id": "epc-delivery-v2.0-445a0e1fe3a57f9d"
+      "validation_run_id": "epc-delivery-v2.1-0094f08f7dcbc692"
     },
     {
       "actual": "",
       "element_key": "structural::3SGBcf7Lv0r80vKtUCgOpf",
       "expected": "IsExternal data shall be provided in the dataset Pset_WallCommon",
-      "finding_key": "339e95c9-6668-5772-9722-bc003c63debf",
+      "finding_key": "15efa36d-27ba-53a0-911f-decf67a05188",
       "is_applicable": "true",
       "is_issue": "false",
       "model_key": "structural",
@@ -1957,13 +1957,13 @@
       "requirement_key": "5dd2e8a6-985f-5a56-9462-77a2765b7ef4",
       "severity": "INFO",
       "status": "PASS",
-      "validation_run_id": "epc-delivery-v2.0-445a0e1fe3a57f9d"
+      "validation_run_id": "epc-delivery-v2.1-0094f08f7dcbc692"
     },
     {
       "actual": "",
       "element_key": "structural::3oNJ9yHi5FJuFnK8yg68Yt",
       "expected": "IsExternal data shall be provided in the dataset Pset_WallCommon",
-      "finding_key": "402e597e-5c8b-5546-8147-cd4660a6031f",
+      "finding_key": "5f97adfa-ac3c-5b3b-b7ad-2509cbc4c0ee",
       "is_applicable": "true",
       "is_issue": "false",
       "model_key": "structural",
@@ -1972,13 +1972,13 @@
       "requirement_key": "5dd2e8a6-985f-5a56-9462-77a2765b7ef4",
       "severity": "INFO",
       "status": "PASS",
-      "validation_run_id": "epc-delivery-v2.0-445a0e1fe3a57f9d"
+      "validation_run_id": "epc-delivery-v2.1-0094f08f7dcbc692"
     },
     {
       "actual": "",
       "element_key": "structural::0DyViLJJ175RvWQi1rE7a6",
       "expected": "The Name shall be provided",
-      "finding_key": "9a8e86d4-5981-50a5-8add-ece3967b964d",
+      "finding_key": "fcb00a6d-12f8-5bcc-9c35-7e20b73d9f2f",
       "is_applicable": "true",
       "is_issue": "false",
       "model_key": "structural",
@@ -1987,13 +1987,13 @@
       "requirement_key": "63e9c0f9-4cb5-5b50-9f4b-456fc6f25c41",
       "severity": "INFO",
       "status": "PASS",
-      "validation_run_id": "epc-delivery-v2.0-445a0e1fe3a57f9d"
+      "validation_run_id": "epc-delivery-v2.1-0094f08f7dcbc692"
     },
     {
       "actual": "",
       "element_key": "structural::2gTJhghMT81QThk15l2VwR",
       "expected": "The Name shall be provided",
-      "finding_key": "7c1e1c09-8ff4-5031-88d4-7f6d61134b14",
+      "finding_key": "0b70904c-4a6b-5e63-a162-64ee10a37b9b",
       "is_applicable": "true",
       "is_issue": "false",
       "model_key": "structural",
@@ -2002,13 +2002,13 @@
       "requirement_key": "63e9c0f9-4cb5-5b50-9f4b-456fc6f25c41",
       "severity": "INFO",
       "status": "PASS",
-      "validation_run_id": "epc-delivery-v2.0-445a0e1fe3a57f9d"
+      "validation_run_id": "epc-delivery-v2.1-0094f08f7dcbc692"
     },
     {
       "actual": "",
       "element_key": "structural::3SGBcf7Lv0r80vKtUCgOpf",
       "expected": "The Name shall be provided",
-      "finding_key": "bff42e6b-65f2-5c8a-944c-f679d290fe85",
+      "finding_key": "354effd5-3fee-591d-8a9e-55081f100047",
       "is_applicable": "true",
       "is_issue": "false",
       "model_key": "structural",
@@ -2017,13 +2017,13 @@
       "requirement_key": "63e9c0f9-4cb5-5b50-9f4b-456fc6f25c41",
       "severity": "INFO",
       "status": "PASS",
-      "validation_run_id": "epc-delivery-v2.0-445a0e1fe3a57f9d"
+      "validation_run_id": "epc-delivery-v2.1-0094f08f7dcbc692"
     },
     {
       "actual": "",
       "element_key": "structural::3oNJ9yHi5FJuFnK8yg68Yt",
       "expected": "The Name shall be provided",
-      "finding_key": "261d8d4e-dcb9-5514-9135-445c9bd9127a",
+      "finding_key": "cb4cf086-9554-5bb9-9b40-cc1f6a979fb9",
       "is_applicable": "true",
       "is_issue": "false",
       "model_key": "structural",
@@ -2032,13 +2032,13 @@
       "requirement_key": "63e9c0f9-4cb5-5b50-9f4b-456fc6f25c41",
       "severity": "INFO",
       "status": "PASS",
-      "validation_run_id": "epc-delivery-v2.0-445a0e1fe3a57f9d"
+      "validation_run_id": "epc-delivery-v2.1-0094f08f7dcbc692"
     },
     {
       "actual": "",
       "element_key": "",
       "expected": "AssetTag data shall be provided in the dataset EPC_Delivery",
-      "finding_key": "469f8a6e-eb79-5c20-be21-54e36e694a63",
+      "finding_key": "72e2c3f0-596e-5c9e-b92c-778b711fafb3",
       "is_applicable": "false",
       "is_issue": "false",
       "model_key": "structural",
@@ -2047,13 +2047,13 @@
       "requirement_key": "842a37c7-3183-5fce-ab45-b93c37ec7a08",
       "severity": "INFO",
       "status": "N/A",
-      "validation_run_id": "epc-delivery-v2.0-445a0e1fe3a57f9d"
+      "validation_run_id": "epc-delivery-v2.1-0094f08f7dcbc692"
     },
     {
       "actual": "",
       "element_key": "",
       "expected": "SystemCode data shall be provided in the dataset EPC_Delivery",
-      "finding_key": "7842a635-3231-51e5-bb93-d9855a10b420",
+      "finding_key": "537f2166-161b-5344-aa21-212c7d131438",
       "is_applicable": "false",
       "is_issue": "false",
       "model_key": "structural",
@@ -2062,13 +2062,13 @@
       "requirement_key": "9321298b-4a9f-5a3e-9d10-6668b736d465",
       "severity": "INFO",
       "status": "N/A",
-      "validation_run_id": "epc-delivery-v2.0-445a0e1fe3a57f9d"
+      "validation_run_id": "epc-delivery-v2.1-0094f08f7dcbc692"
     },
     {
       "actual": "",
       "element_key": "",
       "expected": "AssetTag data shall be provided in the dataset EPC_Delivery",
-      "finding_key": "9572bb3b-90fd-5e73-a283-a5a0e2be19a9",
+      "finding_key": "3c38f9b8-983c-5978-bc80-100aa244fcf9",
       "is_applicable": "false",
       "is_issue": "false",
       "model_key": "structural",
@@ -2077,13 +2077,13 @@
       "requirement_key": "a1402559-dcfc-5af4-a222-3a13eaf2b161",
       "severity": "INFO",
       "status": "N/A",
-      "validation_run_id": "epc-delivery-v2.0-445a0e1fe3a57f9d"
+      "validation_run_id": "epc-delivery-v2.1-0094f08f7dcbc692"
     },
     {
       "actual": "",
       "element_key": "structural::2F44QMqSH3TOkM$SZoqCBe",
       "expected": "Carry the project's agreed setout references in every discipline model.",
-      "finding_key": "005d24a6-4fe1-553d-96c1-1bcbc48e74a2",
+      "finding_key": "a4b45960-a29f-50f1-8798-330c073bc725",
       "is_applicable": "true",
       "is_issue": "false",
       "model_key": "structural",
@@ -2092,13 +2092,13 @@
       "requirement_key": "acb11f11-bf18-5516-a6f2-21e451a6e410",
       "severity": "INFO",
       "status": "PASS",
-      "validation_run_id": "epc-delivery-v2.0-445a0e1fe3a57f9d"
+      "validation_run_id": "epc-delivery-v2.1-0094f08f7dcbc692"
     },
     {
       "actual": "",
       "element_key": "",
       "expected": "Shall be IFCCOLUMN data of type {'enumeration': ['COLUMN', 'PILASTER']}",
-      "finding_key": "bfee8bd8-ed0e-594e-913f-efeacaaae1ba",
+      "finding_key": "f4a4209a-616e-5465-b58f-0af173946b3d",
       "is_applicable": "false",
       "is_issue": "false",
       "model_key": "structural",
@@ -2107,13 +2107,13 @@
       "requirement_key": "f6b0edb7-ca35-596a-b72e-42f21ed1419a",
       "severity": "INFO",
       "status": "N/A",
-      "validation_run_id": "epc-delivery-v2.0-445a0e1fe3a57f9d"
+      "validation_run_id": "epc-delivery-v2.1-0094f08f7dcbc692"
     },
     {
       "actual": "",
       "element_key": "structural::0Lvk$Qa81D5et3l3a4S9Vk",
       "expected": "Shall be IFCBEAM data of type {'enumeration': ['BEAM', 'JOIST', 'HOLLOWCORE', 'LINTEL', 'SPANDREL', 'T_BEAM']}",
-      "finding_key": "7f9f9878-eced-5093-bbd3-2c4046d52e33",
+      "finding_key": "87175238-9aab-5acd-bebe-5def1ce41d84",
       "is_applicable": "true",
       "is_issue": "true",
       "model_key": "structural",
@@ -2122,13 +2122,13 @@
       "requirement_key": "fd3742bc-adf3-55ea-a220-d7b7c82df6d6",
       "severity": "ERROR",
       "status": "FAIL",
-      "validation_run_id": "epc-delivery-v2.0-445a0e1fe3a57f9d"
+      "validation_run_id": "epc-delivery-v2.1-0094f08f7dcbc692"
     },
     {
       "actual": "",
       "element_key": "structural::0fqX614OH1YO1Njdxms2$Q",
       "expected": "Shall be IFCBEAM data of type {'enumeration': ['BEAM', 'JOIST', 'HOLLOWCORE', 'LINTEL', 'SPANDREL', 'T_BEAM']}",
-      "finding_key": "e6d2ec22-ae7f-5843-987a-7728cbc8de11",
+      "finding_key": "f458814a-a60b-5bcb-a549-6184eab5c22f",
       "is_applicable": "true",
       "is_issue": "true",
       "model_key": "structural",
@@ -2137,13 +2137,13 @@
       "requirement_key": "fd3742bc-adf3-55ea-a220-d7b7c82df6d6",
       "severity": "ERROR",
       "status": "FAIL",
-      "validation_run_id": "epc-delivery-v2.0-445a0e1fe3a57f9d"
+      "validation_run_id": "epc-delivery-v2.1-0094f08f7dcbc692"
     },
     {
       "actual": "",
       "element_key": "structural::0rh7bRO0L9fg1NzgGKU$Ut",
       "expected": "Shall be IFCBEAM data of type {'enumeration': ['BEAM', 'JOIST', 'HOLLOWCORE', 'LINTEL', 'SPANDREL', 'T_BEAM']}",
-      "finding_key": "e9e21d5e-fd98-5888-82ef-e69c503e61ad",
+      "finding_key": "57975b5c-e02d-5938-8750-eac16449a033",
       "is_applicable": "true",
       "is_issue": "true",
       "model_key": "structural",
@@ -2152,13 +2152,13 @@
       "requirement_key": "fd3742bc-adf3-55ea-a220-d7b7c82df6d6",
       "severity": "ERROR",
       "status": "FAIL",
-      "validation_run_id": "epc-delivery-v2.0-445a0e1fe3a57f9d"
+      "validation_run_id": "epc-delivery-v2.1-0094f08f7dcbc692"
     },
     {
       "actual": "",
       "element_key": "structural::2ddLgAnQf4mBfh5IpUp54U",
       "expected": "Shall be IFCBEAM data of type {'enumeration': ['BEAM', 'JOIST', 'HOLLOWCORE', 'LINTEL', 'SPANDREL', 'T_BEAM']}",
-      "finding_key": "2f4a3b89-d35b-5f37-ae0a-c3e24ae81cbb",
+      "finding_key": "9cf9a76e-f3fb-5dc5-8693-31f46bc4cfa5",
       "is_applicable": "true",
       "is_issue": "true",
       "model_key": "structural",
@@ -2167,13 +2167,13 @@
       "requirement_key": "fd3742bc-adf3-55ea-a220-d7b7c82df6d6",
       "severity": "ERROR",
       "status": "FAIL",
-      "validation_run_id": "epc-delivery-v2.0-445a0e1fe3a57f9d"
+      "validation_run_id": "epc-delivery-v2.1-0094f08f7dcbc692"
     },
     {
       "actual": "",
       "element_key": "structural::2fjJuPht9EIQaZQYZfC1Op",
       "expected": "Shall be IFCBEAM data of type {'enumeration': ['BEAM', 'JOIST', 'HOLLOWCORE', 'LINTEL', 'SPANDREL', 'T_BEAM']}",
-      "finding_key": "34c98b81-8f50-574a-ae33-8de7c77f52c9",
+      "finding_key": "1f393168-9e5b-5841-9761-cac7df08000e",
       "is_applicable": "true",
       "is_issue": "true",
       "model_key": "structural",
@@ -2182,13 +2182,13 @@
       "requirement_key": "fd3742bc-adf3-55ea-a220-d7b7c82df6d6",
       "severity": "ERROR",
       "status": "FAIL",
-      "validation_run_id": "epc-delivery-v2.0-445a0e1fe3a57f9d"
+      "validation_run_id": "epc-delivery-v2.1-0094f08f7dcbc692"
     },
     {
       "actual": "",
       "element_key": "structural::3roxUKbVv98xiUcl22_T07",
       "expected": "Shall be IFCBEAM data of type {'enumeration': ['BEAM', 'JOIST', 'HOLLOWCORE', 'LINTEL', 'SPANDREL', 'T_BEAM']}",
-      "finding_key": "7b53b678-f66c-5107-9eae-f213653183dd",
+      "finding_key": "aaf9e01d-3375-5336-8e91-f468aba5148d",
       "is_applicable": "true",
       "is_issue": "true",
       "model_key": "structural",
@@ -2197,13 +2197,13 @@
       "requirement_key": "fd3742bc-adf3-55ea-a220-d7b7c82df6d6",
       "severity": "ERROR",
       "status": "FAIL",
-      "validation_run_id": "epc-delivery-v2.0-445a0e1fe3a57f9d"
+      "validation_run_id": "epc-delivery-v2.1-0094f08f7dcbc692"
     },
     {
       "actual": "",
       "element_key": "",
       "expected": "SystemCode data shall be provided in the dataset EPC_Delivery",
-      "finding_key": "e30a2062-e733-5e57-9cac-c569b7848162",
+      "finding_key": "a2057e3f-8a57-5fa1-a677-72efe46019d4",
       "is_applicable": "false",
       "is_issue": "false",
       "model_key": "structural",
@@ -2212,69 +2212,17 @@
       "requirement_key": "fd49c300-7ef6-5a8d-825f-53210dd579fe",
       "severity": "INFO",
       "status": "N/A",
-      "validation_run_id": "epc-delivery-v2.0-445a0e1fe3a57f9d"
+      "validation_run_id": "epc-delivery-v2.1-0094f08f7dcbc692"
     }
   ],
   "issue_events": [
     {
       "actor_ref": "",
-      "actor_role": "model-coordination",
-      "event_key": "5bdeb9f6-b30d-5295-a3ff-d60271753ceb",
+      "actor_role": "structural-lead",
+      "event_key": "44312632-d15f-56d8-8358-80cbc818e441",
       "event_type": "topic_created",
       "from_state": "",
-      "issue_key": "03881004-f81c-5ff8-8a99-cda50ec2a925",
-      "occurred_at": "2026-08-13T00:00:00Z",
-      "payload_version": "1",
-      "sequence": "1",
-      "to_state": "Open",
-      "typed_payload": "{\"finding_count\":\"1\",\"title\":\"architecture::1uS5vfZPn9R8PlAaVd73on\"}"
-    },
-    {
-      "actor_ref": "",
-      "actor_role": "model-coordination",
-      "event_key": "f02095ef-eaa4-58d3-9b54-c428bb278a21",
-      "event_type": "topic_created",
-      "from_state": "",
-      "issue_key": "1951b982-8168-5a67-ade4-ab156b7cb475",
-      "occurred_at": "2026-08-13T00:00:00Z",
-      "payload_version": "1",
-      "sequence": "1",
-      "to_state": "Open",
-      "typed_payload": "{\"finding_count\":\"1\",\"title\":\"structural::0fqX614OH1YO1Njdxms2$Q\"}"
-    },
-    {
-      "actor_ref": "",
-      "actor_role": "model-coordination",
-      "event_key": "938536fe-7e51-5b06-a5ff-9678c97e6af0",
-      "event_type": "topic_created",
-      "from_state": "",
-      "issue_key": "1a6e6e04-b249-5c4f-8add-91db8f88b4ad",
-      "occurred_at": "2026-08-13T00:00:00Z",
-      "payload_version": "1",
-      "sequence": "1",
-      "to_state": "Open",
-      "typed_payload": "{\"finding_count\":\"2\",\"title\":\"hvac::23uPJWDfXEcwHH3kdFgV9c\"}"
-    },
-    {
-      "actor_ref": "",
-      "actor_role": "model-coordination",
-      "event_key": "67d412e1-744e-5600-83df-15a786a70942",
-      "event_type": "topic_created",
-      "from_state": "",
-      "issue_key": "1af8ab96-9987-5806-9753-cb2980378f96",
-      "occurred_at": "2026-08-13T00:00:00Z",
-      "payload_version": "1",
-      "sequence": "1",
-      "to_state": "Open",
-      "typed_payload": "{\"finding_count\":\"1\",\"title\":\"architecture::0OfZwWc8j9QP5uX8xPTxDH\"}"
-    },
-    {
-      "actor_ref": "",
-      "actor_role": "model-coordination",
-      "event_key": "10fb8260-1d1b-5bf1-b8d6-0fba40141b54",
-      "event_type": "topic_created",
-      "from_state": "",
-      "issue_key": "1bc4aaa2-4a9d-53e8-8da8-0fd4bbfae59d",
+      "issue_key": "092b1db5-0991-5520-be35-91773ff2f78e",
       "occurred_at": "2026-08-13T00:00:00Z",
       "payload_version": "1",
       "sequence": "1",
@@ -2284,62 +2232,10 @@
     {
       "actor_ref": "",
       "actor_role": "model-coordination",
-      "event_key": "d282ee27-a436-5d80-b5b2-d114611973e8",
+      "event_key": "444240a7-efb1-5590-9de2-0269cdc558b9",
       "event_type": "topic_created",
       "from_state": "",
-      "issue_key": "1d38233c-869b-5d3e-a9b6-e3676ccffb18",
-      "occurred_at": "2026-08-13T00:00:00Z",
-      "payload_version": "1",
-      "sequence": "1",
-      "to_state": "Open",
-      "typed_payload": "{\"finding_count\":\"1\",\"title\":\"iso-reference-view.architecture::3ZYW59sxj8lei475l7EhLU\"}"
-    },
-    {
-      "actor_ref": "",
-      "actor_role": "model-coordination",
-      "event_key": "6d6c2bbe-f32a-5fea-b315-a0d411e2ac85",
-      "event_type": "topic_created",
-      "from_state": "",
-      "issue_key": "2dc6a6ad-4213-5bb5-a3e2-bbee87c60ec2",
-      "occurred_at": "2026-08-13T00:00:00Z",
-      "payload_version": "1",
-      "sequence": "1",
-      "to_state": "Open",
-      "typed_payload": "{\"finding_count\":\"2\",\"title\":\"hvac::34Y6EIt3nDCAS1k$kPGOKm\"}"
-    },
-    {
-      "actor_ref": "",
-      "actor_role": "model-coordination",
-      "event_key": "37440e76-de06-5472-b7a9-564006022b73",
-      "event_type": "topic_created",
-      "from_state": "",
-      "issue_key": "2ddf8be3-75a1-50cb-a10f-4bddf2f80b4a",
-      "occurred_at": "2026-08-13T00:00:00Z",
-      "payload_version": "1",
-      "sequence": "1",
-      "to_state": "Open",
-      "typed_payload": "{\"finding_count\":\"1\",\"title\":\"architecture::3wdauVJT5Fx9drrREiDqA$\"}"
-    },
-    {
-      "actor_ref": "",
-      "actor_role": "model-coordination",
-      "event_key": "7f2a4c5e-a902-5825-a379-ae2b75ed4ae3",
-      "event_type": "topic_created",
-      "from_state": "",
-      "issue_key": "339918bf-a195-5346-b520-f4db281dde79",
-      "occurred_at": "2026-08-13T00:00:00Z",
-      "payload_version": "1",
-      "sequence": "1",
-      "to_state": "Open",
-      "typed_payload": "{\"finding_count\":\"1\",\"title\":\"structural::3SGBcf7Lv0r80vKtUCgOpf\"}"
-    },
-    {
-      "actor_ref": "",
-      "actor_role": "model-coordination",
-      "event_key": "7adffd70-f627-5ebe-8695-11b04c774ec1",
-      "event_type": "topic_created",
-      "from_state": "",
-      "issue_key": "4235ec21-0a2c-5b7c-9435-4a5f624e0afe",
+      "issue_key": "0a04d789-435b-5364-9c3f-bc905d86da9d",
       "occurred_at": "2026-08-13T00:00:00Z",
       "payload_version": "1",
       "sequence": "1",
@@ -2348,102 +2244,24 @@
     },
     {
       "actor_ref": "",
-      "actor_role": "model-coordination",
-      "event_key": "7fea9b5b-c089-50a1-838b-a236adf9eec3",
+      "actor_role": "structural-lead",
+      "event_key": "6e31a1be-c57e-5c69-b776-3d816fa9a444",
       "event_type": "topic_created",
       "from_state": "",
-      "issue_key": "5266add9-f5ff-5da9-8502-fd3d7594d3a9",
+      "issue_key": "0fc789c2-ba3c-5c15-a273-fc3af3f3c59d",
       "occurred_at": "2026-08-13T00:00:00Z",
       "payload_version": "1",
       "sequence": "1",
       "to_state": "Open",
-      "typed_payload": "{\"finding_count\":\"1\",\"title\":\"structural::2fjJuPht9EIQaZQYZfC1Op\"}"
+      "typed_payload": "{\"finding_count\":\"1\",\"title\":\"structural::0fqX614OH1YO1Njdxms2$Q\"}"
     },
     {
       "actor_ref": "",
-      "actor_role": "model-coordination",
-      "event_key": "ed7dfac1-d72c-5217-8b7b-6e61bd3db132",
+      "actor_role": "information-manager",
+      "event_key": "01b53ede-84f0-5b2c-84a4-ec6876b8c530",
       "event_type": "topic_created",
       "from_state": "",
-      "issue_key": "55941ecd-438e-56af-875b-985444d73a32",
-      "occurred_at": "2026-08-13T00:00:00Z",
-      "payload_version": "1",
-      "sequence": "1",
-      "to_state": "Open",
-      "typed_payload": "{\"finding_count\":\"1\",\"title\":\"structural::2gTJhghMT81QThk15l2VwR\"}"
-    },
-    {
-      "actor_ref": "",
-      "actor_role": "model-coordination",
-      "event_key": "af07580d-0337-5c91-9d75-77c0d443169b",
-      "event_type": "topic_created",
-      "from_state": "",
-      "issue_key": "55f2fdc2-e108-5db8-b4e7-e03eb8339681",
-      "occurred_at": "2026-08-13T00:00:00Z",
-      "payload_version": "1",
-      "sequence": "1",
-      "to_state": "Open",
-      "typed_payload": "{\"finding_count\":\"1\",\"title\":\"iso-reference-view.structural\"}"
-    },
-    {
-      "actor_ref": "",
-      "actor_role": "model-coordination",
-      "event_key": "4b1e2bff-dfb7-5a3b-a06b-471095f01af9",
-      "event_type": "topic_created",
-      "from_state": "",
-      "issue_key": "58d77c94-3a83-58b5-aa8e-7cab1c66d153",
-      "occurred_at": "2026-08-13T00:00:00Z",
-      "payload_version": "1",
-      "sequence": "1",
-      "to_state": "Open",
-      "typed_payload": "{\"finding_count\":\"1\",\"title\":\"structural::3roxUKbVv98xiUcl22_T07\"}"
-    },
-    {
-      "actor_ref": "",
-      "actor_role": "model-coordination",
-      "event_key": "c02f5cba-9102-58c2-b555-7b39f6ae4346",
-      "event_type": "topic_created",
-      "from_state": "",
-      "issue_key": "7f0fd7ea-0019-5d0b-aea5-0aaba77b587b",
-      "occurred_at": "2026-08-13T00:00:00Z",
-      "payload_version": "1",
-      "sequence": "1",
-      "to_state": "Open",
-      "typed_payload": "{\"finding_count\":\"1\",\"title\":\"structural::0DyViLJJ175RvWQi1rE7a6\"}"
-    },
-    {
-      "actor_ref": "",
-      "actor_role": "model-coordination",
-      "event_key": "77f4a148-908a-5839-bb7f-cf9be1813eb2",
-      "event_type": "topic_created",
-      "from_state": "",
-      "issue_key": "81e3afc8-3d83-574b-85de-e982d57a4317",
-      "occurred_at": "2026-08-13T00:00:00Z",
-      "payload_version": "1",
-      "sequence": "1",
-      "to_state": "Open",
-      "typed_payload": "{\"finding_count\":\"1\",\"title\":\"structural::2ddLgAnQf4mBfh5IpUp54U\"}"
-    },
-    {
-      "actor_ref": "",
-      "actor_role": "model-coordination",
-      "event_key": "23e143ef-101b-5ad3-a080-2cab2925d62c",
-      "event_type": "topic_created",
-      "from_state": "",
-      "issue_key": "9b8b687a-04b5-5bf2-99ba-9e1ec31d83f4",
-      "occurred_at": "2026-08-13T00:00:00Z",
-      "payload_version": "1",
-      "sequence": "1",
-      "to_state": "Open",
-      "typed_payload": "{\"finding_count\":\"1\",\"title\":\"architecture::1AQAupaRP1txwK1AGiN61V\"}"
-    },
-    {
-      "actor_ref": "",
-      "actor_role": "model-coordination",
-      "event_key": "b01656a1-0cc4-51db-b39b-a07876d97e22",
-      "event_type": "topic_created",
-      "from_state": "",
-      "issue_key": "aacc184c-98ed-5efd-8d7a-c344eff565fb",
+      "issue_key": "1be18260-fb8c-5486-99f4-64ecebeda3d0",
       "occurred_at": "2026-08-13T00:00:00Z",
       "payload_version": "1",
       "sequence": "1",
@@ -2453,10 +2271,192 @@
     {
       "actor_ref": "",
       "actor_role": "model-coordination",
-      "event_key": "1f2a0c3f-8462-52f7-b10d-f0360947ed99",
+      "event_key": "572301cc-a0f3-5728-89ab-3ae792e86c8c",
       "event_type": "topic_created",
       "from_state": "",
-      "issue_key": "b17489f8-5e19-5a81-a702-320e32c57b88",
+      "issue_key": "1d9a253e-f500-58ba-b59e-cdf9054e135d",
+      "occurred_at": "2026-08-13T00:00:00Z",
+      "payload_version": "1",
+      "sequence": "1",
+      "to_state": "Open",
+      "typed_payload": "{\"finding_count\":\"2\",\"title\":\"hvac::23uPJWDfXEcwHH3kdFgV9c\"}"
+    },
+    {
+      "actor_ref": "",
+      "actor_role": "information-manager",
+      "event_key": "85315b1b-15a8-59f4-a411-bccea6f74bf5",
+      "event_type": "topic_created",
+      "from_state": "",
+      "issue_key": "2d311ad7-26f1-58ec-81c1-851295814fe8",
+      "occurred_at": "2026-08-13T00:00:00Z",
+      "payload_version": "1",
+      "sequence": "1",
+      "to_state": "Open",
+      "typed_payload": "{\"finding_count\":\"1\",\"title\":\"architecture::3wdauVJT5Fx9drrREiDqA$\"}"
+    },
+    {
+      "actor_ref": "",
+      "actor_role": "information-manager",
+      "event_key": "8536afda-bff9-5ac5-b837-90014017f6c5",
+      "event_type": "topic_created",
+      "from_state": "",
+      "issue_key": "34c44480-a283-5954-91b7-be35fca9fcb2",
+      "occurred_at": "2026-08-13T00:00:00Z",
+      "payload_version": "1",
+      "sequence": "1",
+      "to_state": "Open",
+      "typed_payload": "{\"finding_count\":\"1\",\"title\":\"structural::0DyViLJJ175RvWQi1rE7a6\"}"
+    },
+    {
+      "actor_ref": "",
+      "actor_role": "information-manager",
+      "event_key": "a42cdb1a-d4c9-5788-997f-6ab6995cabae",
+      "event_type": "topic_created",
+      "from_state": "",
+      "issue_key": "659a09d9-0531-516e-a316-c0ee24733135",
+      "occurred_at": "2026-08-13T00:00:00Z",
+      "payload_version": "1",
+      "sequence": "1",
+      "to_state": "Open",
+      "typed_payload": "{\"finding_count\":\"1\",\"title\":\"architecture::1uS5vfZPn9R8PlAaVd73on\"}"
+    },
+    {
+      "actor_ref": "",
+      "actor_role": "information-manager",
+      "event_key": "bdadbc32-498e-5a31-acf4-c6dd927fa439",
+      "event_type": "topic_created",
+      "from_state": "",
+      "issue_key": "685b707f-4a40-514a-af7e-751311f8e908",
+      "occurred_at": "2026-08-13T00:00:00Z",
+      "payload_version": "1",
+      "sequence": "1",
+      "to_state": "Open",
+      "typed_payload": "{\"finding_count\":\"1\",\"title\":\"architecture::1AQAupaRP1txwK1AGiN61V\"}"
+    },
+    {
+      "actor_ref": "",
+      "actor_role": "information-manager",
+      "event_key": "b7aa90b2-0aae-587b-a194-dbfddc049f82",
+      "event_type": "topic_created",
+      "from_state": "",
+      "issue_key": "6f36c45a-3395-5f86-87ed-248f777f1f2f",
+      "occurred_at": "2026-08-13T00:00:00Z",
+      "payload_version": "1",
+      "sequence": "1",
+      "to_state": "Open",
+      "typed_payload": "{\"finding_count\":\"1\",\"title\":\"structural::2gTJhghMT81QThk15l2VwR\"}"
+    },
+    {
+      "actor_ref": "",
+      "actor_role": "model-coordination",
+      "event_key": "941ed20f-ad5b-5164-8c17-b5cae4b489ac",
+      "event_type": "topic_created",
+      "from_state": "",
+      "issue_key": "70f19f87-454b-5177-a2ea-83d557f2fe21",
+      "occurred_at": "2026-08-13T00:00:00Z",
+      "payload_version": "1",
+      "sequence": "1",
+      "to_state": "Open",
+      "typed_payload": "{\"finding_count\":\"2\",\"title\":\"hvac::34Y6EIt3nDCAS1k$kPGOKm\"}"
+    },
+    {
+      "actor_ref": "",
+      "actor_role": "information-manager",
+      "event_key": "d52ad36d-114b-55c0-9e6f-f05d5dcf920b",
+      "event_type": "topic_created",
+      "from_state": "",
+      "issue_key": "739a29bc-f812-5bed-94b8-11af45910945",
+      "occurred_at": "2026-08-13T00:00:00Z",
+      "payload_version": "1",
+      "sequence": "1",
+      "to_state": "Open",
+      "typed_payload": "{\"finding_count\":\"1\",\"title\":\"architecture::0OfZwWc8j9QP5uX8xPTxDH\"}"
+    },
+    {
+      "actor_ref": "",
+      "actor_role": "information-manager",
+      "event_key": "00835be5-ef4a-50a2-aad8-a3c3e539b1be",
+      "event_type": "topic_created",
+      "from_state": "",
+      "issue_key": "9bf9b7ce-d8a7-5755-803c-d3f30600885d",
+      "occurred_at": "2026-08-13T00:00:00Z",
+      "payload_version": "1",
+      "sequence": "1",
+      "to_state": "Open",
+      "typed_payload": "{\"finding_count\":\"1\",\"title\":\"iso-reference-view.architecture::3ZYW59sxj8lei475l7EhLU\"}"
+    },
+    {
+      "actor_ref": "",
+      "actor_role": "structural-lead",
+      "event_key": "6cb2b642-33d2-590c-a0ee-bae0fbb28768",
+      "event_type": "topic_created",
+      "from_state": "",
+      "issue_key": "b139ce98-4ecd-5724-9c16-1c266933b9d9",
+      "occurred_at": "2026-08-13T00:00:00Z",
+      "payload_version": "1",
+      "sequence": "1",
+      "to_state": "Open",
+      "typed_payload": "{\"finding_count\":\"1\",\"title\":\"structural::2fjJuPht9EIQaZQYZfC1Op\"}"
+    },
+    {
+      "actor_ref": "",
+      "actor_role": "model-coordination",
+      "event_key": "936edc45-f78d-5e4f-a796-622c54d1e567",
+      "event_type": "topic_created",
+      "from_state": "",
+      "issue_key": "b744b1e8-dd23-5f17-9057-29b791e0ba62",
+      "occurred_at": "2026-08-13T00:00:00Z",
+      "payload_version": "1",
+      "sequence": "1",
+      "to_state": "Open",
+      "typed_payload": "{\"finding_count\":\"1\",\"title\":\"iso-reference-view.structural\"}"
+    },
+    {
+      "actor_ref": "",
+      "actor_role": "structural-lead",
+      "event_key": "922fb733-8a65-5d40-8c4e-cc1171d05768",
+      "event_type": "topic_created",
+      "from_state": "",
+      "issue_key": "c9724f5d-132a-51bd-817e-83e43abe6310",
+      "occurred_at": "2026-08-13T00:00:00Z",
+      "payload_version": "1",
+      "sequence": "1",
+      "to_state": "Open",
+      "typed_payload": "{\"finding_count\":\"1\",\"title\":\"structural::0Lvk$Qa81D5et3l3a4S9Vk\"}"
+    },
+    {
+      "actor_ref": "",
+      "actor_role": "structural-lead",
+      "event_key": "ef490c59-fd61-540c-8d46-ed38d2fe80e3",
+      "event_type": "topic_created",
+      "from_state": "",
+      "issue_key": "d88c43c0-a5ee-51af-bb43-176d72457107",
+      "occurred_at": "2026-08-13T00:00:00Z",
+      "payload_version": "1",
+      "sequence": "1",
+      "to_state": "Open",
+      "typed_payload": "{\"finding_count\":\"1\",\"title\":\"structural::3roxUKbVv98xiUcl22_T07\"}"
+    },
+    {
+      "actor_ref": "",
+      "actor_role": "information-manager",
+      "event_key": "5bbaff0b-31ad-5b07-b844-526a8489f8a9",
+      "event_type": "topic_created",
+      "from_state": "",
+      "issue_key": "e01554fd-c479-5a41-aac0-27923c0f44a6",
+      "occurred_at": "2026-08-13T00:00:00Z",
+      "payload_version": "1",
+      "sequence": "1",
+      "to_state": "Open",
+      "typed_payload": "{\"finding_count\":\"1\",\"title\":\"structural::3SGBcf7Lv0r80vKtUCgOpf\"}"
+    },
+    {
+      "actor_ref": "",
+      "actor_role": "model-coordination",
+      "event_key": "e820e75b-7d91-52e2-893c-a7ed20ea314c",
+      "event_type": "topic_created",
+      "from_state": "",
+      "issue_key": "ebdd8e01-2152-50f2-b4c7-9728228f6a0b",
       "occurred_at": "2026-08-13T00:00:00Z",
       "payload_version": "1",
       "sequence": "1",
@@ -2465,370 +2465,412 @@
     },
     {
       "actor_ref": "",
-      "actor_role": "model-coordination",
-      "event_key": "8951bd26-792a-5fea-85ad-249e4d8c8f06",
+      "actor_role": "structural-lead",
+      "event_key": "18228d37-e756-5dc2-9687-bc7cb358acb5",
       "event_type": "topic_created",
       "from_state": "",
-      "issue_key": "d241ac35-19dd-53aa-8d3c-f6df4675c420",
+      "issue_key": "efd1dcb1-4049-5f8c-9adf-eacbec69bc4a",
+      "occurred_at": "2026-08-13T00:00:00Z",
+      "payload_version": "1",
+      "sequence": "1",
+      "to_state": "Open",
+      "typed_payload": "{\"finding_count\":\"1\",\"title\":\"structural::2ddLgAnQf4mBfh5IpUp54U\"}"
+    },
+    {
+      "actor_ref": "",
+      "actor_role": "model-coordination",
+      "event_key": "75258928-646b-503d-9200-4ec9ede0f98c",
+      "event_type": "topic_created",
+      "from_state": "",
+      "issue_key": "f700b58c-081e-5944-8936-4d4191aa4616",
       "occurred_at": "2026-08-13T00:00:00Z",
       "payload_version": "1",
       "sequence": "1",
       "to_state": "Open",
       "typed_payload": "{\"finding_count\":\"1\",\"title\":\"iso-reference-view.architecture\"}"
-    },
-    {
-      "actor_ref": "",
-      "actor_role": "model-coordination",
-      "event_key": "01e3050d-95f0-5981-b5b8-cf67fe18d0b0",
-      "event_type": "topic_created",
-      "from_state": "",
-      "issue_key": "dfb792df-e58b-5522-ae2d-d140bb6eace1",
-      "occurred_at": "2026-08-13T00:00:00Z",
-      "payload_version": "1",
-      "sequence": "1",
-      "to_state": "Open",
-      "typed_payload": "{\"finding_count\":\"1\",\"title\":\"structural::0Lvk$Qa81D5et3l3a4S9Vk\"}"
     }
   ],
   "issues": [
     {
-      "assignee_role": "model-coordination",
-      "due": "",
-      "element_key": "architecture::1uS5vfZPn9R8PlAaVd73on",
-      "finding_keys": [
-        "2733d608-bf27-51b5-b35f-cddd88bb4cee"
-      ],
-      "grouping_policy": "element",
-      "issue_key": "03881004-f81c-5ff8-8a99-cda50ec2a925",
-      "lifecycle_state": "Open",
-      "model_key": "architecture",
-      "priority": "",
-      "project_id": "pcert-sample",
-      "stage": "",
-      "validation_run_id": "epc-delivery-v2.0-445a0e1fe3a57f9d"
-    },
-    {
-      "assignee_role": "model-coordination",
-      "due": "",
-      "element_key": "structural::0fqX614OH1YO1Njdxms2$Q",
-      "finding_keys": [
-        "e6d2ec22-ae7f-5843-987a-7728cbc8de11"
-      ],
-      "grouping_policy": "element",
-      "issue_key": "1951b982-8168-5a67-ade4-ab156b7cb475",
-      "lifecycle_state": "Open",
-      "model_key": "structural",
-      "priority": "",
-      "project_id": "pcert-sample",
-      "stage": "",
-      "validation_run_id": "epc-delivery-v2.0-445a0e1fe3a57f9d"
-    },
-    {
-      "assignee_role": "model-coordination",
-      "due": "",
-      "element_key": "hvac::23uPJWDfXEcwHH3kdFgV9c",
-      "finding_keys": [
-        "9142fd60-b5eb-596d-8e3f-f1a658d52ce5",
-        "c411b008-5d46-5fd0-8eb8-51669a6b5818"
-      ],
-      "grouping_policy": "element",
-      "issue_key": "1a6e6e04-b249-5c4f-8add-91db8f88b4ad",
-      "lifecycle_state": "Open",
-      "model_key": "hvac",
-      "priority": "",
-      "project_id": "pcert-sample",
-      "stage": "",
-      "validation_run_id": "epc-delivery-v2.0-445a0e1fe3a57f9d"
-    },
-    {
-      "assignee_role": "model-coordination",
-      "due": "",
-      "element_key": "architecture::0OfZwWc8j9QP5uX8xPTxDH",
-      "finding_keys": [
-        "c1e2e556-b912-5d9f-aa8c-23316730b476"
-      ],
-      "grouping_policy": "element",
-      "issue_key": "1af8ab96-9987-5806-9753-cb2980378f96",
-      "lifecycle_state": "Open",
-      "model_key": "architecture",
-      "priority": "",
-      "project_id": "pcert-sample",
-      "stage": "",
-      "validation_run_id": "epc-delivery-v2.0-445a0e1fe3a57f9d"
-    },
-    {
-      "assignee_role": "model-coordination",
-      "due": "",
+      "assignee_role": "structural-lead",
+      "due": "2026-07-01T00:00:00Z",
       "element_key": "structural::0rh7bRO0L9fg1NzgGKU$Ut",
       "finding_keys": [
-        "e9e21d5e-fd98-5888-82ef-e69c503e61ad"
+        "57975b5c-e02d-5938-8750-eac16449a033"
       ],
       "grouping_policy": "element",
-      "issue_key": "1bc4aaa2-4a9d-53e8-8da8-0fd4bbfae59d",
+      "is_overdue": "true",
+      "issue_key": "092b1db5-0991-5520-be35-91773ff2f78e",
+      "labels": "Structural",
       "lifecycle_state": "Open",
       "model_key": "structural",
       "priority": "",
       "project_id": "pcert-sample",
-      "stage": "",
-      "validation_run_id": "epc-delivery-v2.0-445a0e1fe3a57f9d"
+      "stage": "Design",
+      "validation_run_id": "epc-delivery-v2.1-0094f08f7dcbc692"
     },
     {
       "assignee_role": "model-coordination",
-      "due": "",
-      "element_key": "iso-reference-view.architecture::3ZYW59sxj8lei475l7EhLU",
+      "due": "2026-08-01T00:00:00Z",
+      "element_key": "hvac::38WbwIGD90nB_3T2BTU5Ed",
       "finding_keys": [
-        "b69689f6-e93c-52c6-b746-7df28907106d"
+        "5ce8d2a5-e906-574e-af5e-9a13dd61086a",
+        "8330922a-951e-5c32-b73b-b60c856cb15d"
       ],
       "grouping_policy": "element",
-      "issue_key": "1d38233c-869b-5d3e-a9b6-e3676ccffb18",
+      "is_overdue": "true",
+      "issue_key": "0a04d789-435b-5364-9c3f-bc905d86da9d",
+      "labels": "HVAC;IDS;ProjectAssumption",
+      "lifecycle_state": "Open",
+      "model_key": "hvac",
+      "priority": "Medium",
+      "project_id": "pcert-sample",
+      "stage": "Coordination",
+      "validation_run_id": "epc-delivery-v2.1-0094f08f7dcbc692"
+    },
+    {
+      "assignee_role": "structural-lead",
+      "due": "2026-07-01T00:00:00Z",
+      "element_key": "structural::0fqX614OH1YO1Njdxms2$Q",
+      "finding_keys": [
+        "f458814a-a60b-5bcb-a549-6184eab5c22f"
+      ],
+      "grouping_policy": "element",
+      "is_overdue": "true",
+      "issue_key": "0fc789c2-ba3c-5c15-a273-fc3af3f3c59d",
+      "labels": "Structural",
+      "lifecycle_state": "Open",
+      "model_key": "structural",
+      "priority": "",
+      "project_id": "pcert-sample",
+      "stage": "Design",
+      "validation_run_id": "epc-delivery-v2.1-0094f08f7dcbc692"
+    },
+    {
+      "assignee_role": "information-manager",
+      "due": "2026-12-01T00:00:00Z",
+      "element_key": "structural::3oNJ9yHi5FJuFnK8yg68Yt",
+      "finding_keys": [
+        "997ef6cf-070a-5cc1-a15b-c1a6f10ed892"
+      ],
+      "grouping_policy": "element",
+      "is_overdue": "false",
+      "issue_key": "1be18260-fb8c-5486-99f4-64ecebeda3d0",
+      "labels": "Architecture;Structural",
+      "lifecycle_state": "Open",
+      "model_key": "structural",
+      "priority": "",
+      "project_id": "pcert-sample",
+      "stage": "Handover",
+      "validation_run_id": "epc-delivery-v2.1-0094f08f7dcbc692"
+    },
+    {
+      "assignee_role": "model-coordination",
+      "due": "2026-08-01T00:00:00Z",
+      "element_key": "hvac::23uPJWDfXEcwHH3kdFgV9c",
+      "finding_keys": [
+        "5138c0c5-b713-5bb6-bf8c-b6218b46ab2a",
+        "ab41b5d1-7b6a-51c2-9f89-8a469130cd44"
+      ],
+      "grouping_policy": "element",
+      "is_overdue": "true",
+      "issue_key": "1d9a253e-f500-58ba-b59e-cdf9054e135d",
+      "labels": "HVAC;IDS;ProjectAssumption",
+      "lifecycle_state": "Open",
+      "model_key": "hvac",
+      "priority": "Medium",
+      "project_id": "pcert-sample",
+      "stage": "Coordination",
+      "validation_run_id": "epc-delivery-v2.1-0094f08f7dcbc692"
+    },
+    {
+      "assignee_role": "information-manager",
+      "due": "2026-12-01T00:00:00Z",
+      "element_key": "architecture::3wdauVJT5Fx9drrREiDqA$",
+      "finding_keys": [
+        "f00d4690-6c49-5526-9cb8-270a59a56bb7"
+      ],
+      "grouping_policy": "element",
+      "is_overdue": "false",
+      "issue_key": "2d311ad7-26f1-58ec-81c1-851295814fe8",
+      "labels": "Architecture;Structural",
+      "lifecycle_state": "Open",
+      "model_key": "architecture",
+      "priority": "",
+      "project_id": "pcert-sample",
+      "stage": "Handover",
+      "validation_run_id": "epc-delivery-v2.1-0094f08f7dcbc692"
+    },
+    {
+      "assignee_role": "information-manager",
+      "due": "2026-12-01T00:00:00Z",
+      "element_key": "structural::0DyViLJJ175RvWQi1rE7a6",
+      "finding_keys": [
+        "34b5b702-3e4b-5aec-be20-23cc6d35bb8a"
+      ],
+      "grouping_policy": "element",
+      "is_overdue": "false",
+      "issue_key": "34c44480-a283-5954-91b7-be35fca9fcb2",
+      "labels": "Architecture;Structural",
+      "lifecycle_state": "Open",
+      "model_key": "structural",
+      "priority": "",
+      "project_id": "pcert-sample",
+      "stage": "Handover",
+      "validation_run_id": "epc-delivery-v2.1-0094f08f7dcbc692"
+    },
+    {
+      "assignee_role": "information-manager",
+      "due": "2026-12-01T00:00:00Z",
+      "element_key": "architecture::1uS5vfZPn9R8PlAaVd73on",
+      "finding_keys": [
+        "3a65a05a-193e-5b62-9cec-96c4cb323f1c"
+      ],
+      "grouping_policy": "element",
+      "is_overdue": "false",
+      "issue_key": "659a09d9-0531-516e-a316-c0ee24733135",
+      "labels": "Architecture;Structural",
+      "lifecycle_state": "Open",
+      "model_key": "architecture",
+      "priority": "",
+      "project_id": "pcert-sample",
+      "stage": "Handover",
+      "validation_run_id": "epc-delivery-v2.1-0094f08f7dcbc692"
+    },
+    {
+      "assignee_role": "information-manager",
+      "due": "2026-12-01T00:00:00Z",
+      "element_key": "architecture::1AQAupaRP1txwK1AGiN61V",
+      "finding_keys": [
+        "7ee4c783-89e5-5ae9-b51e-1174b02f4755"
+      ],
+      "grouping_policy": "element",
+      "is_overdue": "false",
+      "issue_key": "685b707f-4a40-514a-af7e-751311f8e908",
+      "labels": "Architecture;Structural",
+      "lifecycle_state": "Open",
+      "model_key": "architecture",
+      "priority": "",
+      "project_id": "pcert-sample",
+      "stage": "Handover",
+      "validation_run_id": "epc-delivery-v2.1-0094f08f7dcbc692"
+    },
+    {
+      "assignee_role": "information-manager",
+      "due": "2026-12-01T00:00:00Z",
+      "element_key": "structural::2gTJhghMT81QThk15l2VwR",
+      "finding_keys": [
+        "032b4d37-b9cc-5566-9c28-674ca7847728"
+      ],
+      "grouping_policy": "element",
+      "is_overdue": "false",
+      "issue_key": "6f36c45a-3395-5f86-87ed-248f777f1f2f",
+      "labels": "Architecture;Structural",
+      "lifecycle_state": "Open",
+      "model_key": "structural",
+      "priority": "",
+      "project_id": "pcert-sample",
+      "stage": "Handover",
+      "validation_run_id": "epc-delivery-v2.1-0094f08f7dcbc692"
+    },
+    {
+      "assignee_role": "model-coordination",
+      "due": "2026-08-01T00:00:00Z",
+      "element_key": "hvac::34Y6EIt3nDCAS1k$kPGOKm",
+      "finding_keys": [
+        "da8aa5bc-1c6d-584e-8a0b-9eef9ac359ca",
+        "df4d11e2-4e64-5f20-84a9-3e598094f1ab"
+      ],
+      "grouping_policy": "element",
+      "is_overdue": "true",
+      "issue_key": "70f19f87-454b-5177-a2ea-83d557f2fe21",
+      "labels": "HVAC;IDS;ProjectAssumption",
+      "lifecycle_state": "Open",
+      "model_key": "hvac",
+      "priority": "Medium",
+      "project_id": "pcert-sample",
+      "stage": "Coordination",
+      "validation_run_id": "epc-delivery-v2.1-0094f08f7dcbc692"
+    },
+    {
+      "assignee_role": "information-manager",
+      "due": "2026-12-01T00:00:00Z",
+      "element_key": "architecture::0OfZwWc8j9QP5uX8xPTxDH",
+      "finding_keys": [
+        "e98682b1-a4a0-57de-865e-2480c29d133b"
+      ],
+      "grouping_policy": "element",
+      "is_overdue": "false",
+      "issue_key": "739a29bc-f812-5bed-94b8-11af45910945",
+      "labels": "Architecture;Structural",
+      "lifecycle_state": "Open",
+      "model_key": "architecture",
+      "priority": "",
+      "project_id": "pcert-sample",
+      "stage": "Handover",
+      "validation_run_id": "epc-delivery-v2.1-0094f08f7dcbc692"
+    },
+    {
+      "assignee_role": "information-manager",
+      "due": "2026-12-01T00:00:00Z",
+      "element_key": "iso-reference-view.architecture::3ZYW59sxj8lei475l7EhLU",
+      "finding_keys": [
+        "403b973a-c6a7-53bf-9d16-20dcb1dd9f3b"
+      ],
+      "grouping_policy": "element",
+      "is_overdue": "false",
+      "issue_key": "9bf9b7ce-d8a7-5755-803c-d3f30600885d",
+      "labels": "Architecture;Structural",
       "lifecycle_state": "Open",
       "model_key": "iso-reference-view.architecture",
       "priority": "",
       "project_id": "iso-reference-view",
-      "stage": "",
-      "validation_run_id": "epc-delivery-v2.0-445a0e1fe3a57f9d"
+      "stage": "Handover",
+      "validation_run_id": "epc-delivery-v2.1-0094f08f7dcbc692"
     },
     {
-      "assignee_role": "model-coordination",
-      "due": "",
-      "element_key": "hvac::34Y6EIt3nDCAS1k$kPGOKm",
-      "finding_keys": [
-        "899ed68d-5aa9-5a95-ae0b-e34bb1787748",
-        "f37b2b09-30ee-5c33-9e5b-4280eb4cc0e2"
-      ],
-      "grouping_policy": "element",
-      "issue_key": "2dc6a6ad-4213-5bb5-a3e2-bbee87c60ec2",
-      "lifecycle_state": "Open",
-      "model_key": "hvac",
-      "priority": "",
-      "project_id": "pcert-sample",
-      "stage": "",
-      "validation_run_id": "epc-delivery-v2.0-445a0e1fe3a57f9d"
-    },
-    {
-      "assignee_role": "model-coordination",
-      "due": "",
-      "element_key": "architecture::3wdauVJT5Fx9drrREiDqA$",
-      "finding_keys": [
-        "4588cb49-5372-531d-bbb1-8739e9cf9a3d"
-      ],
-      "grouping_policy": "element",
-      "issue_key": "2ddf8be3-75a1-50cb-a10f-4bddf2f80b4a",
-      "lifecycle_state": "Open",
-      "model_key": "architecture",
-      "priority": "",
-      "project_id": "pcert-sample",
-      "stage": "",
-      "validation_run_id": "epc-delivery-v2.0-445a0e1fe3a57f9d"
-    },
-    {
-      "assignee_role": "model-coordination",
-      "due": "",
-      "element_key": "structural::3SGBcf7Lv0r80vKtUCgOpf",
-      "finding_keys": [
-        "e5a003c0-617d-5854-8352-e6fd840f927a"
-      ],
-      "grouping_policy": "element",
-      "issue_key": "339918bf-a195-5346-b520-f4db281dde79",
-      "lifecycle_state": "Open",
-      "model_key": "structural",
-      "priority": "",
-      "project_id": "pcert-sample",
-      "stage": "",
-      "validation_run_id": "epc-delivery-v2.0-445a0e1fe3a57f9d"
-    },
-    {
-      "assignee_role": "model-coordination",
-      "due": "",
-      "element_key": "hvac::38WbwIGD90nB_3T2BTU5Ed",
-      "finding_keys": [
-        "03d7f6aa-055e-5ba8-924b-d7b4b48b3698",
-        "8cdaf5e5-98b4-54f1-a086-7d9d8f48d1c0"
-      ],
-      "grouping_policy": "element",
-      "issue_key": "4235ec21-0a2c-5b7c-9435-4a5f624e0afe",
-      "lifecycle_state": "Open",
-      "model_key": "hvac",
-      "priority": "",
-      "project_id": "pcert-sample",
-      "stage": "",
-      "validation_run_id": "epc-delivery-v2.0-445a0e1fe3a57f9d"
-    },
-    {
-      "assignee_role": "model-coordination",
-      "due": "",
+      "assignee_role": "structural-lead",
+      "due": "2026-07-01T00:00:00Z",
       "element_key": "structural::2fjJuPht9EIQaZQYZfC1Op",
       "finding_keys": [
-        "34c98b81-8f50-574a-ae33-8de7c77f52c9"
+        "1f393168-9e5b-5841-9761-cac7df08000e"
       ],
       "grouping_policy": "element",
-      "issue_key": "5266add9-f5ff-5da9-8502-fd3d7594d3a9",
+      "is_overdue": "true",
+      "issue_key": "b139ce98-4ecd-5724-9c16-1c266933b9d9",
+      "labels": "Structural",
       "lifecycle_state": "Open",
       "model_key": "structural",
       "priority": "",
       "project_id": "pcert-sample",
-      "stage": "",
-      "validation_run_id": "epc-delivery-v2.0-445a0e1fe3a57f9d"
+      "stage": "Design",
+      "validation_run_id": "epc-delivery-v2.1-0094f08f7dcbc692"
     },
     {
       "assignee_role": "model-coordination",
-      "due": "",
-      "element_key": "structural::2gTJhghMT81QThk15l2VwR",
-      "finding_keys": [
-        "14175615-f6ab-505b-a15e-564f5e398dd7"
-      ],
-      "grouping_policy": "element",
-      "issue_key": "55941ecd-438e-56af-875b-985444d73a32",
-      "lifecycle_state": "Open",
-      "model_key": "structural",
-      "priority": "",
-      "project_id": "pcert-sample",
-      "stage": "",
-      "validation_run_id": "epc-delivery-v2.0-445a0e1fe3a57f9d"
-    },
-    {
-      "assignee_role": "model-coordination",
-      "due": "",
+      "due": "2026-08-01T00:00:00Z",
       "element_key": "",
       "finding_keys": [
-        "152d0158-4a01-5e48-8c47-13f7c5b49e0b"
+        "482b5ce9-8872-5dde-a87a-9e30273dbdfb"
       ],
       "grouping_policy": "element",
-      "issue_key": "55f2fdc2-e108-5db8-b4e7-e03eb8339681",
+      "is_overdue": "true",
+      "issue_key": "b744b1e8-dd23-5f17-9057-29b791e0ba62",
+      "labels": "Architecture;Structural;HVAC;Plumbing",
       "lifecycle_state": "Open",
       "model_key": "iso-reference-view.structural",
       "priority": "",
       "project_id": "iso-reference-view",
-      "stage": "",
-      "validation_run_id": "epc-delivery-v2.0-445a0e1fe3a57f9d"
+      "stage": "Coordination",
+      "validation_run_id": "epc-delivery-v2.1-0094f08f7dcbc692"
     },
     {
-      "assignee_role": "model-coordination",
-      "due": "",
+      "assignee_role": "structural-lead",
+      "due": "2026-07-01T00:00:00Z",
+      "element_key": "structural::0Lvk$Qa81D5et3l3a4S9Vk",
+      "finding_keys": [
+        "87175238-9aab-5acd-bebe-5def1ce41d84"
+      ],
+      "grouping_policy": "element",
+      "is_overdue": "true",
+      "issue_key": "c9724f5d-132a-51bd-817e-83e43abe6310",
+      "labels": "Structural",
+      "lifecycle_state": "Open",
+      "model_key": "structural",
+      "priority": "",
+      "project_id": "pcert-sample",
+      "stage": "Design",
+      "validation_run_id": "epc-delivery-v2.1-0094f08f7dcbc692"
+    },
+    {
+      "assignee_role": "structural-lead",
+      "due": "2026-07-01T00:00:00Z",
       "element_key": "structural::3roxUKbVv98xiUcl22_T07",
       "finding_keys": [
-        "7b53b678-f66c-5107-9eae-f213653183dd"
+        "aaf9e01d-3375-5336-8e91-f468aba5148d"
       ],
       "grouping_policy": "element",
-      "issue_key": "58d77c94-3a83-58b5-aa8e-7cab1c66d153",
+      "is_overdue": "true",
+      "issue_key": "d88c43c0-a5ee-51af-bb43-176d72457107",
+      "labels": "Structural",
       "lifecycle_state": "Open",
       "model_key": "structural",
       "priority": "",
       "project_id": "pcert-sample",
-      "stage": "",
-      "validation_run_id": "epc-delivery-v2.0-445a0e1fe3a57f9d"
+      "stage": "Design",
+      "validation_run_id": "epc-delivery-v2.1-0094f08f7dcbc692"
     },
     {
-      "assignee_role": "model-coordination",
-      "due": "",
-      "element_key": "structural::0DyViLJJ175RvWQi1rE7a6",
+      "assignee_role": "information-manager",
+      "due": "2026-12-01T00:00:00Z",
+      "element_key": "structural::3SGBcf7Lv0r80vKtUCgOpf",
       "finding_keys": [
-        "ed3bf8b9-6e38-5d4d-8397-a85d66336f7d"
+        "b8e3b9ec-dd0d-50b9-ad9a-3ee46e04c1fc"
       ],
       "grouping_policy": "element",
-      "issue_key": "7f0fd7ea-0019-5d0b-aea5-0aaba77b587b",
+      "is_overdue": "false",
+      "issue_key": "e01554fd-c479-5a41-aac0-27923c0f44a6",
+      "labels": "Architecture;Structural",
       "lifecycle_state": "Open",
       "model_key": "structural",
       "priority": "",
       "project_id": "pcert-sample",
-      "stage": "",
-      "validation_run_id": "epc-delivery-v2.0-445a0e1fe3a57f9d"
+      "stage": "Handover",
+      "validation_run_id": "epc-delivery-v2.1-0094f08f7dcbc692"
     },
     {
       "assignee_role": "model-coordination",
-      "due": "",
-      "element_key": "structural::2ddLgAnQf4mBfh5IpUp54U",
-      "finding_keys": [
-        "2f4a3b89-d35b-5f37-ae0a-c3e24ae81cbb"
-      ],
-      "grouping_policy": "element",
-      "issue_key": "81e3afc8-3d83-574b-85de-e982d57a4317",
-      "lifecycle_state": "Open",
-      "model_key": "structural",
-      "priority": "",
-      "project_id": "pcert-sample",
-      "stage": "",
-      "validation_run_id": "epc-delivery-v2.0-445a0e1fe3a57f9d"
-    },
-    {
-      "assignee_role": "model-coordination",
-      "due": "",
-      "element_key": "architecture::1AQAupaRP1txwK1AGiN61V",
-      "finding_keys": [
-        "efc78427-d995-57a2-8237-9c4c697d60d8"
-      ],
-      "grouping_policy": "element",
-      "issue_key": "9b8b687a-04b5-5bf2-99ba-9e1ec31d83f4",
-      "lifecycle_state": "Open",
-      "model_key": "architecture",
-      "priority": "",
-      "project_id": "pcert-sample",
-      "stage": "",
-      "validation_run_id": "epc-delivery-v2.0-445a0e1fe3a57f9d"
-    },
-    {
-      "assignee_role": "model-coordination",
-      "due": "",
-      "element_key": "structural::3oNJ9yHi5FJuFnK8yg68Yt",
-      "finding_keys": [
-        "0149a3fa-553b-569f-b2e5-a98e95b97ca6"
-      ],
-      "grouping_policy": "element",
-      "issue_key": "aacc184c-98ed-5efd-8d7a-c344eff565fb",
-      "lifecycle_state": "Open",
-      "model_key": "structural",
-      "priority": "",
-      "project_id": "pcert-sample",
-      "stage": "",
-      "validation_run_id": "epc-delivery-v2.0-445a0e1fe3a57f9d"
-    },
-    {
-      "assignee_role": "model-coordination",
-      "due": "",
+      "due": "2026-08-01T00:00:00Z",
       "element_key": "",
       "finding_keys": [
-        "d0e58769-d98e-5b39-bea5-3248a904e129"
+        "cf20c927-a9d7-53e4-a9fb-7c757dfbe6b7"
       ],
       "grouping_policy": "element",
-      "issue_key": "b17489f8-5e19-5a81-a702-320e32c57b88",
+      "is_overdue": "true",
+      "issue_key": "ebdd8e01-2152-50f2-b4c7-9728228f6a0b",
+      "labels": "Architecture;Structural;HVAC;Plumbing",
       "lifecycle_state": "Open",
       "model_key": "iso-reference-view.plumbing",
       "priority": "",
       "project_id": "iso-reference-view",
-      "stage": "",
-      "validation_run_id": "epc-delivery-v2.0-445a0e1fe3a57f9d"
+      "stage": "Coordination",
+      "validation_run_id": "epc-delivery-v2.1-0094f08f7dcbc692"
     },
     {
-      "assignee_role": "model-coordination",
-      "due": "",
-      "element_key": "",
+      "assignee_role": "structural-lead",
+      "due": "2026-07-01T00:00:00Z",
+      "element_key": "structural::2ddLgAnQf4mBfh5IpUp54U",
       "finding_keys": [
-        "eaa65cb5-e775-5260-93d1-3dafc830a9c3"
+        "9cf9a76e-f3fb-5dc5-8693-31f46bc4cfa5"
       ],
       "grouping_policy": "element",
-      "issue_key": "d241ac35-19dd-53aa-8d3c-f6df4675c420",
-      "lifecycle_state": "Open",
-      "model_key": "iso-reference-view.architecture",
-      "priority": "",
-      "project_id": "iso-reference-view",
-      "stage": "",
-      "validation_run_id": "epc-delivery-v2.0-445a0e1fe3a57f9d"
-    },
-    {
-      "assignee_role": "model-coordination",
-      "due": "",
-      "element_key": "structural::0Lvk$Qa81D5et3l3a4S9Vk",
-      "finding_keys": [
-        "7f9f9878-eced-5093-bbd3-2c4046d52e33"
-      ],
-      "grouping_policy": "element",
-      "issue_key": "dfb792df-e58b-5522-ae2d-d140bb6eace1",
+      "is_overdue": "true",
+      "issue_key": "efd1dcb1-4049-5f8c-9adf-eacbec69bc4a",
+      "labels": "Structural",
       "lifecycle_state": "Open",
       "model_key": "structural",
       "priority": "",
       "project_id": "pcert-sample",
-      "stage": "",
-      "validation_run_id": "epc-delivery-v2.0-445a0e1fe3a57f9d"
+      "stage": "Design",
+      "validation_run_id": "epc-delivery-v2.1-0094f08f7dcbc692"
+    },
+    {
+      "assignee_role": "model-coordination",
+      "due": "2026-08-01T00:00:00Z",
+      "element_key": "",
+      "finding_keys": [
+        "ef4c7bee-ab41-517c-bf1d-82f71923ab77"
+      ],
+      "grouping_policy": "element",
+      "is_overdue": "true",
+      "issue_key": "f700b58c-081e-5944-8936-4d4191aa4616",
+      "labels": "Architecture;Structural;HVAC;Plumbing",
+      "lifecycle_state": "Open",
+      "model_key": "iso-reference-view.architecture",
+      "priority": "",
+      "project_id": "iso-reference-view",
+      "stage": "Coordination",
+      "validation_run_id": "epc-delivery-v2.1-0094f08f7dcbc692"
     }
   ],
   "models": [
@@ -2925,7 +2967,9 @@
       "citation": "ISO 19650-1:2018 §5.1 — information requirements must be identifiable.",
       "discipline_scope": "Architecture",
       "facet_kinds": "attribute",
+      "labels": "",
       "owner_role": "architecture-lead",
+      "priority": "",
       "requirement_id": "Name",
       "requirement_key": "63e9c0f9-4cb5-5b50-9f4b-456fc6f25c41",
       "requirement_label": "Name",
@@ -2939,7 +2983,9 @@
       "citation": "IFC4 Pset_WallCommon.",
       "discipline_scope": "Architecture",
       "facet_kinds": "property",
+      "labels": "",
       "owner_role": "architecture-lead",
+      "priority": "",
       "requirement_id": "Pset_WallCommon.IsExternal",
       "requirement_key": "5dd2e8a6-985f-5a56-9462-77a2765b7ef4",
       "requirement_label": "Pset_WallCommon.IsExternal",
@@ -2953,7 +2999,9 @@
       "citation": "IFC4 Pset_BeamCommon.",
       "discipline_scope": "Structural",
       "facet_kinds": "property",
+      "labels": "",
       "owner_role": "structural-lead",
+      "priority": "",
       "requirement_id": "Pset_BeamCommon.LoadBearing",
       "requirement_key": "0041a575-0031-56c2-a9a3-642dc399b84e",
       "requirement_label": "Pset_BeamCommon.LoadBearing",
@@ -2967,7 +3015,9 @@
       "citation": "ISO 19650-1:2018 §5.4 — deliverables must be spatially locatable.",
       "discipline_scope": "HVAC",
       "facet_kinds": "partof",
+      "labels": "",
       "owner_role": "mep-lead",
+      "priority": "",
       "requirement_id": "IFCRELCONTAINEDINSPATIALSTRUCTURE",
       "requirement_key": "491a4a0b-9b4a-5f77-b90d-31a7dc8beb44",
       "requirement_label": "IFCRELCONTAINEDINSPATIALSTRUCTURE",
@@ -2981,7 +3031,9 @@
       "citation": "ISO 19650-1:2018 §5.4 — deliverables must be spatially locatable.",
       "discipline_scope": "HVAC",
       "facet_kinds": "partof",
+      "labels": "",
       "owner_role": "mep-lead",
+      "priority": "",
       "requirement_id": "IFCRELCONTAINEDINSPATIALSTRUCTURE",
       "requirement_key": "2ead0930-568e-5d49-9708-716c5c740846",
       "requirement_label": "IFCRELCONTAINEDINSPATIALSTRUCTURE",
@@ -2995,7 +3047,9 @@
       "citation": "Project-assumed EPC delivery requirement; not a buildingSMART obligation.",
       "discipline_scope": "HVAC",
       "facet_kinds": "property",
+      "labels": "IDS;ProjectAssumption",
       "owner_role": "model-coordination",
+      "priority": "Medium",
       "requirement_id": "EPC_Delivery.AssetTag",
       "requirement_key": "842a37c7-3183-5fce-ab45-b93c37ec7a08",
       "requirement_label": "EPC_Delivery.AssetTag",
@@ -3009,7 +3063,9 @@
       "citation": "Project-assumed EPC delivery requirement; not a buildingSMART obligation.",
       "discipline_scope": "HVAC",
       "facet_kinds": "property",
+      "labels": "IDS;ProjectAssumption",
       "owner_role": "model-coordination",
+      "priority": "Medium",
       "requirement_id": "EPC_Delivery.SystemCode",
       "requirement_key": "9321298b-4a9f-5a3e-9d10-6668b736d465",
       "requirement_label": "EPC_Delivery.SystemCode",
@@ -3023,7 +3079,9 @@
       "citation": "Project-assumed EPC delivery requirement; not a buildingSMART obligation.",
       "discipline_scope": "HVAC",
       "facet_kinds": "property",
+      "labels": "IDS;ProjectAssumption",
       "owner_role": "model-coordination",
+      "priority": "Medium",
       "requirement_id": "EPC_Delivery.AssetTag",
       "requirement_key": "a1402559-dcfc-5af4-a222-3a13eaf2b161",
       "requirement_label": "EPC_Delivery.AssetTag",
@@ -3037,7 +3095,9 @@
       "citation": "Project-assumed EPC delivery requirement; not a buildingSMART obligation.",
       "discipline_scope": "HVAC",
       "facet_kinds": "property",
+      "labels": "IDS;ProjectAssumption",
       "owner_role": "model-coordination",
+      "priority": "Medium",
       "requirement_id": "EPC_Delivery.SystemCode",
       "requirement_key": "fd49c300-7ef6-5a8d-825f-53210dd579fe",
       "requirement_label": "EPC_Delivery.SystemCode",
@@ -3051,7 +3111,9 @@
       "citation": "ISO 19650-1:2018 §5.1 — information requirements must be identifiable.",
       "discipline_scope": "Architecture;Structural",
       "facet_kinds": "material",
+      "labels": "",
       "owner_role": "architecture-lead",
+      "priority": "",
       "requirement_id": "Name / Category",
       "requirement_key": "3d87ff1f-cc75-5e96-b83a-95709a015713",
       "requirement_label": "Name / Category",
@@ -3065,7 +3127,9 @@
       "citation": "ISO 19650-1:2018 §5.1 — information requirements must be identifiable.",
       "discipline_scope": "Structural",
       "facet_kinds": "entity",
+      "labels": "",
       "owner_role": "structural-lead",
+      "priority": "",
       "requirement_id": "IFC Class / Predefined Type",
       "requirement_key": "f6b0edb7-ca35-596a-b72e-42f21ed1419a",
       "requirement_label": "IFC Class / Predefined Type",
@@ -3079,7 +3143,9 @@
       "citation": "ISO 19650-1:2018 §5.1 — information requirements must be identifiable.",
       "discipline_scope": "Structural",
       "facet_kinds": "entity",
+      "labels": "",
       "owner_role": "structural-lead",
+      "priority": "",
       "requirement_id": "IFC Class / Predefined Type",
       "requirement_key": "fd3742bc-adf3-55ea-a220-d7b7c82df6d6",
       "requirement_label": "IFC Class / Predefined Type",
@@ -3093,7 +3159,9 @@
       "citation": "Project-assumed EPC delivery requirement; not a buildingSMART obligation.",
       "discipline_scope": "Architecture;Structural",
       "facet_kinds": "classification",
+      "labels": "",
       "owner_role": "information-manager",
+      "priority": "",
       "requirement_id": "System / Reference",
       "requirement_key": "4b7491ef-98a2-5976-aa1d-2b8b765688eb",
       "requirement_label": "System / Reference",
@@ -3107,7 +3175,9 @@
       "citation": "ISO 19650-1:2018 §5.3 — a federated information model requires a common coordinate reference.",
       "discipline_scope": "Architecture;Structural;HVAC;Plumbing",
       "facet_kinds": "shared-across-models",
+      "labels": "",
       "owner_role": "model-coordination",
+      "priority": "",
       "requirement_id": "shared-across-models",
       "requirement_key": "acb11f11-bf18-5516-a6f2-21e451a6e410",
       "requirement_label": "Carry the project's agreed setout references in every discipline model.",
@@ -3159,10 +3229,10 @@
     ],
     "ruleset": {
       "id": "epc-delivery",
-      "normalized_digest": "d9c0c6b451bff28bb66583d0dea84152134798f969b0ce3d91b9dc374b8f9a4f",
+      "normalized_digest": "a06989a5ea1e52f05f6b9345cc0b1897517210efbeb76c631c11e6306684769c",
       "source_blob_sha256": "",
-      "version": "2.0"
+      "version": "2.1"
     },
-    "validation_run_id": "epc-delivery-v2.0-445a0e1fe3a57f9d"
+    "validation_run_id": "epc-delivery-v2.1-0094f08f7dcbc692"
   }
 }

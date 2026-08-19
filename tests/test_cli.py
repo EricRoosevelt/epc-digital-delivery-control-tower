@@ -57,7 +57,7 @@ class AdvertisedCommandsTests(unittest.TestCase):
         code, out, _ = run_cli("version")
         self.assertEqual(code, 0)
         self.assertIn("epc-control-tower", out)
-        self.assertIn("data contract 1.4", out)
+        self.assertIn("data contract 1.5", out)
 
     def test_components_lists_what_is_registered(self):
         code, out, _ = run_cli("components")
@@ -177,12 +177,12 @@ class RunManifestTests(unittest.TestCase):
             )
 
         self.assertEqual(code, 0, err)
-        self.assertEqual(manifest["contract_version"], "1.4")
+        self.assertEqual(manifest["contract_version"], "1.5")
         self.assertEqual(
             sorted(entry["id"] for entry in manifest["exporters"]),
-            ["csv", "json", "legacy-bcf", "legacy-pbip"],
+            ["bcf", "csv", "json", "legacy-bcf", "legacy-pbip"],
         )
-        self.assertEqual(len(manifest["artifacts"]), 18)
+        self.assertEqual(len(manifest["artifacts"]), 19)
         for entry in manifest["artifacts"]:
             with self.subTest(artifact=entry["path"]):
                 self.assertRegex(entry["sha256"], r"^[0-9a-f]{64}$")

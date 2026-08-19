@@ -139,10 +139,15 @@ class GroupStageTests(unittest.TestCase):
     class InconsistentPolicy:
         id = "inconsistent"
 
-        def group(self, findings, *, validation_run_id, as_of):
+        def group(
+            self, findings, *, validation_run_id, as_of, requirements=None, milestones=None
+        ):
             policy = ElementGroupingPolicy()
             issues, events = policy.group(
-                findings, validation_run_id=validation_run_id, as_of=as_of
+                findings,
+                validation_run_id=validation_run_id,
+                as_of=as_of,
+                requirements=requirements,
             )
             import dataclasses
 
