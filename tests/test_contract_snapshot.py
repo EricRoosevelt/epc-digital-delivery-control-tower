@@ -71,7 +71,7 @@ class RecordedSnapshotTests(unittest.TestCase):
 
     def test_the_rule_set_is_the_declarative_one(self):
         self.assertEqual(self.recorded["ruleset"]["id"], "epc-delivery")
-        self.assertEqual(self.recorded["ruleset"]["version"], "1.0")
+        self.assertEqual(self.recorded["ruleset"]["version"], "2.0")
         self.assertEqual(self.recorded["ruleset"]["requirements"], 14)
 
     def test_the_earlier_contract_is_kept_as_history(self):
@@ -199,6 +199,109 @@ class RefreshCeremonyTests(unittest.TestCase):
         code, out, err = run_cli("snapshot")
         self.assertEqual(code, 0, err)
         self.assertIn("matches", out)
+
+
+class RuleSetVersionTests(unittest.TestCase):
+    """A `(ruleset_id, version)` pair names exactly one set of rules.
+
+    The rule set had a version and it did not move: `epc-delivery v1.0` stood
+    for three contracts while the rules went from seven to twelve, so the tag
+    named three different rule sets and `ids/epc-delivery_v1.0.ids` held three
+    different byte sequences.
+
+    Nothing broke, which is why nobody noticed. The normalized digest carries
+    identity and moved every time; the tag carries the *name*, and a name that
+    points at three things is worse than none. So the tag is not discretionary
+    and it did not get a ceremony of its own — it rides on the refresh, which
+    is already the moment somebody says what moved.
+    """
+
+    def test_the_shipped_rule_set_does_not_reuse_a_version(self):
+        from epc_control_tower.snapshots import ruleset_version_conflicts
+
+        recorded = load_snapshot(RECORDED)
+        self.assertEqual(ruleset_version_conflicts(PROJECT_ROOT, recorded), [])
+
+    def test_the_two_refreshes_that_should_not_have_happened_are_refused(self):
+        # The counterfactual, pinned. Contracts 1.2 and 1.3 were both refreshed
+        # with the rule set tagged v1.0 and different rules underneath it. Offer
+        # either of those recorded snapshots to the guard and it refuses.
+        from epc_control_tower.snapshots import (
+            load_snapshot,
+            ruleset_version_conflicts,
+            snapshot_path,
+        )
+
+        for version in ("1.2", "1.3"):
+            with self.subTest(contract=version):
+                recorded = load_snapshot(snapshot_path(PROJECT_ROOT, version))
+                self.assertEqual(recorded["ruleset"]["version"], "1.0")
+                conflicts = ruleset_version_conflicts(PROJECT_ROOT, recorded)
+                self.assertTrue(conflicts)
+                for conflict in conflicts:
+                    self.assertIn("epc-delivery v1.0", conflict)
+
+    def test_the_record_of_what_happened_is_left_alone(self):
+        # Those snapshots are the account of what this repository actually did.
+        # Rewriting them so a new rule looks retroactively obeyed would be the
+        # same dishonesty the ceremony exists to prevent, so the breach stands
+        # in the record and this test says so on purpose.
+        from epc_control_tower.snapshots import load_snapshot, snapshot_path
+
+        tagged = {
+            version: load_snapshot(snapshot_path(PROJECT_ROOT, version))["ruleset"]
+            for version in ("1.1", "1.2", "1.3")
+        }
+        self.assertEqual({r["version"] for r in tagged.values()}, {"1.0"})
+        # One tag, three different rule sets, still on the record.
+        self.assertEqual(len({r["normalized_digest"] for r in tagged.values()}), 3)
+
+    def test_a_version_bump_alone_re_keys_everything(self):
+        # Why the tag is not free to raise on a whim, measured rather than
+        # assumed: changing only the tag, touching no rule, moves the digest,
+        # the run id and every finding key.
+        import shutil
+
+        from epc_control_tower.rules import load_ruleset
+        from helpers import writable_test_directory
+
+        source = PROJECT_ROOT / "rules" / "epc-delivery"
+        before = load_ruleset(source)
+        with writable_test_directory("ruleset-version") as scratch:
+            target = scratch / "epc-delivery"
+            shutil.copytree(source, target)
+            meta = target / "ruleset.toml"
+            meta.write_text(
+                meta.read_text(encoding="utf-8").replace(
+                    'version = "2.0"', 'version = "2.1"'
+                ),
+                encoding="utf-8",
+            )
+            after = load_ruleset(target)
+
+        self.assertEqual(before.version, "2.0")
+        self.assertEqual(after.version, "2.1")
+        self.assertNotEqual(before.normalized_digest, after.normalized_digest)
+        # The requirements themselves are untouched, so their keys do not move.
+        # Only what is built *on top of* the rule set does.
+        self.assertEqual(
+            {r.requirement_key for r in before.requirements},
+            {r.requirement_key for r in after.requirements},
+        )
+
+    def test_the_compiled_document_is_named_for_the_version_it_holds(self):
+        # The filename is what a delivery archives, so it carries the version.
+        # It said v1.0 while holding three different documents; it must not
+        # again.
+        from epc_control_tower.rules import load_ruleset
+
+        ruleset = load_ruleset(PROJECT_ROOT / "rules" / "epc-delivery")
+        compiled = PROJECT_ROOT / "ids" / f"{ruleset.ruleset_id}_v{ruleset.version}.ids"
+        self.assertTrue(compiled.is_file(), compiled)
+        self.assertEqual(
+            sorted(p.name for p in (PROJECT_ROOT / "ids").glob("epc-delivery*.ids")),
+            [compiled.name],
+        )
 
 
 if __name__ == "__main__":

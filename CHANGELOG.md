@@ -17,6 +17,93 @@ of what moved exists before the expectation that says it did.
 
 ## Unreleased
 
+### Data contract 1.4 — the rule set gets a version that means something
+
+`rules/epc-delivery/ruleset.toml` said `version = "1.0"` for three contracts
+while the rules went from seven to twelve. The repository's own record is the
+measurement:
+
+| snapshot | rule set | requirements | normalized digest |
+|---|---|---:|---|
+| `contract-1.1.json` | `epc-delivery` **v1.0** | 9 | `93e3354b…` |
+| `contract-1.2.json` | `epc-delivery` **v1.0** | 13 | `7b5bb6d4…` |
+| `contract-1.3.json` | `epc-delivery` **v1.0** | 14 | `8a5585c3…` |
+
+One name, three rule sets. And `ids/epc-delivery_v1.0.ids` — the compiled
+document a delivery would archive — held three different byte sequences under
+that one filename.
+
+**Nothing was broken by it**, and that is worth stating plainly before the fix,
+because it is the reason nobody noticed. Two measurements:
+
+- Adding five rules with the tag unchanged moves the normalized digest
+  (`93e3354b…` → `8a5585c3…`) and therefore every finding key. Identity was
+  never at risk. The digest was doing its job the whole time.
+- Bumping the tag alone, changing no rule, re-keys **all 121 canonical
+  findings**. A version bump costs exactly as much as a rule change.
+
+So the tag is not carrying identity, and raising it is not free. Which is
+precisely why "leave it to the author's discretion" was the wrong answer: it
+would make a field that re-keys every published artifact a matter of taste.
+
+### What the version is for, given the digest already exists
+
+The digest identifies; the version *names*. Nobody writes "we validated against
+`8a5585c3efc9c774…`" in a delivery plan, and no two digests can be compared for
+which came first. A rule set version is the readable handle for the thing the
+digest identifies — and a handle that points at three different things is worse
+than no handle at all.
+
+It also is not a duplicate of the contract version. The contract version says
+what this project **publishes**; the rule set version says what it **asked
+for**. Different questions, different audiences, and the second is the one a
+project hands to a supplier.
+
+### The rule, and where it is enforced
+
+> **A `(ruleset_id, version)` pair names exactly one set of rules.**
+
+Raise the **major** part when the rule set can reject something it used to
+accept — a rule added, or an existing one tightened — because a model that
+passed before can fail now. Raise the **minor** part for anything else that
+moves the digest: wording, ownership metadata, a rule removed or relaxed.
+
+The rule set is therefore **2.0**, not 1.1. Five rules were added, two of which
+fail elements in the shipped fixture; a model that passed the seven-rule set can
+fail the twelve-rule one. That is not a point release.
+
+No second ceremony was created for it. `epc-ct snapshot --refresh` already is
+the moment somebody says out loud what moved, so the check rides on that: the
+refresh now refuses when the incoming rule set reuses a version tag that a
+recorded snapshot already pairs with different rules. Checked against every
+snapshot on record, not only the previous one, so reverting a tag to reuse an
+old number is caught too.
+
+Only the mechanical half is machine-checkable. Whether a change was major or
+minor is a judgement, and `ruleset.toml` now states the rule that judgement is
+made against, which is the most that can honestly be automated.
+
+**The counterfactual is pinned as a test.** `ruleset_version_conflicts` is run
+against the snapshots for contracts 1.2 and 1.3 and must refuse both — the two
+refreshes that actually happened and should not have. Those snapshots are left
+exactly as they were recorded: they are the account of what this repository did,
+and rewriting them to make a new rule look retroactively obeyed would be the
+same class of dishonesty the ceremony exists to prevent.
+
+### Unchanged
+
+The eight published CSVs and the BCF archive are byte-identical, and
+`run_id ids-v0.1-8706ef58303bfd11` still resolves — the legacy projection is
+scoped to the frozen v0.1 document, which this does not touch. Canonical keys
+all move, because the rule set version is part of the validation identity, which
+is the whole point.
+
+`ids/epc-delivery_v1.0.ids` is replaced by `ids/epc-delivery_v2.0.ids`. The
+filename carries the version for exactly this reason, and now it tells the
+truth.
+
+Snapshot: `docs/contracts/contract-1.4.json`.
+
 ### Data contract 1.3 — a second checker, and what a finding points at
 
 `Checker` has been a protocol since Phase 1 with exactly one implementation,

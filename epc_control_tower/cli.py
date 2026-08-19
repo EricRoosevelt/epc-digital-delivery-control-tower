@@ -191,6 +191,7 @@ def _command_snapshot(arguments: argparse.Namespace) -> int:
         changelog_mentions,
         compare_snapshots,
         load_snapshot,
+        ruleset_version_conflicts,
         snapshot_path,
         write_snapshot,
     )
@@ -212,6 +213,29 @@ def _command_snapshot(arguments: argparse.Namespace) -> int:
             print(
                 f"error: {CHANGELOG_HINT} must describe contract "
                 f"{current['contract_version']} before its snapshot is refreshed.",
+                file=sys.stderr,
+            )
+            return 2
+        # The rule set has a version too, and it went three contracts without
+        # moving while the rules changed twice underneath it. It rides on this
+        # ceremony rather than getting one of its own: a refresh is already the
+        # moment somebody says out loud what moved, and this is one more thing
+        # that must be true when they do.
+        conflicts = ruleset_version_conflicts(root, current)
+        if conflicts:
+            ruleset = current["ruleset"]
+            print(
+                f"error: rule set {ruleset['id']} v{ruleset['version']} already "
+                f"names a different set of rules.",
+                file=sys.stderr,
+            )
+            for conflict in conflicts:
+                print(f"  - {conflict}", file=sys.stderr)
+            print(
+                "\nA (ruleset_id, version) pair names one rule set. Raise the "
+                "version in the rule set's ruleset.toml: the major part when "
+                "the rule set can now reject something it used to accept, the "
+                "minor part otherwise.",
                 file=sys.stderr,
             )
             return 2

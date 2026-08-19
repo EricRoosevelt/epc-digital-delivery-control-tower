@@ -11,7 +11,21 @@
 
 [ruleset]
 ruleset_id = "epc-delivery"
-version = "1.0"
+
+# A (ruleset_id, version) pair names exactly one set of rules, and `epc-ct
+# snapshot --refresh` refuses if it ever names two.
+#
+# Raise the major part when this rule set can reject something it used to
+# accept — a rule added, or an existing one tightened — because a model that
+# passed before can fail now. Raise the minor part for anything else that moves
+# the normalized digest: wording, ownership metadata, a rule removed or
+# relaxed. Only the first half is machine-checkable; which half moved is a
+# judgement, and it is written down here so it is at least a judgement made
+# against a stated rule.
+#
+# 2.0 because 1.0 said "seven rules" and then went on saying it while the rules
+# became twelve. See the CHANGELOG entry for contract 1.4.
+version = "2.0"
 title = "EPC Digital Delivery Requirements"
 description = "Project-authored information requirements for the EPC Digital Delivery Control Tower prototype."
 purpose = "Validate selected information requirements in public multidisciplinary IFC sample models."

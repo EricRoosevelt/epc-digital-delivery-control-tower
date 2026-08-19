@@ -38,6 +38,8 @@ __all__ = [
     "compare_snapshots",
     "changelog_mentions",
     "load_snapshot",
+    "recorded_snapshots",
+    "ruleset_version_conflicts",
     "snapshot_path",
     "write_snapshot",
 ]
@@ -165,6 +167,67 @@ def compare_snapshots(
             differences.append(f"artifact changed: {path} ({was[:12]} -> {now[:12]})")
 
     return differences
+
+
+def recorded_snapshots(repository_root: Path) -> list[tuple[Path, Mapping[str, object]]]:
+    """Every contract snapshot this repository has kept, oldest first by name."""
+
+    directory = repository_root / SNAPSHOT_DIRECTORY
+    if not directory.is_dir():
+        return []
+    return [
+        (path, load_snapshot(path)) for path in sorted(directory.glob("contract-*.json"))
+    ]
+
+
+def ruleset_version_conflicts(
+    repository_root: Path,
+    current: Mapping[str, object],
+) -> list[str]:
+    """Where the incoming rule set reuses a version tag for different rules.
+
+    The rule being enforced is one sentence:
+
+        **A ``(ruleset_id, version)`` pair names exactly one set of rules.**
+
+    It is not a restatement of the contract ceremony. The contract version says
+    what this project *publishes*; the rule set version says what it *asked
+    for*, and those are different questions with different audiences. A delivery
+    keeps the rule set it was validated against, and keeps it by name.
+
+    Nor is the version redundant with the normalized digest, though it is easy
+    to think so. The digest already carries identity — add a rule and every key
+    moves whether or not the tag does, which is exactly why nothing broke while
+    the tag stood still. What the digest cannot do is *be quoted*. Nobody
+    writes "we validated against 8a5585c3efc9c774…" in a delivery plan, and no
+    two digests can be compared for which came first. The tag is the readable
+    name for the thing the digest identifies, and a name that points at three
+    different things is worse than no name.
+
+    Checked against every recorded snapshot rather than only the previous one,
+    so that reverting a tag to reuse an old number is caught too.
+    """
+
+    ruleset = current.get("ruleset", {})
+    ruleset_id = ruleset.get("id")
+    version = ruleset.get("version")
+    digest = ruleset.get("normalized_digest")
+
+    conflicts = []
+    for path, recorded in recorded_snapshots(repository_root):
+        was = recorded.get("ruleset", {})
+        if was.get("id") != ruleset_id or was.get("version") != version:
+            continue
+        if was.get("normalized_digest") == digest:
+            continue
+        conflicts.append(
+            f"{path.name} already records {ruleset_id} v{version} with a "
+            f"different rule set ({was.get('requirements')} requirements, "
+            f"digest {str(was.get('normalized_digest'))[:12]}…; now "
+            f"{ruleset.get('requirements')} requirements, digest "
+            f"{str(digest)[:12]}…)"
+        )
+    return conflicts
 
 
 def changelog_mentions(repository_root: Path, contract_version: str) -> bool:

@@ -98,7 +98,7 @@ class ShippedFixtureTests(unittest.TestCase):
         # A completeness rule in an IDS document would be a sentence in a
         # language that cannot hold it, and IfcTester would then evaluate a
         # specification nobody meant it to see.
-        document = (PROJECT_ROOT / "ids" / "epc-delivery_v1.0.ids").read_text("utf-8")
+        document = (PROJECT_ROOT / "ids" / "epc-delivery_v2.0.ids").read_text("utf-8")
         self.assertNotIn("R-010", document)
         self.assertIn("R-009", document)
 

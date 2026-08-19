@@ -1,5 +1,5 @@
 {
-  "artifact_bundle_id": "bundle-d28bff5d6eae5edc",
+  "artifact_bundle_id": "bundle-a9a5d30877fb277f",
   "artifacts": [
     {
       "bytes": 630,
@@ -41,25 +41,25 @@
       "bytes": 35514,
       "exporter": "csv",
       "path": "data/processed/canonical/findings.csv",
-      "sha256": "9dd46a2cc0382fa7017598563b98792e4318bb295cf632ef09156e45ae5b0ecb"
+      "sha256": "d62f7ef1adbf490816cb4abec4426e7d1290bf22dda0d9a097b4350fcc45529d"
     },
     {
       "bytes": 4658,
       "exporter": "csv",
       "path": "data/processed/canonical/issue_events.csv",
-      "sha256": "cbe905ab85978d8ab94b7d94f6802c206f6ae47a23d20173bcfcb9af89e2273e"
+      "sha256": "c823e35b6a8d1fa9484a7892dc61337275dd4e870bf79270f7f467e836a47a1c"
     },
     {
       "bytes": 1801,
       "exporter": "csv",
       "path": "data/processed/canonical/issue_findings.csv",
-      "sha256": "71e3d7b41c1340a45b51f658f4c97fdc94ed615241d19059e527deadc100de1f"
+      "sha256": "c810fd07d5f3a930f49013985e7207b0e81a48406b044f8ce4d220e16529abf7"
     },
     {
       "bytes": 3616,
       "exporter": "csv",
       "path": "data/processed/canonical/issues.csv",
-      "sha256": "0a2b5e680c7abb77b44f9f1c7addb28aed797a4ca31dbd2dde78cb56524550b5"
+      "sha256": "d7219c7fc46b5211f0312626d702517a474c611d325279e5a561799146bdfdb1"
     },
     {
       "bytes": 2225,
@@ -83,7 +83,7 @@
       "bytes": 119793,
       "exporter": "json",
       "path": "data/processed/canonical/run.json",
-      "sha256": "f4edb552b11780c4174c6742c517d093f5573de911eb7112d8209e6656b4c255"
+      "sha256": "55e3a372b49bd98a78247354f2f1644fb5af24dedc9a4b12c0f395f7bd8297aa"
     },
     {
       "bytes": 18462,
@@ -111,7 +111,7 @@
     }
   ],
   "as_of": "2026-08-13T00:00:00Z",
-  "contract_version": "1.3",
+  "contract_version": "1.4",
   "exporters": [
     {
       "config_sha256": "",
@@ -134,5 +134,5 @@
       "version": "1.0.0"
     }
   ],
-  "validation_run_id": "epc-delivery-v1.0-259cb40729569a87"
+  "validation_run_id": "epc-delivery-v2.0-445a0e1fe3a57f9d"
 }
