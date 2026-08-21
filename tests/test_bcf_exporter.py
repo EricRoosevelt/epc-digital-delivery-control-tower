@@ -99,7 +99,10 @@ class MetadataDrivenTests(unittest.TestCase):
         import dataclasses
 
         projection = project_bundle(
-            self.bundle, project_id=LEGACY_PROJECT_ID, frozen_ruleset=frozen_ruleset(), compat=legacy_compat()
+            self.bundle,
+            project_id=LEGACY_PROJECT_ID,
+            frozen_ruleset=frozen_ruleset(),
+            compat=legacy_compat(),
         )
         bare = dataclasses.replace(
             projection.topics[0], priority="", stage="", assignee_role="", labels=()

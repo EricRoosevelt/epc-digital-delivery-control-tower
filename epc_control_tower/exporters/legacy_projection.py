@@ -48,7 +48,7 @@ from ..legacy_identity import (
     legacy_topic_guid,
     legacy_viewpoint_guid,
 )
-from .legacy_compat import FrozenRequirementMeta, LegacyCompatibility
+from .legacy_compat import LegacyCompatibility
 from .legacy_contract import (
     CREATION_AUTHOR,
     EVENT_SOURCE,

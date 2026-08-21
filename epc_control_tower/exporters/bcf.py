@@ -168,7 +168,9 @@ class BcfExporter:
         elements = {element.element_key: element for element in bundle.elements}
         models = {model.model_key: model for model in bundle.models}
 
-        events_by_issue = {issue.issue_key: bundle.events_for(issue.issue_key) for issue in issues}
+        events_by_issue = {
+            issue.issue_key: bundle.events_for(issue.issue_key) for issue in issues
+        }
         authors = self._authors_written(issues, events_by_issue)
 
         entries = self.root_entries(issues, authors)

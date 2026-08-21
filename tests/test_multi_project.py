@@ -310,7 +310,9 @@ class LegacyScopeTests(unittest.TestCase):
 
     def test_the_second_project_is_absent_from_every_published_file(self):
         tables = LegacyPbipAdapter(
-            project_id=LEGACY_PROJECT_ID, frozen_ruleset=frozen_ruleset(), compat=legacy_compat()
+            project_id=LEGACY_PROJECT_ID,
+            frozen_ruleset=frozen_ruleset(),
+            compat=legacy_compat(),
         ).build_tables(self.bundle)
         for filename, data in tables.items():
             with self.subTest(table=filename):
@@ -320,9 +322,13 @@ class LegacyScopeTests(unittest.TestCase):
         # Measured, not assumed. This is the outcome the scope decision exists
         # to prevent, and it would have been silent.
         published = LegacyPbipAdapter(
-            project_id=LEGACY_PROJECT_ID, frozen_ruleset=frozen_ruleset(), compat=legacy_compat()
+            project_id=LEGACY_PROJECT_ID,
+            frozen_ruleset=frozen_ruleset(),
+            compat=legacy_compat(),
         ).build_tables(self.bundle)
-        widened = LegacyPbipAdapter(frozen_ruleset=frozen_ruleset(), compat=legacy_compat()).build_tables(
+        widened = LegacyPbipAdapter(
+            frozen_ruleset=frozen_ruleset(), compat=legacy_compat()
+        ).build_tables(
             dataclasses.replace(
                 self.bundle,
                 projects=tuple(

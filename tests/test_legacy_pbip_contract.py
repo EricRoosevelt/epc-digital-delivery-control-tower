@@ -56,7 +56,9 @@ class ByteEqualityTests(unittest.TestCase):
     def setUpClass(cls):
         cls.result = shipped_pipeline_result()
         cls.adapter = LegacyPbipAdapter(
-            project_id=LEGACY_PROJECT_ID, frozen_ruleset=frozen_ruleset(), compat=legacy_compat()
+            project_id=LEGACY_PROJECT_ID,
+            frozen_ruleset=frozen_ruleset(),
+            compat=legacy_compat(),
         )
         cls.tables = cls.adapter.build_tables(cls.result.bundle)
 
@@ -181,7 +183,9 @@ class LegacyManifestTests(unittest.TestCase):
             processed = scratch / "processed"
             reports = scratch / "reports"
             LegacyPbipAdapter(
-                project_id=LEGACY_PROJECT_ID, frozen_ruleset=frozen_ruleset(), compat=legacy_compat()
+                project_id=LEGACY_PROJECT_ID,
+                frozen_ruleset=frozen_ruleset(),
+                compat=legacy_compat(),
             ).export(result.bundle, processed)
             LegacyBcfExporter(
                 schema_dir=default_schema_dir(PROJECT_ROOT),

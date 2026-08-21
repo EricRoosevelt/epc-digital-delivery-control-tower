@@ -104,7 +104,10 @@ class WideningTheRuleSetTests(unittest.TestCase):
 
     def test_with_the_scope_the_published_run_identity_survives(self):
         scoped = project_bundle(
-            self.widened, project_id=LEGACY_PROJECT_ID, frozen_ruleset=self.frozen, compat=legacy_compat()
+            self.widened,
+            project_id=LEGACY_PROJECT_ID,
+            frozen_ruleset=self.frozen,
+            compat=legacy_compat(),
         )
         self.assertEqual(scoped.run_id, LEGACY_RUN_ID)
         self.assertEqual(len(scoped.findings), 47)
@@ -155,10 +158,16 @@ class FrozenMetadataTests(unittest.TestCase):
             ),
         )
         current = project_bundle(
-            self.bundle, project_id=LEGACY_PROJECT_ID, frozen_ruleset=self.frozen, compat=legacy_compat()
+            self.bundle,
+            project_id=LEGACY_PROJECT_ID,
+            frozen_ruleset=self.frozen,
+            compat=legacy_compat(),
         )
         altered = project_bundle(
-            self.bundle, project_id=LEGACY_PROJECT_ID, frozen_ruleset=reclassified, compat=legacy_compat()
+            self.bundle,
+            project_id=LEGACY_PROJECT_ID,
+            frozen_ruleset=reclassified,
+            compat=legacy_compat(),
         )
         self.assertEqual(
             {row.severity for row in current.findings if row.is_issue == "true"},

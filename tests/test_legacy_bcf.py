@@ -108,9 +108,15 @@ class ModelGroupingPolicy:
 
             deciding, due = ElementGroupingPolicy._deciding(members, by_key, due_of)
             issue_key = build_issue_key(
-                validation_run_id=validation_run_id, grouping_policy=self.id, group_ref=model_key
+                validation_run_id=validation_run_id,
+                grouping_policy=self.id,
+                group_ref=model_key,
             )
-            role = deciding.owner_role if deciding and deciding.owner_role else "model-coordination"
+            role = (
+                deciding.owner_role
+                if deciding and deciding.owner_role
+                else "model-coordination"
+            )
             event = IssueEvent(
                 event_key=build_issue_event_key(
                     issue_key=issue_key, sequence=1, event_type="topic_created"
@@ -141,7 +147,9 @@ class ModelGroupingPolicy:
                     priority=deciding.priority if deciding else "",
                     stage=deciding.stage if deciding else "",
                     due=due,
-                    is_overdue=derive_is_overdue(as_of=as_of, due=due, lifecycle_state=lifecycle),
+                    is_overdue=derive_is_overdue(
+                        as_of=as_of, due=due, lifecycle_state=lifecycle
+                    ),
                     labels=(),
                 )
             )
