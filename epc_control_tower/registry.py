@@ -150,6 +150,21 @@ class Registry:
             for checker in (self.checker(checker_id) for checker_id in sorted(checker_ids))
         )
 
+    def grouping_fingerprint(self, policy_id: str) -> ComponentFingerprint:
+        """Fingerprint the grouping policy for the artifact bundle identity.
+
+        The grouping choice shapes issues and therefore every exported byte, so
+        its id, version and configuration belong in the artifact identity the
+        same way a checker's belong in the validation identity.
+        """
+
+        policy = self.grouping_policy(policy_id)
+        return ComponentFingerprint(
+            component_id=policy.id,
+            version=policy.version,
+            config_sha256=policy.config_sha256(),
+        )
+
     def exporter_fingerprints(
         self, exporter_ids: Iterable[str]
     ) -> tuple[ComponentFingerprint, ...]:
@@ -188,6 +203,7 @@ def default_registry(config: RunConfig) -> Registry:
     from .exporters.canonical import CsvExporter, JsonExporter
     from .exporters.legacy_bcf import LegacyBcfExporter
     from .exporters.legacy_pbip import LegacyPbipAdapter
+    from .exporters.legacy_compat import load_legacy_compatibility
     from .grouping.element import ElementGroupingPolicy
     from .rules import load_ruleset
 
@@ -208,6 +224,17 @@ def default_registry(config: RunConfig) -> Registry:
         if config.legacy_ruleset_path is not None
         else None
     )
+    legacy_compat = (
+        load_legacy_compatibility(
+            config.legacy_compat_path, expected_sha256=config.legacy_compat_sha256
+        )
+        if config.legacy_compat_path is not None
+        else None
+    )
+    # The general BCF writer projects the whole run — no project or rule-set
+    # scope. Narrowing to a published slice is what the legacy adapters below
+    # exist for, and conflating the two is what made this exporter publish three
+    # topics for a run that had twenty-one issues.
     registry.register_exporter(
         BcfExporter(
             schema_dir=default_schema_dir(config.repository_root),
@@ -215,8 +242,6 @@ def default_registry(config: RunConfig) -> Registry:
             creation_author=config.bcf_creation_author,
             topic_type=config.bcf_topic_type,
             role_domain=config.bcf_role_domain,
-            project_id=legacy_project_id,
-            frozen_ruleset=frozen_ruleset,
         )
     )
     registry.register_exporter(
@@ -224,11 +249,14 @@ def default_registry(config: RunConfig) -> Registry:
             schema_dir=default_schema_dir(config.repository_root),
             project_id=legacy_project_id,
             frozen_ruleset=frozen_ruleset,
+            compat=legacy_compat,
         )
     )
     registry.register_exporter(
         LegacyPbipAdapter(
-            project_id=legacy_project_id, frozen_ruleset=frozen_ruleset
+            project_id=legacy_project_id,
+            frozen_ruleset=frozen_ruleset,
+            compat=legacy_compat,
         )
     )
     return registry

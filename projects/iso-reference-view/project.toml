@@ -56,3 +56,17 @@ filename = "basin-tessellation.ifc"
 source_url = "https://github.com/buildingSMART/Sample-Test-Files/blob/cecf656112a54a0d8cdd8b06b9398bfea5163886/IFC%204.0.2.1%20%28IFC%204%29/ISO%20Spec%20-%20ReferenceView_V1.2/basin-tessellation.ifc"
 license = "CC BY 4.0"
 content_sha256 = "7278769ec5ef35d388819d2f197519061c7f0f68dd43a733f333ddeb74578121"
+
+# Delivery programme for this project. Same three stages the rules reach; the
+# dates are this project's to state and need not match another project's.
+[[milestones]]
+stage = "Design"
+due = "2026-07-01T00:00:00Z"
+
+[[milestones]]
+stage = "Coordination"
+due = "2026-08-01T00:00:00Z"
+
+[[milestones]]
+stage = "Handover"
+due = "2026-12-01T00:00:00Z"

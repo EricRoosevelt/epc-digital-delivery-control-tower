@@ -26,6 +26,7 @@ __all__ = [
     "shipped_pipeline_result",
     "shipped_reports_dir",
     "frozen_ruleset",
+    "legacy_compat",
     "shipped_run_config",
     "declared_rules_plus_one",
     "widened_ruleset_bundle",
@@ -120,6 +121,18 @@ def frozen_ruleset():
 
     return load_ruleset(
         PROJECT_ROOT / "ids" / "epc_delivery_requirements_v0.1.ids"
+    )
+
+
+@functools.cache
+def legacy_compat():
+    """The frozen legacy compatibility metadata the shipped config pins."""
+
+    from epc_control_tower.exporters.legacy_compat import load_legacy_compatibility
+
+    config = shipped_run_config()
+    return load_legacy_compatibility(
+        config.legacy_compat_path, expected_sha256=config.legacy_compat_sha256
     )
 
 

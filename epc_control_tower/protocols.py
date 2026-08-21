@@ -163,14 +163,24 @@ class GroupingPolicy(Protocol):
     policy needs it to answer the questions an issue has and a finding does not
     — who owns this, how urgent is it, which stage does it belong to — because
     those are properties of the *rule*, and a finding carries only the key of
-    the requirement it is about. Handing the mapping in rather than letting a
-    policy load the rule set keeps grouping a pure function of what it is given.
+    the requirement it is about. ``programmes`` maps a project id to that
+    project's ``stage -> due`` schedule, so a policy can date an issue's
+    deadline from the project that owns it rather than from a global table that
+    cannot tell two projects apart. Handing both in rather than letting a policy
+    load them keeps grouping a pure function of what it is given.
 
-    It is keyword-only with a default so that a policy which does not care
-    about metadata does not have to mention it.
+    Both are passed on every call. They are keyword arguments with ``None``
+    defaults so a conforming policy may accept and ignore either, but a policy
+    must *accept* both — the stage passes them unconditionally, and a policy
+    that omitted them from its signature would raise. ``id``, ``version`` and
+    ``config_sha256`` are required so that the grouping choice, like a checker
+    and an exporter, has an identity a bundle can fold in.
     """
 
     id: str
+    version: str
+
+    def config_sha256(self) -> str: ...
 
     def group(
         self,
@@ -179,7 +189,7 @@ class GroupingPolicy(Protocol):
         validation_run_id: str,
         as_of: str,
         requirements: Mapping[str, Requirement] | None = None,
-        milestones: Mapping[str, str] | None = None,
+        programmes: Mapping[str, Mapping[str, str]] | None = None,
     ) -> tuple[tuple[Issue, ...], tuple[IssueEvent, ...]]: ...
 
 

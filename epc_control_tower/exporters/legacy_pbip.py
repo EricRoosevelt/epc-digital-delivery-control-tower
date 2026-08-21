@@ -41,6 +41,7 @@ from .legacy_contract import (
     LegacyTopicRow,
     LegacyViewpointRow,
 )
+from .legacy_compat import LegacyCompatibility, legacy_config_sha256
 from .legacy_projection import LegacyProjection, project_bundle
 
 __all__ = ["LEGACY_TABLES", "LegacyPbipAdapter"]
@@ -102,6 +103,7 @@ class LegacyPbipAdapter:
         *,
         project_id: str | None = None,
         frozen_ruleset: RuleSet | None = None,
+        compat: LegacyCompatibility | None = None,
     ) -> None:
         #: The single project these files describe, and the single rule set
         #: version. See :func:`~.legacy_projection.narrow_to_project` and
@@ -109,9 +111,15 @@ class LegacyPbipAdapter:
         #: contract has exactly one of each, and what widening either costs.
         self._project_id = project_id
         self._frozen_ruleset = frozen_ruleset
+        self._compat = compat
 
     def config_sha256(self) -> str:
-        return ""
+        return legacy_config_sha256(
+            subdirectory="",
+            project_id=self._project_id,
+            frozen_ruleset=self._frozen_ruleset,
+            compat=self._compat,
+        )
 
     def build_tables(
         self, bundle: RunBundle, projection: LegacyProjection | None = None
@@ -122,6 +130,7 @@ class LegacyPbipAdapter:
             bundle,
             project_id=self._project_id,
             frozen_ruleset=self._frozen_ruleset,
+            compat=self._compat,
         )
         return {
             filename: _table_bytes(

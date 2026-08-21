@@ -153,6 +153,7 @@ def build_bundle() -> RunBundle:
         model_key=model.model_key,
         element_key=element.element_key,
         grouping_policy="element",
+        group_ref=element.element_key,
         finding_keys=(finding.finding_key,),
         lifecycle_state=IssueState.OPEN,
         assignee_role="model-coordination",

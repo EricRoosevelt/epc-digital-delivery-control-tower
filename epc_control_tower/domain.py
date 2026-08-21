@@ -26,6 +26,7 @@ from __future__ import annotations
 import dataclasses
 import re
 from dataclasses import dataclass
+from datetime import datetime, timedelta
 from enum import StrEnum
 from typing import ClassVar
 
@@ -43,6 +44,7 @@ __all__ = [
     "IssueState",
     "Model",
     "Project",
+    "ProjectMilestone",
     "Provenance",
     "Requirement",
     "RuleSet",
@@ -51,14 +53,74 @@ __all__ = [
     "StateChangedPayload",
     "TopicCreatedPayload",
     "ValidationRun",
+    "derive_is_overdue",
     "derive_lifecycle_state",
     "derive_model_key",
     "field_names",
     "make_element_key",
+    "parse_instant",
 ]
 
 _SHA256 = re.compile(r"^[0-9a-f]{64}$")
 _SLUG = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]*$")
+
+#: A timezone-aware ``xs:dateTime``, strictly. ``datetime.fromisoformat`` alone
+#: is too lenient for this: it accepts a space in place of ``T``, an offset
+#: without a colon, and other spellings the schema forbids. The lexical space is
+#: pinned here — four-digit year, two-digit month/day, ``T``, ``hh:mm:ss``, an
+#: optional fractional second, and a required ``Z`` or ``±hh:mm`` — so that what
+#: reaches BCF's ``xs:dateTime`` fields is what BCF will accept. Field *ranges*
+#: (a thirteenth month, an offset past 14:00) are left to :func:`parse_instant`
+#: to reject, because the calendar knows them and a regex would only approximate.
+_XS_DATETIME = re.compile(
+    r"^-?\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?(Z|[+-]\d{2}:\d{2})$"
+)
+
+
+def parse_instant(value: str, label: str) -> datetime:
+    """Parse one timezone-aware ``xs:dateTime``, or fail closed.
+
+    One parser for every moment this system records — ``ValidationRun.as_of``,
+    a ``ProjectMilestone.due``, an ``IssueEvent.occurred_at`` — so that a
+    deadline comparison can never disagree with a date validator by parsing in
+    one place and string-comparing in another. A naive datetime is rejected: an
+    offset is required, because ``…T00:00:00Z`` and ``…T01:00:00+02:00`` are the
+    same instant and only an offset-aware comparison can see that.
+
+    Two gates, because neither alone is enough. The lexical form is checked
+    against :data:`_XS_DATETIME` first — ``fromisoformat`` would otherwise accept
+    a space separator or a bare-hour offset that ``xs:dateTime`` rejects — and
+    then the value is parsed, which is what catches an out-of-range field the
+    pattern deliberately does not police.
+    """
+
+    if not _XS_DATETIME.match(value):
+        raise ValueError(
+            f"{label} must be a timezone-aware xs:dateTime "
+            f"(YYYY-MM-DDThh:mm:ss with Z or ±hh:mm), got {value!r}"
+        )
+    try:
+        moment = datetime.fromisoformat(value)
+    except ValueError as exc:
+        raise ValueError(f"{label} is not a valid datetime: {value!r}") from exc
+    offset = moment.utcoffset()
+    if offset is None:  # pragma: no cover - the pattern requires an offset
+        raise ValueError(
+            f"{label} must carry a timezone offset (…Z or ±hh:mm), got {value!r}"
+        )
+    # xs:dateTime bounds the timezone at ±14:00; Python's datetime would accept
+    # anything under ±24:00. A ``+15:00`` or ``+14:01`` is a value BCF's schema
+    # would reject, so it is rejected here rather than allowed to reach it.
+    if abs(offset) > timedelta(hours=14):
+        raise ValueError(
+            f"{label} timezone offset is out of range (xs:dateTime allows at most "
+            f"±14:00), got {value!r}"
+        )
+    return moment
+
+
+def _require_aware_datetime(value: str, label: str) -> None:
+    parse_instant(value, label)
 
 
 def field_names(row_type: type) -> tuple[str, ...]:
@@ -167,6 +229,34 @@ class Project:
     def __post_init__(self) -> None:
         _require_slug(self.project_id, "project_id")
         _require_text(self.name, "project name")
+
+
+@dataclass(frozen=True, slots=True)
+class ProjectMilestone:
+    """When one project's information for one delivery stage is due.
+
+    Programme data belongs to the project, not to the rule set. Two projects in
+    one portfolio run the same rules and reach the same stages on different
+    dates, and a stage-keyed table on the rule set cannot say that. ``stage`` is
+    still named by the rule (a `Requirement.stage`); the *date* it is due is the
+    project's to state.
+
+    ``due`` is deliberately allowed to be empty, and empty is not the same as
+    absent. A stage present with ``due=""`` says "this project has this stage
+    but sets no deadline for it"; a stage missing from a project's programme is
+    a coverage gap that fails the run. The two must never be conflated by a
+    lookup that defaults a missing key to the empty string.
+    """
+
+    project_id: str
+    stage: str
+    due: str = ""
+
+    def __post_init__(self) -> None:
+        _require_slug(self.project_id, "project_id")
+        _require_text(self.stage, "milestone stage")
+        if self.due:
+            _require_aware_datetime(self.due, f"milestone {self.stage} due")
 
 
 @dataclass(frozen=True, slots=True)
@@ -395,15 +485,6 @@ class RuleSet:
     normalized_digest: str
     source_blob_sha256: str = ""
     requirements: tuple[Requirement, ...] = ()
-    #: When each delivery stage's information is due, as ``(stage, date)``
-    #: pairs. A *programme date*, not an offset from when a run happened.
-    #:
-    #: That distinction is the whole reason `overdue` can be answered at
-    #: all. An offset from the opening event would put every due date in the
-    #: future of the only moment this system has, so nothing could ever be
-    #: overdue. A programme says coordination information was due on a date,
-    #: and the logical `as_of` is either past it or not.
-    milestones: tuple[tuple[str, str], ...] = ()
 
     def __post_init__(self) -> None:
         _require_slug(self.ruleset_id, "ruleset_id")
@@ -416,14 +497,6 @@ class RuleSet:
         duplicates = sorted({key for key in keys if keys.count(key) > 1})
         if duplicates:
             raise ValueError(f"Duplicate requirement_key values: {duplicates}")
-
-    def milestone_for(self, stage: str) -> str:
-        """When this stage's information is due, or empty if unstated."""
-
-        for name, date in self.milestones:
-            if name == stage:
-                return date
-        return ""
 
     def by_key(self, requirement_key: str) -> Requirement:
         for requirement in self.requirements:
@@ -465,6 +538,7 @@ class ValidationRun:
 
     def __post_init__(self) -> None:
         _require_text(self.validation_run_id, "validation_run_id")
+        _require_aware_datetime(self.as_of, "as_of")
         _require_sha256(self.ruleset_normalized_digest, "ruleset_normalized_digest")
         # Recorded for audit, not for identity: which file was read is worth
         # knowing, but reformatting it must not re-key the validation.
@@ -660,6 +734,10 @@ class IssueEvent:
     event_type: str
     from_state: IssueState | None
     to_state: IssueState | None
+    #: Who acted, as a role. Optional: an event may instead name a concrete
+    #: ``actor_ref``, or neither — a fork emitting history it cannot attribute
+    #: leaves both empty, and a renderer then falls back to its own configured
+    #: author. Requiring a role would forbid those legitimate cases.
     actor_role: str
     payload_version: int
     typed_payload: IssueEventPayload
@@ -668,8 +746,7 @@ class IssueEvent:
     def __post_init__(self) -> None:
         _require_text(self.event_key, "event_key")
         _require_text(self.issue_key, "issue_key")
-        _require_text(self.occurred_at, "occurred_at")
-        _require_text(self.actor_role, "actor_role")
+        _require_aware_datetime(self.occurred_at, "occurred_at")
         if self.sequence < 1:
             raise ValueError(f"{self.event_key}: sequence starts at 1, got {self.sequence}")
         if self.payload_version < 1:
@@ -702,6 +779,14 @@ class Issue:
     model_key: str
     element_key: str
     grouping_policy: str
+    #: The run-free reference the policy grouped on. It is *the* subject of the
+    #: issue in the policy's own terms — an element key for element grouping, a
+    #: requirement key for requirement grouping, whatever a policy chooses — and
+    #: it is persisted so a stable identity can be recomputed from it:
+    #: ``issue_key`` folds it in with the policy id, and it is the seed of the
+    #: run-free topic identity. What it means is the policy's business; that it
+    #: is present and non-empty is not, so the domain checks only that.
+    group_ref: str
     finding_keys: tuple[str, ...]
     lifecycle_state: IssueState
     assignee_role: str = ""
@@ -718,6 +803,7 @@ class Issue:
     def __post_init__(self) -> None:
         _require_text(self.issue_key, "issue_key")
         _require_text(self.grouping_policy, "grouping_policy")
+        _require_text(self.group_ref, "group_ref")
         if not self.finding_keys:
             raise ValueError(f"{self.issue_key}: an issue must cover at least one finding")
         duplicates = sorted(
@@ -766,6 +852,30 @@ def derive_lifecycle_state(
     return state
 
 
+def derive_is_overdue(*, as_of: str, due: str, lifecycle_state: IssueState) -> bool:
+    """Whether an issue is overdue at ``as_of``, given its deadline and state.
+
+    Recorded on the issue and re-derived by validation, the same way
+    ``lifecycle_state`` is: a stored derivation nobody re-checks is a second
+    source of truth waiting to disagree with the first.
+
+    Three rules, and each is a decision:
+
+    - No deadline is never overdue. Silence is not a deadline.
+    - A resolved or closed issue is never overdue: the work is done, and a
+      deliverable filed late but filed is not an open deadline breach.
+    - Otherwise the comparison is between two timezone-aware instants, not two
+      strings — ``…T00:00:00Z`` and ``…T01:00:00+02:00`` are the same instant,
+      and the earlier of them being already past must read as overdue.
+    """
+
+    if not due:
+        return False
+    if lifecycle_state in (IssueState.RESOLVED, IssueState.CLOSED):
+        return False
+    return parse_instant(as_of, "as_of") > parse_instant(due, "due")
+
+
 # ---------------------------------------------------------------------------
 # The bundle exporters consume
 # ---------------------------------------------------------------------------
@@ -788,6 +898,11 @@ class RunBundle:
     run: ValidationRun
     ruleset: RuleSet
     projects: tuple[Project, ...] = ()
+    #: Each project's delivery programme: when its information is due, one row
+    #: per (project, stage). Carried on the bundle so validation can re-derive
+    #: every issue's ``due`` from it and refuse a forged one — the programme is
+    #: not a rule input and does not touch ``validation_run_id``.
+    project_milestones: tuple[ProjectMilestone, ...] = ()
     models: tuple[Model, ...] = ()
     elements: tuple[Element, ...] = ()
     findings: tuple[Finding, ...] = ()
@@ -803,6 +918,22 @@ class RunBundle:
             if project.project_id == project_id:
                 return project
         raise KeyError(f"Unknown project_id: {project_id}")
+
+    def milestones_for(self, project_id: str) -> dict[str, str]:
+        """One project's ``stage -> due`` programme.
+
+        A stage is *present* iff it is a key here; membership is what tells a
+        deadline that is deliberately empty apart from a stage that was never
+        stated. Callers must test ``stage in programme`` rather than reach for a
+        default, so a coverage gap fails closed instead of masquerading as "no
+        deadline".
+        """
+
+        return {
+            milestone.stage: milestone.due
+            for milestone in self.project_milestones
+            if milestone.project_id == project_id
+        }
 
     def model_by_key(self, model_key: str) -> Model:
         for model in self.models:

@@ -103,6 +103,7 @@ class ExportedShapeTests(unittest.TestCase):
                 "issue_findings.csv",
                 "issues.csv",
                 "models.csv",
+                "project_milestones.csv",
                 "projects.csv",
                 "requirements.csv",
             ],
@@ -110,6 +111,17 @@ class ExportedShapeTests(unittest.TestCase):
         self.assertEqual(len(self.tables["findings.csv"][1]), len(self.bundle.findings))
         self.assertEqual(len(self.tables["elements.csv"][1]), len(self.bundle.elements))
         self.assertEqual(len(self.tables["issues.csv"][1]), len(self.bundle.issues))
+        # The delivery programme reaches a canonical table, one row per
+        # (project, stage), with its own columns.
+        self.assertEqual(
+            self.tables["project_milestones.csv"][0],
+            ["project_id", "stage", "due"],
+        )
+        self.assertEqual(
+            len(self.tables["project_milestones.csv"][1]),
+            len(self.bundle.project_milestones),
+        )
+        self.assertEqual(len(self.bundle.project_milestones), 6)
 
     def test_the_repository_csv_convention_is_used(self):
         for artifact in self.artifacts:
@@ -213,6 +225,7 @@ class ExportStageTests(unittest.TestCase):
                 exporter_ids=["csv", "json"],
                 output_roots={"processed": scratch, "reports": scratch},
                 repository_root=PROJECT_ROOT,
+                grouping_policy_id="element",
                 manifest_dir=scratch,
             )
             fewer = export(
@@ -221,12 +234,13 @@ class ExportStageTests(unittest.TestCase):
                 exporter_ids=["csv"],
                 output_roots={"processed": scratch, "reports": scratch},
                 repository_root=PROJECT_ROOT,
+                grouping_policy_id="element",
             )
 
         self.assertNotEqual(first.artifact_bundle_id, fewer.artifact_bundle_id)
         self.assertTrue(first.artifact_bundle_id.startswith("bundle-"))
-        self.assertEqual(len(first.artifacts), 9)
-        self.assertEqual(len(fewer.artifacts), 8)
+        self.assertEqual(len(first.artifacts), 10)
+        self.assertEqual(len(fewer.artifacts), 9)
 
     def test_running_the_same_export_twice_writes_the_same_bytes(self):
         # Into the same location both times: the manifest records where each
@@ -241,6 +255,7 @@ class ExportStageTests(unittest.TestCase):
                     exporter_ids=["csv", "json"],
                     output_roots={"processed": scratch, "reports": scratch},
                     repository_root=PROJECT_ROOT,
+                    grouping_policy_id="element",
                     manifest_dir=scratch,
                 )
                 digests.append(
@@ -260,6 +275,7 @@ class ExportStageTests(unittest.TestCase):
                 exporter_ids=["csv", "json"],
                 output_roots={"processed": scratch, "reports": scratch},
                 repository_root=PROJECT_ROOT,
+                grouping_policy_id="element",
                 manifest_dir=scratch,
             )
             document = json.loads(result.manifest.path.read_text("utf-8"))
@@ -279,6 +295,7 @@ class ExportStageTests(unittest.TestCase):
                 exporter_ids=[],
                 output_roots={"processed": PROJECT_ROOT, "reports": PROJECT_ROOT},
                 repository_root=PROJECT_ROOT,
+                grouping_policy_id="element",
             )
 
     def test_an_export_outside_the_repository_fails_closed(self):
@@ -292,6 +309,7 @@ class ExportStageTests(unittest.TestCase):
                     exporter_ids=["json"],
                     output_roots={"processed": outside, "reports": outside},
                     repository_root=PROJECT_ROOT,
+                    grouping_policy_id="element",
                 )
         finally:
             import shutil

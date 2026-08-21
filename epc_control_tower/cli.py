@@ -163,7 +163,7 @@ def frozen_legacy_ruleset(config):
 
 def _current_snapshot(config):
     from .exporters.legacy_projection import project_bundle
-    from .pipeline import execute
+    from .pipeline import _legacy_compat, execute
     from .snapshots import build_snapshot
 
     result = execute(config)
@@ -178,6 +178,7 @@ def _current_snapshot(config):
             result.pipeline.bundle,
             project_id=config.legacy_project_id or None,
             frozen_ruleset=frozen_legacy_ruleset(config),
+            compat=_legacy_compat(config),
         ).run_id,
         artifact_bundle_id=result.export.artifact_bundle_id,
         artifacts=artifacts,

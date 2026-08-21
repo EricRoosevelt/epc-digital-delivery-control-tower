@@ -50,4 +50,4 @@ __version__ = "1.0.0"
 # rows. The legacy contract did not move at all — the eight published CSV files
 # and the BCF archive are byte-identical, because the legacy writers publish
 # one named project.
-CONTRACT_VERSION = "1.5"
+CONTRACT_VERSION = "1.6"

@@ -210,8 +210,10 @@ class RuleSetDefinition:
     title: str
     description: str = ""
     purpose: str = ""
+    #: The IDS document's own ``milestone`` attribute — a single free-text
+    #: label such as "Portfolio prototype", not a programme. Delivery *dates*
+    #: are project data now and live on the project manifest, not here.
     milestone: str = ""
-    milestones: tuple[tuple[str, str], ...] = ()
     rules: tuple[RuleDefinition, ...] = field(default=())
 
 
@@ -318,12 +320,6 @@ def load_rule_definitions(directory: Path) -> RuleSetDefinition:
         description=str(section.get("description", "")),
         purpose=str(section.get("purpose", "")),
         milestone=str(section.get("milestone", "")),
-        milestones=tuple(
-            sorted(
-                (str(stage), str(due))
-                for stage, due in dict(meta.get("milestones", {})).items()
-            )
-        ),
         rules=tuple(rules),
     )
 
@@ -421,10 +417,8 @@ def compile_document(definition: RuleSetDefinition):
             ruleset_id=definition.ruleset_id,
             version=definition.version,
             requirements=requirements,
-            milestones=definition.milestones,
         ),
         requirements=tuple(requirements),
-        milestones=definition.milestones,
     )
     return document, ruleset, expectations
 

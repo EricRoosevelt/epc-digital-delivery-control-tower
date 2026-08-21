@@ -23,7 +23,7 @@ from pathlib import Path
 from . import CONTRACT_VERSION
 from .bcf.schema import default_schema_dir
 from .config import ProjectManifest, RunConfig, load_project_manifests
-from .domain import RunBundle, RuleSet, ValidationRun
+from .domain import ProjectMilestone, RunBundle, RuleSet, ValidationRun
 from .exporters.legacy_bcf import BCF_FILENAME
 from .exporters.legacy_manifest import (
     build_legacy_manifest,
@@ -40,7 +40,7 @@ from .stages.geometry import compute_geometry
 from .stages.group import group
 from .stages.ingest import IngestResult, ingest
 from .stages.inventory import inventory
-from .validation import validate_bundle
+from .validation import programme_coverage_gaps, validate_bundle
 
 __all__ = [
     "PipelineResult",
@@ -65,6 +65,22 @@ class PipelineResult:
     registry: Registry
     ingested: IngestResult
     ruleset: RuleSet
+
+
+def _programmes(
+    milestones: Sequence[ProjectMilestone],
+) -> dict[str, dict[str, str]]:
+    """Fold project milestones into ``{project_id: {stage: due}}``.
+
+    Presence of a key is meaningful — it is how a stated-but-undated stage is
+    told apart from a missing one — so a stage with an empty ``due`` is kept
+    rather than dropped.
+    """
+
+    programmes: dict[str, dict[str, str]] = {}
+    for milestone in milestones:
+        programmes.setdefault(milestone.project_id, {})[milestone.stage] = milestone.due
+    return programmes
 
 
 def load_manifests(config: RunConfig) -> tuple[ProjectManifest, ...]:
@@ -92,6 +108,35 @@ def build_bundle(
     manifests = tuple(manifests) if manifests is not None else load_manifests(config)
     reports_dir = reports_dir or config.resolved_reports_dir()
 
+    # The rule set and the programme are read from files, not from models, so
+    # they are known before a single IFC file is opened — and the programme
+    # coverage gate runs here, ahead of ingest. A stage a rule uses but a
+    # project's programme omits is a planning error, and paying to parse six
+    # models before reporting it would be spending the expensive half of the run
+    # to reach a verdict already available.
+    ruleset = load_ruleset(config.resolved_ruleset_path())
+    project_milestones = tuple(
+        sorted(
+            (
+                milestone
+                for manifest in manifests
+                for milestone in manifest.milestones
+            ),
+            key=lambda milestone: (milestone.project_id, milestone.stage),
+        )
+    )
+    programmes = _programmes(project_milestones)
+    gaps = programme_coverage_gaps(
+        ruleset.requirements,
+        [manifest.project.project_id for manifest in manifests],
+        programmes,
+    )
+    if gaps:
+        raise ValueError(
+            "Delivery programme does not cover every rule stage:\n  - "
+            + "\n  - ".join(gaps)
+        )
+
     ingested = ingest(manifests)
     paths = {
         declared.model_key: manifest.raw_data_dir / declared.filename
@@ -100,7 +145,6 @@ def build_bundle(
     }
     elements = inventory(ingested.models, paths)
 
-    ruleset = load_ruleset(config.resolved_ruleset_path())
     routed = registry.route(ruleset.requirements)
     registry.validate_plan(routed, ingested.models)
     checker_fingerprints = registry.fingerprints(routed)
@@ -135,23 +179,31 @@ def build_bundle(
         validation_run_id=validation_run_id,
         as_of=config.as_of,
         requirements=ruleset.requirements,
-        milestones=ruleset.milestones,
+        programmes=programmes,
     )
 
-    # Only for elements an issue points at. Tessellating every element to
-    # produce a bounding box nobody asks for would be the expensive half of
-    # the run, spent on nothing.
+    # Geometry only for the elements something will point a viewpoint at —
+    # tessellating every element to produce a box nobody asks for would be the
+    # expensive half of the run, spent on nothing. Model-level issues point at
+    # no element and need none.
     #
-    # A model-level issue points at no element — it is about something that is
-    # absent — so there is nothing to tessellate and nothing for a viewpoint to
-    # frame. Filtering here rather than teaching the geometry stage about blank
-    # keys keeps that stage's contract simple: every key it is given is an
-    # element it must find.
-    geometry = compute_geometry(
-        [issue.element_key for issue in grouped.issues if issue.element_key],
-        elements=elements,
-        model_paths=paths,
+    # The set is a deterministic union of two sources, not just the current
+    # issues: the element of every current issue, and the element of every
+    # issue-bearing finding. The second half is what keeps the legacy projection
+    # — which does its own element grouping over the frozen findings — from
+    # depending on the current grouping policy having produced element-level
+    # issues. A policy that grouped by model would otherwise starve the legacy
+    # archive of the boxes it needs, and this is a general rule about what a run
+    # might frame rather than a legacy-specific branch.
+    geometry_keys = sorted(
+        {issue.element_key for issue in grouped.issues if issue.element_key}
+        | {
+            finding.element_key
+            for finding in checked.findings
+            if finding.is_issue and finding.element_key
+        }
     )
+    geometry = compute_geometry(geometry_keys, elements=elements, model_paths=paths)
 
     run = ValidationRun(
         validation_run_id=validation_run_id,
@@ -169,6 +221,7 @@ def build_bundle(
         run=run,
         ruleset=ruleset,
         projects=ingested.projects,
+        project_milestones=project_milestones,
         models=ingested.models,
         elements=elements,
         findings=checked.findings,
@@ -204,6 +257,18 @@ def _frozen_ruleset(config: RunConfig) -> RuleSet | None:
     if config.legacy_ruleset_path is None:
         return None
     return load_ruleset(config.legacy_ruleset_path)
+
+
+def _legacy_compat(config: RunConfig):
+    """The frozen legacy metadata, if a compatibility document is pinned."""
+
+    if config.legacy_compat_path is None:
+        return None
+    from .exporters.legacy_compat import load_legacy_compatibility
+
+    return load_legacy_compatibility(
+        config.legacy_compat_path, expected_sha256=config.legacy_compat_sha256
+    )
 
 
 def _manifest_for_project(
@@ -261,6 +326,7 @@ def execute(
         exporter_ids=enabled,
         output_roots=roots,
         repository_root=config.repository_root,
+        grouping_policy_id=config.grouping_policy,
         # Beside the reports rather than inside any exporter's directory: it
         # describes whichever exporters ran, so it does not belong to one of
         # them.
@@ -277,6 +343,7 @@ def execute(
             result.bundle,
             project_id=legacy_project_id,
             frozen_ruleset=_frozen_ruleset(config),
+            compat=_legacy_compat(config),
         )
         # The manifest names the IFC file the archive was built from, so it has
         # to read the raw data directory of the project the legacy writers

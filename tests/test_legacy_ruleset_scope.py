@@ -32,6 +32,7 @@ from epc_control_tower.exporters.legacy_projection import (
 from epc_control_tower.legacy_identity import LEGACY_RUN_ID
 from epc_control_tower.rules import load_ruleset
 from helpers import (
+    legacy_compat,
     LEGACY_PROJECT_ID,
     PROJECT_ROOT,
     shipped_pipeline_result,
@@ -94,7 +95,7 @@ class WideningTheRuleSetTests(unittest.TestCase):
 
     def test_with_the_scope_every_published_byte_survives(self):
         tables = LegacyPbipAdapter(
-            project_id=LEGACY_PROJECT_ID, frozen_ruleset=self.frozen
+            project_id=LEGACY_PROJECT_ID, frozen_ruleset=self.frozen, compat=legacy_compat()
         ).build_tables(self.widened)
         self.assertEqual(len(tables), 8)
         for name, data in sorted(tables.items()):
@@ -103,7 +104,7 @@ class WideningTheRuleSetTests(unittest.TestCase):
 
     def test_with_the_scope_the_published_run_identity_survives(self):
         scoped = project_bundle(
-            self.widened, project_id=LEGACY_PROJECT_ID, frozen_ruleset=self.frozen
+            self.widened, project_id=LEGACY_PROJECT_ID, frozen_ruleset=self.frozen, compat=legacy_compat()
         )
         self.assertEqual(scoped.run_id, LEGACY_RUN_ID)
         self.assertEqual(len(scoped.findings), 47)
@@ -115,7 +116,7 @@ class WideningTheRuleSetTests(unittest.TestCase):
         archive = LegacyBcfExporter(
             schema_dir=default_schema_dir(PROJECT_ROOT),
             project_id=LEGACY_PROJECT_ID,
-            frozen_ruleset=self.frozen,
+            frozen_ruleset=self.frozen, compat=legacy_compat(),
         ).build_archive(self.widened)
         self.assertEqual(
             sha256_bytes(archive),
@@ -154,10 +155,10 @@ class FrozenMetadataTests(unittest.TestCase):
             ),
         )
         current = project_bundle(
-            self.bundle, project_id=LEGACY_PROJECT_ID, frozen_ruleset=self.frozen
+            self.bundle, project_id=LEGACY_PROJECT_ID, frozen_ruleset=self.frozen, compat=legacy_compat()
         )
         altered = project_bundle(
-            self.bundle, project_id=LEGACY_PROJECT_ID, frozen_ruleset=reclassified
+            self.bundle, project_id=LEGACY_PROJECT_ID, frozen_ruleset=reclassified, compat=legacy_compat()
         )
         self.assertEqual(
             {row.severity for row in current.findings if row.is_issue == "true"},

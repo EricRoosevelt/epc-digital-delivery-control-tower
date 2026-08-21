@@ -138,9 +138,16 @@ class ElementGroupingTests(unittest.TestCase):
 class GroupStageTests(unittest.TestCase):
     class InconsistentPolicy:
         id = "inconsistent"
+        version = "1.0.0"
 
+        def config_sha256(self):
+            return ""
+
+        # A conforming policy accepts both `requirements` and `programmes`; the
+        # stage passes them unconditionally, so a policy that omitted either from
+        # its signature would raise. It may ignore them, but it must accept them.
         def group(
-            self, findings, *, validation_run_id, as_of, requirements=None, milestones=None
+            self, findings, *, validation_run_id, as_of, requirements=None, programmes=None
         ):
             policy = ElementGroupingPolicy()
             issues, events = policy.group(
@@ -148,6 +155,7 @@ class GroupStageTests(unittest.TestCase):
                 validation_run_id=validation_run_id,
                 as_of=as_of,
                 requirements=requirements,
+                programmes=programmes,
             )
             import dataclasses
 

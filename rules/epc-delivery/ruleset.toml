@@ -31,28 +31,22 @@ ruleset_id = "epc-delivery"
 # digest, the refresh refused, and this is the minor part because none of it
 # can make a model that passed 2.0 fail 2.1. Metadata about a requirement is
 # not a requirement.
-version = "2.1"
+#
+# 2.2 is the mirror image: the milestone table *left* the rule set — programme
+# is project data now — so the normalized digest moved again and the refresh
+# refused again. Still the minor part, and for the same reason: a deadline was
+# never a requirement, so removing it cannot make a model that passed 2.1 fail
+# 2.2. See the CHANGELOG entry for contract 1.6.
+version = "2.2"
 title = "EPC Digital Delivery Requirements"
 description = "Project-authored information requirements for the EPC Digital Delivery Control Tower prototype."
 purpose = "Validate selected information requirements in public multidisciplinary IFC sample models."
 milestone = "Portfolio prototype"
 
-# When each delivery stage's information is due.
-#
-# Programme dates, not offsets from when somebody ran the pipeline. That is what
-# makes `overdue` answerable at all: an offset from the opening event would put
-# every due date in the future of the only moment this system has, so nothing
-# could ever be late. A programme states a date, and the run's logical `as_of`
-# is either past it or not — a comparison between two configured values, which
-# reproduces exactly.
-#
-# A stage with no date here yields no due date, and an issue with no due date is
-# never overdue. Silence is not a deadline.
-[milestones]
-# Full timestamps, in the same shape as the run's `as_of`. BCF's DueDate is an
-# xs:dateTime and a bare date fails schema validation; keeping both sides
-# identical in shape also means the overdue comparison is a plain string
-# comparison that cannot disagree with a date parser.
-Design = "2026-07-01T00:00:00Z"
-Coordination = "2026-08-01T00:00:00Z"
-Handover = "2026-12-01T00:00:00Z"
+# When each delivery stage's information is due is *project* data, not rule
+# data: the rule names the stage (a requirement's `stage`), and each project
+# states the date in its own `projects/<id>/project.toml` under
+# `[[milestones]]`. Two projects in one portfolio reach the same stage on
+# different dates, which a stage-keyed table here could never express. A
+# programme date is therefore not part of the rule-set digest and does not
+# re-key any finding when it moves.

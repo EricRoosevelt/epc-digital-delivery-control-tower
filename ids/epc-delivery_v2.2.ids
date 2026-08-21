@@ -2,7 +2,7 @@
 <ids xmlns="http://standards.buildingsmart.org/IDS" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://standards.buildingsmart.org/IDS http://standards.buildingsmart.org/IDS/1.0/ids.xsd">
     <info>
         <title>EPC Digital Delivery Requirements</title>
-        <version>2.1</version>
+        <version>2.2</version>
         <description>Project-authored information requirements for the EPC Digital Delivery Control Tower prototype.</description>
         <purpose>Validate selected information requirements in public multidisciplinary IFC sample models.</purpose>
         <milestone>Portfolio prototype</milestone>

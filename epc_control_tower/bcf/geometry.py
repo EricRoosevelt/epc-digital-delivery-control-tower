@@ -23,9 +23,10 @@ import itertools
 import math
 import re
 from dataclasses import dataclass
+from typing import TYPE_CHECKING
 
-import ifcopenshell
-import ifcopenshell.geom
+if TYPE_CHECKING:  # pragma: no cover - imported only for type checkers
+    import ifcopenshell
 
 __all__ = [
     "IFC_GUID_PATTERN",
@@ -100,13 +101,20 @@ def _aabb_corners(aabb: Aabb) -> tuple[Vector, ...]:
     return tuple(itertools.product(*zip(aabb.minimum, aabb.maximum, strict=True)))
 
 
-def world_coordinate_aabb(model: ifcopenshell.file, global_id: str) -> Aabb:
+def world_coordinate_aabb(model: "ifcopenshell.file", global_id: str) -> Aabb:
     """Tessellate one IFC element and return its world-coordinate AABB.
 
     World coordinates rather than local: a viewpoint has to place the camera in
     the same space the viewer's model is in, and an element's own placement is
     exactly the part that would be lost.
+
+    IfcOpenShell is imported here rather than at module load, so that the pure
+    camera arithmetic — everything the BCF exporters actually consume — can be
+    imported and exercised without the geometry engine installed. Only this
+    function, which reads an IFC file, needs it.
     """
+
+    import ifcopenshell.geom
 
     if not IFC_GUID_PATTERN.fullmatch(global_id):
         raise ValueError(f"Invalid IFC GlobalId: {global_id!r}")

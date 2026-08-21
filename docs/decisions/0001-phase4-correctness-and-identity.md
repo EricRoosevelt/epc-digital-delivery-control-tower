@@ -1,10 +1,9 @@
 # 0001 — Phase 4 correctness, project-scoped programme, and persisted run-free group reference and topic identity
 
-- **Status:** Planned / accepted for implementation. This note records decisions
-  before the code that implements them exists. Until the implementation commit
-  lands and refreshes the snapshot, the code and every published artifact remain
-  at **contract 1.5**; see the `## Unreleased` → *Data contract 1.6 (PLANNED)*
-  entry in [`CHANGELOG.md`](../../CHANGELOG.md).
+- **Status:** Accepted and implemented in **contract 1.6** (rule set 2.2). This
+  note recorded the decisions before the code; that code now exists and the
+  snapshot is refreshed. See the *Data contract 1.6* entry in
+  [`CHANGELOG.md`](../../CHANGELOG.md) for the measured file-by-file delta.
 - **Date:** 2026-08-20.
 - **Scope:** Phase 4 correctness only. No PBIP/TMDL, no forensic screenshots, no
   `data/raw`, no `third_party`. The six protected tests are not modified.

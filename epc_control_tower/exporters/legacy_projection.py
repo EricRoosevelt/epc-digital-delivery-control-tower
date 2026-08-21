@@ -48,6 +48,7 @@ from ..legacy_identity import (
     legacy_topic_guid,
     legacy_viewpoint_guid,
 )
+from .legacy_compat import FrozenRequirementMeta, LegacyCompatibility
 from .legacy_contract import (
     CREATION_AUTHOR,
     EVENT_SOURCE,
@@ -65,6 +66,12 @@ from .legacy_contract import (
     LegacyTopicRow,
     LegacyViewpointRow,
 )
+
+#: Worst first, for the frozen legacy grouping's own tie-break. The R-005 family
+#: that produces the published topics is uniform in its metadata, so this only
+#: has to be deterministic; it is stated rather than left to chance so it stays
+#: correct if the frozen set ever carried a mixed-severity element.
+_LEGACY_SEVERITY_RANK = {Severity.ERROR: 3, Severity.WARNING: 2, Severity.INFO: 1}
 
 __all__ = [
     "LegacyProjection",
@@ -325,6 +332,11 @@ def narrow_to_project(bundle: RunBundle, project_id: str) -> RunBundle:
         projects=tuple(
             project for project in bundle.projects if project.project_id == project_id
         ),
+        project_milestones=tuple(
+            milestone
+            for milestone in bundle.project_milestones
+            if milestone.project_id == project_id
+        ),
         models=tuple(
             model for model in bundle.models if model.model_key in model_keys
         ),
@@ -431,6 +443,7 @@ def project_bundle(
     *,
     project_id: str | None = None,
     frozen_ruleset: RuleSet | None = None,
+    compat: LegacyCompatibility | None = None,
 ) -> LegacyProjection:
     """Project a canonical bundle onto the published contract.
 
@@ -438,6 +451,12 @@ def project_bundle(
     ``frozen_ruleset`` the single rule set version they were built from. Both
     may be omitted only when the run offers no choice; with a choice available,
     guessing would silently republish a different contract.
+
+    ``compat`` supplies the frozen requirement metadata the topics are built
+    from. It is required whenever ``frozen_ruleset`` is, because the metadata a
+    topic renders — priority, stage, labels, assignee — comes from there and not
+    from ``bundle.issues`` or the current grouping policy, and it is validated to
+    freeze exactly the frozen rule set.
     """
 
     if project_id is not None:
@@ -452,6 +471,13 @@ def project_bundle(
 
     if frozen_ruleset is not None:
         bundle = narrow_to_ruleset(bundle, frozen_ruleset)
+        if compat is None:
+            raise ValueError(
+                "The legacy projection is scoped to a frozen rule set but no "
+                "compatibility metadata was supplied; topic metadata cannot come "
+                "from the current rules."
+            )
+        compat.validate_against_ruleset(bundle.ruleset)
 
     ids_version = bundle.ruleset.version
     run_id = legacy_run_id(
@@ -505,6 +531,7 @@ def project_bundle(
         models_by_key=models_by_key,
         elements_by_key=elements_by_key,
         rows_by_finding_key=rows_by_finding_key,
+        compat=compat,
     )
 
     topic_rows = tuple(
@@ -595,35 +622,81 @@ def project_bundle(
     )
 
 
+def _legacy_labels(metas: Sequence[object]) -> tuple[str, ...]:
+    """The deterministic union of every member rule's disciplines then labels.
+
+    Ordered by requirement key, then discipline_scope before labels, first
+    appearance kept — the same convention the canonical grouping uses, so the
+    published archive's label order is reproduced from frozen metadata.
+    """
+
+    seen: list[str] = []
+    for meta in sorted(metas, key=lambda item: item.requirement_key):
+        for label in (*meta.discipline_scope, *meta.labels):
+            if label and label not in seen:
+                seen.append(label)
+    return tuple(seen)
+
+
 def _project_topics(
     *,
     bundle: RunBundle,
     models_by_key: dict[str, Model],
     elements_by_key: dict[str, Element],
     rows_by_finding_key: dict[tuple[str, str, str], LegacyFindingRow],
+    compat: LegacyCompatibility | None,
 ) -> tuple[LegacyTopic, ...]:
-    topics: list[LegacyTopic] = []
+    """Build the published topics with a fixed element grouping of frozen findings.
 
-    for issue in sorted(bundle.issues, key=lambda item: item.element_key):
-        element = elements_by_key[issue.element_key]
-        model = models_by_key[issue.model_key]
+    Deliberately independent of ``bundle.issues`` and of the current
+    ``GroupingPolicy``: the legacy archive groups a failure with an element into
+    a topic by a rule that is frozen here and cannot evolve. Topic metadata comes
+    from ``compat`` (or, for an unscoped projection, from the bundle's own rule
+    set) keyed by ``requirement_key`` — never from a current issue snapshot.
+    """
+
+    def _meta(requirement_key: str):
+        if compat is not None:
+            return compat.by_key(requirement_key)
+        return bundle.ruleset.by_key(requirement_key)
+
+    grouped: dict[str, list[Finding]] = {}
+    for finding in bundle.findings:
+        # A failure with an element becomes a topic; the published legacy shape
+        # is element-level, so an element-less failure has no topic here.
+        if finding.is_issue and finding.element_key:
+            grouped.setdefault(finding.element_key, []).append(finding)
+
+    topics: list[LegacyTopic] = []
+    for element_key in sorted(grouped):
+        members = sorted(grouped[element_key], key=lambda item: item.finding_key)
+        element = elements_by_key[element_key]
+        model = models_by_key[element.model_key]
+
+        metas = [_meta(finding.requirement_key) for finding in members]
+        deciding = min(
+            metas,
+            key=lambda item: (
+                -_LEGACY_SEVERITY_RANK.get(item.severity, 0),
+                item.requirement_key,
+            ),
+        )
 
         rows = [
             rows_by_finding_key[(model.model_id, finding.requirement_key, finding.element_key)]
-            for finding in bundle.findings
-            if finding.finding_key in set(issue.finding_keys)
+            for finding in members
         ]
         # Ordered by the published key, which is what the archive's reference
         # links and the description's requirement list are ordered by.
         rows.sort(key=lambda row: row.finding_key)
 
-        geometry = bundle.geometry_for(issue.element_key)
+        geometry = bundle.geometry_for(element_key)
         aabb = Aabb(minimum=geometry.aabb_min, maximum=geometry.aabb_max)
-        topic_guid = legacy_topic_guid(issue.element_key)
+        topic_guid = legacy_topic_guid(element_key)
 
         topics.append(
             LegacyTopic(
-                element_key=issue.element_key,
+                element_key=element_key,
                 topic_guid=topic_guid,
                 viewpoint_guid=legacy_viewpoint_guid(topic_guid),
                 model=model,
@@ -631,10 +704,10 @@ def _project_topics(
                 findings=tuple(rows),
                 aabb=aabb,
                 camera=camera_for_aabb(aabb),
-                assignee_role=issue.assignee_role,
-                priority=issue.priority,
-                stage=issue.stage,
-                labels=issue.labels,
+                assignee_role=deciding.owner_role,
+                priority=deciding.priority,
+                stage=deciding.stage,
+                labels=_legacy_labels(metas),
             )
         )
 

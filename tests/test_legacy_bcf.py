@@ -43,6 +43,7 @@ from epc_control_tower.exporters.legacy_bcf import LegacyBcfExporter
 from epc_control_tower.exporters.legacy_projection import project_bundle
 from epc_control_tower.legacy_identity import LEGACY_RUN_ID
 from helpers import (
+    legacy_compat,
     LEGACY_PROJECT_ID,
     frozen_ruleset,
     PROJECT_ROOT,
@@ -57,6 +58,131 @@ PUBLISHED_BCF_SHA256 = (
 SCHEMA_DIR = default_schema_dir(PROJECT_ROOT)
 
 
+class ModelGroupingPolicy:
+    """A legal grouping policy that produces *model*-level issues only.
+
+    Not registered in the package — it exists to prove the legacy projection
+    does not depend on the current policy having produced element-level issues.
+    It groups every issue-bearing finding by its model, so no issue names an
+    element, which is exactly the case that would starve the legacy archive of
+    geometry if the run computed boxes only for the current issues' elements.
+    """
+
+    id = "model"
+    version = "1.0.0"
+
+    def config_sha256(self) -> str:
+        return ""
+
+    def group(self, findings, *, validation_run_id, as_of, requirements=None, programmes=None):
+        from epc_control_tower.domain import (
+            Issue,
+            IssueEvent,
+            IssueState,
+            TopicCreatedPayload,
+            derive_is_overdue,
+            derive_lifecycle_state,
+        )
+        from epc_control_tower.grouping.element import ElementGroupingPolicy
+        from epc_control_tower.identity import build_issue_event_key, build_issue_key
+
+        by_key = dict(requirements or {})
+        prog = {pid: dict(stages) for pid, stages in (programmes or {}).items()}
+        grouped: dict[str, list] = {}
+        for finding in findings:
+            if finding.is_issue:
+                grouped.setdefault(finding.model_key, []).append(finding)
+
+        issues, events = [], []
+        for model_key in sorted(grouped):
+            members = sorted(grouped[model_key], key=lambda item: item.finding_key)
+            first = members[0]
+
+            def due_of(stage, project_id=first.project_id):
+                if not stage:
+                    return ""
+                stated = prog.get(project_id, {})
+                if stage in stated:
+                    return stated[stage]
+                raise ValueError(f"no milestone for {project_id} {stage}")
+
+            deciding, due = ElementGroupingPolicy._deciding(members, by_key, due_of)
+            issue_key = build_issue_key(
+                validation_run_id=validation_run_id, grouping_policy=self.id, group_ref=model_key
+            )
+            role = deciding.owner_role if deciding and deciding.owner_role else "model-coordination"
+            event = IssueEvent(
+                event_key=build_issue_event_key(
+                    issue_key=issue_key, sequence=1, event_type="topic_created"
+                ),
+                issue_key=issue_key,
+                sequence=1,
+                occurred_at=as_of,
+                event_type="topic_created",
+                from_state=None,
+                to_state=IssueState.OPEN,
+                actor_role=role,
+                payload_version=1,
+                typed_payload=TopicCreatedPayload(finding_count=len(members), title=model_key),
+            )
+            lifecycle = derive_lifecycle_state([event])
+            issues.append(
+                Issue(
+                    issue_key=issue_key,
+                    validation_run_id=validation_run_id,
+                    project_id=first.project_id,
+                    model_key=first.model_key,
+                    element_key="",
+                    grouping_policy=self.id,
+                    group_ref=model_key,
+                    finding_keys=tuple(m.finding_key for m in members),
+                    lifecycle_state=lifecycle,
+                    assignee_role=role,
+                    priority=deciding.priority if deciding else "",
+                    stage=deciding.stage if deciding else "",
+                    due=due,
+                    is_overdue=derive_is_overdue(as_of=as_of, due=due, lifecycle_state=lifecycle),
+                    labels=(),
+                )
+            )
+            events.append(event)
+        return tuple(issues), tuple(events)
+
+
+class LegacyIndependenceFromCurrentPolicyTests(unittest.TestCase):
+    """The legacy archive survives a run grouped by a non-element policy."""
+
+    @classmethod
+    def setUpClass(cls):
+        import dataclasses
+
+        from epc_control_tower.pipeline import build_bundle
+        from epc_control_tower.registry import default_registry
+        from helpers import shipped_run_config, shipped_reports_dir
+
+        config = dataclasses.replace(shipped_run_config(), grouping_policy="model")
+        registry = default_registry(config)
+        registry.register_grouping_policy(ModelGroupingPolicy())
+        cls.bundle = build_bundle(
+            config, registry=registry, reports_dir=shipped_reports_dir()
+        ).bundle
+
+    def test_no_issue_is_element_level_under_this_policy(self):
+        # If any issue named an element the test would prove nothing about the
+        # geometry union — so assert the precondition.
+        self.assertTrue(self.bundle.issues)
+        self.assertTrue(all(issue.element_key == "" for issue in self.bundle.issues))
+
+    def test_the_legacy_bcf_still_reproduces_the_frozen_bytes(self):
+        archive = LegacyBcfExporter(
+            schema_dir=SCHEMA_DIR,
+            project_id=LEGACY_PROJECT_ID,
+            frozen_ruleset=frozen_ruleset(),
+            compat=legacy_compat(),
+        ).build_archive(self.bundle)
+        self.assertEqual(sha256_bytes(archive), PUBLISHED_BCF_SHA256)
+
+
 class PublishedArchiveTests(unittest.TestCase):
     """The port moved the code without moving the bytes."""
 
@@ -66,12 +192,12 @@ class PublishedArchiveTests(unittest.TestCase):
         cls.projection = project_bundle(
             cls.result.bundle,
             project_id=LEGACY_PROJECT_ID,
-            frozen_ruleset=frozen_ruleset(),
+            frozen_ruleset=frozen_ruleset(), compat=legacy_compat(),
         )
         cls.exporter = LegacyBcfExporter(
             schema_dir=SCHEMA_DIR,
             project_id=LEGACY_PROJECT_ID,
-            frozen_ruleset=frozen_ruleset(),
+            frozen_ruleset=frozen_ruleset(), compat=legacy_compat(),
         )
         cls.data = cls.exporter.build_archive(cls.result.bundle, cls.projection)
 
@@ -132,7 +258,7 @@ class LegacyScopeTests(unittest.TestCase):
         return project_bundle(
             shipped_pipeline_result().bundle,
             project_id=LEGACY_PROJECT_ID,
-            frozen_ruleset=frozen_ruleset(),
+            frozen_ruleset=frozen_ruleset(), compat=legacy_compat(),
         )
 
     def test_it_no_longer_knows_which_rules_it_converts(self):
@@ -174,7 +300,7 @@ class LegacyScopeTests(unittest.TestCase):
         exporter = LegacyBcfExporter(
             schema_dir=SCHEMA_DIR,
             project_id=LEGACY_PROJECT_ID,
-            frozen_ruleset=frozen_ruleset(),
+            frozen_ruleset=frozen_ruleset(), compat=legacy_compat(),
         )
         data = exporter.build_archive(self.bundle, mutated)
         self.assertTrue(data)
@@ -195,7 +321,7 @@ class LegacyScopeTests(unittest.TestCase):
         exporter = LegacyBcfExporter(
             schema_dir=SCHEMA_DIR,
             project_id=LEGACY_PROJECT_ID,
-            frozen_ruleset=frozen_ruleset(),
+            frozen_ruleset=frozen_ruleset(), compat=legacy_compat(),
         )
         changed = dataclasses.replace(
             projection,
@@ -299,7 +425,7 @@ class CameraTests(unittest.TestCase):
         for topic in project_bundle(
             shipped_pipeline_result().bundle,
             project_id=LEGACY_PROJECT_ID,
-            frozen_ruleset=frozen_ruleset(),
+            frozen_ruleset=frozen_ruleset(), compat=legacy_compat(),
         ).topics:
             with self.subTest(topic=topic.topic_guid):
                 verify_camera_frames_aabb(topic.aabb, topic.camera, tolerance=1e-12)

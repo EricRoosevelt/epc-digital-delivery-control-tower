@@ -31,6 +31,7 @@ from epc_control_tower.exporters.legacy_pbip import LEGACY_TABLES, LegacyPbipAda
 from epc_control_tower.exporters.legacy_projection import project_bundle
 from epc_control_tower.legacy_identity import LEGACY_RUN_ID
 from helpers import (
+    legacy_compat,
     LEGACY_PROJECT_ID,
     frozen_ruleset,
     PROJECT_ROOT,
@@ -55,7 +56,7 @@ class ByteEqualityTests(unittest.TestCase):
     def setUpClass(cls):
         cls.result = shipped_pipeline_result()
         cls.adapter = LegacyPbipAdapter(
-            project_id=LEGACY_PROJECT_ID, frozen_ruleset=frozen_ruleset()
+            project_id=LEGACY_PROJECT_ID, frozen_ruleset=frozen_ruleset(), compat=legacy_compat()
         )
         cls.tables = cls.adapter.build_tables(cls.result.bundle)
 
@@ -97,7 +98,7 @@ class ProjectionPurityTests(unittest.TestCase):
         cls.projection = project_bundle(
             cls.result.bundle,
             project_id=LEGACY_PROJECT_ID,
-            frozen_ruleset=frozen_ruleset(),
+            frozen_ruleset=frozen_ruleset(), compat=legacy_compat(),
         )
 
     def test_the_published_run_identity_comes_from_the_frozen_derivation(self):
@@ -173,19 +174,19 @@ class LegacyManifestTests(unittest.TestCase):
         projection = project_bundle(
             result.bundle,
             project_id=LEGACY_PROJECT_ID,
-            frozen_ruleset=frozen_ruleset(),
+            frozen_ruleset=frozen_ruleset(), compat=legacy_compat(),
         )
 
         with writable_test_directory("legacy-manifest") as scratch:
             processed = scratch / "processed"
             reports = scratch / "reports"
             LegacyPbipAdapter(
-                project_id=LEGACY_PROJECT_ID, frozen_ruleset=frozen_ruleset()
+                project_id=LEGACY_PROJECT_ID, frozen_ruleset=frozen_ruleset(), compat=legacy_compat()
             ).export(result.bundle, processed)
             LegacyBcfExporter(
                 schema_dir=default_schema_dir(PROJECT_ROOT),
                 project_id=LEGACY_PROJECT_ID,
-                frozen_ruleset=frozen_ruleset(),
+                frozen_ruleset=frozen_ruleset(), compat=legacy_compat(),
             ).export(result.bundle, reports)
 
             manifest = build_legacy_manifest(

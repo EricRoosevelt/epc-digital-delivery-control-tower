@@ -39,6 +39,7 @@ from ..domain import (
     IssueEvent,
     Model,
     Project,
+    ProjectMilestone,
     Provenance,
     Requirement,
     RunBundle,
@@ -76,6 +77,7 @@ def _drop(columns: Sequence[str], *dropped: str) -> tuple[str, ...]:
 
 
 PROJECT_COLUMNS = field_names(Project)
+PROJECT_MILESTONE_COLUMNS = field_names(ProjectMilestone)
 MODEL_COLUMNS = _expand(field_names(Model), {"provenance": field_names(Provenance)})
 ELEMENT_COLUMNS = field_names(Element)
 REQUIREMENT_COLUMNS = field_names(Requirement)
@@ -163,6 +165,11 @@ class CsvExporter:
 
         tables: tuple[tuple[str, list[dict[str, object]], tuple[str, ...]], ...] = (
             ("projects.csv", _rows(bundle.projects, PROJECT_COLUMNS), PROJECT_COLUMNS),
+            (
+                "project_milestones.csv",
+                _rows(bundle.project_milestones, PROJECT_MILESTONE_COLUMNS),
+                PROJECT_MILESTONE_COLUMNS,
+            ),
             ("models.csv", _rows(bundle.models, MODEL_COLUMNS), MODEL_COLUMNS),
             ("elements.csv", _rows(bundle.elements, ELEMENT_COLUMNS), ELEMENT_COLUMNS),
             (
@@ -225,6 +232,9 @@ class JsonExporter:
                 ],
             },
             "projects": _rows(bundle.projects, PROJECT_COLUMNS),
+            "project_milestones": _rows(
+                bundle.project_milestones, PROJECT_MILESTONE_COLUMNS
+            ),
             "models": _rows(bundle.models, MODEL_COLUMNS),
             "elements": _rows(bundle.elements, ELEMENT_COLUMNS),
             "requirements": _rows(bundle.ruleset.requirements, REQUIREMENT_COLUMNS),

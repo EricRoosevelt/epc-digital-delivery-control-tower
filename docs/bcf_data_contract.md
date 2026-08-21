@@ -4,9 +4,20 @@ Version: 0.1
 Status: Implemented
 
 This contract defines the deterministic conversion of normalized IDS failures
-into BCF 3.0 issues and analytical sidecars. The normative inputs are
-`ids_findings.csv`, `models.csv`, `model_inventory.csv`, the project IDS, and
-the source HVAC IFC recorded by those tables.
+into BCF 3.0 issues and analytical sidecars — the **frozen legacy** archive
+`reports/bcf/ids_failures.bcf` (`b3c6f51abc9647ef…`) and the `bcf_*` sidecar
+CSVs. The normative inputs are `ids_findings.csv`, `models.csv`,
+`model_inventory.csv`, the project IDS, and the source HVAC IFC recorded by
+those tables. It does not move: through **contract 1.6** every byte it describes
+is unchanged, and from 1.6 the legacy topic metadata is reproduced from the
+pinned `docs/contracts/legacy/legacy_bcf_compat.v0.1.json` rather than from the
+current rules.
+
+The general, whole-run BCF archive `reports/bcf/issues.bcf` — 21 topics over
+both projects, run-free topic GUIDs, a snapshot of each issue's history
+(creation from the opening event, modified from the latest) — is a separate
+canonical artifact versioned by `CHANGELOG.md` and the `docs/contracts/`
+snapshots, not by this legacy document.
 
 ## Identity and issue semantics
 

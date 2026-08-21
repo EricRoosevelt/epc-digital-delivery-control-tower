@@ -316,6 +316,7 @@ class IssueInvariantTests(unittest.TestCase):
                 model_key="hvac",
                 element_key="hvac::GUID",
                 grouping_policy="element",
+                group_ref="hvac::GUID",
                 finding_keys=(),
                 lifecycle_state=IssueState.OPEN,
             )
@@ -329,6 +330,7 @@ class IssueInvariantTests(unittest.TestCase):
                 model_key="hvac",
                 element_key="hvac::GUID",
                 grouping_policy="element",
+                group_ref="hvac::GUID",
                 finding_keys=("a", "a"),
                 lifecycle_state=IssueState.OPEN,
             )

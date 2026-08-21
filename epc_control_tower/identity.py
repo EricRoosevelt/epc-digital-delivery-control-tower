@@ -48,8 +48,10 @@ __all__ = [
     "build_finding_key",
     "build_issue_event_key",
     "build_issue_key",
+    "build_project_programme_digest",
     "build_requirement_key",
     "build_ruleset_normalized_digest",
+    "build_topic_guid",
     "build_validation_run_id",
     "new_execution_nonce",
     "uuid5_from_values",
@@ -109,7 +111,6 @@ def build_ruleset_normalized_digest(
     ruleset_id: str,
     version: str,
     requirements: Iterable[Requirement],
-    milestones: Iterable[tuple[str, str]] = (),
 ) -> str:
     """Digest what a rule set *says*, independent of how it was written.
 
@@ -117,6 +118,12 @@ def build_ruleset_normalized_digest(
     it survives reformatting, re-indentation and a change of line endings, and
     so rule sets loaded from different source formats stay comparable. Only a
     change to the rules themselves moves it.
+
+    A delivery programme is deliberately *not* here. When each stage's
+    information is due is a property of a project, not of the rule set, and it
+    cannot change any finding — so folding it into this digest would re-key
+    every finding whenever a deadline moved. Programme lives on the project
+    manifest and reaches issues, never the validation identity.
 
     This is the digest that feeds :func:`build_validation_run_id`. The raw
     bytes of the source artifact are recorded separately as provenance and take
@@ -130,9 +137,6 @@ def build_ruleset_normalized_digest(
     document = {
         "ruleset_id": ruleset_id,
         "version": version,
-        "milestones": [
-            {"stage": stage, "due": due} for stage, due in sorted(milestones)
-        ],
         "requirements": [
             {
                 "rule_id": requirement.rule_id,
@@ -238,13 +242,47 @@ def build_execution_id(
     return uuid5_from_values("execution", [started_at, platform, tool_version, nonce])
 
 
+def build_project_programme_digest(
+    milestones: Iterable[tuple[str, str, str]],
+) -> str:
+    """Digest a run's delivery programme — ``(project_id, stage, due)`` rows.
+
+    Not part of the validation identity: a programme cannot change a finding, so
+    it must not re-key one. It *is* part of the artifact identity, because
+    moving a deadline moves an issue's ``due`` and ``is_overdue`` and therefore
+    the bytes an exporter writes. Sorted here so the caller's ordering cannot
+    leak in.
+    """
+
+    document = {
+        "milestones": [
+            {"project_id": project_id, "stage": stage, "due": due}
+            for project_id, stage, due in sorted(milestones)
+        ]
+    }
+    return hashlib.sha256(
+        canonical_json_document(document).encode("utf-8")
+    ).hexdigest()
+
+
 def build_artifact_bundle_id(
     *,
     validation_run_id: str,
     contract_version: str,
+    grouping: ComponentFingerprint,
+    programme_digest: str,
     exporters: Iterable[ComponentFingerprint],
 ) -> str:
-    """Identify one set of exported artifacts."""
+    """Identify one set of exported artifacts.
+
+    Everything that can change the bytes without changing the *validation* is
+    folded in here rather than there: the output contract version, the grouping
+    policy that turned findings into issues (its id, version and configuration),
+    the delivery programme that dated those issues, and every exporter's id,
+    version and configuration — where configuration already covers each
+    exporter's scope and every byte-affecting parameter. Two bundles can share a
+    validation and still differ because any of these moved.
+    """
 
     document = {
         "contract_version": contract_version,
@@ -252,6 +290,8 @@ def build_artifact_bundle_id(
             fingerprint.as_document()
             for fingerprint in sorted(exporters, key=lambda item: item.component_id)
         ],
+        "grouping": grouping.as_document(),
+        "programme_digest": programme_digest,
         "validation_run_id": validation_run_id,
     }
     digest = hashlib.sha256(
@@ -297,6 +337,30 @@ def build_issue_key(
         "issue",
         [validation_run_id, grouping_policy, group_ref],
     )
+
+
+def build_topic_guid(
+    *,
+    grouping_policy: str,
+    project_id: str,
+    group_ref: str,
+) -> str:
+    """Return the run-free GUID for the BCF topic an issue projects to.
+
+    Unlike ``issue_key`` this does **not** fold in the validation run: the same
+    subject with the same problem should be the same topic to whoever opens the
+    archive across runs. It does fold in the grouping policy and the project, so
+    two policies that grouped on the same reference — or two projects that
+    happen to name the same element locally — cannot collide onto one topic and
+    silently overwrite each other. A collision that does arise is rejected, in
+    the validator and again in the exporter, rather than resolved by whichever
+    entry was written last.
+    """
+
+    _require_slug(grouping_policy, "grouping_policy")
+    _require_slug(project_id, "project_id")
+    _require_text(group_ref, "group_ref")
+    return uuid5_from_values("bcf-topic", [grouping_policy, project_id, group_ref])
 
 
 def build_issue_event_key(

@@ -30,3 +30,13 @@ legacy_project_id = "pcert-sample"
 # library could not grow until Phase 5. New rules go into a new version of the
 # document and reach the canonical outputs only.
 legacy_ruleset_path = "ids/epc_delivery_requirements_v0.1.ids"
+
+# The frozen metadata the legacy topics are built from, keyed by requirement,
+# and the SHA-256 that pins its bytes.
+#
+# The published archive's priority, stage, labels and assignee once came from
+# the current rules, which meant editing a live rule moved a frozen published
+# byte. They come from this document now — validated to freeze exactly rule set
+# 0.1's requirements — so the two are severed. Retires with the adapters.
+legacy_compat_path = "docs/contracts/legacy/legacy_bcf_compat.v0.1.json"
+legacy_compat_sha256 = "be8a28b8222baa53fb76dcf716a5e5141b0cbd9e8622be25ef2d50092900402f"

@@ -17,24 +17,22 @@ of what moved exists before the expectation that says it did.
 
 ## Unreleased
 
-### Data contract 1.6 — project-scoped programme, persisted run-free group reference and topic identity, and a snapshot BCF that admits it — **PLANNED, not yet implemented**
+### Data contract 1.6 — project-scoped programme, persisted run-free group reference and topic identity, and a snapshot BCF that admits it
 
-> **Status: planned.** This entry is written *before* the code, so the account
-> of what will move exists before the expectation that says it did (Hard rule
-> #2). Until the implementation commit lands and refreshes the snapshot, the
-> code and every published artifact remain at **contract 1.5**, the recorded
-> snapshot is still `docs/contracts/contract-1.5.json`, and `epc-ct snapshot`
-> must still match it. Nothing under `data/processed/` or `reports/` moves in
-> the commit that adds this entry. The full rationale and the binding design
-> decisions each fix rests on are in
+> The account of what would move was written here first, before the code (Hard
+> rule #2); this is that account rewritten from expectation into the measured
+> result. The rule set moves to **2.2** (the milestone table left it, so its
+> normalized digest moved — the minor part, because a deadline was never a
+> requirement) and the contract to **1.6**. The full rationale and the binding
+> design decisions are in
 > [`docs/decisions/0001-phase4-correctness-and-identity.md`](docs/decisions/0001-phase4-correctness-and-identity.md).
 
 #### Why this version exists — ten reproduced defects, not a feature
 
 Phase 4 shipped `due`/`overdue` and a metadata-driven BCF, and a subsequent
 audit reproduced ten correctness defects against the live pipeline. They are not
-speculative; each was run and confirmed, and each is pinned as a counterfactual
-test by the implementation commit. The short list:
+speculative; each was run and confirmed, and each is now pinned as a
+counterfactual test. The short list:
 
 - The *general* `BcfExporter` publishes `reports/bcf/issues.bcf` under the
   **legacy** scope — 3 topics for a run whose canonical bundle has 21 issues —
@@ -65,44 +63,66 @@ test by the implementation commit. The short list:
   rule decides the deadline — so a future-dated high-severity ERROR hides an
   already-overdue lower-severity WARNING on the same element.
 
-#### What 1.6 will change
+#### What 1.6 moved — measured file by file from one `epc-ct run`
 
-- **Added** `data/processed/canonical/project_milestones.csv`
-  (`project_id, stage, due`) and a corresponding `project_milestones` block in
-  `run.json`; a `group_ref` column on `issues.csv`/`run.json`; the frozen
-  compatibility document `docs/contracts/legacy/legacy_bcf_compat.v0.1.json`
-  (schema, version and SHA-256 pinned), keyed by `requirement_key`; and
-  `docs/contracts/contract-1.6.json`.
-- **Changed (expected — to be measured file by file in the implementation
-  commit, not asserted here).** The identity-bearing canonical outputs —
-  `findings.csv`, `issues.csv`, `issue_events.csv`, `issue_findings.csv`,
-  `run.json`, and the manifests — are expected to re-key, because programme
-  moves out of the rule set and therefore out of `ruleset_normalized_digest` →
-  `validation_run_id`. `projects.csv`, `models.csv`, `elements.csv` and
-  `requirements.csv` carry no run identity and may stay byte-identical; this is
-  not yet known. Commit B must regenerate every artifact from one `epc-ct run`
-  and measure each file before this section is rewritten from expectation into
-  fact. `reports/bcf/issues.bcf` goes **3 → 21 topics** over both projects with
-  new run-free topic GUIDs `H(grouping_policy, project_id, group_ref)`, and
-  gains `ModifiedDate`/`ModifiedAuthor` when an issue has history beyond its
-  opening event. `reports/artifact_manifest.json` gains grouping-policy,
-  programme-digest and richer exporter-config inputs to `artifact_bundle_id`.
-- **Removed** `RuleSet.milestones` and the `[milestones]` table from
-  `ruleset.toml`; the legacy projection's dependence on `Issue`/the current
-  grouping policy; and the over-claim that a pure exporter "supports arbitrary
-  rules" or preserves full history.
+**Added**
 
-#### The hard gate 1.6 does not move
+- `data/processed/canonical/project_milestones.csv` (`project_id, stage, due`)
+  and a `project_milestones` block in `run.json`; a `group_ref` column on
+  `issues.csv`/`run.json`.
+- `docs/contracts/legacy/legacy_bcf_compat.v0.1.json` — the frozen
+  compatibility document, keyed by `requirement_key`, with schema, version and
+  SHA-256 pinned in `control-tower.toml`
+  (`be8a28b8222baa53fb76dcf716a5e5141b0cbd9e8622be25ef2d50092900402f`).
+- `ids/epc-delivery_v2.2.ids` replaces `ids/epc-delivery_v2.1.ids` — the
+  compiled document carries the version, and the version moved.
+- `docs/contracts/contract-1.6.json`.
 
-The eight legacy CSVs under `data/processed/`, `reports/bcf/ids_failures.bcf` at
-`b3c6f51abc9647ef…`, `reports/bcf/run_manifest.json`, and
-`run_id ids-v0.1-8706ef58303bfd11` stay byte-identical. The legacy projection is
-rebuilt to read frozen requirement metadata from the pinned compatibility
-document and regroup the frozen findings with its own fixed element-grouping —
-never the evolvable policy — so those bytes are reproduced from a frozen source
-rather than borrowed from the current snapshot.
+**Changed** — seven files, each measured:
 
-Snapshot (planned): `docs/contracts/contract-1.6.json`.
+| Artifact | before | after |
+|---|---|---|
+| `canonical/findings.csv` | `004653dbf277…` | `9eba66d2dd03…` |
+| `canonical/issue_events.csv` | `4781514f9d3c…` | `51f67d2691c2…` |
+| `canonical/issue_findings.csv` | `471ab98fd17e…` | `b4c0b6b70c79…` |
+| `canonical/issues.csv` | `9f78b7dddf9a…` | `68934d33bda7…` |
+| `canonical/run.json` | `28fb83b7d7e9…` | `64e7095a2f74…` |
+| `reports/artifact_manifest.json` | `52ecf78b05d0…` | `efac566bc221…` |
+| `reports/bcf/issues.bcf` | `d9237f828e2e…` | `488f13897594…` |
+
+The five canonical outputs re-key because programme left the rule set and
+therefore left `ruleset_normalized_digest` → `validation_run_id`
+(`epc-delivery-v2.1-…` → `epc-delivery-v2.2-…`). `reports/bcf/issues.bcf` goes
+**3 → 21 topics** over both projects with run-free topic GUIDs
+`H(grouping_policy, project_id, group_ref)`, and gains `ModifiedDate`/
+`ModifiedAuthor` when an issue has an event beyond its opening one.
+`reports/artifact_manifest.json` folds the grouping-policy fingerprint, the
+project-programme digest and richer exporter config into `artifact_bundle_id`.
+
+**Stayed byte-identical, and measured to prove it** — the four canonical tables
+that carry no run identity (`projects.csv`, `models.csv`, `elements.csv`,
+`requirements.csv`) and the twelve IDS reports under `reports/ids/`.
+
+**Removed** `RuleSet.milestones` and the `[milestones]` table from
+`ruleset.toml`; the legacy projection's dependence on `Issue`/the current
+grouping policy; and the over-claim that the general exporter preserves full
+history (it is a snapshot projection: creation from the opening event, modified
+from the latest).
+
+#### The hard gate 1.6 did not move
+
+Measured after the run: the eight legacy CSVs under `data/processed/`,
+`reports/bcf/ids_failures.bcf` at `b3c6f51abc9647ef…`,
+`reports/bcf/run_manifest.json`, and `run_id ids-v0.1-8706ef58303bfd11` are
+byte-identical. The legacy projection now reads frozen requirement metadata from
+the pinned compatibility document and regroups the frozen findings with its own
+fixed element-grouping — never the current policy — so those bytes are
+reproduced from a frozen source. A run grouped by a model-level policy still
+reproduces `b3c6f51abc9647ef…`, pinned as a test, because the geometry a
+viewpoint needs is computed for every issue-bearing finding's element rather
+than only for the current issues'.
+
+Snapshot: `docs/contracts/contract-1.6.json`.
 
 ### Data contract 1.5 — BCF from metadata, and a due date with no clock
 

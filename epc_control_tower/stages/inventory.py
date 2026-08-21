@@ -2,10 +2,11 @@
 
 The one decision worth spelling out is the join key. A bare IFC ``GlobalId`` is
 not unique across the discipline files that describe a single building — the
-shipped fixture has 39 element occurrences but only 32 distinct GlobalIds,
-because four GUID groups recur across files. Joining on ``GlobalId`` would
-therefore silently merge unrelated elements, so every cross-model join goes
-through ``element_key``, which carries the model that owns it.
+same GUID recurs across files, so occurrences outnumber distinct GlobalIds.
+Joining on ``GlobalId`` would therefore silently merge unrelated elements, so
+every cross-model join goes through ``element_key``, which carries the model
+that owns it. (The exact counts are a property of a fixture, not of this stage,
+so they live in the characterization tests rather than here.)
 
 Only property sets are counted, not quantity sets: ``pset_count`` is a measure
 of how much descriptive data an element carries, and mixing in derived

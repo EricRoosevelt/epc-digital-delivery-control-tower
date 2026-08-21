@@ -20,7 +20,7 @@ from pathlib import Path
 
 from ..determinism import atomic_write_bytes, json_bytes, sha256_bytes
 from ..domain import RunBundle
-from ..identity import build_artifact_bundle_id
+from ..identity import build_artifact_bundle_id, build_project_programme_digest
 from ..protocols import Artifact
 from ..registry import Registry
 
@@ -57,6 +57,7 @@ def export(
     exporter_ids: Sequence[str],
     output_roots: Mapping[str, Path],
     repository_root: Path,
+    grouping_policy_id: str,
     manifest_dir: Path | None = None,
 ) -> ExportResult:
     """Run each named exporter and record what the whole set produced.
@@ -65,6 +66,10 @@ def export(
     directory. Exporters declare which kind of output they write and never
     carry a path of their own, so where things land stays a configuration
     decision rather than a constant buried in an exporter.
+
+    ``grouping_policy_id`` names the policy that produced the bundle's issues; it
+    is fingerprinted into the artifact bundle identity alongside the programme,
+    because both shape the exported bytes without changing the validation.
     """
 
     ordered = sorted(set(exporter_ids))
@@ -72,9 +77,16 @@ def export(
         raise ValueError("No exporters enabled; nothing would be written")
 
     fingerprints = registry.exporter_fingerprints(ordered)
+    grouping = registry.grouping_fingerprint(grouping_policy_id)
+    programme_digest = build_project_programme_digest(
+        (milestone.project_id, milestone.stage, milestone.due)
+        for milestone in bundle.project_milestones
+    )
     artifact_bundle_id = build_artifact_bundle_id(
         validation_run_id=bundle.run.validation_run_id,
         contract_version=bundle.contract_version,
+        grouping=grouping,
+        programme_digest=programme_digest,
         exporters=fingerprints,
     )
 
@@ -100,6 +112,8 @@ def export(
             "contract_version": bundle.contract_version,
             "validation_run_id": bundle.run.validation_run_id,
             "as_of": bundle.run.as_of,
+            "grouping": grouping.as_document(),
+            "programme_digest": programme_digest,
             "exporters": [fingerprint.as_document() for fingerprint in fingerprints],
             "artifacts": [
                 {

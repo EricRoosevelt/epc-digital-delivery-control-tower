@@ -206,6 +206,61 @@ filename = "A.ifc"
             manifest = load_project_manifest(path, repository_root=PROJECT_ROOT)
         self.assertEqual(manifest.models[0].content_sha256, "")
 
+    def test_a_duplicate_milestone_stage_is_rejected(self):
+        # A (project, stage) pair names one deadline. A stage listed twice is a
+        # contradiction, not a merge, so the loader fails closed rather than
+        # letting the last one silently win.
+        text = MINIMAL + """
+[[milestones]]
+stage = "Design"
+due = "2026-07-01T00:00:00Z"
+
+[[milestones]]
+stage = "Design"
+due = "2026-09-01T00:00:00Z"
+"""
+        self._expect(text, "stage 'Design' is declared more than once")
+
+
+class ProjectMilestoneLoadingTests(unittest.TestCase):
+    def test_the_shipped_manifest_declares_its_programme(self):
+        manifest = load_project_manifest(
+            PROJECT_ROOT / "projects" / "pcert-sample" / "project.toml",
+            repository_root=PROJECT_ROOT,
+        )
+        programme = {m.stage: m.due for m in manifest.milestones}
+        self.assertEqual(
+            programme,
+            {
+                "Design": "2026-07-01T00:00:00Z",
+                "Coordination": "2026-08-01T00:00:00Z",
+                "Handover": "2026-12-01T00:00:00Z",
+            },
+        )
+        for milestone in manifest.milestones:
+            self.assertEqual(milestone.project_id, "pcert-sample")
+
+    def test_a_stated_stage_may_carry_no_deadline(self):
+        with writable_test_directory("cfg") as directory:
+            path = write_manifest(
+                directory,
+                "project",
+                MINIMAL + '\n[[milestones]]\nstage = "Design"\n',
+            )
+            manifest = load_project_manifest(path, repository_root=PROJECT_ROOT)
+        self.assertEqual(manifest.milestones[0].stage, "Design")
+        self.assertEqual(manifest.milestones[0].due, "")
+
+    def test_a_naive_milestone_due_is_rejected(self):
+        with writable_test_directory("cfg") as directory:
+            path = write_manifest(
+                directory,
+                "project",
+                MINIMAL + '\n[[milestones]]\nstage = "Design"\ndue = "2026-07-01T00:00:00"\n',
+            )
+            with self.assertRaisesRegex(ValueError, "xs:dateTime"):
+                load_project_manifest(path, repository_root=PROJECT_ROOT)
+
 
 class RunConfigTests(unittest.TestCase):
     def test_defaults_discover_every_shipped_project(self):

@@ -328,34 +328,67 @@ class ExecutionIdentityTests(unittest.TestCase):
 
 
 class ArtifactBundleIdentityTests(unittest.TestCase):
-    def test_exporter_version_changes_the_bundle_but_not_the_validation(self):
-        validation_run_id = build_validation_run_id(**_run_id_inputs())
-        first = build_artifact_bundle_id(
-            validation_run_id=validation_run_id,
+    """Everything that shapes the exported bytes without changing the validation
+    moves the bundle id; the validation id itself does not move for any of it."""
+
+    def _bundle_id(self, **overrides) -> str:
+        base = dict(
+            validation_run_id=build_validation_run_id(**_run_id_inputs()),
             contract_version="0.1",
+            grouping=ComponentFingerprint("element", "1.0.0"),
+            programme_digest="a" * 64,
             exporters=[ComponentFingerprint("csv", "1.0")],
         )
-        second = build_artifact_bundle_id(
-            validation_run_id=validation_run_id,
-            contract_version="0.1",
-            exporters=[ComponentFingerprint("csv", "2.0")],
+        base.update(overrides)
+        return build_artifact_bundle_id(**base)
+
+    def test_exporter_version_changes_the_bundle(self):
+        self.assertNotEqual(
+            self._bundle_id(exporters=[ComponentFingerprint("csv", "1.0")]),
+            self._bundle_id(exporters=[ComponentFingerprint("csv", "2.0")]),
         )
-        self.assertNotEqual(first, second)
+
+    def test_exporter_config_including_scope_changes_the_bundle(self):
+        # An exporter's config_sha256 covers its scope and every byte-affecting
+        # parameter, so a change to it moves the bundle id.
+        self.assertNotEqual(
+            self._bundle_id(exporters=[ComponentFingerprint("legacy-bcf", "1.0", "a" * 64)]),
+            self._bundle_id(exporters=[ComponentFingerprint("legacy-bcf", "1.0", "b" * 64)]),
+        )
 
     def test_contract_version_changes_the_bundle(self):
-        validation_run_id = build_validation_run_id(**_run_id_inputs())
         self.assertNotEqual(
-            build_artifact_bundle_id(
-                validation_run_id=validation_run_id,
-                contract_version="0.1",
-                exporters=[ComponentFingerprint("csv", "1.0")],
-            ),
-            build_artifact_bundle_id(
-                validation_run_id=validation_run_id,
-                contract_version="1.0",
-                exporters=[ComponentFingerprint("csv", "1.0")],
-            ),
+            self._bundle_id(contract_version="0.1"),
+            self._bundle_id(contract_version="1.0"),
         )
+
+    def test_grouping_policy_identity_changes_the_bundle(self):
+        self.assertNotEqual(
+            self._bundle_id(grouping=ComponentFingerprint("element", "1.0.0")),
+            self._bundle_id(grouping=ComponentFingerprint("requirement", "1.0.0")),
+        )
+
+    def test_grouping_policy_version_or_config_changes_the_bundle(self):
+        self.assertNotEqual(
+            self._bundle_id(grouping=ComponentFingerprint("element", "1.0.0")),
+            self._bundle_id(grouping=ComponentFingerprint("element", "2.0.0")),
+        )
+        self.assertNotEqual(
+            self._bundle_id(grouping=ComponentFingerprint("element", "1.0.0", "a" * 64)),
+            self._bundle_id(grouping=ComponentFingerprint("element", "1.0.0", "b" * 64)),
+        )
+
+    def test_programme_digest_changes_the_bundle(self):
+        self.assertNotEqual(
+            self._bundle_id(programme_digest="a" * 64),
+            self._bundle_id(programme_digest="b" * 64),
+        )
+
+    def test_the_validation_run_id_is_unmoved_by_any_of_them(self):
+        # None of the bundle inputs is a validation input, so the validation id
+        # they are built on is the same string throughout.
+        run_id = build_validation_run_id(**_run_id_inputs())
+        self.assertTrue(self._bundle_id(validation_run_id=run_id).startswith("bundle-"))
 
 
 class CanonicalFindingKeyTests(unittest.TestCase):

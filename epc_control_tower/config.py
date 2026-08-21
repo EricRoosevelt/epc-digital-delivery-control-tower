@@ -27,7 +27,7 @@ from collections.abc import Sequence
 from dataclasses import dataclass
 from pathlib import Path
 
-from .domain import Project, Provenance, derive_model_key
+from .domain import Project, ProjectMilestone, Provenance, derive_model_key
 
 __all__ = [
     "DEFAULT_CONFIG_FILENAME",
@@ -94,6 +94,9 @@ class ProjectManifest:
     project: Project
     models: tuple[ManifestModel, ...]
     raw_data_dir: Path
+    #: This project's delivery programme, one row per stage. Programme is
+    #: project data, not rule data, so it is declared here beside the models.
+    milestones: tuple[ProjectMilestone, ...] = ()
 
     def model_by_filename(self, filename: str) -> ManifestModel:
         for model in self.models:
@@ -138,6 +141,13 @@ class RunConfig:
     #: the legacy writers use whatever rule set the run used, which is correct
     #: only while the two are the same document. Retires with the adapters.
     legacy_ruleset_path: Path | None = None
+    #: The frozen metadata the legacy topics are rendered from, keyed by
+    #: requirement, and the SHA-256 that pins its exact bytes. The published
+    #: archive's priority, stage, labels and assignee come from here rather than
+    #: from the current rules, so a live rule edit cannot move a frozen byte.
+    #: Retires with the adapters.
+    legacy_compat_path: Path | None = None
+    legacy_compat_sha256: str = ""
     #: How issues are rendered as BCF topics.
     #:
     #: These are here rather than on a rule because they are the same for
@@ -235,12 +245,51 @@ def load_project_manifest(path: Path, *, repository_root: Path) -> ProjectManife
         raw_data_dir = path.parent
 
     _check_manifest_uniqueness(models, path)
+    milestones = _load_milestones(document, project.project_id, path)
 
     return ProjectManifest(
         project=project,
         models=tuple(models),
         raw_data_dir=raw_data_dir,
+        milestones=milestones,
     )
+
+
+def _load_milestones(
+    document: dict[str, object], project_id: str, source: Path
+) -> tuple[ProjectMilestone, ...]:
+    """Read a project's ``[[milestones]]`` programme, failing closed on a dup.
+
+    A ``(project_id, stage)`` pair names exactly one deadline. A stage listed
+    twice is a contradiction, not a merge, so it is rejected here rather than
+    silently letting the last one win. ``due`` may be absent or empty — that is
+    a stated stage with no deadline — but a present ``due`` is validated as a
+    timezone-aware datetime by :class:`~.domain.ProjectMilestone` itself.
+    """
+
+    raw = document.get("milestones", [])
+    if not isinstance(raw, list):
+        raise ValueError(f"{source}: [[milestones]] must be an array of tables")
+
+    milestones: list[ProjectMilestone] = []
+    seen: set[str] = set()
+    for entry in raw:
+        if not isinstance(entry, dict):
+            raise ValueError(f"{source}: each [[milestones]] entry must be a table")
+        stage = str(_require(entry, "stage", source))
+        if stage in seen:
+            raise ValueError(
+                f"{source}: milestone stage {stage!r} is declared more than once"
+            )
+        seen.add(stage)
+        milestones.append(
+            ProjectMilestone(
+                project_id=project_id,
+                stage=stage,
+                due=str(entry.get("due", "")),
+            )
+        )
+    return tuple(milestones)
 
 
 def _check_manifest_uniqueness(models: Sequence[ManifestModel], source: Path) -> None:
@@ -356,4 +405,6 @@ def load_run_config(
         exporters=tuple(str(item) for item in exporters),
         legacy_project_id=str(run_section.get("legacy_project_id", "")),
         legacy_ruleset_path=_optional_path("legacy_ruleset_path"),
+        legacy_compat_path=_optional_path("legacy_compat_path"),
+        legacy_compat_sha256=str(run_section.get("legacy_compat_sha256", "")),
     )

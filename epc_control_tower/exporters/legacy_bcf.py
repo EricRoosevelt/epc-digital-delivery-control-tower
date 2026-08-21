@@ -41,6 +41,7 @@ from .legacy_contract import (
     TOPIC_STATUS,
     TOPIC_TYPE,
 )
+from .legacy_compat import LegacyCompatibility, legacy_config_sha256
 from .legacy_projection import LegacyProjection, LegacyTopic, project_bundle
 
 __all__ = ["BCF_FILENAME", "LegacyBcfExporter"]
@@ -84,6 +85,7 @@ class LegacyBcfExporter:
         subdirectory: str = "bcf",
         project_id: str | None = None,
         frozen_ruleset: RuleSet | None = None,
+        compat: LegacyCompatibility | None = None,
     ) -> None:
         self._schema_dir = Path(schema_dir)
         self._subdirectory = subdirectory
@@ -93,9 +95,15 @@ class LegacyBcfExporter:
         #: republish the existing ones under a different run identity.
         self._project_id = project_id
         self._frozen_ruleset = frozen_ruleset
+        self._compat = compat
 
     def config_sha256(self) -> str:
-        return ""
+        return legacy_config_sha256(
+            subdirectory=self._subdirectory,
+            project_id=self._project_id,
+            frozen_ruleset=self._frozen_ruleset,
+            compat=self._compat,
+        )
 
     # -- export ------------------------------------------------------------
 
@@ -137,6 +145,7 @@ class LegacyBcfExporter:
             bundle,
             project_id=self._project_id,
             frozen_ruleset=self._frozen_ruleset,
+            compat=self._compat,
         )
 
     # -- XML ---------------------------------------------------------------

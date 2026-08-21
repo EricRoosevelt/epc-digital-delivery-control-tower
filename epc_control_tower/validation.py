@@ -15,20 +15,54 @@ hash.
 
 from __future__ import annotations
 
-from collections.abc import Iterable
+from collections.abc import Iterable, Mapping
 
 from .domain import (
+    Requirement,
     RunBundle,
+    derive_is_overdue,
     derive_lifecycle_state,
 )
 from .identity import (
     build_finding_key,
     build_issue_event_key,
+    build_issue_key,
     build_ruleset_normalized_digest,
+    build_topic_guid,
     build_validation_run_id,
 )
 
-__all__ = ["BundleInvariantError", "validate_bundle"]
+__all__ = [
+    "BundleInvariantError",
+    "programme_coverage_gaps",
+    "validate_bundle",
+]
+
+
+def programme_coverage_gaps(
+    requirements: Iterable[Requirement],
+    project_ids: Iterable[str],
+    programmes: Mapping[str, Mapping[str, str]],
+) -> list[str]:
+    """Where a project's programme fails to date a stage a rule uses.
+
+    Every non-empty ``Requirement.stage`` must be a *present* key in every
+    project's programme — present, not merely truthy, so a stage stated with an
+    empty ``due`` counts as covered while a stage nobody stated is a gap. The
+    result is the list of gaps, empty when coverage is complete, so a caller can
+    fail closed with all of them named at once.
+    """
+
+    needed = sorted({requirement.stage for requirement in requirements if requirement.stage})
+    gaps: list[str] = []
+    for project_id in sorted(set(project_ids)):
+        stated = programmes.get(project_id, {})
+        for stage in needed:
+            if stage not in stated:
+                gaps.append(
+                    f"project {project_id!r} has no milestone for stage {stage!r}"
+                )
+    return gaps
 
 
 class BundleInvariantError(ValueError):
@@ -79,6 +113,26 @@ def validate_bundle(bundle: RunBundle, *, recompute_identity: bool = True) -> No
         repeated = _duplicates(values)
         if repeated:
             violations.append(f"duplicate {label} values: {repeated}")
+
+    # Two issues that project to the same BCF topic GUID would overwrite one
+    # another in the archive, so the collision is rejected here — before any
+    # exporter runs — as well as in the exporter itself. The GUID is run-free
+    # (policy, project, group_ref), so this is the structural guarantee that a
+    # finer grouping policy cannot silently merge two subjects onto one topic.
+    topic_guids: dict[str, str] = {}
+    for issue in bundle.issues:
+        guid = build_topic_guid(
+            grouping_policy=issue.grouping_policy,
+            project_id=issue.project_id,
+            group_ref=issue.group_ref,
+        )
+        if guid in topic_guids:
+            violations.append(
+                f"topic GUID collision: issues {topic_guids[guid]!r} and "
+                f"{issue.issue_key!r} both derive {guid}"
+            )
+        else:
+            topic_guids[guid] = issue.issue_key
 
     # A model_id only has to be unique inside its own project; a model_key has
     # to be unique everywhere. That asymmetry is the whole point of the split,
@@ -186,17 +240,64 @@ def validate_bundle(bundle: RunBundle, *, recompute_identity: bool = True) -> No
 
     # -- identity is recomputed, not trusted -------------------------------
 
+    # -- programme is well-formed and covers every rule stage ---------------
+
+    milestone_seen: set[tuple[str, str]] = set()
+    programmes: dict[str, dict[str, str]] = {}
+    for milestone in bundle.project_milestones:
+        pair = (milestone.project_id, milestone.stage)
+        if pair in milestone_seen:
+            violations.append(
+                f"duplicate milestone for project {milestone.project_id!r} stage "
+                f"{milestone.stage!r}"
+            )
+        milestone_seen.add(pair)
+        if milestone.project_id not in project_ids:
+            violations.append(
+                f"milestone names unknown project_id {milestone.project_id!r}"
+            )
+        programmes.setdefault(milestone.project_id, {})[milestone.stage] = milestone.due
+
+    for gap in programme_coverage_gaps(
+        bundle.ruleset.requirements,
+        [project.project_id for project in bundle.projects],
+        programmes,
+    ):
+        violations.append(gap)
+
     for issue in bundle.issues:
-        # `is_overdue` is derived, so it is checked against its inputs rather
-        # than trusted — the same treatment `lifecycle_state` gets, and for the
-        # same reason: a recorded derivation nobody re-checks is a second source
-        # of truth waiting to disagree with the first.
-        expected_overdue = bool(issue.due) and bundle.run.as_of > issue.due
+        # `due` and `is_overdue` are both derived, so they are recomputed here
+        # rather than trusted. `due` is looked up from the project's programme
+        # by the issue's stage — not read off the issue — so erasing the field
+        # cannot forge "no deadline": the programme still says one is due. An
+        # empty stage means no deadline and is the only way `due` is legitimately
+        # empty. A stage the programme does not cover is caught above.
+        stated = programmes.get(issue.project_id, {})
+        if not issue.stage:
+            expected_due = ""
+        elif issue.stage in stated:
+            expected_due = stated[issue.stage]
+        else:
+            # The coverage check above already recorded the gap; skip the
+            # per-issue derivation rather than pile on a second message.
+            continue
+        if issue.due != expected_due:
+            violations.append(
+                f"issue {issue.issue_key}: due {issue.due!r} does not match its "
+                f"programme (project {issue.project_id!r} stage {issue.stage!r} is "
+                f"due {expected_due!r})"
+            )
+            continue
+        expected_overdue = derive_is_overdue(
+            as_of=bundle.run.as_of,
+            due=expected_due,
+            lifecycle_state=issue.lifecycle_state,
+        )
         if issue.is_overdue != expected_overdue:
             violations.append(
                 f"issue {issue.issue_key}: is_overdue={issue.is_overdue} but "
-                f"as_of {bundle.run.as_of!r} against due {issue.due!r} derives "
-                f"{expected_overdue}"
+                f"as_of {bundle.run.as_of!r} against due {expected_due!r} in state "
+                f"{issue.lifecycle_state} derives {expected_overdue}"
             )
 
     if recompute_identity:
@@ -206,7 +307,6 @@ def validate_bundle(bundle: RunBundle, *, recompute_identity: bool = True) -> No
             ruleset_id=bundle.ruleset.ruleset_id,
             version=bundle.ruleset.version,
             requirements=bundle.ruleset.requirements,
-            milestones=bundle.ruleset.milestones,
         )
         if expected_digest != bundle.ruleset.normalized_digest:
             violations.append(
@@ -246,6 +346,23 @@ def validate_bundle(bundle: RunBundle, *, recompute_identity: bool = True) -> No
                 violations.append(
                     f"finding_key {finding.finding_key!r} does not recompute "
                     f"(expected {expected!r})"
+                )
+
+        for issue in bundle.issues:
+            # The issue key folds the run, the grouping policy and the run-free
+            # group reference. Recomputing it here is what makes the persisted
+            # `group_ref` trustworthy: a forged reference no longer keys the
+            # issue it claims to.
+            expected_issue = build_issue_key(
+                validation_run_id=issue.validation_run_id,
+                grouping_policy=issue.grouping_policy,
+                group_ref=issue.group_ref,
+            )
+            if expected_issue != issue.issue_key:
+                violations.append(
+                    f"issue_key {issue.issue_key!r} does not recompute from its "
+                    f"policy {issue.grouping_policy!r} and group_ref "
+                    f"{issue.group_ref!r} (expected {expected_issue!r})"
                 )
 
         for event in bundle.issue_events:
