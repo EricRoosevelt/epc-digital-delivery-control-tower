@@ -136,19 +136,60 @@ with no metadata.
 
 ### 9. Commit sequencing
 
-- **Commit A (this one, `docs:`):** only the CHANGELOG 1.6 entry marked *planned*
-  and this decision note, also marked planned. The current authoritative
-  `docs/data_contract.md` and `docs/bcf_data_contract.md` are **not** rewritten
-  to claim 1.6 is implemented — doing so would make A's code (still 1.5) and its
-  docs disagree, so A would not be independently consistent.
-- **Commit B (`feat:`, later):** the code, the counterfactual tests, the
+The sequence was planned here and has since been executed. Both the plan and
+what actually happened are kept, because the difference between them is the
+useful part of the record.
+
+- **Commit A (`767b23e`, `docs:`):** only the CHANGELOG 1.6 entry marked
+  *planned* and this decision note, also marked planned. The then-authoritative
+  `docs/data_contract.md` and `docs/bcf_data_contract.md` were **not** rewritten
+  to claim 1.6 was implemented — doing so would have made A's code (still 1.5)
+  and its docs disagree, so A would not have been independently consistent.
+  Landed as planned, moving no bytes.
+- **Commit B (`11e4163`, `feat:`):** the code, the counterfactual tests, the
   regenerated artifacts from one `epc-ct run`, and `contract-1.6.json` from
-  `epc-ct snapshot --refresh --contract-changed`. Not started, not pushed, and
-  awaiting audit of Commit A.
+  `epc-ct snapshot --refresh --contract-changed`. Landed. Every decision above
+  is implemented, and the measured 1.5 -> 1.6 delta is the *Data contract 1.6*
+  entry in the CHANGELOG.
+- **Correction commit (`d89e31a`, `fix:`):** B was pushed before its own gates
+  had been run to the end, and continuous integration stopped at `ruff` with
+  fourteen findings. Because the lint step fails the job, the eight gates behind
+  it — the regression suite included — were *skipped*, not passed. Two defects
+  were sitting in that shadow: the fourteen lint findings themselves, and a
+  stale entry in `test_ids_syntax_audit.DOCUMENTS`, which still named
+  `epc-delivery_v2.1.ids` after B renamed that document to v2.2. Under
+  `EPC_REQUIRE_IDS_AUDIT=1` the audit pointed at a path that does not exist.
+  Both are fixed in `d89e31a`, which changes no published byte.
+
+This is the second time in this project that a green-looking signal was not the
+signal anyone thought it was, and it generalises the same way rule 6 in
+`AGENTS.md` does: **a skipped gate reads as an absence of failure and is
+evidence of nothing.** A job summary that says "1 failed" is describing the
+first step that failed, not the state of the ones after it. Read the steps.
+
+Contract 1.6 is therefore implemented as of `11e4163` and green as of
+`d89e31a`, whose exact head SHA passed continuous integration on
+`ubuntu-latest` and `windows-latest` — both platforms, all eleven gates
+executed rather than skipped, with the IDS audit enforced by
+`EPC_REQUIRE_IDS_AUDIT=1`.
 
 ## Consequences
 
-Commit A moves no bytes: `epc-ct run` stays diff-clean, `epc-ct snapshot` still
-matches contract 1.5, and the full suite is unchanged, because A touches only
-prose. The design is now recorded before the change, which is what lets the
-snapshot refresh in Commit B be permitted and reviewable.
+Commit A moved no bytes: `epc-ct run` stayed diff-clean, `epc-ct snapshot` still
+matched contract 1.5, and the full suite was unchanged, because A touched only
+prose. Recording the design before the change is what made the snapshot refresh
+in Commit B permitted and reviewable.
+
+Commit B moved the bytes it said it would and no others. The measured delta is
+in the CHANGELOG file by file; the hard gate held, and `run_id`
+`ids-v0.1-8706ef58303bfd11` together with `ids_failures.bcf`
+(`b3c6f51abc9647ef…`) is unchanged, so the published legacy identity survives
+the contract move. The correction commit moved nothing: both platforms
+regenerate every artifact byte-identically and `contract-1.6.json` matches all
+twenty.
+
+What this note does **not** license is the next phase. The decisions above are
+about correctness, identity and programme scope inside the existing pipeline.
+Purpose Packs, Overlays, readiness, blockers, source fixes and rechecks are
+named nowhere in this repository's code, and nothing here should be read as
+their design having been settled.

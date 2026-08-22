@@ -13,8 +13,47 @@ project-specific assumptions. It is not presented as a production deployment.
 
 ![EPC Delivery Control Tower overview](docs/evidence/stage_3b/overview-final.png)
 
-## V1.0.0 at a Glance
+## Two layers, and which numbers belong to which
 
+This repository holds two things at once, and almost every number below belongs
+to exactly one of them. Reading a figure from one layer as if it described the
+other is the single easiest mistake to make here.
+
+| | **Canonical pipeline** | **Frozen V1.0.0 showcase** |
+| --- | --- | --- |
+| What it is | The live framework: `epc-ct run`, every stage and exporter | A pinned demonstration of one project at one moment |
+| Version | **Framework / data contract 1.6**, rule set 2.2 | V1.0.0, IDS v0.1, 47 findings |
+| Scope | Both projects in `projects/` | One project, one frozen rule set version |
+| Where it lands | `data/processed/canonical/`, `reports/bcf/issues.bcf` | The eight legacy CSVs, `reports/bcf/ids_failures.bcf`, the PBIP dashboard |
+| Moves when | The pipeline or the rules change | **Never** — it is byte-pinned by test |
+
+The Power BI / Speckle dashboard and its evidence screenshots read the **frozen
+showcase**, not the canonical layer. That is why the dashboard still shows three
+models and 47 findings while the canonical pipeline covers six and 121: the two
+`Legacy…` exporters reproduce a frozen identity derivation on purpose, and they
+retire together in Phase 5. See `AGENTS.md` for why that scope exists.
+
+## Canonical pipeline at a glance (contract 1.6)
+
+What one `epc-ct run` currently produces across every project in `projects/`:
+
+| Canonical measure | Current result |
+| --- | ---: |
+| Projects | 2 |
+| Source IFC models | **6** |
+| Federated elements | **44** |
+| Findings | **121** |
+| Issues | **21** |
+| Requirements | 14 |
+| Project milestones | 6 |
+
+These are the counts the framework stands behind today. They are produced by
+the canonical stages and written to `data/processed/canonical/`; the general
+`BcfExporter` projects the whole run into `reports/bcf/issues.bcf`.
+
+## V1.0.0 showcase at a glance (frozen)
+
+Everything in this section describes the **frozen** fixture and does not move.
 The verified portfolio fixture contains three multidisciplinary IFC models and
 39 federated element occurrences. The end-to-end workflow produces:
 
@@ -34,9 +73,9 @@ The 80.65 percent result is an **applicable-check pass rate for the selected
 project-authored rules**, not an overall model-compliance score. The six
 failed checks belong to three elements and generate three traceable BCF topics.
 
-## Current MVP
+## What the frozen showcase demonstrates
 
-The current implementation:
+The workflow behind the V1.0.0 figures above:
 
 - parses Architecture, Structural, and HVAC IFC models;
 - registers source-model identity and content hashes;
@@ -110,7 +149,10 @@ GlobalId is therefore never used as a federated join key.
 One row represents one normalized IDS requirement result for one applicable
 element, or one `N/A` result when no elements are applicable.
 
-The current batch produces 47 findings with the normalized statuses:
+This is a frozen legacy projection, not the canonical findings table; the
+canonical one is `data/processed/canonical/findings.csv`, which currently holds
+121 rows across both projects. The frozen batch produces 47 findings with the
+normalized statuses:
 
 * `PASS`;
 * `FAIL`;
@@ -168,7 +210,15 @@ IfcTester report.
 A zero-applicable result is normalized to `N/A`; it is not counted as 100
 percent compliance.
 
-`ids_findings.csv` is the canonical normalized source for Control Tower KPIs.
+`ids_findings.csv` is **not** the canonical source of truth. It is one of the
+frozen legacy projections: a normalized view of one project under one pinned
+rule set version, kept byte-stable so the published dashboard and its evidence
+keep meaning what they meant. The canonical record for the whole run is
+`data/processed/canonical/` — `findings.csv` and `issues.csv` in particular —
+and any new consumer should read that instead. `ids_findings.csv` remains
+authoritative for the V1.0.0 dashboard KPIs and for nothing else, and it
+retires with the other `Legacy…` outputs in Phase 5.
+
 The raw IfcTester JSON and HTML reports retain IfcTester's native aggregates,
 where an optional zero-applicable specification may appear as passed even
 though its individual section is marked as skipped. Those native headline
@@ -345,6 +395,30 @@ The sample files are licensed under the
 
 The IDS rules and normalization logic are authored for this portfolio
 prototype and are not official buildingSMART delivery requirements.
+
+## Not implemented
+
+Named here because they are discussed around this project and are easy to
+assume exist. None of these appear anywhere in the code, and no design for them
+is settled:
+
+* **Purpose Packs** — no purpose-scoped bundle of requirements exists.
+* **Overlays** — no mechanism layers one requirement set over another.
+* **Readiness** — nothing computes whether a deliverable is ready. In
+  particular, `Finding.is_issue` and the `Issue` record are *validation*
+  concepts: `is_issue` says a check failed in a way that warrants a topic, and
+  an `Issue` groups such findings. Neither is a readiness verdict, and reading
+  them as one will produce a number the pipeline never claimed.
+* **Blockers** — no blocker concept exists. The `Requirement` fields that look
+  adjacent — owner role, severity, stage — are *rule metadata* carried for
+  validation and for reproducing the frozen legacy archive. They are not a
+  priority model for delivery decisions.
+* **Source fix and recheck** — there is no loop that records a fix at source and
+  revalidates only what it touched. `epc-ct run` recomputes everything.
+
+The three seams in `AGENTS.md` (`Checker`, `GroupingPolicy`, `Exporter`) are
+extension points of the pipeline as it stands. They are not a roadmap, and none
+of the above is a matter of implementing one of them.
 
 ## Current Limitations
 

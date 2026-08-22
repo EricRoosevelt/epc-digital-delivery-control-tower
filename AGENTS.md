@@ -86,6 +86,30 @@ on that name. A rule pointed at a checker that does not exist — or at one that
 cannot evaluate its facets, or read its IFC schema — is rejected while planning,
 before any model is opened.
 
+**These three seams are extension points, not a list of the product's phases.**
+They describe the shapes the current pipeline can absorb without being edited.
+Work that is not one of those shapes does not become one by being forced through
+the nearest seam, and the table above is not a roadmap. Two consequences worth
+stating, because both have been guessed wrong already:
+
+- **A purpose assessment, if it is ever built, is approved between `check` and
+  the compatible group** — after requirements and facts have been validated,
+  before findings are grouped into issues. It is not a `Checker` (it does not
+  evaluate a requirement against a model), not a `GroupingPolicy` (it does not
+  decide what counts as one actionable issue), not an `Exporter` (it does not
+  move results anywhere), and it does not belong in `default_registry`.
+  Registering it as one of the three would make an approval step look like a
+  pipeline component and put a decision inside a projection.
+- **`Finding.is_issue`, `Issue`, and the `Requirement` metadata fields
+  (`owner_role`, `severity`, `stage`) are validation and legacy-compatibility
+  concepts, and stay that way.** `is_issue` records that a check failed in a way
+  that warrants a topic; `Issue` is the grouping of such findings; the
+  `Requirement` fields carry what a rule means and are what lets the frozen
+  legacy archive be rebuilt byte for byte from rule metadata. None of them is a
+  readiness verdict or a blocker model. Reusing them as one would silently
+  redefine every published number that currently depends on them — which is
+  exactly the class of change rule 6 exists to stop.
+
 Registration is explicit and in-tree. Dynamic discovery is deliberately absent:
 an entry-point mechanism is a promise to third-party packages about names,
 versions and compatibility, and making that promise before anything outside this
@@ -185,6 +209,34 @@ dotnet tool install --global ids-tool.CommandLine --version 1.0.124
 
 CI installs it and sets `EPC_REQUIRE_IDS_AUDIT=1`, which turns that skip into a
 failure — a gate that disappears when its tool is missing is not a gate.
+
+### Before you push
+
+Run the gates in the order continuous integration runs them, using the
+project's own `.venv` so the tool versions match what CI will use. This is the
+minimum that makes a local pass mean anything:
+
+```bash
+python -m ruff check .
+EPC_REQUIRE_IDS_AUDIT=1 python -m pytest -p no:cacheprovider tests -q
+python -m epc_control_tower.cli run
+git diff --exit-code
+git status --porcelain --untracked-files=all   # must be empty
+python -m epc_control_tower.cli snapshot
+python src/validate_dashboard.py --mode core
+python src/validate_pbip.py
+python -m pip check
+```
+
+Two things this checklist is defending against, both of which have happened:
+
+- **Do not let the IDS audit skip.** Set `EPC_REQUIRE_IDS_AUDIT=1` and install
+  the pinned `ids-tool` above. Without it the audit skips, the suite is green,
+  and the gate is simply not running.
+- **A failed early gate hides every gate behind it.** `ruff` failing means the
+  suite, the pipeline run, the diff gates and the snapshot were *skipped* — not
+  passed. Run the list to the end, and when reading a CI result, read the steps
+  rather than the job's headline.
 
 ## Conventions
 
