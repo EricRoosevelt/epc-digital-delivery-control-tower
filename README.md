@@ -399,8 +399,12 @@ prototype and are not official buildingSMART delivery requirements.
 ## Not implemented
 
 Named here because they are discussed around this project and are easy to
-assume exist. None of these appear anywhere in the code, and no design for them
-is settled:
+assume exist. None of these appear anywhere in the code.
+
+The next phase's route and its fixed boundaries have been approved. What has
+**not** been approved is the detailed data structure of the Purpose slice, and
+none of it is written: no schema, no types, no stages. Treat everything below as
+named-but-unbuilt, and do not infer a design from the name.
 
 * **Purpose Packs** — no purpose-scoped bundle of requirements exists.
 * **Overlays** — no mechanism layers one requirement set over another.
@@ -410,11 +414,21 @@ is settled:
   an `Issue` groups such findings. Neither is a readiness verdict, and reading
   them as one will produce a number the pipeline never claimed.
 * **Blockers** — no blocker concept exists. The `Requirement` fields that look
-  adjacent — owner role, severity, stage — are *rule metadata* carried for
-  validation and for reproducing the frozen legacy archive. They are not a
-  priority model for delivery decisions.
-* **Source fix and recheck** — there is no loop that records a fix at source and
-  revalidates only what it touched. `epc-ct run` recomputes everything.
+  adjacent — `owner_role`, `severity`, `stage`, `priority`, `labels` — are
+  contract 1.6 *rule metadata* carried for validation and for reproducing the
+  frozen legacy archive. `priority` says when somebody will get to a failure,
+  not what that failure stops; `owner_role` is the role the rule author expects
+  to answer for the rule, not a final responsible-role decision. Nor does
+  `discipline_scope` help: it says which disciplines a requirement is evaluated
+  against, and carries no direction, so it cannot express an MEP-to-Architecture
+  handoff. Direction would be Pack data.
+* **Source fix and recheck** — there is no traceable loop from a fix made at
+  source to the subsequent validation that confirms it. Today a fix and the run
+  that follows it are two unrelated events, and nothing links them. What such a
+  loop should do is an open question, not a settled one: recomputing only the
+  changed objects is one possible answer, but it is not the assumed design and
+  nothing here presumes it. For the avoidance of doubt about present behaviour,
+  `epc-ct run` recomputes the full scope every time.
 
 The three seams in `AGENTS.md` (`Checker`, `GroupingPolicy`, `Exporter`) are
 extension points of the pipeline as it stands. They are not a roadmap, and none

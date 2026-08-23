@@ -101,14 +101,30 @@ stating, because both have been guessed wrong already:
   Registering it as one of the three would make an approval step look like a
   pipeline component and put a decision inside a projection.
 - **`Finding.is_issue`, `Issue`, and the `Requirement` metadata fields
-  (`owner_role`, `severity`, `stage`) are validation and legacy-compatibility
-  concepts, and stay that way.** `is_issue` records that a check failed in a way
-  that warrants a topic; `Issue` is the grouping of such findings; the
-  `Requirement` fields carry what a rule means and are what lets the frozen
-  legacy archive be rebuilt byte for byte from rule metadata. None of them is a
-  readiness verdict or a blocker model. Reusing them as one would silently
-  redefine every published number that currently depends on them — which is
-  exactly the class of change rule 6 exists to stop.
+  (`owner_role`, `severity`, `stage`, `priority`, `labels`) are contract 1.6
+  validation and legacy-compatibility concepts, and stay that way.** `is_issue`
+  records that a check failed in a way that warrants a topic; `Issue` is the
+  grouping of such findings; the `Requirement` fields carry what a rule means
+  and are what lets the frozen legacy archive be rebuilt byte for byte from rule
+  metadata. Specifically, none of them is:
+  - a Purpose readiness verdict — nothing here says a deliverable is fit for a
+    purpose;
+  - a blocker consequence — `priority` says when somebody will get to a failure,
+    not what that failure stops;
+  - a final responsible-role decision — `owner_role` is the role a *rule author*
+    expects to answer for the rule, which is an input to such a decision and not
+    the decision.
+
+  Reusing any of them as one would silently redefine every published number that
+  currently depends on them — exactly the class of change rule 6 exists to stop.
+- **`discipline_scope` expresses validation applicability only.** It says which
+  disciplines a requirement is evaluated against — which models the rule applies
+  to at all. It does not express a *directional handoff*: "MEP hands this to
+  Architecture" is a statement about who gives what to whom, and no field in
+  this package carries it today. Direction is Pack data when Packs exist. Do not
+  read a scope tuple as an arrow, and do not overload it into one; a set of
+  disciplines that quietly becomes a from/to pair is unreviewable and would
+  re-key every requirement that carries it.
 
 Registration is explicit and in-tree. Dynamic discovery is deliberately absent:
 an entry-point mechanism is a promise to third-party packages about names,
@@ -220,13 +236,32 @@ minimum that makes a local pass mean anything:
 python -m ruff check .
 EPC_REQUIRE_IDS_AUDIT=1 python -m pytest -p no:cacheprovider tests -q
 python -m epc_control_tower.cli run
-git diff --exit-code
-git status --porcelain --untracked-files=all   # must be empty
+git diff --exit-code -- data/processed reports
+git status --porcelain --untracked-files=all   # no new or changed generated files
 python -m epc_control_tower.cli snapshot
 python src/validate_dashboard.py --mode core
 python src/validate_pbip.py
 python -m pip check
 ```
+
+In PowerShell the environment variable is set separately, since there is no
+inline `VAR=value` prefix:
+
+```powershell
+$env:EPC_REQUIRE_IDS_AUDIT = "1"
+python -m pytest -p no:cacheprovider tests -q
+```
+
+**What the working tree has to show is that the pipeline changed nothing** —
+the same state before and after `epc-ct run`, with no generated file added or
+modified. That is not the same as the tree being empty. A maintainer's checkout
+can legitimately hold local files that are not repository deliverables:
+`Agent-product-manager.md` and `Agent-tech-lead.md` are local maintainer role
+charters, and they stay untracked and unstaged. Read the two commands above as
+"nothing under `data/processed/` or `reports/` moved, and the run left no new
+output behind", not as "the porcelain output is blank". CI's own tree has no
+charters in it, which is why the workflow can afford the stricter phrasing that
+a working checkout cannot.
 
 Two things this checklist is defending against, both of which have happened:
 
@@ -237,6 +272,8 @@ Two things this checklist is defending against, both of which have happened:
   suite, the pipeline run, the diff gates and the snapshot were *skipped* — not
   passed. Run the list to the end, and when reading a CI result, read the steps
   rather than the job's headline.
+
+Nothing here needs a hook or a wrapper script. It is a list you run.
 
 ## Conventions
 
