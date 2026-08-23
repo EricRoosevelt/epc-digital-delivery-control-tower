@@ -1,0 +1,26 @@
+rule_id = "R-007"
+title = "Columns must declare a meaningful predefined type"
+description = "Checks whether every applicable IfcColumn declares a predefined type other than NOTDEFINED or USERDEFINED."
+checker = "ids"
+severity = "ERROR"
+owner_role = "structural-lead"
+stage = "Design"
+discipline_scope = ["Structural"]
+citation = "ISO 19650-1:2018 §5.1 — information requirements must be identifiable."
+
+[[applicability]]
+facet = "entity"
+name = "IFCCOLUMN"
+
+# An entity facet in requirement position, which is how IDS says "the class you
+# already selected must also declare this type". The enumeration is the value
+# constraint: IfcColumnTypeEnum also admits NOTDEFINED and USERDEFINED, and
+# both are ways of not answering. Listing what counts is exact where a
+# prohibition would have to guess at the ways of evading it.
+[[requirements]]
+facet = "entity"
+name = "IFCCOLUMN"
+instructions = "Declare COLUMN or PILASTER. NOTDEFINED states nothing."
+
+[requirements.predefinedType]
+enumeration = ["COLUMN", "PILASTER"]

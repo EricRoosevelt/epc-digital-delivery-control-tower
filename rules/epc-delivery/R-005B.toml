@@ -1,0 +1,45 @@
+rule_id = "R-005B"
+title = "Air terminals need assumed EPC metadata"
+description = "Project-specific assumed EPC delivery requirement for IfcAirTerminal elements."
+checker = "ids"
+
+# A warning, not an error, and now because the rule says so rather than
+# because its identifier starts with "R-005". This states an information
+# requirement the project assumes; it is not an obligation the buildingSMART
+# sample files were ever meant to satisfy, so failing it is not a defect in
+# the supplied model.
+severity = "WARNING"
+owner_role = "model-coordination"
+stage = "Coordination"
+discipline_scope = ["HVAC"]
+citation = "Project-assumed EPC delivery requirement; not a buildingSMART obligation."
+
+# Priority is not severity. Severity says how wrong the model is; priority says
+# when somebody gets to it. These are WARNINGs — the project assumes the
+# requirement, it is not a defect in the supplied model — but they block the
+# coordination stage, so they are not the thing to do last either.
+priority = "Medium"
+
+# Labels the topic carries. `HVAC` is not repeated here: it is already
+# `discipline_scope`, and the issue composes discipline first, then these.
+labels = ["IDS", "ProjectAssumption"]
+
+[[applicability]]
+facet = "entity"
+name = "IFCAIRTERMINAL"
+
+[[requirements]]
+facet = "property"
+propertySet = "EPC_Delivery"
+baseName = "AssetTag"
+dataType = "IFCLABEL"
+cardinality = "required"
+instructions = "Provide the project-assumed EPC asset tag."
+
+[[requirements]]
+facet = "property"
+propertySet = "EPC_Delivery"
+baseName = "SystemCode"
+dataType = "IFCLABEL"
+cardinality = "required"
+instructions = "Provide the project-assumed EPC system code."

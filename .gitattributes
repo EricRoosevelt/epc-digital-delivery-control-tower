@@ -12,5 +12,43 @@
 *.pbism text eol=lf
 **/.platform text eol=lf
 
+# The generated IDS reports under reports/ids/ are the only HTML here, and the
+# checker already writes them with explicit LF on every platform. This line is
+# therefore not a fix — it is a declaration. Without it the guarantee rests on
+# an implementation detail of one exporter, and an editor, a formatter, or a
+# future writer that used the platform default would put CRLF into the blob on
+# Windows and quietly break the byte comparison that CI runs on Linux. The
+# other generated text formats are pinned for the same reason; HTML was simply
+# missed.
+*.html text eol=lf
+
 third_party/buildingsmart/bcf-xml/3.0/** -text
+third_party/buildingsmart/ids/1.0/LICENSE -text
+third_party/buildingsmart/ids/1.0/*/** -text
+
+# Two kinds of file share that directory and need opposite rules. The vendored
+# cases above are pinned raw because a NoDerivatives license and a digest table
+# both require the exact upstream bytes. The digest table itself is ours, and
+# its own recorded hash is taken over LF, so it is pinned the other way — as
+# text with LF endings — rather than left to `text=auto`, which would hand a
+# Windows checkout CRLF and make the recorded hash unverifiable there. Same
+# hazard as `ids/*.ids` below, opposite resolution, because the two files mean
+# different things.
+third_party/buildingsmart/ids/1.0/SHA256SUMS text eol=lf
 third_party/speckle/powerbi-visual/2026.6.0/LICENSE -text
+
+# Legacy compatibility for data contract 0.1 only.
+#
+# The published v1.0.0 run_id is a SHA-256 over this file's raw bytes, taken
+# from a CRLF working copy. Left to `text=auto` the file checks out with
+# platform line endings, so the same commit yields a different run_id on Linux
+# than on Windows — and run_id feeds every finding key. Pinning the bytes keeps
+# the published baseline reproducible everywhere.
+#
+# This is a compatibility measure, not a statement about rule identity. Raw
+# text bytes are not the semantic identity of a rule set: reindenting a
+# document must not re-key a validation. The canonical design separates the
+# two — `source_blob_sha256` records which exact file was read, while the
+# normalized ruleset digest carries rule semantics and is what the new
+# validation_run_id derives from. This line retires with the legacy adapters.
+ids/*.ids -text

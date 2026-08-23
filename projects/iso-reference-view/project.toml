@@ -1,0 +1,72 @@
+# ISO Spec Reference View — the second project, and the point of Phase 2.
+#
+# Phase 1 proved that nothing changed. This project exists to prove that
+# something *can* change: adding it should be a matter of dropping a directory
+# in place, with no edit to the pipeline that reads it.
+#
+# The three IFC files are unmodified public samples from the buildingSMART
+# International Sample-Test-Files repository, ISO Spec - ReferenceView_V1.2,
+# pinned at commit cecf656112a54a0d8cdd8b06b9398bfea5163886 and licensed
+# CC BY 4.0. Copyright buildingSMART International Ltd. See
+# THIRD_PARTY_NOTICES.md for the full attribution.
+#
+# Two things about this manifest are deliberate.
+#
+# It declares no `raw_data_dir`, so the models are read from this directory.
+# A project is meant to be self-contained and movable, and the shipped example
+# pointing at `data/raw/` is a legacy layout, not the intended one.
+#
+# It declares no `model_key`. Two of its models are called `architecture` and
+# `structural` — the same business codes the PCERT project uses — precisely to
+# exercise the reason those are separate fields. `model_id` is a project-scoped
+# code that humans read and that projects may reuse; `model_key` is the global
+# join identity, derived here as `iso-reference-view.architecture`, which cannot
+# collide with the PCERT project's pinned `architecture`. Had the two been one
+# field, this project could not have been added without renaming its models.
+
+[project]
+project_id = "iso-reference-view"
+name = "ISO Spec Reference View 1.2"
+stage = "Reference sample"
+description = "buildingSMART ISO Spec Reference View 1.2 samples, used as a second worked example with a different discipline mix."
+
+# content_sha256 is an assertion, not a record: ingest verifies each file
+# against it and fails the run on a mismatch.
+
+[[models]]
+model_id = "architecture"
+discipline = "Architecture"
+filename = "wall-with-opening-and-window.ifc"
+source_url = "https://github.com/buildingSMART/Sample-Test-Files/blob/cecf656112a54a0d8cdd8b06b9398bfea5163886/IFC%204.0.2.1%20%28IFC%204%29/ISO%20Spec%20-%20ReferenceView_V1.2/wall-with-opening-and-window.ifc"
+license = "CC BY 4.0"
+content_sha256 = "73b0e45d931d5dc13bfee5fdc7bd80f796526445458b2de74c4168d209097832"
+
+[[models]]
+model_id = "structural"
+discipline = "Structural"
+filename = "column-straight-rectangle-tessellation.ifc"
+source_url = "https://github.com/buildingSMART/Sample-Test-Files/blob/cecf656112a54a0d8cdd8b06b9398bfea5163886/IFC%204.0.2.1%20%28IFC%204%29/ISO%20Spec%20-%20ReferenceView_V1.2/column-straight-rectangle-tessellation.ifc"
+license = "CC BY 4.0"
+content_sha256 = "58bb9b2cae96edf2c368de95f526650f3f282e4e7fc37c0065c501bdbeed00a1"
+
+[[models]]
+model_id = "plumbing"
+discipline = "Plumbing"
+filename = "basin-tessellation.ifc"
+source_url = "https://github.com/buildingSMART/Sample-Test-Files/blob/cecf656112a54a0d8cdd8b06b9398bfea5163886/IFC%204.0.2.1%20%28IFC%204%29/ISO%20Spec%20-%20ReferenceView_V1.2/basin-tessellation.ifc"
+license = "CC BY 4.0"
+content_sha256 = "7278769ec5ef35d388819d2f197519061c7f0f68dd43a733f333ddeb74578121"
+
+# Delivery programme for this project. Same three stages the rules reach; the
+# dates are this project's to state and need not match another project's.
+[[milestones]]
+stage = "Design"
+due = "2026-07-01T00:00:00Z"
+
+[[milestones]]
+stage = "Coordination"
+due = "2026-08-01T00:00:00Z"
+
+[[milestones]]
+stage = "Handover"
+due = "2026-12-01T00:00:00Z"

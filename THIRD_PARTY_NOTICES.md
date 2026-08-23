@@ -44,6 +44,23 @@ Copyright buildingSMART International Ltd. Licensed under the
 The project records each file's source URL and SHA-256 in
 `data/processed/models.csv`.
 
+The following files are unmodified public samples from the same repository,
+IFC 4 ISO Spec Reference View 1.2, pinned at commit
+[`cecf656112a54a0d8cdd8b06b9398bfea5163886`](https://github.com/buildingSMART/Sample-Test-Files/tree/cecf656112a54a0d8cdd8b06b9398bfea5163886/IFC%204.0.2.1%20%28IFC%204%29/ISO%20Spec%20-%20ReferenceView_V1.2):
+
+- `projects/iso-reference-view/wall-with-opening-and-window.ifc`
+  — SHA-256 `73b0e45d931d5dc13bfee5fdc7bd80f796526445458b2de74c4168d209097832`
+- `projects/iso-reference-view/column-straight-rectangle-tessellation.ifc`
+  — SHA-256 `58bb9b2cae96edf2c368de95f526650f3f282e4e7fc37c0065c501bdbeed00a1`
+- `projects/iso-reference-view/basin-tessellation.ifc`
+  — SHA-256 `7278769ec5ef35d388819d2f197519061c7f0f68dd43a733f333ddeb74578121`
+
+Copyright buildingSMART International Ltd. Licensed under the
+[Creative Commons Attribution 4.0 International License](https://creativecommons.org/licenses/by/4.0/).
+Each file's source URL and SHA-256 is also recorded in
+`projects/iso-reference-view/project.toml`, where ingest verifies the hash on
+every run and stops if a file has changed.
+
 ## buildingSMART BCF 3.0 Schemas
 
 Unmodified BCF-XML 3.0 schema files under
@@ -55,6 +72,41 @@ Copyright buildingSMART International Ltd. Licensed under the
 These files are retained byte-for-byte as the validation source of truth. They
 must not be reformatted, normalized, or modified. Source revision and file
 hashes are recorded alongside the vendored snapshot.
+
+## buildingSMART IDS 1.0 Implementer Test Cases
+
+Unmodified IDS implementer test cases under
+`third_party/buildingsmart/ids/1.0/` originate from the
+[buildingSMART IDS repository](https://github.com/buildingSMART/IDS), pinned at
+commit
+[`dba4549e57a3a98e725e086991e19800a76850b8`](https://github.com/buildingSMART/IDS/tree/dba4549e57a3a98e725e086991e19800a76850b8/Documentation/ImplementersDocumentation/TestCases).
+
+Copyright buildingSMART International Ltd. Licensed under the
+[Creative Commons Attribution-NoDerivatives 4.0 International License](https://creativecommons.org/licenses/by-nd/4.0/),
+whose text is retained verbatim in
+`third_party/buildingsmart/ids/1.0/LICENSE`.
+
+Four of the ten test case directories are vendored — `attribute`,
+`classification`, `partof` and `property` — as 199 `.ids`/`.ifc` pairs. They are
+retained byte-for-byte as an independent conformance judge and must not be
+reformatted, normalized, or modified. The pinned revision, what was taken, and
+per-file SHA-256 values are recorded in
+`third_party/buildingsmart/ids/1.0/SOURCE.md` and `SHA256SUMS`, which the test
+suite verifies on every run.
+
+## buildingSMART IDS Audit Tool
+
+The test suite and continuous integration invoke
+[`ids-tool`](https://github.com/buildingSMART/IDS-Audit-tool)
+(`ids-tool.CommandLine` 1.0.124, package SHA-256
+`f0405a163c3e23c1fcd67a6f1b5397c4f618e2338adecb1de76a95d89e5d71ec`) as an
+external process to audit this project's IDS documents against the schema and
+the standard's content rules.
+
+Copyright buildingSMART International Ltd and contributors. Licensed under the
+MIT License. The tool is installed from NuGet as a .NET global tool and is not
+redistributed here; no part of its implementation is copied into this
+repository.
 
 ## Speckle Power BI Connector and 3D Visual
 

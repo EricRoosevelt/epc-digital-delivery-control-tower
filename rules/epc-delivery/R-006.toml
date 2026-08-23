@@ -1,0 +1,23 @@
+rule_id = "R-006"
+title = "Walls must declare their material"
+description = "Checks whether every applicable IfcWall is associated with a material, layer set, or constituent set."
+checker = "ids"
+severity = "ERROR"
+owner_role = "architecture-lead"
+stage = "Design"
+discipline_scope = ["Architecture", "Structural"]
+citation = "ISO 19650-1:2018 §5.1 — information requirements must be identifiable."
+
+[[applicability]]
+facet = "entity"
+name = "IFCWALL"
+
+# The material facet does not name a material. IDS treats a bare material
+# requirement as "there must be one", which is the delivery requirement here:
+# a wall whose material is unstated cannot be costed, scheduled, or handed
+# over, whatever that material turns out to be. Naming an expected material
+# instead would be a design decision this rule set has no standing to make.
+[[requirements]]
+facet = "material"
+cardinality = "required"
+instructions = "Associate the wall with a material, material layer set, or constituent set."

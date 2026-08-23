@@ -1,0 +1,69 @@
+# PCERT Sample Scene — the project this repository ships as its worked example.
+#
+# The three IFC files are unmodified public samples from the buildingSMART
+# International Sample-Test-Files repository, IFC 4 PCERT Sample Scene, and are
+# licensed CC BY 4.0. Copyright buildingSMART International Ltd. Their source
+# URLs and content hashes are recorded per model below; see
+# THIRD_PARTY_NOTICES.md for the full attribution.
+#
+# To adapt this project: copy this directory, change the [project] table, and
+# point each [[models]] entry at your own files. Nothing in the pipeline needs
+# to be edited.
+
+[project]
+project_id = "pcert-sample"
+name = "PCERT Sample Scene"
+stage = "Portfolio prototype"
+description = "Public multidisciplinary buildingSMART sample models used as the worked example."
+raw_data_dir = "data/raw"
+
+# content_sha256 is an assertion, not a record: ingest verifies each file
+# against it and fails the run on a mismatch, so a swapped or edited input
+# cannot silently change the findings.
+
+[[models]]
+model_key = "architecture"
+model_id = "architecture"
+discipline = "Architecture"
+filename = "Building-Architecture.ifc"
+source_url = "https://github.com/buildingSMART/Sample-Test-Files/blob/main/IFC%204.0.2.1%20%28IFC%204%29/PCERT-Sample-Scene/Building-Architecture.ifc"
+license = "CC BY 4.0"
+content_sha256 = "3ff9b10bd00c7b96dded51e7ca5a6b69efbea38b049adcdd05fcd247de7e70d5"
+
+[[models]]
+model_key = "hvac"
+model_id = "hvac"
+discipline = "HVAC"
+filename = "Building-Hvac.ifc"
+source_url = "https://github.com/buildingSMART/Sample-Test-Files/blob/main/IFC%204.0.2.1%20%28IFC%204%29/PCERT-Sample-Scene/Building-Hvac.ifc"
+license = "CC BY 4.0"
+content_sha256 = "11a8552bc555fa44dfdc49374d1ab2da0a16104c10f086af509f500ce03fa2b3"
+
+[[models]]
+model_key = "structural"
+model_id = "structural"
+discipline = "Structural"
+filename = "Building-Structural.ifc"
+source_url = "https://github.com/buildingSMART/Sample-Test-Files/blob/main/IFC%204.0.2.1%20%28IFC%204%29/PCERT-Sample-Scene/Building-Structural.ifc"
+license = "CC BY 4.0"
+content_sha256 = "68be722391e7aaa53bb9278645a02aa4b6382f13cc07548a1612e9b1dc3def67"
+
+# Delivery programme: when this project's information is due, per stage.
+#
+# Programme dates are project data, not rule data — the rule names the stage
+# (Requirement.stage), the project states the date. Every non-empty stage a
+# rule uses must appear here, or the run fails closed while planning. A stage
+# may carry an empty due to say "stated, but no deadline"; silence is a gap,
+# not a deadline. Full timezone-aware timestamps, in the same shape as the
+# run's as_of, so the overdue comparison is offset-aware.
+[[milestones]]
+stage = "Design"
+due = "2026-07-01T00:00:00Z"
+
+[[milestones]]
+stage = "Coordination"
+due = "2026-08-01T00:00:00Z"
+
+[[milestones]]
+stage = "Handover"
+due = "2026-12-01T00:00:00Z"

@@ -1,0 +1,3 @@
+﻿project_id,name,stage,description
+iso-reference-view,ISO Spec Reference View 1.2,Reference sample,"buildingSMART ISO Spec Reference View 1.2 samples, used as a second worked example with a different discipline mix."
+pcert-sample,PCERT Sample Scene,Portfolio prototype,Public multidisciplinary buildingSMART sample models used as the worked example.

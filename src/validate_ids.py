@@ -1,317 +1,111 @@
-import hashlib
-import json
-import xml.etree.ElementTree as ET
+"""Normalize an IfcTester report into the published findings table.
+
+Compatibility shim over :mod:`epc_control_tower`. Running the validation is now
+``epc-ct run``: it opens the models, evaluates the rules, writes the reports and
+produces every published artifact in one pass, from the canonical domain model.
+``main`` here delegates to it and writes only ``ids_findings.csv``, which is
+what this script always produced.
+
+What is *not* delegated is :func:`normalize_report`. It turns one IfcTester
+report dictionary into published rows, and it is the seam the pre-existing
+tests exercise directly with hand-built reports. The package's IDS checker does
+the same job against real models but does not take a report dictionary, so this
+remains the legacy shape and retires with the legacy adapters.
+
+Three behaviours are unchanged and deliberate:
+
+* A specification with zero applicable elements becomes ``N/A``, not ``PASS``.
+  IfcTester reports it as passing; counting that as compliance is what would
+  inflate every published pass rate.
+* ``actual`` stays empty. IfcTester does not stably report the value it
+  observed, and an invented one would be worse than none.
+* Severity is a property of the rule, not of the outcome: the R-005 family
+  states a requirement this project assumes rather than a defect in a supplied
+  model, so its failures are warnings.
+
+The finding column list is no longer written out by hand. It comes from the row
+type, which is the direct fix for these columns having been declared twice — as
+a twenty-item list here and an eleven-item set elsewhere — and drifting apart.
+"""
+
+from __future__ import annotations
+
+import argparse
+import sys
 from pathlib import Path
 
-import ifcopenshell
-import pandas as pd
-from ifctester import ids, reporter
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
+
+from epc_control_tower.determinism import (  # noqa: E402
+    atomic_write_bytes,
+    sha256_file as calculate_sha256,
+    write_csv_bytes,
+)
+from epc_control_tower.domain import field_names  # noqa: E402
+from epc_control_tower.exporters.legacy_contract import LegacyFindingRow  # noqa: E402
 
 try:
-    from .identity import (
-        build_finding_key,
-        build_requirement_key,
-    )
-except ImportError:
-    from identity import (
-        build_finding_key,
-        build_requirement_key,
-    )
+    from .identity import build_finding_key, build_requirement_key
+except ImportError:  # pragma: no cover - the bare-import route
+    from identity import build_finding_key, build_requirement_key
 
-
-# 取得项目根目录，使脚本不依赖当前 PowerShell 所在位置
-PROJECT_ROOT = Path(__file__).resolve().parents[1]
-
-IDS_PATH = (
-    PROJECT_ROOT
-    / "ids"
-    / "epc_delivery_requirements_v0.1.ids"
-)
-
-MODELS_PATH = (
-    PROJECT_ROOT
-    / "data"
-    / "processed"
-    / "models.csv"
-)
-
-INVENTORY_PATH = (
-    PROJECT_ROOT
-    / "data"
-    / "processed"
-    / "model_inventory.csv"
-)
-
+IDS_PATH = PROJECT_ROOT / "ids" / "epc_delivery_requirements_v0.1.ids"
+MODELS_PATH = PROJECT_ROOT / "data" / "processed" / "models.csv"
+INVENTORY_PATH = PROJECT_ROOT / "data" / "processed" / "model_inventory.csv"
 RAW_DATA_DIR = PROJECT_ROOT / "data" / "raw"
 REPORT_DIR = PROJECT_ROOT / "reports" / "ids"
+FINDINGS_OUTPUT = PROJECT_ROOT / "data" / "processed" / "ids_findings.csv"
 
-FINDINGS_OUTPUT = (
-    PROJECT_ROOT
-    / "data"
-    / "processed"
-    / "ids_findings.csv"
-)
+#: Column order, taken from the row type rather than restated.
+FINDING_COLUMNS = list(field_names(LegacyFindingRow))
 
+IDS_NAMESPACE = {"ids": "http://standards.buildingsmart.org/IDS"}
 
-# ids_findings.csv 的固定列顺序
-FINDING_COLUMNS = [
-    "finding_key",
-    "run_id",
-    "model_id",
-    "element_key",
-    "global_id",
-    "ids_version",
-    "specification_id",
-    "specification",
-    "requirement_id",
-    "requirement_key",
-    "requirement",
-    "status",
-    "is_applicable",
-    "is_issue",
-    "severity",
-    "ifc_class",
-    "element_name",
-    "expected",
-    "actual",
-    "reason",
-]
-
-
-# XML 中的 IDS 命名空间
-IDS_NAMESPACE = {
-    "ids": "http://standards.buildingsmart.org/IDS"
-}
-
-
-def calculate_sha256(path):
-    """计算文件的 SHA-256 内容摘要。"""
-
-    hasher = hashlib.sha256()
-
-    with path.open("rb") as file:
-        for chunk in iter(
-            lambda: file.read(1024 * 1024),
-            b"",
-        ):
-            hasher.update(chunk)
-
-    return hasher.hexdigest()
-
-
-def read_ids_metadata():
-    """
-    直接从 XML 读取 IDS 版本、规则编号和名称。
-
-    IfcTester 0.8.5 重新读取 IDS 后，不会把 identifier
-    恢复到 Python specification 对象，因此这里读取原始 XML。
-    """
-
-    root = ET.parse(IDS_PATH).getroot()
-
-    version_node = root.find(
-        "ids:info/ids:version",
-        IDS_NAMESPACE,
-    )
-
-    if version_node is None or not version_node.text:
-        raise ValueError("IDS version is missing")
-
-    specification_nodes = root.findall(
-        ".//ids:specification",
-        IDS_NAMESPACE,
-    )
-
-    specification_ids = {}
-    known_identifiers = set()
-
-    for node in specification_nodes:
-        name = node.get("name")
-        identifier = node.get("identifier")
-
-        if not name or not identifier:
-            raise ValueError(
-                "An IDS specification has no name or identifier"
-            )
-
-        if name in specification_ids:
-            raise ValueError(
-                f"Duplicate IDS specification name: {name}"
-            )
-
-        if identifier in known_identifiers:
-            raise ValueError(
-                "Duplicate IDS specification identifier: "
-                f"{identifier}"
-            )
-
-        specification_ids[name] = identifier
-        known_identifiers.add(identifier)
-
-    return version_node.text, specification_ids
-
-
-def build_run_id(
-    ids_version,
-    ids_hash,
-    models_df,
-):
-    """
-    根据 IDS 内容和三个 IFC 文件的内容生成稳定 run_id。
-
-    输入不变时 run_id 不变；
-    IDS 或任一 IFC 改变时 run_id 随之改变。
-    """
-
-    hasher = hashlib.sha256()
-    hasher.update(f"ids:{ids_hash}\n".encode("utf-8"))
-
-    for row in models_df.sort_values(
-        "model_id"
-    ).itertuples(index=False):
-        hasher.update(
-            (
-                f"{row.model_id}:"
-                f"{row.content_sha256}\n"
-            ).encode("utf-8")
-        )
-
-    return (
-        f"ids-v{ids_version}-"
-        f"{hasher.hexdigest()[:16]}"
-    )
+_PASS_REASON = "Requirement satisfied."
+_FAIL_REASON = "Requirement not satisfied."
+_NOT_APPLICABLE_REASON = "No applicable elements exist in this model."
 
 
 def get_specification_status(specification_report):
+    """Turn IfcTester's outcome into ``PASS``, ``FAIL`` or ``N/A``.
+
+    IfcTester reports zero applicable elements as passing. That is normalised
+    to ``N/A`` and excluded from the applicable denominator, because reporting
+    it as compliance would inflate every pass rate this project publishes.
     """
-    将 IfcTester 的状态转换成 PASS、FAIL 或 N/A。
 
-    IfcTester 会把 0/0 显示为 PASS；
-    本项目必须把零适用对象规范化为 N/A。
-    """
-
-    total_applicable = int(
-        specification_report.get(
-            "total_applicable",
-            0,
-        )
-        or 0
-    )
-
-    if (
-        specification_report.get("is_skipped")
-        or total_applicable == 0
-    ):
+    total_applicable = int(specification_report.get("total_applicable", 0) or 0)
+    if specification_report.get("is_skipped") or total_applicable == 0:
         return "N/A"
-
-    if specification_report.get("status"):
-        return "PASS"
-
-    return "FAIL"
+    return "PASS" if specification_report.get("status") else "FAIL"
 
 
 def get_severity(identifier, status):
-    """
-    根据规则来源和结果确定 Finding 严重度。
+    """Severity of one outcome.
 
-    R-005 是本项目假设的 EPC 要求，失败只记为 WARNING。
-    其他规则失败记为 ERROR。
-    PASS 和 N/A 不是问题，因此记为 INFO。
+    R-005 states a requirement this project assumes rather than a defect in a
+    supplied model, so failing it is a warning. Anything that is not a failure
+    is not a problem and carries INFO.
     """
 
     if status != "FAIL":
         return "INFO"
-
-    if identifier.startswith("R-005"):
-        return "WARNING"
-
-    return "ERROR"
+    return "WARNING" if identifier.startswith("R-005") else "ERROR"
 
 
 def get_requirement_id(requirement):
     """Return the canonical requirement label emitted by IfcTester."""
 
     requirement_id = requirement.get("label")
-
     if not requirement_id:
-        raise ValueError(
-            "An IDS requirement has no canonical label"
-        )
-
+        raise ValueError("An IDS requirement has no canonical label")
     return str(requirement_id)
 
 
-def validate_model(model_row):
-    """
-    验证一个 IFC 模型，同时生成 JSON 和 HTML 原始报告。
-
-    每个模型都重新读取 IDS，防止上一个模型的验证状态
-    残留到下一个模型中。
-    """
-
-    model_id = model_row.model_id
-    ifc_path = RAW_DATA_DIR / model_row.filename
-
-    if not ifc_path.exists():
-        raise FileNotFoundError(
-            f"IFC file not found: {ifc_path}"
-        )
-
-    # 验证原始 IFC 内容与 models.csv 中记录的哈希一致
-    actual_hash = calculate_sha256(ifc_path)
-
-    if actual_hash != model_row.content_sha256:
-        raise ValueError(
-            f"IFC content hash changed: {model_row.filename}"
-        )
-
-    specifications = ids.open(str(IDS_PATH))
-    model = ifcopenshell.open(str(ifc_path))
-
-    specifications.validate(model)
-
-    REPORT_DIR.mkdir(
-        parents=True,
-        exist_ok=True,
-    )
-
-    json_path = REPORT_DIR / f"{model_id}.json"
-    html_path = REPORT_DIR / f"{model_id}.html"
-
-    # 生成供程序读取的 JSON 报告
-    json_reporter = reporter.Json(specifications)
-    json_reporter.report()
-    json_reporter.to_file(str(json_path))
-
-    # 生成供人阅读的 HTML 报告
-    html_reporter = reporter.Html(specifications)
-    html_reporter.report()
-    html_reporter.to_file(str(html_path))
-
-    # IfcTester 的 HTML 模板包含行尾空格。清理格式噪声，
-    # 使生成报告可以通过 Git whitespace 检查。
-    html_content = html_path.read_text(
-        encoding="utf-8-sig",
-    )
-    cleaned_html = "\n".join(
-        line.rstrip()
-        for line in html_content.splitlines()
-    )
-    html_path.write_text(
-        f"{cleaned_html}\n",
-        encoding="utf-8",
-    )
-
-    # 从刚刚生成的 JSON 读取真实报告结构
-    with json_path.open(
-        "r",
-        encoding="utf-8-sig",
-    ) as file:
-        report_data = json.load(file)
-
-    print(f"Validated {model_row.filename}")
-
-    return report_data
+def _row(**values) -> dict[str, str]:
+    return {column: values.get(column, "") for column in FINDING_COLUMNS}
 
 
 def add_na_findings(
@@ -323,61 +117,33 @@ def add_na_findings(
     specification_name,
     requirements,
 ):
-    """
-    为零适用对象的 specification 生成 N/A 记录。
+    """Emit one specification-level ``N/A`` row per requirement.
 
-    一项 requirement 对应一行 N/A；
-    N/A 没有具体构件，因此构件字段留空。
+    No element is applicable, so no element is named: an N/A finding that
+    pointed at a component would be claiming something was checked.
     """
 
     for requirement in requirements:
         requirement_id = get_requirement_id(requirement)
-        requirement_key = build_requirement_key(
-            identifier,
-            requirement_id,
-        )
-
-        expected = (
-            requirement.get("description")
-            or requirement_id
-        )
-
-        finding_key = build_finding_key(
-            run_id=run_id,
-            model_id=model_id,
-            requirement_key=requirement_key,
-            element_key="",
-        )
-
+        requirement_key = build_requirement_key(identifier, requirement_id)
         findings.append(
-            {
-                "finding_key": finding_key,
-                "run_id": run_id,
-                "model_id": model_id,
-                "element_key": "",
-                "global_id": "",
-                "ids_version": ids_version,
-                "specification_id": identifier,
-                "specification": (
-                    f"{identifier}: "
-                    f"{specification_name}"
-                ),
-                "requirement_id": requirement_id,
-                "requirement_key": requirement_key,
-                "requirement": requirement_id,
-                "status": "N/A",
-                "is_applicable": "false",
-                "is_issue": "false",
-                "severity": "INFO",
-                "ifc_class": "",
-                "element_name": "",
-                "expected": expected,
-                "actual": "",
-                "reason": (
-                    "No applicable elements "
-                    "exist in this model."
-                ),
-            }
+            _row(
+                finding_key=build_finding_key(run_id, model_id, requirement_key, ""),
+                run_id=run_id,
+                model_id=model_id,
+                ids_version=ids_version,
+                specification_id=identifier,
+                specification=f"{identifier}: {specification_name}",
+                requirement_id=requirement_id,
+                requirement_key=requirement_key,
+                requirement=requirement_id,
+                status="N/A",
+                is_applicable="false",
+                is_issue="false",
+                severity="INFO",
+                expected=requirement.get("description") or requirement_id,
+                reason=_NOT_APPLICABLE_REASON,
+            )
         )
 
 
@@ -393,92 +159,54 @@ def add_entity_findings(
     requirement,
     element_lookup,
 ):
-    """
-    将通过或失败的构件结果转换成扁平 Finding 行。
-    """
+    """Flatten one requirement's passing or failing elements into rows."""
 
     requirement_id = get_requirement_id(requirement)
-    requirement_key = build_requirement_key(
-        identifier,
-        requirement_id,
-    )
-
-    expected = (
-        requirement.get("description")
-        or requirement_id
-    )
+    requirement_key = build_requirement_key(identifier, requirement_id)
+    expected = requirement.get("description") or requirement_id
 
     for entity in entities:
         global_id = entity.get("global_id")
-
         if not global_id:
-            raise ValueError(
-                "A non-N/A finding has no GlobalId"
-            )
+            raise ValueError("A non-N/A finding has no GlobalId")
 
-        lookup_key = (model_id, global_id)
-        element_key = element_lookup.get(lookup_key)
-
+        element_key = element_lookup.get((model_id, global_id))
         if not element_key:
             raise ValueError(
-                "Validation element not found in inventory: "
-                f"{lookup_key}"
+                f"Validation element not found in inventory: {(model_id, global_id)}"
             )
-
-        if status == "PASS":
-            reason = "Requirement satisfied."
-        else:
-            reason = (
-                entity.get("reason")
-                or "Requirement not satisfied."
-            )
-
-        finding_key = build_finding_key(
-            run_id=run_id,
-            model_id=model_id,
-            requirement_key=requirement_key,
-            element_key=element_key,
-        )
 
         findings.append(
-            {
-                "finding_key": finding_key,
-                "run_id": run_id,
-                "model_id": model_id,
-                "element_key": element_key,
-                "global_id": global_id,
-                "ids_version": ids_version,
-                "specification_id": identifier,
-                "specification": (
-                    f"{identifier}: "
-                    f"{specification_name}"
+            _row(
+                finding_key=build_finding_key(
+                    run_id, model_id, requirement_key, element_key
                 ),
-                "requirement_id": requirement_id,
-                "requirement_key": requirement_key,
-                "requirement": requirement_id,
-                "status": status,
-                "is_applicable": "true",
-                "is_issue": (
-                    "true" if status == "FAIL" else "false"
+                run_id=run_id,
+                model_id=model_id,
+                element_key=element_key,
+                global_id=global_id,
+                ids_version=ids_version,
+                specification_id=identifier,
+                specification=f"{identifier}: {specification_name}",
+                requirement_id=requirement_id,
+                requirement_key=requirement_key,
+                requirement=requirement_id,
+                status=status,
+                is_applicable="true",
+                is_issue="true" if status == "FAIL" else "false",
+                severity=get_severity(identifier, status),
+                ifc_class=entity.get("class") or "",
+                element_name=entity.get("name") or "",
+                expected=expected,
+                # IfcTester does not stably report the observed value, and
+                # inventing one would be worse than leaving it out.
+                actual="",
+                reason=(
+                    _PASS_REASON
+                    if status == "PASS"
+                    else (entity.get("reason") or _FAIL_REASON)
                 ),
-                "severity": get_severity(
-                    identifier,
-                    status,
-                ),
-                "ifc_class": (
-                    entity.get("class")
-                    or ""
-                ),
-                "element_name": (
-                    entity.get("name")
-                    or ""
-                ),
-                "expected": expected,
-                # IfcTester 的 JSON 没有稳定提供属性实际值；
-                # 不编造数据，暂时保留为空
-                "actual": "",
-                "reason": reason,
-            }
+            )
         )
 
 
@@ -490,55 +218,27 @@ def normalize_report(
     specification_ids,
     element_lookup,
 ):
-    """
-    把一个模型的嵌套 JSON 报告转换成 Finding 行。
-    """
+    """Turn one model's nested IfcTester report into published rows."""
 
-    findings = []
+    findings: list[dict[str, str]] = []
 
-    for specification in report_data[
-        "specifications"
-    ]:
+    for specification in report_data["specifications"]:
         specification_name = specification["name"]
-
-        identifier = specification_ids.get(
-            specification_name
-        )
-
+        identifier = specification_ids.get(specification_name)
         if not identifier:
             raise ValueError(
-                "Specification name not found in IDS XML: "
-                f"{specification_name}"
+                f"Specification name not found in IDS XML: {specification_name}"
             )
 
-        requirements = specification.get(
-            "requirements",
-            [],
-        )
-
-        requirement_ids = [
-            get_requirement_id(requirement)
-            for requirement in requirements
-        ]
-
-        if len(requirement_ids) != len(
-            set(requirement_ids)
-        ):
+        requirements = specification.get("requirements", [])
+        requirement_ids = [get_requirement_id(item) for item in requirements]
+        if len(requirement_ids) != len(set(requirement_ids)):
             raise ValueError(
-                "Duplicate requirement label in IDS "
-                f"specification: {identifier}"
+                f"Duplicate requirement label in IDS specification: {identifier}"
             )
 
-        specification_status = (
-            get_specification_status(specification)
-        )
-
-        print(
-            f"  {identifier}: "
-            f"{specification_status}"
-        )
-
-        if specification_status == "N/A":
+        status = get_specification_status(specification)
+        if status == "N/A":
             add_na_findings(
                 findings=findings,
                 run_id=run_id,
@@ -551,304 +251,60 @@ def normalize_report(
             continue
 
         for requirement in requirements:
-            passed_entities = (
-                requirement.get(
-                    "passed_entities",
-                    [],
-                )
-                or []
-            )
-
-            failed_entities = (
-                requirement.get(
-                    "failed_entities",
-                    [],
-                )
-                or []
-            )
-
-            total_applicable = int(
-                requirement.get(
-                    "total_applicable",
-                    0,
-                )
-                or 0
-            )
-
-            # 每个 requirement 的通过数和失败数
-            # 应当等于其适用构件总数
-            if (
-                len(passed_entities)
-                + len(failed_entities)
-                != total_applicable
-            ):
+            passed = requirement.get("passed_entities", []) or []
+            failed = requirement.get("failed_entities", []) or []
+            total_applicable = int(requirement.get("total_applicable", 0) or 0)
+            if len(passed) + len(failed) != total_applicable:
                 raise ValueError(
-                    "Requirement entity counts "
-                    "do not reconcile: "
-                    f"{identifier} "
-                    f"{requirement.get('label')}"
+                    "Requirement entity counts do not reconcile: "
+                    f"{identifier} {requirement.get('label')}"
                 )
 
-            add_entity_findings(
-                findings=findings,
-                entities=passed_entities,
-                status="PASS",
-                run_id=run_id,
-                model_id=model_id,
-                ids_version=ids_version,
-                identifier=identifier,
-                specification_name=specification_name,
-                requirement=requirement,
-                element_lookup=element_lookup,
-            )
-
-            add_entity_findings(
-                findings=findings,
-                entities=failed_entities,
-                status="FAIL",
-                run_id=run_id,
-                model_id=model_id,
-                ids_version=ids_version,
-                identifier=identifier,
-                specification_name=specification_name,
-                requirement=requirement,
-                element_lookup=element_lookup,
-            )
+            for entities, entity_status in ((passed, "PASS"), (failed, "FAIL")):
+                add_entity_findings(
+                    findings=findings,
+                    entities=entities,
+                    status=entity_status,
+                    run_id=run_id,
+                    model_id=model_id,
+                    ids_version=ids_version,
+                    identifier=identifier,
+                    specification_name=specification_name,
+                    requirement=requirement,
+                    element_lookup=element_lookup,
+                )
 
     return findings
 
 
-def main():
-    """执行三个模型的批量 IDS 验证。"""
+def main() -> None:
+    """Validate every configured project and write the published findings."""
 
-    required_inputs = [
-        IDS_PATH,
-        MODELS_PATH,
-        INVENTORY_PATH,
-    ]
+    from epc_control_tower.config import load_run_config
+    from epc_control_tower.exporters.legacy_projection import project_bundle
+    from epc_control_tower.pipeline import build_bundle
 
-    for path in required_inputs:
-        if not path.exists():
-            raise FileNotFoundError(
-                f"Required input not found: {path}"
-            )
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--output", type=Path, default=FINDINGS_OUTPUT)
+    arguments = parser.parse_args()
 
-    models_df = pd.read_csv(
-        MODELS_PATH,
-        dtype=str,
-    ).fillna("")
+    config = load_run_config(PROJECT_ROOT)
+    result = build_bundle(config)
+    projection = project_bundle(result.bundle)
 
-    inventory_df = pd.read_csv(
-        INVENTORY_PATH,
-        dtype=str,
-    ).fillna("")
-
-    # 同一个模型中的 GlobalId 必须唯一，
-    # 才能可靠回到 element_key
-    duplicated_elements = inventory_df.duplicated(
-        subset=["model_id", "global_id"],
-        keep=False,
+    print(f"Validation run: {projection.run_id}")
+    atomic_write_bytes(
+        arguments.output,
+        write_csv_bytes(
+            [
+                {column: getattr(row, column) for column in FINDING_COLUMNS}
+                for row in projection.findings
+            ],
+            FINDING_COLUMNS,
+        ),
     )
-
-    if duplicated_elements.any():
-        raise ValueError(
-            "Duplicate model_id + global_id "
-            "found in model inventory"
-        )
-
-    element_lookup = {
-        (row.model_id, row.global_id): row.element_key
-        for row in inventory_df.itertuples(index=False)
-    }
-
-    ids_version, specification_ids = (
-        read_ids_metadata()
-    )
-
-    ids_hash = calculate_sha256(IDS_PATH)
-
-    run_id = build_run_id(
-        ids_version=ids_version,
-        ids_hash=ids_hash,
-        models_df=models_df,
-    )
-
-    print(f"Validation run: {run_id}")
-
-    all_findings = []
-
-    for model_row in models_df.sort_values(
-        "model_id"
-    ).itertuples(index=False):
-        report_data = validate_model(model_row)
-
-        model_findings = normalize_report(
-            report_data=report_data,
-            model_id=model_row.model_id,
-            run_id=run_id,
-            ids_version=ids_version,
-            specification_ids=specification_ids,
-            element_lookup=element_lookup,
-        )
-
-        all_findings.extend(model_findings)
-
-    findings_df = pd.DataFrame(
-        all_findings,
-        columns=FINDING_COLUMNS,
-    )
-
-    if findings_df.empty:
-        raise ValueError(
-            "Validation produced no findings"
-        )
-
-    # 固定排序，保证相同输入重复运行时 CSV 顺序一致
-    findings_df = findings_df.sort_values(
-        [
-            "model_id",
-            "specification_id",
-            "requirement_id",
-            "element_key",
-            "status",
-        ]
-    ).reset_index(drop=True)
-
-    # 同一次验证中，一项要求对同一模型构件只能产生一条结果。
-    # N/A 记录的 element_key 为空，但 specification 和 requirement
-    # 仍可共同保证每项不适用要求只有一行。
-    finding_key_columns = [
-        "run_id",
-        "model_id",
-        "requirement_key",
-        "element_key",
-    ]
-
-    duplicated_findings = findings_df.duplicated(
-        subset=finding_key_columns,
-        keep=False,
-    )
-
-    if duplicated_findings.any():
-        duplicate_keys = findings_df.loc[
-            duplicated_findings,
-            finding_key_columns,
-        ].to_dict("records")
-
-        raise ValueError(
-            "Duplicate normalized findings: "
-            f"{duplicate_keys}"
-        )
-
-    if not findings_df["finding_key"].is_unique:
-        raise ValueError("finding_key is not unique")
-
-    expected_requirement_keys = [
-        build_requirement_key(
-            row.specification_id,
-            row.requirement_id,
-        )
-        for row in findings_df.itertuples(index=False)
-    ]
-
-    if not findings_df["requirement_key"].equals(
-        pd.Series(expected_requirement_keys)
-    ):
-        raise ValueError(
-            "A requirement_key does not match its identity payload"
-        )
-
-    expected_finding_keys = [
-        build_finding_key(
-            run_id=row.run_id,
-            model_id=row.model_id,
-            requirement_key=row.requirement_key,
-            element_key=row.element_key,
-        )
-        for row in findings_df.itertuples(index=False)
-    ]
-
-    if not findings_df["finding_key"].equals(
-        pd.Series(expected_finding_keys)
-    ):
-        raise ValueError(
-            "A finding_key does not match its identity payload"
-        )
-
-    expected_applicable = findings_df["status"].map(
-        lambda status: "false" if status == "N/A" else "true"
-    )
-    expected_issue = findings_df["status"].map(
-        lambda status: "true" if status == "FAIL" else "false"
-    )
-
-    if not findings_df["is_applicable"].equals(
-        expected_applicable
-    ):
-        raise ValueError(
-            "is_applicable does not match finding status"
-        )
-
-    if not findings_df["is_issue"].equals(expected_issue):
-        raise ValueError(
-            "is_issue does not match finding status"
-        )
-
-    # 所有非 N/A 结果都必须关联到一个真实构件
-    non_na = findings_df[
-        findings_df["status"] != "N/A"
-    ]
-
-    if (
-        non_na["element_key"].eq("").any()
-        or non_na["global_id"].eq("").any()
-    ):
-        raise ValueError(
-            "A non-N/A finding has no element key"
-        )
-
-    known_element_keys = set(
-        inventory_df["element_key"]
-    )
-
-    unknown_element_keys = (
-        set(non_na["element_key"])
-        - known_element_keys
-    )
-
-    if unknown_element_keys:
-        raise ValueError(
-            "Unknown element keys in findings: "
-            f"{unknown_element_keys}"
-        )
-
-    FINDINGS_OUTPUT.parent.mkdir(
-        parents=True,
-        exist_ok=True,
-    )
-
-    findings_df.to_csv(
-        FINDINGS_OUTPUT,
-        index=False,
-        encoding="utf-8-sig",
-        lineterminator="\n",
-    )
-
-    print(
-        f"Wrote {len(findings_df)} findings "
-        f"to {FINDINGS_OUTPUT}"
-    )
-
-    print(
-        findings_df.groupby(
-            ["model_id", "status"]
-        ).size()
-    )
-
-    print(
-        "Findings SHA-256: "
-        f"{calculate_sha256(FINDINGS_OUTPUT)}"
-    )
+    print(f"Wrote {len(projection.findings)} findings to {arguments.output}")
+    print(f"Findings SHA-256: {calculate_sha256(arguments.output)}")
 
 
 if __name__ == "__main__":

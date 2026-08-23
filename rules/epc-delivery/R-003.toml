@@ -1,0 +1,21 @@
+rule_id = "R-003"
+title = "Beams must declare LoadBearing"
+description = "Checks the presence and IFC data type of Pset_BeamCommon.LoadBearing."
+checker = "ids"
+severity = "ERROR"
+owner_role = "structural-lead"
+stage = "Design"
+discipline_scope = ["Structural"]
+citation = "IFC4 Pset_BeamCommon."
+
+[[applicability]]
+facet = "entity"
+name = "IFCBEAM"
+
+[[requirements]]
+facet = "property"
+propertySet = "Pset_BeamCommon"
+baseName = "LoadBearing"
+dataType = "IFCBOOLEAN"
+cardinality = "required"
+instructions = "Declare whether the beam is load-bearing."

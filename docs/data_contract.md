@@ -3,8 +3,19 @@
 Version: 0.1
 Status: Draft
 
-This document defines the tabular data contract for the EPC Digital
-Delivery Control Tower prototype.
+This document defines the **frozen legacy** tabular data contract for the EPC
+Digital Delivery Control Tower prototype — the eight CSVs under
+`data/processed/` that the Power BI project reads, keyed on the legacy `run_id`.
+It is deliberately at version 0.1 and does not move: through **contract 1.6**
+every file it describes is byte-identical, including
+`run_id ids-v0.1-8706ef58303bfd11`.
+
+The evolving *canonical* surface — `data/processed/canonical/`, including the
+`project_milestones.csv` table (`project_id, stage, due`) added in contract 1.6
+and the `group_ref` column on `issues.csv` — is versioned by `CHANGELOG.md` and
+the recorded snapshots under `docs/contracts/`, not here. Keeping the two apart
+is what lets the canonical model grow a column without disturbing the published
+legacy contract this file governs.
 
 ## General Rules
 

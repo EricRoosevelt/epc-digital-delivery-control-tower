@@ -1,0 +1,48 @@
+{
+  "artifact_bundle_id": "bundle-d58a285ed72b2487",
+  "artifacts": {
+    "data/processed/bcf_topic_events.csv": "569a2ec391b5726c652d74c75e86ebfc654f10e9b1cfeb97cc8445fa81a0b5bf",
+    "data/processed/bcf_topic_findings.csv": "ab49e6de9c41c98c29bfcfb14da2710ff9e976754580e6807e09309e99156209",
+    "data/processed/bcf_topics.csv": "dd39cf192f010d0e72b1daeaa30ecb2b7bbd948d01a9acf197ddfd19fc0cf550",
+    "data/processed/bcf_viewpoint_components.csv": "0268a09c712c2bbefe80af52f232b838ce3d929748f88c4767a7618bf60b5f5c",
+    "data/processed/bcf_viewpoints.csv": "6e31593bf5b0a88ffb0bbd9ece7c509130206a244bce82709b507065f9b57bbf",
+    "data/processed/canonical/elements.csv": "e28529b55e6e21888e1157c4afa473f0b0e844e19e2708fac0c6c228f2f0c1a0",
+    "data/processed/canonical/findings.csv": "004653dbf277a07080036d625a5b54dd05384dd4280e97e56874c261d1935535",
+    "data/processed/canonical/issue_events.csv": "4781514f9d3c73a3249032210a392373a4c41d342db8333c86f2f2248780e18e",
+    "data/processed/canonical/issue_findings.csv": "471ab98fd17e77db81879f08c08bb3dfa1f96e8019ec4bf7dc4ef15a1e3e4ede",
+    "data/processed/canonical/issues.csv": "9f78b7dddf9a5be9ddf9aa60b716a08108e9dd1ec9c8e383e710d9f709f8fe34",
+    "data/processed/canonical/models.csv": "34534380d0456b5e7a87bac610f4543abb9e2ca5a753ac58bf348783a55e2941",
+    "data/processed/canonical/projects.csv": "194e795a7a3d929ad51263a14970ec70e82f0016085ae6774811c1c7f4f8ab52",
+    "data/processed/canonical/requirements.csv": "b4588e0672c8f36894ee41ee8df87b04bf855bd0248444fb625c843cbb57b830",
+    "data/processed/canonical/run.json": "28fb83b7d7e956185fdb70dc8cc1df6b1acfd45650021c02bd2f765b3fa2d3f2",
+    "data/processed/ids_findings.csv": "ea7d2fa2cd1690eb8b791dcab2792f116238566f0c60b10b64f1b02ce504eb4d",
+    "data/processed/model_inventory.csv": "34d894f73fcfae20561d17be5daf23796e5969092533cf2f8928e157622a1c04",
+    "data/processed/models.csv": "e0851c3c9d647e6905428e63df61d76f4f5bf6090598120383ba082d83e39181",
+    "reports/bcf/ids_failures.bcf": "b3c6f51abc9647ef4baeee9f9bccd884094b362362e516778c4bf083326abc99",
+    "reports/bcf/issues.bcf": "d9237f828e2ebe4c43e71ed5340e7b012bdb8b7cd7a0b2743dbdeb4dbf38435b"
+  },
+  "as_of": "2026-08-13T00:00:00Z",
+  "contract_version": "1.5",
+  "counts": {
+    "applicable": 64,
+    "by_status": {
+      "FAIL": 24,
+      "N/A": 57,
+      "PASS": 40
+    },
+    "elements": 44,
+    "findings": 121,
+    "issue_events": 21,
+    "issues": 21,
+    "models": 6,
+    "projects": 2
+  },
+  "legacy_run_id": "ids-v0.1-8706ef58303bfd11",
+  "ruleset": {
+    "id": "epc-delivery",
+    "normalized_digest": "a06989a5ea1e52f05f6b9345cc0b1897517210efbeb76c631c11e6306684769c",
+    "requirements": 14,
+    "version": "2.1"
+  },
+  "validation_run_id": "epc-delivery-v2.1-0094f08f7dcbc692"
+}

@@ -1,0 +1,142 @@
+"""Export: a bundle becomes files, and the set of files gets an identity.
+
+Exporters receive a :class:`~..domain.RunBundle` and nothing else. They do not
+reopen IFC files, consult checkers, or branch on rule ids — if one needs to,
+that is a sign the information belongs in the domain model rather than in the
+exporter.
+
+The identity of a *set of outputs* is computed here rather than by any
+exporter, because no exporter can know it: it depends on the validation, on the
+output contract version, and on every exporter that took part. Two bundles can
+share a validation and still differ because an exporter changed, and this is
+where that becomes visible.
+"""
+
+from __future__ import annotations
+
+from collections.abc import Mapping, Sequence
+from dataclasses import dataclass
+from pathlib import Path
+
+from ..determinism import atomic_write_bytes, json_bytes, sha256_bytes
+from ..domain import RunBundle
+from ..identity import build_artifact_bundle_id, build_project_programme_digest
+from ..protocols import Artifact
+from ..registry import Registry
+
+__all__ = ["ExportResult", "export"]
+
+MANIFEST_NAME = "artifact_manifest.json"
+
+
+@dataclass(frozen=True, slots=True)
+class ExportResult:
+    artifact_bundle_id: str
+    artifacts: tuple[Artifact, ...]
+    manifest: Artifact | None = None
+
+
+def _relative(path: Path, root: Path) -> str:
+    """A repository-relative POSIX path, or fail closed.
+
+    Absolute paths would put the machine that ran the export into a
+    deterministic artifact, and a path escaping the repository would mean an
+    export wrote somewhere nobody reviewed.
+    """
+
+    try:
+        return path.resolve().relative_to(root.resolve()).as_posix()
+    except ValueError as error:
+        raise ValueError(f"Export must stay inside the repository: {path}") from error
+
+
+def export(
+    bundle: RunBundle,
+    *,
+    registry: Registry,
+    exporter_ids: Sequence[str],
+    output_roots: Mapping[str, Path],
+    repository_root: Path,
+    grouping_policy_id: str,
+    manifest_dir: Path | None = None,
+) -> ExportResult:
+    """Run each named exporter and record what the whole set produced.
+
+    ``output_roots`` maps each of :data:`~..protocols.OUTPUT_ROOT_KEYS` to a
+    directory. Exporters declare which kind of output they write and never
+    carry a path of their own, so where things land stays a configuration
+    decision rather than a constant buried in an exporter.
+
+    ``grouping_policy_id`` names the policy that produced the bundle's issues; it
+    is fingerprinted into the artifact bundle identity alongside the programme,
+    because both shape the exported bytes without changing the validation.
+    """
+
+    ordered = sorted(set(exporter_ids))
+    if not ordered:
+        raise ValueError("No exporters enabled; nothing would be written")
+
+    fingerprints = registry.exporter_fingerprints(ordered)
+    grouping = registry.grouping_fingerprint(grouping_policy_id)
+    programme_digest = build_project_programme_digest(
+        (milestone.project_id, milestone.stage, milestone.due)
+        for milestone in bundle.project_milestones
+    )
+    artifact_bundle_id = build_artifact_bundle_id(
+        validation_run_id=bundle.run.validation_run_id,
+        contract_version=bundle.contract_version,
+        grouping=grouping,
+        programme_digest=programme_digest,
+        exporters=fingerprints,
+    )
+
+    artifacts: list[Artifact] = []
+    for exporter_id in ordered:
+        exporter = registry.exporter(exporter_id)
+        key = getattr(exporter, "output_root_key", "processed")
+        try:
+            root = output_roots[key]
+        except KeyError:
+            raise KeyError(
+                f"Exporter {exporter_id!r} writes {key!r} output, but no such "
+                f"root was configured; got {sorted(output_roots)}"
+            ) from None
+        artifacts.extend(exporter.export(bundle, root))
+
+    artifacts.sort(key=lambda artifact: _relative(artifact.path, repository_root))
+
+    manifest: Artifact | None = None
+    if manifest_dir is not None:
+        document = {
+            "artifact_bundle_id": artifact_bundle_id,
+            "contract_version": bundle.contract_version,
+            "validation_run_id": bundle.run.validation_run_id,
+            "as_of": bundle.run.as_of,
+            "grouping": grouping.as_document(),
+            "programme_digest": programme_digest,
+            "exporters": [fingerprint.as_document() for fingerprint in fingerprints],
+            "artifacts": [
+                {
+                    "path": _relative(artifact.path, repository_root),
+                    "sha256": artifact.sha256,
+                    "bytes": artifact.byte_count,
+                    "exporter": artifact.exporter_id,
+                }
+                for artifact in artifacts
+            ],
+        }
+        data = json_bytes(document)
+        path = manifest_dir / MANIFEST_NAME
+        atomic_write_bytes(path, data)
+        manifest = Artifact(
+            path=path,
+            sha256=sha256_bytes(data),
+            byte_count=len(data),
+            exporter_id="",
+        )
+
+    return ExportResult(
+        artifact_bundle_id=artifact_bundle_id,
+        artifacts=tuple(artifacts),
+        manifest=manifest,
+    )
