@@ -139,7 +139,8 @@ is complete:
 | Which storey an MEP element sits in | **Yes** — `elements.csv` carries `storey`, e.g. `00 groundfloor` |
 | That an MEP element is spatially assigned at all | **Yes** — R-004A/B |
 | Project asset identity on equipment | **Yes**, as a project assumption — R-005A/B |
-| That the models can be federated at all | **Yes** — R-010 |
+| That a shared setout marker is present in every model | **Yes** — R-010, by exact name match plus a GlobalId reused across siblings |
+| That the models are actually *aligned* to a common datum | **No.** R-010 compares names and GlobalIds, never coordinates or placements. A pass establishes a shared reference exists, not that the models overlay. |
 | Whether MEP geometry clashes with architectural fabric | **No.** `ElementGeometry` (`domain.py:362`) holds a world-coordinate bounding box, but it is computed only for elements a BCF viewpoint must point at, is not exported to `elements.csv`, and nothing compares two elements' boxes. There is no clash or clearance evaluation anywhere in the pipeline. |
 | Whether a penetration has a matching architectural opening | **No.** No requirement relates an MEP element to an architectural one. |
 | Whether the MEP model was *issued* for coordination or is work in progress | **No.** `models.csv` records identity and a content hash. There is no issue status, revision, or suitability code. |
@@ -159,13 +160,29 @@ the current run.
 
 ---
 
-### Case 1 — BLOCKED
+### Case 1 — BLOCKED *(external counterfactual, not this project's state)*
 
 *Can Architecture position the MEP model in the federated model at all?*
 
+**Read this case as borrowed evidence.** In the main scenario —
+`pcert-sample`, `hvac` → `architecture` — this question is already answered
+affirmatively: R-010 **passes** on all three models, and the three passing
+findings are cited in case 3. There is no federation blocker in this project
+today, and nothing below should be read as a live `pcert-sample` fact, a current
+consequence for this Architecture team, or an action anyone on this handover
+owes.
+
+The BLOCKED shape is nevertheless worth walking, because the whole point of the
+scenario is that the four verdicts must be distinguishable, and a verdict with no
+worked example is an assertion. The one available instance of this failure lives
+in the *other* project in the repository, `iso-reference-view`, which is a set of
+three unrelated buildingSMART sample files that share nothing. It is a genuine
+run result, and it is genuinely not this project's. Where the text below says
+what a team would do, it means *would*, in the counterfactual.
+
 **Requirement and evidence.** R-010, `acb11f11-bf18-5516-a6f2-21e451a6e410`,
-evaluated by the `completeness` checker. In the sibling project
-`iso-reference-view` it fails at model level:
+evaluated by the `completeness` checker. In `iso-reference-view` — the external
+project, not the scenario's — it fails at model level:
 
 - `finding_key` `2e5d3a0b-02ca-54ac-9eb9-04ab46c02948`
 - `model_key` `iso-reference-view.plumbing`, `element_key` **empty** — the
@@ -179,49 +196,102 @@ evaluated by the `completeness` checker. In the sibling project
   `model-coordination`, stage Coordination, due `2026-08-01T00:00:00Z`,
   `is_overdue = true`
 
-**Purpose impact.** Total. Every one of the three downstream activities assumes
-the MEP model can be placed next to the architectural one. Without a shared
-setout reference it cannot be placed at all, so ceiling layout, openings and
-schedules are all unreachable. Note the *other two* models in that project fail
-the same rule (`cb599b72-…` architecture, `85360128-…` structural): this is a
-project-wide federation failure, not one discipline's mistake.
+**Purpose impact — in the counterfactual.** Total. Every one of the three
+downstream activities assumes the MEP model can be placed next to the
+architectural one. Without a shared setout reference it cannot be placed at all,
+so ceiling layout, openings and schedules would all be unreachable. Note the
+*other two* models in that project fail the same rule (`cb599b72-…`
+architecture, `85360128-…` structural): it is a project-wide federation failure
+there, not one discipline's mistake.
 
-**Decision. BLOCKED.** Architecture does not start.
+**Decision. BLOCKED** — for `iso-reference-view`. The corresponding decision for
+this scenario's handover is *not blocked*; see case 3.
 
 **Blocker.** No coordination reference shared with any sibling model.
 
-**Business consequence.** The Architecture team allocated to ceiling layout has
-no work it can safely start this week. Any coordination geometry produced now
-would be positioned against an assumed origin and would be discarded when the
-true setout arrives — this is rework created by proceeding, not by waiting. The
-Coordination milestone is already twelve days past due at the run's `as_of`, so
-the block is consuming float that has already run out.
+**Business consequence — what it would cost, were this the project.** An
+Architecture team allocated to ceiling layout would have no work it could safely
+start. Coordination geometry produced against an assumed origin would be
+discarded when the true setout arrived — rework created by proceeding rather
+than by waiting. The `iso-reference-view` Coordination milestone is also
+`2026-08-01T00:00:00Z` and its issue is flagged `is_overdue = true` at the run's
+`as_of`, so in that project the block is consuming float that has already run
+out. None of this is a cost being carried by `pcert-sample` today.
 
 **Responsible role.** `model-coordination` — carried on both the requirement and
 the derived issue. Correctly so: no single discipline lead can fix this, because
 the reference must be *agreed* before it can be inserted. The MEP lead executes
 their part once the agreement exists.
 
-**Where to fix it at source.** In Revit, this is the shared coordinate system,
-not a property edit. Acquire the project's survey point from the agreed
-coordination file (*Manage → Coordinates → Acquire Coordinates*), confirm the
-project base point and true north match the coordination datum, then re-export
-IFC with *IFC Site* / *IFC Building* placement referencing that shared origin
-rather than the internal origin. In Tekla Structures, set the model's base point
-to the agreed coordination base point (*File → Project properties → Base
-points*) and mark it the IFC export origin. The failure mode to avoid in both is
-"fixing" it by moving geometry — that shifts the model without giving it a
-shared reference and reproduces the same failure with worse provenance.
+**What the checker can actually see.** This has to be stated before any
+authoring advice, because the fix must produce the evidence the gate reads
+rather than the evidence a coordinator would intuitively supply. R-010's rule
+declares `name_pattern = "^(origin|geo-reference)$"` against applicability facet
+`IFCBUILDINGELEMENTPROXY`, and the `completeness` checker reads the federated
+element register. It passes a model when that model contains an element whose
+**name matches that pattern exactly** — `origin` or `geo-reference`, nothing
+else — and whose **`global_id` also occurs in at least one sibling model**. The
+witness is a reused GlobalId on a named proxy, and the passing finding names
+that element.
+
+That is exactly what `pcert-sample` carries. Two proxies satisfy it in all three
+models: `2F44QMqSH3TOkM$SZoqCBe` named `origin` and `3Fit2Fad92zf2f6aWdJtF5`
+named `geo-reference`. The published passes name the first by key —
+`ddef6755-…` (hvac), `a02a738f-…` (architecture), `21999183-…` (structural).
+
+**What the checker does not see, and must not be assumed to.** It compares
+names and GlobalIds. It **does not compare coordinates, placements or
+transforms**, and it never opens the geometry: `ElementGeometry` is computed only
+for BCF viewpoint placement and is not consulted here. So an R-010 `PASS` proves
+that a shared, identically-identified setout marker is present in the models —
+not that those models are actually aligned. Two exports could each carry a proxy
+named `origin` with the same GlobalId and still be placed kilometres apart, and
+this rule would pass both. **Real shared-coordinate alignment remains a separate
+confirmation**, done by overlaying the models or comparing the exported placement
+against the agreed datum, and R-010 passing must never be reported as having
+established it.
+
+**Where to fix it at source.** Two things must both come out of the authoring
+tool: the true coordinate alignment, and the witness that lets the gate see it.
+
+*Alignment.* In Revit, acquire the project's survey point from the agreed
+coordination file (*Manage → Coordinates → Acquire Coordinates*) and confirm the
+project base point and true north match the coordination datum, then export IFC
+with placement referencing that shared origin rather than the internal origin. In
+Tekla Structures, set the model's base point to the agreed coordination base
+point (*File → Project properties → Base points*) and mark it the IFC export
+origin. The failure mode to avoid in both is "fixing" it by moving geometry: that
+shifts the model without giving it a shared reference.
+
+*Witness.* Alignment alone will not clear R-010, because nothing about acquiring
+coordinates creates a named proxy. Each discipline model must also **contain and
+export the agreed setout markers as `IfcBuildingElementProxy` named exactly
+`origin` and/or `geo-reference`, carrying the same IFC GlobalId across every
+discipline export.** In practice that means the markers are authored once in the
+shared coordination file and *linked and copied* into each discipline model
+rather than re-drawn in each — re-drawing produces a proxy with the right name
+and a fresh GlobalId, which is invisible to the checker and is the most likely
+way a well-intentioned fix still fails. In Revit the practical route is a shared
+coordination family placed via *Copy/Monitor* or a linked-model copy so the
+identity is preserved through export; the exported name must survive IFC
+mapping, since the pattern match is on name and is exact. In Tekla, export the
+equivalent reference object with a stable GUID rather than letting the exporter
+mint one per model. Confirm after export that the GlobalId is byte-identical
+across the discipline files — that identity, not the marker's presence, is what
+the gate reads.
 
 **Recheck: what evidence would end the block.** R-010 returning `PASS` for
-`iso-reference-view.plumbing` — a coordination reference present in the plumbing
-model that at least one sibling model also carries. Concretely, the shape of the
-passing evidence already exists in the other project: in `pcert-sample`, element
-`2F44QMqSH3TOkM$SZoqCBe` is present in all three models and produces R-010
-passes `ddef6755-…` (hvac), `a02a738f-…` (architecture) and `21999183-…`
-(structural). Since all three models in `iso-reference-view` fail, the exit
-condition applies to all three — a shared reference must appear in at least two
-sibling models before any of them clears.
+`iso-reference-view.plumbing` — a name-matching proxy whose GlobalId also occurs
+in a sibling model. Since all three models in that project fail, the exit
+condition applies to all three: the shared marker must appear in at least two
+sibling models before any of them clears, because a GlobalId occurring once
+cannot be shared with anything.
+
+And the recheck does not stop at the gate. Because R-010 cannot see placement, a
+`PASS` must be accompanied by the separate alignment confirmation described
+above before anyone reports that the models federate correctly. The gate
+establishes that a shared reference exists; a human still establishes that the
+models sit on top of each other.
 
 ---
 
@@ -409,32 +479,71 @@ The UNKNOWN does not extend to ceiling layout, which case 3 answers, nor to
 schedules, which case 2 answers. Scope matters: an unbounded UNKNOWN is
 indistinguishable from an excuse, and would let a team defer everything.
 
-**What ends the UNKNOWN.** Any one of these converts it into a real verdict:
+**What ends the UNKNOWN.** The production question is *can Architecture cut the
+builder's work openings*, so only evidence that answers **that** question ends
+it. The three gaps are not interchangeable, and closing one does not close the
+verdict:
 
-- A requirement scoped to `IfcChimney` is added and evaluated, and the chimney
-  gets a spatial-assignment finding. `PASS` → this element joins case 3's READY.
-  `FAIL` → it becomes a BLOCKED case with `mep-lead` as owner.
-- A recorded coordination-review decision that the chimney requires no
-  architectural opening, with the reviewing roles named. That is evidence too,
-  even though no model changes — and today there is nowhere to put it.
-- An architectural opening is modelled and cross-referenced to the chimney,
-  making the relationship inspectable.
+- **Gap 1 alone is not an exit.** A requirement scoped to `IfcChimney` would
+  make the chimney's spatial assignment inspectable, and that is worth having —
+  it tells Architecture which storey to look in. But a `PASS` on spatial
+  assignment says the element is assigned to a storey; it says nothing about
+  whether it penetrates architectural fabric or whether an opening exists. A
+  team that treated that `PASS` as a release would be cutting no openings on the
+  strength of evidence about something else. Closing gap 1 narrows the UNKNOWN;
+  it does not end it.
+- **Either of these two answers does end it**, because either one answers the
+  openings question:
+  - **No penetration.** A recorded coordination-review determination that the
+    chimney passes through no architectural element and requires no opening,
+    with the reviewing roles named and the version of both models it was
+    determined against. No model changes; the evidence is the decision. Verdict
+    becomes READY for openings on this element.
+  - **Penetration confirmed, with opening status.** The penetration relationship
+    is established — which architectural element the chimney passes through —
+    *and* the state of the corresponding opening is known. Opening modelled and
+    cross-referenced → READY. Penetration confirmed with no opening → this
+    ceases to be UNKNOWN and becomes a BLOCKED or CONDITIONAL case with a named
+    owner, which is a better outcome than not knowing.
 
-**Where to fix it at source** *(applies once (1) resolves as `FAIL`, and to (3)
-regardless)*. For the chimney in Revit: host the element to the correct level
-and ensure it reports an `IFCRELCONTAINEDINSPATIALSTRUCTURE` relationship on
-export. For the architectural opening: model it in the architectural model as a
-hosted opening or shaft against the storey the chimney passes through, rather
-than as a void in the MEP model, so it appears in the discipline that owns the
-fabric.
+Note that the second path subsumes gaps 2 and 3 together: knowing there is a
+penetration without knowing the opening's state leaves the production question
+just as unanswerable as before, so partial closure there is not an exit either.
 
-**Recheck.** After the rule set covers `IfcChimney`, re-run and confirm the
-element produces a finding at all. That check is important on its own terms:
-*producing a finding* is the exit condition from UNKNOWN, independent of whether
-that finding passes or fails. The absence of a finding is the defect here, and
-it is invisible in every count the system currently reports — 121 findings
-across 44 elements looks complete until you notice which elements are missing
-from it.
+**Where to fix it at source.** Two separable actions. *For gap 1* — extend the
+rule set to cover `IfcChimney`; a rule-authoring change, no model edit. If that
+rule then fails, the model-side fix in Revit is to host the element to the
+correct level so it reports an `IFCRELCONTAINEDINSPATIALSTRUCTURE` relationship
+on export. *For gap 3* — model the opening in the **architectural** model as a
+hosted opening or shaft against each storey the chimney passes through, rather
+than as a void carried in the MEP model, so it exists in the discipline that
+owns the fabric and can be pointed at.
+
+**Recheck.** The recheck must cover **every gap still preventing the
+judgement**, not whichever one was most convenient to close:
+
+1. If the rule set was extended: the chimney now produces a spatial-assignment
+   finding, and that finding passes. *(Necessary for confidence in the storey,
+   not sufficient for openings.)*
+2. The penetration question is answered — either a recorded determination of no
+   penetration, or an established relationship naming the architectural element
+   penetrated.
+3. Where a penetration exists: the corresponding architectural opening is
+   present and inspectably linked to the chimney.
+
+Only when the set of open gaps is empty does the openings verdict leave UNKNOWN.
+If (2) is answered "no penetration", (3) is closed with it and (1) remains
+merely desirable; in every other combination all three must land.
+
+**Why this is easy to get wrong.** The absence of a finding is invisible in every
+count the system reports — 121 findings across 44 elements looks complete until
+you notice which elements are missing from it. The tempting shortcut is to treat
+the *appearance* of any finding on the chimney as the resolution, because it
+makes the gap visible and visibly closed. It is not the resolution: a finding
+appearing changes what the system can see, while the verdict depends on what the
+team now knows about penetrations and openings. Making a gap visible and
+answering the question are different achievements, and only the second releases
+work.
 
 ---
 
