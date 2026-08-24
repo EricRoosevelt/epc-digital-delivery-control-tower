@@ -59,11 +59,14 @@ downstream production depend on it, and they depend on *different* parts of it:
 3. **Room data sheets and equipment schedules** — needs each piece of equipment
    to carry the project's asset identity, so a schedule can be keyed to it.
 
-These are three different questions with three different answers. A single
-"is the MEP model good?" verdict would be useless here, because the model can
-be perfectly adequate for (1) and unusable for (3) at the same time. This is
-the central production observation of the whole scenario, and section 3 shows
-it happening.
+These are three different questions, and each gets its own separately-reasoned
+answer. A single "is the MEP model good?" verdict would be useless here, because
+the same model can be usable for (1) subject to one named condition, unusable
+for (3) for an entirely unrelated reason, and unassessed for (2) — all at once.
+Each activity is decided in exactly one place, on the evidence that bears on
+*it*; evidence answering one question is never spent releasing another. This is
+the central production observation of the whole scenario, and section 3 shows it
+happening.
 
 ### What a manager actually approves or refuses
 
@@ -156,7 +159,9 @@ those into Checkpoint C.
 ## 3. Four decisions on real evidence
 
 Each case below is one production question, decided on findings that exist in
-the current run.
+the current run. One question gets one verdict: no case releases or refuses an
+activity that another case decides, and where a case's evidence is silent about
+another activity that silence is recorded rather than spent.
 
 ---
 
@@ -165,12 +170,13 @@ the current run.
 *Can Architecture position the MEP model in the federated model at all?*
 
 **Read this case as borrowed evidence.** In the main scenario —
-`pcert-sample`, `hvac` → `architecture` — this question is already answered
-affirmatively: R-010 **passes** on all three models, and the three passing
-findings are cited in case 3. There is no federation blocker in this project
-today, and nothing below should be read as a live `pcert-sample` fact, a current
-consequence for this Architecture team, or an action anyone on this handover
-owes.
+`pcert-sample`, `hvac` → `architecture` — this particular blocker is absent:
+R-010 **passes** on all three models, so no model in that project is missing a
+shared setout reference. That is the whole of what the pass establishes. It is
+not a confirmation that the models are aligned, and case 3 is where that
+distinction does its work. Nothing below should be read as a live `pcert-sample`
+fact, a current consequence for this Architecture team, or an action anyone on
+this handover owes.
 
 The BLOCKED shape is nevertheless worth walking, because the whole point of the
 scenario is that the four verdicts must be distinguishable, and a verdict with no
@@ -225,16 +231,28 @@ their part once the agreement exists.
 
 **What the checker can actually see.** This has to be stated before any
 authoring advice, because the fix must produce the evidence the gate reads
-rather than the evidence a coordinator would intuitively supply. R-010's rule
-declares `name_pattern = "^(origin|geo-reference)$"` against applicability facet
-`IFCBUILDINGELEMENTPROXY`, and the `completeness` checker reads the federated
-element register. It passes a model when that model contains an element whose
-**name matches that pattern exactly** — `origin` or `geo-reference`, nothing
-else — and whose **`global_id` also occurs in at least one sibling model**. The
-witness is a reused GlobalId on a named proxy, and the passing finding names
-that element.
+rather than the evidence a coordinator would intuitively supply.
+`rules/epc-delivery/R-010.toml` declares two facets: an applicability facet
+`entity = IFCBUILDINGELEMENTPROXY`, and a `shared-across-models` requirement
+facet with `name_pattern = "^(origin|geo-reference)$"`. **Only the second is
+executed.** The `completeness` checker walks every element of every model in the
+project, keeps those whose **name matches that pattern** — `origin` or
+`geo-reference`, nothing else — and passes a model when one of them carries a
+**`global_id` that also occurs in at least one sibling model**. It never reads
+`ifc_class`: declared applicability is compiled into an IDS document only for
+IDS-checked rules, and R-010 is checked by `completeness`, so an element of any
+class named `origin` would witness the pass identically. The witness the gate
+actually reads is *a matching name carrying a shared GlobalId*.
 
-That is exactly what `pcert-sample` carries. Two proxies satisfy it in all three
+That divergence between what the rule file declares and what the checker
+executes is **recorded here and not acted on.** It is an observation about the
+strength of R-010's evidence, carried into Checkpoint C as one; nothing in this
+branch changes code, rules or schema, and contract 1.6 is not reopened. It is
+stated because the honest reading of a pass depends on it — calling the witness
+"a named proxy" describes what the project happens to have modelled, not what
+was checked.
+
+That is what `pcert-sample` carries. Two proxies satisfy it in all three
 models: `2F44QMqSH3TOkM$SZoqCBe` named `origin` and `3Fit2Fad92zf2f6aWdJtF5`
 named `geo-reference`. The published passes name the first by key —
 `ddef6755-…` (hvac), `a02a738f-…` (architecture), `21999183-…` (structural).
@@ -264,21 +282,32 @@ origin. The failure mode to avoid in both is "fixing" it by moving geometry: tha
 shifts the model without giving it a shared reference.
 
 *Witness.* Alignment alone will not clear R-010, because nothing about acquiring
-coordinates creates a named proxy. Each discipline model must also **contain and
-export the agreed setout markers as `IfcBuildingElementProxy` named exactly
-`origin` and/or `geo-reference`, carrying the same IFC GlobalId across every
-discipline export.** In practice that means the markers are authored once in the
-shared coordination file and *linked and copied* into each discipline model
-rather than re-drawn in each — re-drawing produces a proxy with the right name
-and a fresh GlobalId, which is invisible to the checker and is the most likely
-way a well-intentioned fix still fails. In Revit the practical route is a shared
-coordination family placed via *Copy/Monitor* or a linked-model copy so the
-identity is preserved through export; the exported name must survive IFC
-mapping, since the pattern match is on name and is exact. In Tekla, export the
-equivalent reference object with a stable GUID rather than letting the exporter
-mint one per model. Confirm after export that the GlobalId is byte-identical
-across the discipline files — that identity, not the marker's presence, is what
-the gate reads.
+coordinates creates a named marker. Each discipline model must also **export the
+agreed setout markers under the exact name `origin` and/or `geo-reference` —
+`IfcBuildingElementProxy` being the entity this project models them as and the
+rule file declares — carrying the same IFC GlobalId in every discipline
+export.** The advice worth giving is about the required export outcome, because
+that is what can be rechecked:
+
+1. **The exported name matches exactly.** The pattern is anchored, so any
+   prefix, suffix or type-name substitution introduced by the export mapping
+   breaks the match.
+2. **The exported GlobalId is the agreed one, in every discipline file.** This
+   is the part most likely to go wrong: a marker re-drawn per model yields the
+   right name and a fresh GlobalId, which the checker cannot see and which is
+   the most common way a well-intentioned fix still fails.
+
+How a given tool produces (2) belongs to that tool's export configuration, and
+this document does not assert that any particular authoring workflow preserves
+identity through export. Revit does expose an `IfcGUID` parameter and IFC export
+mapping through which a chosen GlobalId and entity/name can be emitted, and
+other authoring tools have their own mechanism; the mechanism used must be one
+whose output has been verified, not one assumed to carry identity because the
+object was copied, linked or monitored rather than re-drawn. **Verify per file
+after export:** open each discipline IFC and confirm the marker's exported name
+and that its GlobalId string is identical across the files. That identity — not
+the marker's presence, and not the route it took through the authoring tool — is
+what the gate reads.
 
 **Recheck: what evidence would end the block.** R-010 returning `PASS` for
 `iso-reference-view.plumbing` — a name-matching proxy whose GlobalId also occurs
@@ -321,15 +350,20 @@ blank. Grouped into three element-level issues
 `f26a49a6-cf44-59d5-9c66-ec58112a16fe`), each `model-coordination`, priority
 `Medium`, stage Coordination, all `is_overdue = true`.
 
-**Purpose impact.** Partial and precisely bounded. Ceiling layout and builder's
-work openings need *position*, which is present and passing (case 3). Room data
-sheets and equipment schedules need *identity*, which is absent. Three of six
-HVAC elements are affected; nothing about the geometry is in doubt.
+**Purpose impact.** Partial, precisely bounded, and bounded to *one* activity.
+Room data sheets and equipment schedules need *identity*, which is absent on
+three of the six HVAC elements. Nothing about the geometry is in doubt, so this
+evidence says nothing against ceiling layout or openings — but it does not
+release them either. Ceiling layout is decided in case 3 on its own evidence and
+openings in case 4 on theirs; identity evidence cannot stand in for position
+evidence, and a case that spent this finding on all three activities would be
+the single model-level verdict the scenario exists to avoid.
 
-**Decision. CONDITIONAL.** Architecture proceeds with ceiling layout and
-openings. Architecture does **not** start schedules or room data sheets keyed to
-MEP equipment, and the exclusion is minuted so that a later reader does not
-assume the schedules exist and are empty by choice.
+**Decision. CONDITIONAL** — for schedules and room data sheets, and for nothing
+else. Architecture does **not** start schedules or room data sheets keyed to MEP
+equipment, and the exclusion is minuted so that a later reader does not assume
+the schedules exist and are empty by choice. What Architecture *does* start is
+not settled by this case.
 
 **Blocker.** Missing `EPC_Delivery` property set on three MEP elements —
 blocking for schedule production only.
@@ -366,7 +400,7 @@ the condition narrows to terminal-keyed schedules rather than lifting.
 
 ---
 
-### Case 3 — READY
+### Case 3 — CONDITIONAL
 
 *Can Architecture lay out ceilings and bulkheads around the MEP equipment?*
 
@@ -379,38 +413,76 @@ severity, owned by `mep-lead`. All three evaluated HVAC elements pass:
 | `12dc1e52-b4a8-5fd8-b650-222c2cf3060b` | R-004B | `hvac::23uPJWDfXEcwHH3kdFgV9c` (`IfcAirTerminal`) | `00 groundfloor` |
 | `9b1eafbf-e3df-5c5d-9096-83ffbd2e4805` | R-004B | `hvac::34Y6EIt3nDCAS1k$kPGOKm` (`IfcAirTerminal`) | `00 groundfloor` |
 
-All `PASS` / `INFO` / `is_issue = false`, reason *Requirement satisfied*. The
-same project passes R-010, so the models federate.
+All `PASS` / `INFO` / `is_issue = false`, reason *Requirement satisfied*.
 
-**Purpose impact.** The question is answered affirmatively for the elements the
-rules reach. Each of the three is assigned to a storey Architecture also models,
-so ceiling zones can be set out around them.
+**What that evidence carries, and what it does not.** It carries *in-model
+position*: each of the three elements is assigned to a storey that Architecture
+also models, so Architecture knows which storey to look in. It does not carry
+*cross-model position*. Drawing a ceiling zone around a duct means placing
+architectural geometry relative to MEP geometry, and that is only sound if the
+two models sit on a common datum. The only evidence in this repository bearing
+on that is R-010, and an R-010 pass establishes the shared marker witness
+described in case 1 — a matching name carrying a GlobalId that also occurs in a
+sibling model — and nothing about placement, coordinates or transforms. That
+limit is stated in case 1 and it applies here: **this repository holds no
+alignment confirmation for `pcert-sample`**, and the three passing R-010
+findings must not be reported as one.
 
-**Decision. READY** — for this question, on these three elements.
+**Purpose impact.** The position question is answered affirmatively for the
+elements the rules reach. The federation question underneath it is answered by
+no current evidence.
 
-**Blocker.** None.
+**Decision. CONDITIONAL** — for ceiling and bulkhead layout, on these three
+elements. Architecture starts layout on the explicit condition that the
+shared-coordinate alignment of `hvac` and `architecture` is confirmed
+separately, by the overlay-or-datum check case 1 describes, naming the confirming
+role and the model versions it was made against. Until that confirmation is
+recorded, the layout proceeds on an unverified assumption, and the assumption is
+minuted with the work rather than absorbed into it.
+
+**The READY case, as an evidence-qualified counterfactual.** This activity is
+the nearest thing in the scenario to a READY, which is exactly why the missing
+evidence is worth naming instead of rounding away. It would become READY when
+the R-004 passes above are joined by **a recorded alignment confirmation**: the
+two models overlaid, or their exported placements compared against the agreed
+coordination datum, with the confirming role and both model versions named.
+**That evidence does not exist in this repository.** The paragraph describes what
+is absent, not what is in hand, and nothing in the current run may be cited as
+having supplied it.
+
+**Blocker.** None outstanding against the issued MEP model — the three
+requirements that reach it pass. The condition rests on a piece of evidence that
+has not been produced, not on a defect to be fixed.
 
 **Business consequence.** Architecture starts ceiling layout this week rather
-than idling. Refusing the whole handover because R-005 fails would have stopped
-this work for a reason that has nothing to do with it — which is the concrete
-cost of a single model-level verdict, and the reason the three questions are
-kept apart.
+than idling, which is the value of splitting the verdict: refusing the whole
+handover because R-005 fails would have stopped this work for a reason that has
+nothing to do with it. The cost of the condition failing is bounded and
+knowable — if the models prove misaligned, the ceiling geometry set out this
+week is set out against the wrong MEP positions and is redone. Minuting the
+condition is what makes that a managed risk; a team that recorded "R-010 passes"
+as clearance would carry the identical exposure without knowing it had.
 
-**Responsible role.** None required; no action is outstanding. Should this
-regress, `owner_role` on R-004A/B is `mep-lead`.
+**Responsible role.** `model-coordination` for the alignment confirmation — the
+role R-010 itself carries, and for the same reason: a datum is agreed between
+disciplines, not owned by one. Should the spatial assignments regress,
+`owner_role` on R-004A/B is `mep-lead`.
 
-**Where to fix it at source.** Not applicable. Preventatively: the passing
-condition is that every MEP element is assigned to a level and space before
-export, which in Revit means avoiding unhosted or unlevelled components in the
-MEP model.
+**Where to fix it at source.** Nothing to fix in the MEP model for R-004.
+Preventatively: the passing condition is that every MEP element is assigned to a
+level and space before export, which in Revit means avoiding unhosted or
+unlevelled components in the MEP model. For the alignment condition the
+source-side actions are case 1's — acquire the agreed coordinates and export
+placement against them.
 
-**Recheck.** Re-run on the next MEP issue and confirm the three findings still
-pass. A READY verdict is a statement about one version of one model, and it
-expires when the model is re-issued — this is the case most likely to be
-silently assumed to persist.
+**Recheck.** Two things, on the next MEP issue: the three R-004 findings still
+pass, *and* the alignment confirmation is current for the version issued. Any
+verdict here is a statement about one version of one model and expires when the
+model is re-issued — this is the case most likely to be silently assumed to
+persist.
 
-**The honest limit.** READY here covers *the three elements the rules evaluate*,
-not the model. Case 4 is what that qualification is hiding.
+**The honest limit.** The R-004 evidence covers *the three elements the rules
+evaluate*, not the model. Case 4 is what that qualification is hiding.
 
 ---
 
@@ -453,7 +525,9 @@ output: a clean run with no finding.
 
 **Decision. UNKNOWN** — openings work is neither released nor refused. It is
 suspended pending evidence, and the suspension is recorded rather than resolved
-by assumption.
+by assumption. This is the only case that decides openings: no passing position
+or identity evidence elsewhere in this handover releases them, because none of
+it answers the openings question.
 
 **Which evidence is missing, exactly.** Three items, in priority order:
 
@@ -475,8 +549,8 @@ neither model alone contains the answer.
 (`hvac::3dkFAzOGrAIuOzY_RdrdVv`) in one model (`hvac`) in one project
 (`pcert-sample`), plus the openings question for the two air terminals and one
 duct that pass R-004 but have never been compared against architectural fabric.
-The UNKNOWN does not extend to ceiling layout, which case 3 answers, nor to
-schedules, which case 2 answers. Scope matters: an unbounded UNKNOWN is
+The UNKNOWN does not extend to ceiling layout, which case 3 decides, nor to
+schedules, which case 2 decides. Scope matters: an unbounded UNKNOWN is
 indistinguishable from an excuse, and would let a team defer everything.
 
 **What ends the UNKNOWN.** The production question is *can Architecture cut the
@@ -601,12 +675,20 @@ registry, and not a platform.
 3. **The production activities at stake** — ceiling layout, builder's work
    openings, schedules. Three, not one. Without these the verdict cannot be
    partial, and every real answer above was partial.
-4. **Which requirements bear on which activity** — R-004A/B on position,
-   R-005A/B on identity, R-010 on federation. Today this mapping exists only in
-   this document's prose.
-5. **A verdict per activity** — BLOCKED / CONDITIONAL / READY / UNKNOWN.
-   Critically, **UNKNOWN must be a first-class verdict**, distinguishable from
-   READY. Case 4 shows why: silence currently looks exactly like success.
+4. **Which requirements bear on which activity** — R-004A/B on in-model
+   position, R-005A/B on identity, R-010 on the presence of a shared setout
+   marker. Today this mapping exists only in this document's prose. Note that
+   the mapping must also record what a requirement *cannot* answer: R-010
+   witnesses a shared marker and is not evidence of alignment, and treating it
+   as though it were is how a CONDITIONAL silently becomes a READY.
+5. **A verdict per activity, and exactly one** — BLOCKED / CONDITIONAL / READY /
+   UNKNOWN. Two things this scenario demonstrates about that vocabulary.
+   **UNKNOWN must be first-class**, distinguishable from READY, because case 4's
+   silence currently looks exactly like success. And **READY is not awarded
+   anywhere in this handover on current evidence**: ceiling layout comes closest
+   and still lands CONDITIONAL, because the alignment confirmation it would rest
+   on does not exist in this repository. A vocabulary whose top verdict is never
+   reachable from the evidence at hand is telling you what evidence is missing.
 6. **What the verdict rests on** — the specific `finding_key`s cited, *and* the
    named absence of a finding where one was expected. An absence has to be
    recordable, or case 4 cannot be expressed at all.
@@ -617,9 +699,11 @@ registry, and not a platform.
    a rule author expected rather than who this project tasks.
 9. **The exit condition** — what evidence ends the block, stated before the work
    starts so the recheck is not renegotiated afterwards.
-10. **What the verdict was about** — a named model version. Case 3's READY is
-    true of one issue of `hvac` and expires when it is re-issued. Nothing today
-    records that a handover happened, of what, on what date.
+10. **What the verdict was about** — a named model version. Case 3's verdict is
+    true of one issue of `hvac` and expires when it is re-issued, and the
+    alignment confirmation its condition names would have to cite the versions
+    of *both* models it was made against. Nothing today records that a handover
+    happened, of what, on what date.
 
 ### Where each item would come from
 
