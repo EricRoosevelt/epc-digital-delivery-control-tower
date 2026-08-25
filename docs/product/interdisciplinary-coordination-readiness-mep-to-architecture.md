@@ -94,7 +94,7 @@ scope**, against a **named model version**.
 
 | Verdict | Definition |
 |---|---|
-| **READY** | Every piece of evidence the assessed scope requires is present. The activity can start. |
+| **READY** | Every piece of necessary evidence is present **and** satisfies the applicable acceptance conditions, **and** there is no unresolved blocker and no evidence gap. The activity can start, within the assessed scope. |
 | **CONDITIONAL** | The activity is released within a **named release scope**, because a **named authoriser** has accepted the remaining risk against a **named model version**. The accepted risk, the release scope and the conditions that void the release are all recorded. |
 | **BLOCKED** | A known unmet requirement prevents the activity. |
 | **UNKNOWN** | An evidence gap makes the activity undecidable — the evidence needed to answer the question was never produced, so neither release nor refusal can be justified. |
@@ -111,6 +111,15 @@ BLOCKED and UNKNOWN are also distinct, and the distinction is not severity.
 BLOCKED means the system asked a question and got an unacceptable answer.
 UNKNOWN means the question was never asked, or was asked of evidence that cannot
 answer it.
+
+READY is the strictest of the four, and its four clauses are conjunctive. The
+presence of evidence is not enough on its own: evidence that exists but does not
+meet the acceptance condition it is judged against leaves the activity BLOCKED,
+and evidence that was never produced leaves it UNKNOWN. So **READY is mutually
+exclusive with both** — an unresolved blocker disqualifies READY by the third
+clause, and an evidence gap disqualifies it by the third clause too. Reading
+"the evidence is there" as sufficient is the shortcut this definition exists to
+close.
 
 ### Direction
 
@@ -328,9 +337,10 @@ GlobalId — a shared-marker witness — and that is its only admissible reading
 It is not alignment evidence, and calling the witness "a named proxy" describes
 what this project happens to have modelled rather than what was checked.
 
-That is what `pcert-sample` carries. Two proxies satisfy it in all three
+That is what `pcert-sample` carries. Two marker elements satisfy it in all three
 models: `2F44QMqSH3TOkM$SZoqCBe` named `origin` and `3Fit2Fad92zf2f6aWdJtF5`
-named `geo-reference`. The published passes name the first by key —
+named `geo-reference`. Both happen to be authored as `IfcBuildingElementProxy`,
+which is what the project modelled and not something the pass confirms. The published passes name the first by key —
 `ddef6755-…` (hvac), `a02a738f-…` (architecture), `21999183-…` (structural).
 
 **What the checker does not see, and must not be assumed to.** It compares
@@ -338,9 +348,9 @@ names and GlobalIds. It **does not compare coordinates, placements or
 transforms**, and it never opens the geometry: `ElementGeometry` is computed only
 for BCF viewpoint placement and is not consulted here. So an R-010 `PASS` proves
 that a shared, identically-identified setout marker is present in the models —
-not that those models are actually aligned. Two exports could each carry a proxy
-named `origin` with the same GlobalId and still be placed kilometres apart, and
-this rule would pass both. **Real shared-coordinate alignment remains a separate
+not that those models are actually aligned. Two exports could each carry a marker
+element named `origin` with the same GlobalId and still be placed kilometres
+apart, and this rule would pass both. **Real shared-coordinate alignment remains a separate
 confirmation**, done by overlaying the models or comparing the exported placement
 against the agreed datum, and R-010 passing must never be reported as having
 established it.
@@ -386,8 +396,13 @@ the marker's presence, and not the route it took through the authoring tool — 
 what the gate reads.
 
 **Recheck: what evidence would end the block.** R-010 returning `PASS` for
-`iso-reference-view.plumbing` — a name-matching proxy whose GlobalId also occurs
-in a sibling model. Since all three models in that project fail, the exit
+`iso-reference-view.plumbing` — a **name-matching marker/element** whose
+GlobalId also occurs in a sibling model. The wording is deliberate: the checker
+matches on name and cross-model GlobalId and never reads `ifc_class`, so calling
+the witness a *proxy* would imply the gate confirmed an IFC entity applicability
+it does not evaluate. What a `PASS` here means, always and only, is a
+**shared-marker witness of name plus cross-model GlobalId** — never alignment
+evidence. Since all three models in that project fail, the exit
 condition applies to all three: the shared marker must appear in at least two
 sibling models before any of them clears, because a GlobalId occurring once
 cannot be shared with anything.
@@ -469,8 +484,11 @@ that takes and what it costs this project are runtime and Overlay questions
 right call, because the tag values come from the project's asset register rather
 than from the MEP designer's head. The MEP lead applies them; they do not
 originate them. Note this is what `owner_role` means: the role a *rule author*
-expects to answer for the rule. It is an input to the manager's decision about
-who acts, not the decision itself.
+expects to answer for the rule. It is an **input** to the assignment, not the
+assignment — the resolving role or team this assessment actually tasks would be
+derived from a Pack default responsibility policy, mapped through the project's
+own team and role mappings, and then recorded (section 5, rows 8a–8d). Nothing
+in this repository records such an assignment today.
 
 **Where to fix it at source.** In Revit, add a shared-parameter group named
 `EPC_Delivery` containing `AssetTag` and `SystemCode` as instance text
@@ -485,10 +503,19 @@ additional-property-set definition.
 
 **Exit condition.** All six findings returning `PASS` — that is, `EPC_Delivery`
 present on all three elements with both properties non-empty — would lift the
-block and make this activity READY. That is a future, not the current state.
+block. It would also, in this instance, reach READY, and the four clauses are
+worth discharging one by one rather than assumed: the necessary evidence would be
+present (the property set), it would meet its acceptance condition (`PASS`, both
+properties non-empty rather than merely declared), the blocker would be resolved
+by the same passes, and no evidence gap remains for *this* activity — schedules
+need identity, and identity would be exactly what arrived. That is a future, not
+the current state.
+
 Partial delivery is legible and useful here: were the duct to clear while the two
 air terminals did not, the block would narrow to terminal-keyed schedules rather
-than lifting, and duct-keyed schedule work would be READY on that scope alone.
+than lifting. Duct-keyed schedule work would then be READY **on that scope
+alone** — the narrowed assessed scope is what makes the clauses hold, and reading
+it as READY for schedules generally would be the mistake.
 
 ---
 
@@ -555,9 +582,25 @@ the alignment check coming back negative. All four of those are runtime records.
 joined by **a recorded alignment confirmation**: the two models overlaid, or
 their exported placements compared against the agreed coordination datum, with
 the confirming role and both model versions named. That is the only route from
-UNKNOWN to READY for this activity. **That evidence does not exist in this
-repository**, nothing in the current run may be cited as having supplied it, and
-this paragraph is a description of absent evidence rather than of current state.
+UNKNOWN to READY for this activity, and it does not shortcut any of READY's four
+clauses:
+
+- *Necessary evidence present* — in-model position (R-004) **and** cross-model
+  alignment. The second is the one absent today.
+- *Acceptance conditions satisfied* — the confirmation has to be produced by a
+  method the project accepts and has to come back affirmative. A confirmation
+  that was performed and returned a mismatch is evidence that exists and fails
+  its acceptance condition, which is BLOCKED, not READY.
+- *No unresolved blocker* — nothing unmet against the issued model, which holds
+  today and would have to still hold then.
+- *No evidence gap* — and this one binds the scope. R-004 reaches three of the
+  six `hvac` elements, so even with alignment confirmed, READY would cover **the
+  assessed scope of those three elements**, not the model. The chimney's silence
+  (case 4) is a live gap for anything claiming to cover it.
+
+**That evidence does not exist in this repository**, nothing in the current run
+may be cited as having supplied it, and this paragraph is a description of absent
+evidence rather than of current state.
 
 **Blocker.** None — and that is the point of the verdict. No requirement that
 reaches this activity is unmet; the three that do reach it pass. What is missing
@@ -696,11 +739,19 @@ verdict:
     chimney passes through no architectural element and requires no opening,
     with the reviewing roles named and the version of both models it was
     determined against. No model changes; the evidence is the decision. The
-    verdict would then become READY for openings on this element.
+    verdict would then become READY for openings on this element — the
+    determination is the necessary evidence, "recorded, roles named, versions
+    named" is its acceptance condition, no requirement is unmet, and gap 1 is
+    not an evidence gap *for this activity*, since a storey assignment is not
+    something cutting no openings depends on. "Necessary" is always judged
+    against the activity being decided, never against the model in general.
   - **Penetration confirmed, with opening status.** The penetration relationship
     is established — which architectural element the chimney passes through —
-    *and* the state of the corresponding opening is known. Opening modelled and
-    cross-referenced → READY. Penetration confirmed with no opening → this
+    *and* the state of the corresponding opening is known. Opening modelled
+    **and** inspectably cross-referenced to the chimney → READY; modelled but
+    not cross-referenceable fails the acceptance condition and is not READY,
+    because nobody can check that the opening is the one this penetration
+    needs. Penetration confirmed with no opening → this
     ceases to be UNKNOWN and becomes BLOCKED with a named owner; it could become
     CONDITIONAL only if a named authoriser then accepted the risk for a named
     release scope against the named model versions. Either is a better outcome
@@ -813,8 +864,9 @@ registry, and not a platform.
    evidence of alignment. Treating it as though it were is exactly how case 3's
    UNKNOWN would be talked up into a READY.
 5. **A verdict per activity, and exactly one** — BLOCKED / CONDITIONAL / READY /
-   UNKNOWN, with the meanings fixed in section 1. Three things this scenario
-   demonstrates about that vocabulary. **UNKNOWN must be first-class**,
+   UNKNOWN, with the meanings fixed in section 1 and owned by the Framework
+   rather than by any Pack or Overlay. Three things this scenario demonstrates
+   about that vocabulary. **UNKNOWN must be first-class**,
    distinguishable from READY, because case 4's silence currently looks exactly
    like success. **Neither READY nor CONDITIONAL is reached anywhere in this
    handover on current evidence** — the live verdicts are BLOCKED, UNKNOWN,
@@ -834,11 +886,17 @@ registry, and not a platform.
    appears in any of the four cases, because none exists in this repository and
    inventing one would have been the easiest and least visible fabrication in
    the document.
-8. **The role that acts** — distinct from the rule's `owner_role`, which is what
-   a rule author expected rather than who this project tasks. Case 3 adds a
-   second distinction: the role that *produces* a missing piece of evidence and
-   the role that could *authorise* releasing work without it are not the same
-   role, and a CONDITIONAL names the second.
+8. **The resolving role or team assigned by this assessment** — distinct from
+   the rule's `owner_role`, which is what a rule author expected rather than who
+   this project tasks, and distinct from whoever eventually acted. The
+   assignment is derived: a Pack default responsibility policy, mapped through
+   the Overlay's project team and role mappings, produces the role or team this
+   assessment tasks with resolving the blocker or closing the gap. Recording
+   only the actor after the fact loses the assignment entirely, and with it the
+   ability to say that a handover is stalled because nobody was tasked. Case 3
+   adds a further distinction: the role that *produces* a missing piece of
+   evidence and the role that could *authorise* releasing work without it are
+   not the same role, and a CONDITIONAL names the second.
 9. **The exit condition** — what evidence ends the block, stated before the work
    starts so the recheck is not renegotiated afterwards.
 10. **What the verdict was about** — named model versions. Case 3's verdict is
@@ -853,47 +911,98 @@ registry, and not a platform.
 
 ### Where each item would come from
 
-Walking the four cases separated three kinds of thing that are easy to conflate,
-and the third is the one this document previously got wrong. **Reusable
-question** belongs to a Purpose Pack. **Project policy and convention** belongs
-to Project Overlay *configuration*. **What actually happened on a particular
-assessment of particular models** belongs to neither: it is runtime assessment
-evidence and decision, produced by a run, not configured in advance.
+Walking the four cases separated **four** kinds of thing that are easy to
+conflate:
 
-The distinction matters because Overlay configuration is written once and read
-many times, while runtime evidence is produced per handover and is only true of
-the versions it was produced against. Filing an alignment confirmation or a risk
-acceptance as Overlay configuration would make a statement about two specific
-model versions look like a standing project setting — which is how case 3's
-UNKNOWN would quietly turn back into a CONDITIONAL nobody authorised.
+- **Framework** — the base semantics of READY / CONDITIONAL / BLOCKED / UNKNOWN,
+  and the invariants they must always satisfy. These do not vary by purpose or
+  by project. A Pack that redefined what READY means would not be a different
+  purpose; it would be a different framework wearing a purpose's name.
+- **Purpose Pack** — the activity mapping, the evidence each activity requires,
+  and the verdict and blocker decision logic that applies *to this purpose*,
+  expressed **within** the Framework's four states and never outside them.
+- **Project Overlay** — project policy and convention: team and role mappings,
+  risk-authorisation rules, cost parameters, the evidence methods the project
+  accepts. The Overlay **does not own the base four-state semantics**; it
+  parameterises decisions the Framework and the Pack have already shaped.
+- **Runtime assessment** — what a particular assessment of particular model
+  versions actually produced: the verdict, the blocker, the evidence gaps, the
+  authorisation, the assigned resolving role/team, and the rest of the decision
+  evidence.
 
-| # | Item | Contract 1.6 today | Purpose Pack (reusable) | Overlay *configuration* | Runtime assessment evidence / decision |
-|---|---|---|---|---|---|
-| 1 | Purpose identity | — | ✔ | — | — |
-| 2 | Direction (MEP → Architecture) | — | ✔ | — | — |
-| 3 | Production activities at stake | — | ✔ | — | — |
-| 4 | How requirements and evidence bear on an activity, including what a requirement *cannot* answer | — | ✔ | — | — |
-| 5 | Verdict semantics (READY / CONDITIONAL / BLOCKED / UNKNOWN) | — | ✔ | — | — |
-| — | Reusable consequence *kinds* | — | ✔ | — | — |
-| — | Default responsibility policy | — | ✔ | — | — |
-| — | Source-fix and recheck guidance | — | ✔ | — | — |
-| 6a | Findings and their status | ✔ `finding_key`, `status`, `severity`, `is_issue` | — | — | which findings a given assessment actually cited |
-| 6b | A *named absence* being admissible evidence | — | ✔ (that it counts) | — | the absence actually observed in a run |
-| 7 | Business consequence | — | ✔ (kind) | ✔ (cost parameters) | the impact actually recorded |
-| 8 | Acting role | partly — `owner_role` is an input | ✔ (default policy) | ✔ (team / role mappings) | who actually acted |
-| 9 | Exit condition | partly — a requirement passing is expressible | ✔ (what would end it) | ✔ (evidence methods this project accepts) | whether the exit was actually met |
-| 10 | Model versions and the handover issue/event | partly — `models.csv` has a content hash | — | — | ✔ the versions actually issued, and when |
-| 11 | Risk authorisation | — | — | ✔ (who may accept what, and how) | ✔ the risk acceptance actually given, by whom, over what scope |
-| — | The alignment confirmation | — | — | ✔ (what method counts as one) | ✔ the confirmation actually performed |
-| — | The verdict, blocker, authoriser and exit status | — | — | — | ✔ all of it |
-| — | R-005 asset-tag convention and any permitted overrides | ✔ as a rule today | **never** | ✔ belongs here | — |
-| — | Milestone dates | ✔ `project_milestones.csv` | — | — | — |
+**The Framework invariants**, stated because everything in section 3 depends on
+them holding:
 
-Four things this table is asserting, each of which the audit should test:
+1. Exactly one verdict per **activity × assessed scope × model-version context**.
+2. The four verdicts are mutually exclusive.
+3. READY permits no unresolved blocker and no evidence gap.
+4. BLOCKED means a known unmet requirement prevents the activity.
+5. UNKNOWN means an evidence gap makes the activity undecidable.
+6. CONDITIONAL must originate in a **named authorisation event**, and is never
+   derived automatically from findings.
+
+Invariant 6 is why a verdict cannot be computed end-to-end from a rule run, and
+invariant 1 is why the live table at the head of section 3 has exactly three rows
+for three activities.
+
+The Overlay / runtime line matters for a further reason: Overlay configuration is
+written once and read many times, while runtime evidence is produced per handover
+and is only true of the versions it was produced against. Filing an alignment
+confirmation or a risk acceptance as Overlay configuration would make a statement
+about two specific model versions look like a standing project setting — which is
+how case 3's UNKNOWN would quietly turn back into a CONDITIONAL nobody
+authorised.
+
+| # | Item | Contract 1.6 today | Framework | Purpose Pack (reusable) | Overlay *configuration* | Runtime assessment evidence / decision |
+|---|---|---|---|---|---|---|
+| 1 | Purpose identity | — | — | ✔ | — | — |
+| 2 | Direction (MEP → Architecture) | — | — | ✔ | — | — |
+| 3 | Production activities at stake | — | — | ✔ | — | — |
+| 4 | How requirements and evidence bear on an activity, including what a requirement *cannot* answer | — | — | ✔ | — | — |
+| 5a | Base verdict semantics and the six invariants | — | ✔ | — | — | — |
+| 5b | Verdict / blocker decision logic for *this* purpose, within those four states | — | — | ✔ | — | — |
+| — | Reusable consequence *kinds* | — | — | ✔ | — | — |
+| — | Source-fix and recheck guidance | — | — | ✔ | — | — |
+| 6a | Findings and their status | ✔ `finding_key`, `status`, `severity`, `is_issue` | — | — | — | which findings a given assessment actually cited |
+| 6b | A *named absence* being admissible evidence | — | — | ✔ (that it counts) | — | the absence actually observed in a run |
+| 7 | Business consequence | — | — | ✔ (kind) | ✔ (cost parameters) | the impact actually recorded |
+| 8a | Default responsibility policy — which role answers for this kind of failure | partly — `owner_role` is an input | — | ✔ | — | — |
+| 8b | Project team and role mappings — who fills that role here | — | — | — | ✔ | — |
+| 8c | **The assigned resolving role/team for this assessment** | — | — | — | — | ✔ resolved from 8a through 8b, and recorded |
+| 8d | The actual actor | — | — | — | — | ✔ an execution fact, recorded *in addition to* 8c |
+| 9 | Exit condition | partly — a requirement passing is expressible | — | ✔ (what would end it) | ✔ (evidence methods this project accepts) | whether the exit was actually met |
+| 10 | Model versions and the handover issue/event | partly — `models.csv` has a content hash | — | — | — | ✔ the versions actually issued, and when |
+| 11 | Risk authorisation | — | ✔ (that CONDITIONAL requires one) | — | ✔ (who may accept what, and how) | ✔ the risk acceptance actually given, by whom, over what scope |
+| — | The alignment confirmation | — | — | — | ✔ (what method counts as one) | ✔ the confirmation actually performed |
+| — | The verdict, blocker, evidence gaps and exit status | — | — | — | — | ✔ all of it |
+| — | R-005 asset-tag convention and any permitted overrides | ✔ as a rule today | — | **never** | ✔ belongs here | — |
+| — | Milestone dates | ✔ `project_milestones.csv` | — | — | — | — |
+
+**Rows 8a–8d are the assignment chain, and it reads in one direction.** The Pack
+carries a *default responsibility policy* — for a missing project asset tag, the
+role that answers is coordination rather than design, and that generalises. The
+Overlay maps that role onto this project's actual team. The runtime assessment
+records the result of applying the second to the first: **the resolving role or
+team assigned for this assessment**, against these model versions. Only then, and
+separately, does anyone act.
+
+Recording only "who actually acted" is not sufficient and was the earlier
+mistake. An assignment can exist and be unactioned — which is precisely the state
+a stalled handover is in — and a decision record that only knows about actors
+cannot represent it, cannot show whether the right role was ever tasked, and
+cannot distinguish "nobody was assigned" from "the assignee has not started". The
+actual actor stays worth recording, but as an execution fact **alongside** the
+assignment, never as a substitute for it.
+
+Five things this table is asserting, each of which the audit should test:
 
 - **The core does not move.** Every contract 1.6 column above is read, never
   redefined. No new meaning is attached to `is_issue`, `severity`, `priority`,
   `stage`, `owner_role`, `labels` or `discipline_scope`.
+- **The four states are the Framework's, not the Pack's and not the Overlay's.**
+  A Pack decides how *this purpose* reaches a verdict; it does not get to say
+  what READY means. An Overlay decides who may authorise and what evidence the
+  project accepts; it does not get to say what CONDITIONAL means either.
 - **Project-specific agreements go to the Overlay.** R-005's `EPC_Delivery`
   properties are one project's convention, along with whatever overrides the
   project permits against them. A Pack core carrying them would export one
@@ -909,7 +1018,9 @@ Four things this table is asserting, each of which the audit should test:
 - **Runtime assessment evidence and decisions are not Overlay configuration.**
   This is the correction: an earlier reading of this document filed the actual
   cost, the actual acting role and the actual handover event under Overlay,
-  which would have made a per-run result look like a project setting.
+  which would have made a per-run result look like a project setting. The
+  assigned resolving role/team belongs here too — the mapping that produced it is
+  configuration, the assignment itself is a decision this assessment made.
 
 **The rightmost column is an observation, not a design.** It records what the
 four cases turned out to need; it does not define a class, a schema, a table or
