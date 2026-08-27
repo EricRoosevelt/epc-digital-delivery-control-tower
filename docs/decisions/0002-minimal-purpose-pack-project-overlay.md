@@ -56,9 +56,22 @@
     downstream node — which meant invariant 8 (a node exists somewhere in the
     tree) was never actually sufficient to prove a `READY` path tests every
     evidence requirement it needs, only that a node for it exists *somewhere*
-    in the Pack. All three are closed below, each marked **(closes R3 gap
-    N)**, and every conclusion the third rejection named has been removed,
-    not merely qualified.
+    in the Pack. All three were closed at `8b82820`, each marked **(closes
+    R3 gap N)**.
+  - Refines the version at `8b82820` (2026-08-27), which technical-director
+    review returned **CONDITIONAL**, not yet cleared to land, for two
+    remaining closures: the claim that verdict-class priority
+    (`BLOCKED > UNKNOWN > READY`) was a *complete* deterministic aggregation
+    function for any assessed scope was too strong — class priority decides
+    which Framework class a scope's result falls into, not which *named*
+    outcome to pick when a scope's underlying observations disagree across
+    two distinct named outcomes that carry different `failure_kind`/
+    `gap_kind`/`next_node`/`renders_inapplicable` semantics, whether or not
+    those outcomes share a class; and `renders_inapplicable`'s own structural
+    rules were incomplete — nothing yet forbade duplicate entries, a branch
+    naming its own tested evidence requirement inapplicable, or a descendant
+    node retesting evidence an ancestor had already ruled out. Both are
+    closed below, each marked **(closes R4 gap N)**.
 - **Scope:** Checkpoint C only — the representation, ownership and identity
   boundary of a Purpose Pack and a Project Overlay. It does not design or
   execute runtime assessment (Checkpoint D), does not touch contract 1.6, and
@@ -302,7 +315,7 @@ record`.
 | `evidence_requirements[].pack_binding` | Pack | `{ ruleset_id, ruleset_version, requirement_keys[] }` | Present only when `binding_source = "pack"` — a general validation requirement the Pack may reference directly (§3.3). |
 | `evidence_requirements[].insufficient_evidence[]` | Pack | list of `{ ruleset_id, ruleset_version, requirement_key, cannot_answer }` | Records a *related but insufficient* validation pass, e.g. R-010 for `cross-model-alignment` (§3.2, §5). |
 | `decision_nodes[]` | Pack | list of `{ node_id, evidence_requirement_id, branches[] }` | Closed decision tree per activity (§3.8; **closes gap 3**, **closes R2 gap 5**). |
-| `decision_nodes[].branches[]` | Pack | list of `{ outcome, verdict?, failure_kind?, gap_kind?, next_node?, renders_inapplicable? }` | Exactly one of `verdict`/`next_node` per branch; `verdict = "BLOCKED"` requires `failure_kind`, `verdict = "UNKNOWN"` requires `gap_kind`, `verdict = "READY"` requires neither; every declared `outcome` covered exactly once, checked at Pack load time (**closes R2 gap 1, gap 2**). `renders_inapplicable[]` names sibling `evidence_requirement_id`s this outcome structurally rules out further down the path (§3.8 invariant 12; **closes R3 gap 3**). |
+| `decision_nodes[].branches[]` | Pack | list of `{ outcome, verdict?, failure_kind?, gap_kind?, next_node?, renders_inapplicable? }` | Exactly one of `verdict`/`next_node` per branch; `verdict = "BLOCKED"` requires `failure_kind`, `verdict = "UNKNOWN"` requires `gap_kind`, `verdict = "READY"` requires neither; every declared `outcome` covered exactly once, checked at Pack load time (**closes R2 gap 1, gap 2**). `renders_inapplicable[]` names sibling `evidence_requirement_id`s this outcome structurally rules out further down the path — duplicate-free, never the branch's own `evidence_requirement_id`, and never retested by any later node on the same path (§3.8 invariants 12–15; **closes R3 gap 3, closes R4 gap 2**). |
 | `consequence_kinds[]` | Pack | list of `{ activity_id, kinds[] }` | Kind only; no magnitude field exists on a Pack. |
 | `default_responsibility[]` | Pack | list of `{ resolution_kind, role }` | One shared namespace: `resolution_kind` matches either a `BLOCKED` leaf's `failure_kind` or an `UNKNOWN` leaf's `gap_kind` — every leaf of either verdict resolves to a role this way (**closes R2 gap 2**). `resolution_kind` is unique across the list, so every leaf resolves to *exactly* one entry (**closes R3 gap 2**). |
 | `source_fix_guidance[]` | Pack | list of `{ evidence_requirement_id, guidance }` | Free text, tool-specific advice as in Checkpoint B's cases. |
@@ -404,10 +417,16 @@ order makes the three states mutually exclusive and jointly exhaustive
    means every covered element evaluates `PASS`).
 
 This ordering — a known failure always dominates a mere coverage gap — is
-the general rule this design applies wherever an evidence requirement's
-assessed scope could contain more than one underlying observation; §3.5's
-worked Overlay and every live case in §6 use it. **A single verdict does not
-mean discarding the other facts a mixed scope contains.** Suppose, purely
+the general rule this design applies for `asset-identity` and
+`in-model-position`, and it is safe to use as a **complete outcome
+selector**, not merely a class selector, for exactly one reason: each of
+these two evidence requirements has **exactly one named outcome per
+Framework class** — `unmet` is the only `BLOCKED`-shaped outcome,
+`not-yet-evaluated` the only `UNKNOWN`-shaped one, `satisfied` the only
+`READY`/continuing one — so picking the dominant class and picking the
+dominant named outcome are the same operation here. §3.5's worked Overlay
+and every live case in §6 use it this way. **A single verdict does not mean
+discarding the other facts a mixed scope contains.** Suppose, purely
 illustratively, `asset-identity`'s live scope (Checkpoint B case 2's three
 HVAC elements, six `FAIL` findings) also included a fourth element never
 evaluated under R-005 — `hvac::EXAMPLE`, not a live element. The priority
@@ -421,25 +440,90 @@ Recording that alongside a `BLOCKED` verdict is a legitimate, separate
 runtime fact a future assessment step may keep (Checkpoint D); it is
 additional detail under one verdict, not evidence of two.
 
-**The same discipline governs assessment-bound evidence, in general form.**
-Each of this Pack's three assessment-bound evidence requirements happens to
-describe a single fact about the assessed scope as a whole — whether the two
-*models* share a datum, whether *one* penetrating element penetrates,
-whether *one* opening is cross-referenced — so none of them has multiple
-underlying observations to aggregate in this worked Pack. Where a future
-evidence requirement's assessed scope genuinely could contain several
-observations — several candidate penetrations, several storeys' alignment
-checks — the same discipline applies: collapsing that set to the evidence
-requirement's one declared outcome must be a **total, deterministic
-function**, and the default such function is the same worst-observation-wins
-order fixed above — any observation whose own outcome would be `BLOCKED`-shaped
-dominates; failing that, any `UNKNOWN`-shaped observation dominates; only
-when every observation is `READY`-shaped does the aggregate reach it. **How
-the underlying set of observations for a given assessed scope is itself
-constructed or enumerated is a Checkpoint D question and is not decided
-here.** What this document fixes is only the constraint any future
-aggregation function must satisfy: exactly one outcome per evidence
-requirement per assessed scope, never two, and never by silent default.
+**Verdict-class priority is not, by itself, a complete outcome selector for
+every evidence requirement — correcting an overclaim in the previous
+revision (closes R4 gap 1).** `BLOCKED > UNKNOWN > READY` decides which
+*Framework class* an assessed scope's result falls into; it says nothing
+about which *named outcome* to pick when more than one distinct outcome
+exists within, or leads into, that class — and several of this Pack's own
+evidence requirements have exactly that shape. `opening-status` alone has
+**two** distinct `BLOCKED` outcomes, `modelled-not-cross-referenced` and
+`not-modelled`, each with its own `failure_kind`; `penetration-determination`'s
+`no-penetration` (a `READY` leaf carrying `renders_inapplicable`) and
+`penetration-confirmed` (a `next_node` continuing to `opening-status`) are
+two distinct outcomes that are not even in the same class. Class priority
+cannot choose between two tied-class `BLOCKED` outcomes, and must never be
+asked to choose between a terminal `READY` outcome and a continuation —
+those lead to structurally different trees.
+
+**The rule, stated precisely:**
+
+- If every underlying observation in an assessed scope reduces to the
+  **same named outcome**, that outcome is simply the evidence requirement's
+  outcome — plain aggregation, not a choice, and no priority rule is needed
+  at all.
+- If an assessed scope's underlying observations reduce to **two or more
+  different named outcomes** — whether or not they share a Framework class —
+  the evidence requirement **must not** pick one by any priority, any text
+  or alphabetic ordering, or any silent default. **The assessed scope must
+  instead be partitioned into outcome-homogeneous subscopes before the
+  decision tree runs at all**, one subscope per distinct named outcome
+  actually observed; each subscope then carries exactly one outcome, by
+  construction, and follows its own path through the tree — potentially
+  reaching its own distinct verdict.
+
+**Two counterexamples, grounded in this Pack's own vocabulary, that a naive
+class-priority collapse would get wrong:**
+
+1. **Two penetrations, two distinct `BLOCKED` outcomes — must not be folded
+   into one.** Suppose, purely illustratively, `builders-work-openings`'s
+   assessed scope contained two confirmed penetrations: `hvac::EXAMPLE-A`,
+   whose opening is not modelled at all, and `hvac::EXAMPLE-B`, whose
+   opening is modelled but not cross-referenced. Both outcomes are
+   `BLOCKED`-class, so class priority is silent on which "wins" — and
+   picking either would discard a real, distinct blocker:
+   `missing-corresponding-opening` for A is not the same defect as
+   `opening-not-verifiably-linked` for B, and the two need different source
+   fixes (model the opening at all, versus link the one that already
+   exists). The correct handling is two subscopes — `{hvac::EXAMPLE-A}` and
+   `{hvac::EXAMPLE-B}` — each independently reaching `opening-status =
+   not-modelled` and `opening-status = modelled-not-cross-referenced`, each
+   with its own `BLOCKED` verdict and its own `failure_kind`. Folding them
+   into one `BLOCKED` outcome would report only one blocker and silently
+   drop the other.
+2. **One no-penetration, one penetration-confirmed — must not let one
+   render the other's evidence inapplicable.** Suppose the same scope
+   instead contained `hvac::EXAMPLE-A` with no penetration and
+   `hvac::EXAMPLE-C` with a confirmed penetration. These outcomes are not
+   even in the same class — `no-penetration` is `READY`-shaped, with
+   `opening-status` rendered inapplicable *for that element*;
+   `penetration-confirmed` is a continuation that still needs
+   `opening-status` tested *for that element*. Aggregating to one outcome
+   for the whole scope would either wrongly apply
+   `renders_inapplicable = ["opening-status"]` to `hvac::EXAMPLE-C`,
+   silently skipping evidence its own penetration still requires, or wrongly
+   force `hvac::EXAMPLE-A` through the `opening-status` node it structurally
+   cannot need. The correct handling is again two subscopes, evaluated
+   independently, each following its own path through
+   `builders-work-openings`'s tree.
+
+**Checkpoint D owns how subscopes are actually constructed, identified,
+recorded, and — if ever needed — rolled up into a higher-level summary of
+the activity; no `Subscope`-shaped runtime object, identity, or aggregation
+type is created or named here.** What this document fixes, and only this,
+is the constraint any future partitioning must satisfy: an assessed scope
+may never be forced through the decision tree as a single unit when its own
+underlying observations disagree on the named outcome, whether or not those
+outcomes share a Framework class. `asset-identity` and `in-model-position`
+need no partitioning, because each has only one named outcome per class to
+begin with (above); the assessment-bound evidence requirements in this
+Pack — `cross-model-alignment`, `penetration-determination`, `opening-status`
+— each describe a single fact about the assessed scope as a whole in this
+worked Pack (whether the two models share a datum; whether one penetrating
+element penetrates; whether one opening is cross-referenced), so no live
+case in §6 exercises partitioning either; a future Pack whose assessed scope
+genuinely spans several such facts is exactly where the two counterexamples
+above would first bite.
 
 ```toml
 # purpose-packs/mep-to-architecture-coordination/pack.toml
@@ -926,6 +1010,10 @@ silently declines to evaluate is the worst outcome available":
 | A non-root node reachable from an activity's root has zero or more than one incoming `next_node` edge | Fail closed at Pack load time (invariant 10) — every activity's `decision_nodes` must form a genuine tree, not a DAG with merged branches (**closes R3 gap 3**). |
 | A `decision_nodes[]` entry is the `decision_root_node` of, or receives a `next_node` edge from, more than one activity | Fail closed at Pack load time (invariant 11) — no node may be shared between two activities' trees (**closes R3 gap 3**). |
 | Some root-to-`READY`-leaf path in an activity's tree omits a declared `evidence_requirement_id` that is neither tested by a node on that path nor named in a `renders_inapplicable` list on that same path | Fail closed at Pack load time (invariant 12) — the actual sufficient condition for `READY`-path closure, distinct from and stronger than invariant 8 (**closes R3 gap 3**). |
+| On some root-to-`READY`-leaf path, an `evidence_requirement_id` is both tested by a node on the path and named in a `renders_inapplicable` list on that same path | Fail closed at Pack load time (invariant 12) — tested and inapplicable must be disjoint, not merely jointly cover the declared set (**closes R4 gap 2**). |
+| A branch's `renders_inapplicable[]` contains the same `evidence_requirement_id` twice | Fail closed at Pack load time (invariant 13; **closes R4 gap 2**). |
+| A branch's `renders_inapplicable[]` names the `evidence_requirement_id` of the node the branch itself belongs to | Fail closed at Pack load time (invariant 14) — a branch cannot render its own just-tested requirement inapplicable (**closes R4 gap 2**). |
+| A node testing `evidence_requirement_id` X appears on any path descending from a branch that already rendered X inapplicable, regardless of what verdict that path eventually reaches | Fail closed at Pack load time (invariant 15) — checked over every path prefix, not only `READY`-terminating ones (**closes R4 gap 2**). |
 | A branch's `renders_inapplicable[]` names an `evidence_requirement_id` the branch's own activity does not declare | Fail closed at Pack load time, the same way an out-of-scope `next_node` target would be (**closes R3 gap 3**). |
 | `overlay.overrides[].field` is not on the closed override enumeration, or no `recheck_conditions[]` row exists in the named `pack_id` for the named `activity_id` | Fail closed as an illegal or inapplicable override, not applied and not ignored (§3.6; **closes R2 gap 6**). |
 | **A project's `project.toml` has no `[overlay]` table at all** | **Not an error.** The project simply has no purpose assessment available. `epc-ct run`, `check`, `group`, and every exporter are completely unaffected, because nothing in the current pipeline reads `[overlay]` (**closes gap 5**). |
@@ -971,7 +1059,7 @@ exhaustively against the evidence requirement's own declared `outcomes[]` at
 Pack-load time (§3.7).
 
 **Structural invariants, checked at Pack load time, before any project ever
-uses the file (closes R2 gap 5, closes R3 gap 3):**
+uses the file (closes R2 gap 5, closes R3 gap 3, closes R4 gap 2):**
 
 1. Every `activities[].decision_root_node` names an existing `node_id`.
 2. Every branch's `next_node` names an existing `node_id`.
@@ -1002,15 +1090,51 @@ uses the file (closes R2 gap 5, closes R3 gap 3):**
     receives a `next_node` edge from, more than one activity** — an
     activity's tree is disjoint from every other activity's tree; no node
     is shared across two activities' trees.
-12. **For every root-to-`READY`-leaf path in every activity's tree, every
-    `evidence_requirement_id` the activity declares is either the
-    `evidence_requirement_id` of a node on that path, or named in some
-    branch's `renders_inapplicable` list on that same path** (accumulated
+12. **For every root-to-`READY`-leaf path in every activity's tree, the set
+    of evidence requirements *tested* on that path and the set *rendered
+    inapplicable* on that path are disjoint, and their union exactly equals
+    the activity's declared `evidence_requirement_ids`** (both accumulated
     from the root down to the leaf, over every branch actually taken along
-    the way). Checked exhaustively over every such path, of which there are
-    finitely many since the tree is finite and acyclic. Every value inside a
-    `renders_inapplicable` list must itself be an `evidence_requirement_id`
-    the same activity declares.
+    the way; **tightened from a one-directional "union covers declared" to
+    an exact, disjoint partition — closes R4 gap 2**). Checked exhaustively
+    over every such path, of which there are finitely many since the tree is
+    finite and acyclic. Every value inside a `renders_inapplicable` list
+    must itself be an `evidence_requirement_id` the same activity declares.
+13. **A branch's `renders_inapplicable[]` contains no duplicate entries**
+    (**closes R4 gap 2**).
+14. **A branch's `renders_inapplicable[]` never names the
+    `evidence_requirement_id` of the node the branch itself belongs to** —
+    a branch exists because its own node's evidence requirement was just
+    tested, so marking that same requirement inapplicable in the same
+    outcome is a direct contradiction, and is checked locally per branch
+    rather than only through the whole-path disjointness in invariant 12
+    (**closes R4 gap 2**).
+15. **Once a branch renders an `evidence_requirement_id` inapplicable, no
+    node testing that same `evidence_requirement_id` may appear on any path
+    descending from that branch** — checked over every path *prefix* in the
+    tree, regardless of what verdict that path eventually reaches, so a
+    `BLOCKED`- or `UNKNOWN`-terminating path cannot silently retest evidence
+    an ancestor already ruled out any more than a `READY`-terminating one
+    could, which invariant 12 alone — scoped only to `READY`-leaf paths —
+    would not catch (**closes R4 gap 2**).
+
+**Invariants 13–15 close three narrower gaps `renders_inapplicable` itself
+could otherwise open.** A duplicate entry (13) is inert but marks an
+authoring mistake worth catching rather than silently accepting. A branch
+marking its own just-tested requirement inapplicable (14) is a direct
+contradiction, catchable without walking any path at all — a cheap, local
+rejection ahead of the more expensive whole-path checks invariant 12 needs.
+And because invariant 12 as stated examines only paths that terminate in
+`READY`, a `renders_inapplicable` declaration followed by a later retest of
+the same requirement on a path that instead terminates in `BLOCKED` or
+`UNKNOWN` would escape it entirely; invariant 15 is scoped to every path
+prefix in the tree for exactly that reason, independent of how the path
+eventually ends. None of the three is exercised by this Pack's one
+`renders_inapplicable` declaration — `no-penetration`'s — which names
+`opening-status`, a requirement `penetration-determination-node` itself does
+not test, appearing nowhere else in `builders-work-openings`'s tree; the
+verification run accompanying this revision constructs each violation
+directly, off the worked Pack, to prove all three fail closed.
 
 **Invariants 10 and 11 correct a false claim in the previous revision.**
 Acyclicity (invariant 5) alone does not give every node "exactly one parent
@@ -1362,17 +1486,23 @@ round changed a single live verdict, only completed the paths this run's
 evidence never travels down. Round 3 changed nothing in this table; it
 tightened the evidence-outcome priority order and the responsibility chain
 around it (§3.2, §3.5), and the tree's structural guarantees (§3.8), neither
-of which moves a live outcome.
+of which moves a live outcome. Round 4 changed nothing here either: it
+corrected the *general* claim about aggregating multiple underlying
+observations into one outcome (§3.2), and tightened `renders_inapplicable`'s
+own structural rules (§3.8, invariants 12–15) — neither is exercised by this
+Pack's single live scope per evidence requirement, so no live path, verdict,
+or `resolution_kind` moves.
 
-**Every root-to-`READY`-leaf path in all three trees (§3.8, invariant 12),
-tested vs. structurally-inapplicable evidence:**
+**Every root-to-`READY`-leaf path in all three trees (§3.8, invariants
+12–15): tested and inapplicable evidence are disjoint, and their union
+exactly equals the declared set:**
 
-| Activity | Path (outcomes taken) | Evidence tested on path | Evidence ruled inapplicable | Declared evidence fully accounted for? |
-|---|---|---|---|---|
-| Schedules | `asset-identity = satisfied` | `asset-identity` | — | Yes — declared = {`asset-identity`}, tested = {`asset-identity`} |
-| Ceiling | `in-model-position = satisfied` → `cross-model-alignment = confirmed` | `in-model-position`, `cross-model-alignment` | — | Yes — declared = tested |
-| Openings | `penetration-determination = no-penetration` | `penetration-determination` | `opening-status` (via this branch's `renders_inapplicable`) | Yes — declared = {`penetration-determination`, `opening-status`}, tested ∪ inapplicable = {`penetration-determination`} ∪ {`opening-status`} |
-| Openings | `penetration-determination = penetration-confirmed` → `opening-status = cross-referenced` | `penetration-determination`, `opening-status` | — | Yes — declared = tested |
+| Activity | Path (outcomes taken) | Tested | Inapplicable | Disjoint? | Tested ∪ inapplicable = declared? |
+|---|---|---|---|---|---|
+| Schedules | `asset-identity = satisfied` | {`asset-identity`} | {} | Yes | Yes — declared = {`asset-identity`} |
+| Ceiling | `in-model-position = satisfied` → `cross-model-alignment = confirmed` | {`in-model-position`, `cross-model-alignment`} | {} | Yes | Yes — declared = {`in-model-position`, `cross-model-alignment`} |
+| Openings | `penetration-determination = no-penetration` | {`penetration-determination`} | {`opening-status`} (via this branch's `renders_inapplicable`) | Yes — the two sets share no member | Yes — declared = {`penetration-determination`, `opening-status`} = tested ∪ inapplicable |
+| Openings | `penetration-determination = penetration-confirmed` → `opening-status = cross-referenced` | {`penetration-determination`, `opening-status`} | {} | Yes | Yes — declared = {`penetration-determination`, `opening-status`} |
 
 Four `READY` paths total across the three trees, and every one accounts for
 its activity's full declared evidence set — the openings activity has two
@@ -1457,27 +1587,37 @@ anything in this design references existing rule data, because the key alone
 proves identity but not semantic version; a closed decision tree, not a flat
 table or an expression language, as the shape of verdict/blocker logic, with
 every evidence requirement's outcome vocabulary partitioned into exactly
-`READY`/`BLOCKED`/`UNKNOWN`-mapping states by a fixed, deterministic
-priority order — a known failure always dominates a mere coverage gap, so
-one assessed scope never reaches two outcomes at once — and with an outcome
-itself never standing in for a verdict, since only a tree's terminal leaf
-is one; `CONDITIONAL` reachable only as a runtime promotion that must retain
-the promoted leaf's original verdict, resolution kind, and evidence; a
-single `resolution_kind` namespace shared by `BLOCKED`'s `failure_kind` and
-`UNKNOWN`'s `gap_kind`, each unique within a Pack and each resolved by an
-Overlay `team_mapping` entry that is itself unique per `role`, so every
+`READY`/`BLOCKED`/`UNKNOWN`-mapping states, with an outcome itself never
+standing in for a verdict, since only a tree's terminal leaf is one; a
+verdict-class priority (a known failure always dominates a mere coverage
+gap) that is a complete outcome selector only where an evidence requirement
+has exactly one named outcome per class — as this Pack's two
+validation-backed evidence requirements both do — and that must never be
+used to pick among two or more distinct named outcomes an assessed scope's
+underlying observations disagree on, whether or not those outcomes share a
+class; in that case the assessed scope must instead be partitioned into
+outcome-homogeneous subscopes before the tree runs, each producing its own
+verdict, with subscope construction, identity, and recording left to
+Checkpoint D; `CONDITIONAL` reachable only as a runtime promotion that must
+retain the promoted leaf's original verdict, resolution kind, and evidence;
+a single `resolution_kind` namespace shared by `BLOCKED`'s `failure_kind`
+and `UNKNOWN`'s `gap_kind`, each unique within a Pack and each resolved by
+an Overlay `team_mapping` entry that is itself unique per `role`, so every
 role a requested activity's reachable non-`READY` leaves can name — not
 only `BLOCKED` ones — composes to exactly one project assignee or fails
 closed for that request alone, never by falling back to a rule's
 `owner_role` or reporting a bare Pack role as though it were an assignment;
-twelve structural invariants a Pack's decision trees must satisfy at load
+fifteen structural invariants a Pack's decision trees must satisfy at load
 time, covering root/edge existence, uniqueness, true per-activity tree
-shape (not a DAG with merged branches), and — the sufficient condition for
-`READY`-path closure — that every root-to-`READY`-leaf path either tests or
-structurally rules inapplicable, via a closed `renders_inapplicable` field,
-every evidence requirement its activity declares; three independent
-compatibility axes — Pack schema format, Pack content version, and
-per-binding ruleset identity — with
+shape (not a DAG with merged branches), the sufficient condition for
+`READY`-path closure — that every root-to-`READY`-leaf path tests and
+structurally rules inapplicable, via a closed, duplicate-free, non-
+self-referential `renders_inapplicable` field, a disjoint and exactly
+covering partition of every evidence requirement its activity declares —
+and that no node may retest evidence any ancestor already ruled
+inapplicable, on any path regardless of that path's eventual verdict; three
+independent compatibility axes — Pack schema format, Pack content version,
+and per-binding ruleset identity — with
 Framework machine-contract compatibility named as not yet nameable rather
 than fabricated; a project that may use multiple Packs through one Overlay,
 with Pack-local `activity_id`/`evidence_requirement_id` disambiguated only by
