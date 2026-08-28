@@ -738,7 +738,7 @@ decision_root_node = "penetration-determination-node"
 resolution_kind = "missing-project-asset-identity"   # BLOCKED, asset-identity
 default_role = "model-coordination"
 consequence_kinds = ["work-cannot-start", "re-identification-and-reissue-risk"]
-next_action = "Source-model fix: add EPC_Delivery.AssetTag and EPC_Delivery.SystemCode as instance properties on the affected elements (Revit shared parameters bound to the relevant categories, or the equivalent Tekla user-defined attribute set) and confirm the IFC export mapping emits a distinct EPC_Delivery property set rather than folding the values into Pset_ManufacturerTypeInformation."
+next_action = "Source-model fix: populate or correct the project-required asset-identity values on the affected source elements according to the project's active Overlay binding and convention (§3.5), then re-export the model so the bound requirement_keys can be evaluated. Which properties, authoring-tool fields, and export mapping this requires is project- and convention-specific; the Pack does not name them, because that binding belongs to the Overlay."
 recheck_condition = "Every requirement_key bound to asset-identity evaluates PASS for every element in the assessed scope, with no element left uncovered, on the reissued model."
 
 [[resolution_routes]]
@@ -1695,7 +1695,7 @@ consequence, default role, next action, to recheck condition, in one table
 
 | `resolution_kind` | Verdict class | Consequence kinds | Default role | Next action | Recheck condition |
 |---|---|---|---|---|---|
-| `missing-project-asset-identity` | BLOCKED | work-cannot-start, re-identification-and-reissue-risk | model-coordination | Add `EPC_Delivery.AssetTag`/`SystemCode` at source and confirm the IFC export emits an `EPC_Delivery` property set | Every bound `requirement_key` evaluates PASS for every element in scope, none uncovered |
+| `missing-project-asset-identity` | BLOCKED | work-cannot-start, re-identification-and-reissue-risk | model-coordination | Populate or correct the project-required asset-identity values at source per the Overlay binding and re-export; which properties/fields is project-specific and not named by the Pack | Every bound `requirement_key` evaluates PASS for every element in scope, none uncovered |
 | `asset-identity-not-evaluated` | UNKNOWN | work-suspended | model-coordination | *Not a model defect* — run the evaluation over the full assessed scope | Every element in scope is covered by an evaluation, none absent |
 | `mep-element-not-spatially-assigned` | BLOCKED | work-suspended | mep-lead | Host the element to its correct level/space before export | The R-004-bound requirement_key(s) evaluate PASS for the element |
 | `in-model-position-not-evaluated` | UNKNOWN | work-suspended | mep-lead | *Not a model defect* — run the evaluation; extend rule applicability if a rule authoring gap is the cause | Every element in scope is covered by a finding |
