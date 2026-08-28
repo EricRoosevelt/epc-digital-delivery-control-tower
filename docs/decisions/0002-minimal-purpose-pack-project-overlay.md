@@ -355,7 +355,7 @@ record`.
 | Field | Owner | Type shape | Notes |
 |---|---|---|---|
 | `pack_id` | Pack | slug | Must match its directory name. |
-| `pack_schema_version` | Pack | slug | Version of the **file format** — which tables/fields this document uses; bumped to `"2"` this round for the shape changes below (§3.4a). |
+| `pack_schema_version` | Pack | slug | Version of the **file format** — which tables/fields this document uses. This ADR defines the first publishable Pack file format, `"1"` (§3.4a). |
 | `pack_version` | Pack | opaque slug | Version of this Pack's **content**; pinned by exact match, never a range (§3.4b). |
 | `maturity` | Pack | enum (`draft`/`reviewed`/`stable`) | Pack metadata only; never read by the Framework. |
 | `citations` | Pack | list of strings | Free text, provenance for the Pack author's claims. |
@@ -631,7 +631,7 @@ above would first bite.
 # EXAMPLE, not a live artifact — no such file exists yet.
 
 pack_id = "interdisciplinary-coordination-readiness"
-pack_schema_version = "2"
+pack_schema_version = "1"
 pack_version = "0.1.0"
 maturity = "draft"
 citations = ["docs/product/interdisciplinary-coordination-readiness-mep-to-architecture.md"]
@@ -893,13 +893,15 @@ that was the error. Three genuinely separate compatibilities replace it:
 **a) Pack file/schema format version — `pack_schema_version`.** Names the
 *shape* this `pack.toml` file is written against: which tables and fields a
 loader must understand to parse it at all. It changes only when the Pack
-*file format* changes, never when one Pack's content changes. This round
-bumps it from `"1"` to `"2"`, because the file's shape genuinely changed —
-`directions[]` replaces `[direction]`, `activities[]` gained `direction_id`,
-`resolution_routes[]` replaces four separate arrays, and `overlay.overrides[]`
-no longer exists — and a loader built against schema `"1"` could not
-correctly parse a schema-`"2"` file even though both describe the same
-purpose. A future loader that does not implement a given `pack_schema_version`
+*file format* changes, never when one Pack's content changes. **This ADR
+defines the first publishable Pack file format, `"1"`** — no Pack, Pack
+loader, or Pack schema has been published before this document, so there is
+no prior format for this one to move from. A rejected or not-yet-released
+ADR draft does not consume a schema version, and creates no migration or
+compatibility obligation for the format this document actually defines: the
+directions/`resolution_routes` shape below is simply what schema `"1"` is,
+not a revision of anything a loader would already exist for. A future
+loader that does not implement a given, *published* `pack_schema_version`
 refuses the file (§3.7).
 
 **b) Pack content version — `pack_version`.** An author-declared **opaque
@@ -1873,8 +1875,9 @@ matching authorisation row simply has no path to `CONDITIONAL`, not a
 default one; **no project-override capability**, with any future one
 required to be machine-verifiably monotone against four named properties
 before it may even be proposed, and never a free-text patch or expression
-language; three independent compatibility axes — Pack schema format (bumped
-to `"2"` this round), Pack content version, and per-binding ruleset
+language; three independent compatibility axes — Pack schema format (this
+ADR's first publishable format, `"1"`), Pack content version, and per-binding
+ruleset
 identity — with Framework machine-contract compatibility named as not yet
 nameable rather than fabricated; a project that may use multiple Packs
 through one Overlay, with Pack-local `activity_id`/`evidence_requirement_id`
