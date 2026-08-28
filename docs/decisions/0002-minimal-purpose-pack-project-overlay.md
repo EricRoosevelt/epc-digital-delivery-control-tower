@@ -3,7 +3,10 @@
 - **Status:** Proposed. This is a data-design decision for review, not an
   implementation. No code, rule, checker, test, schema, configuration file,
   CLI, loader, or generated artifact is added or changed by this document.
-- **Date:** 2026-08-27.
+  This round corrects Checkpoint C's own fixed inputs — how a Purpose Pack
+  and a Project Overlay are shaped — and asserts nothing about a runtime
+  having been built.
+- **Date:** 2026-08-28.
 - **Revision history:**
   - Supersedes the version at `bc4a142` (2026-08-26), which technical-director
     review **REJECTED** for six reasons: it treated an activity's necessary
@@ -70,8 +73,30 @@
     those outcomes share a class; and `renders_inapplicable`'s own structural
     rules were incomplete — nothing yet forbade duplicate entries, a branch
     naming its own tested evidence requirement inapplicable, or a descendant
-    node retesting evidence an ancestor had already ruled out. Both are
-    closed below, each marked **(closes R4 gap N)**.
+    node retesting evidence an ancestor had already ruled out. Both were
+    closed at `5982653`, each marked **(closes R4 gap N)**.
+  - Refines the version at `5982653` (2026-08-27), which **product review
+    returned AT RISK** — Checkpoint C not yet released, Checkpoint D not
+    authorised — for three further reasons: the worked Pack was named and
+    shaped as a single MEP→Architecture point solution
+    (`mep-to-architecture-coordination`, one singular `[direction]` table),
+    with no stated path to carrying the flagship *Interdisciplinary
+    Coordination Readiness* product beyond that one direction without a
+    schema redesign; a `BLOCKED`/`UNKNOWN` leaf's `resolution_kind` resolved
+    to a role (`default_responsibility[]`) but a reviewer had to separately
+    consult `consequence_kinds[]` (addressed by `activity_id`),
+    `source_fix_guidance[]` (addressed by `evidence_requirement_id`), and
+    `recheck_conditions[]` (addressed by `activity_id` again) to reconstruct
+    what a blocker or gap actually meant for the business, who resolved it,
+    what they should do, and what would clear it — three different addressing
+    schemes for one causal chain; and `overlay.risk_authorisation` was a
+    single project-wide `may_authorise` list with no way to say which
+    specific `resolution_kind` a role may authorise, which reads as (and
+    would compose as) a blanket "may authorise anything," while
+    `overlay.overrides[]` gave Overlay a narrow but genuinely open-ended
+    patch mechanism against Pack fields with no stated bound on what future
+    override kinds could do to Framework or Pack guarantees. All three are
+    closed below, each marked **(closes R5 item N)**.
 - **Scope:** Checkpoint C only — the representation, ownership and identity
   boundary of a Purpose Pack and a Project Overlay. It does not design or
   execute runtime assessment (Checkpoint D), does not touch contract 1.6, and
@@ -99,8 +124,8 @@ decide how a verdict is computed at runtime — that is Checkpoint D, and naming
 would be exactly the mistake `Agent-product-manager.md` warns against:
 approving a tidy schema before the object is earned. What Checkpoint C **does**
 owe is a data shape a future evaluator could walk without redesigning the
-Pack format — that is the standard the rejected revision fell short of, and
-the standard §3 is now held to.
+Pack format — that is the standard every rejected or conditional revision has
+fallen short of, and the standard §3 is now held to.
 
 ---
 
@@ -127,19 +152,24 @@ No Pack and no Overlay may redefine what any of the four words mean or narrow
 the set of legal transitions between them. A Pack that shipped its own meaning
 for `READY` would not be a different purpose; it would be a different
 framework wearing a purpose's name — the same sentence Checkpoint B used, and
-still true here.
+still true here. Nothing in this round touches these six invariants, the
+fifteen decision-tree structural invariants built on top of them (§3.8), or
+the `BLOCKED`/`UNKNOWN`/`READY` semantics of any leaf in the worked Pack.
 
-### Purpose Pack (reusable across projects)
+### Purpose Pack (reusable across projects, and across directions of one flagship purpose)
 
 Owns:
 
 - Purpose identity, Pack file/schema format version, Pack content version,
   maturity, citations (§3.4).
-- Direction (e.g. MEP → Architecture) — never derivable from
+- **Directions**, plural: a Pack may serve more than one directional handoff
+  under one flagship purpose, each declared once and referenced by a stable
+  `direction_id` (§3.2; **closes R5 item 1**) — never derivable from
   `discipline_scope`, which stays applicability-only (`AGENTS.md`).
-- The production activities at stake for this purpose, each naming the
-  **evidence requirements** it needs a decision — never a validation
-  requirement directly (§3.2, §3.8; **closes gap 1**).
+- The production activities at stake for this purpose, each naming **which
+  direction it serves** and the **evidence requirements** it needs a
+  decision — never a validation requirement directly (§3.2, §3.8; **closes
+  gap 1**).
 - What each evidence requirement means, what would satisfy it, and — for a
   reusable, non-project-specific question — how it binds to existing
   validation data by `ruleset_id` + `ruleset_version` + `requirement_key`
@@ -153,16 +183,23 @@ Owns:
   either test or structurally rule out every evidence requirement the
   activity declares — an outcome that merely *exists* in the tree is not
   enough (§3.8, invariant 12; **closes R3 gap 3**).
-- Reusable consequence *kinds* (work cannot start; rework risk; re-issue risk;
-  work suspended) — never a magnitude, which no Pack has evidence for.
-- Default responsibility policy, keyed by the same `resolution_kind` a
-  decision-tree leaf names — a `BLOCKED` leaf's `failure_kind` or an
-  `UNKNOWN` leaf's `gap_kind`, both drawn from one shared namespace — which
-  role answers for a kind of failure *or* a kind of unresolved gap, in the
-  abstract (Checkpoint B §5 row 8a; §3.8; **closes R2 gap 2**). `UNKNOWN` is
-  not exempt from this: not knowing something still needs a role tasked with
-  finding out.
-- Source-fix guidance and recheck conditions.
+- **One canonical `resolution_routes[]` table**, keyed by `resolution_kind`
+  — the same shared namespace a `BLOCKED` leaf's `failure_kind` or an
+  `UNKNOWN` leaf's `gap_kind` names — carrying, in one row per
+  `resolution_kind`: the default resolving role, the consequence kinds this
+  blocker or gap credibly implies, the next action (a source-model fix for a
+  `BLOCKED` leaf; the evidence-gathering step that would end an `UNKNOWN`
+  leaf — never described as a model defect), and the recheck condition that
+  would clear it (§3.2; **closes R5 item 2**). `UNKNOWN` is not exempt from
+  any of this: not knowing something still needs a role tasked with finding
+  out, a credible consequence, a concrete next step, and a stated recheck.
+  This table replaces four separately-addressed fields the pre-AT-RISK
+  revision kept apart (`consequence_kinds[]` by `activity_id`,
+  `default_responsibility[]` by `resolution_kind`,
+  `source_fix_guidance[]` by `evidence_requirement_id`,
+  `recheck_conditions[]` by `activity_id`), so that a reviewer can walk from
+  any non-`READY` leaf's `resolution_kind` to consequence, resolving role,
+  next action, and recheck through **one lookup, not three**.
 
 ### Project Overlay (one per project)
 
@@ -183,13 +220,21 @@ Owns:
   only `BLOCKED` ones, and never substituting the bound rule's `owner_role`
   or the bare Pack role name when a mapping is missing (§3.5; **closes R3
   gap 2**).
-- Risk-authorisation policy: who may accept what, for `CONDITIONAL`.
+- **Per-`resolution_kind` risk-authorisation policy** — which roles *may*
+  authorise a `CONDITIONAL` promotion for one specific
+  `pack_id::resolution_kind`, never a project-wide blanket list (§3.5, §3.7;
+  **closes R5 item 3**). The role that *may authorise* and the role that
+  *resolves* a leaf (from `resolution_routes[]` through `team_mapping`) are
+  two different things, composed from two different tables, and neither
+  substitutes for the other.
 - Cost parameters, for the *magnitude* half of a business consequence a Pack
   can only name the kind of.
 - Project conventions and assumptions that are one project's agreement, not a
   universal truth.
-- Contract assumptions and explicitly permitted overrides against Pack
-  defaults, drawn from a closed list (§3.6).
+- **No override capability today.** A future, product-approved override
+  policy is a legitimate thing for an Overlay to carry — but this round
+  defers its design entirely rather than ship a narrow mechanism with no
+  stated bound on what it could do to a Framework or Pack guarantee (§3.6).
 
 The Overlay never owns base verdict semantics. It parameterises decisions the
 Framework and Pack have already shaped; it does not get a vote on what
@@ -203,13 +248,18 @@ produced or the named absence of it, the verdict actually reached by walking
 a Pack's decision tree, the blocker or gap actually found, the resolving
 role/team actually assigned from whichever `resolution_kind` the reached leaf
 carries — `BLOCKED`'s `failure_kind` or `UNKNOWN`'s `gap_kind`, composed
-through the same 8a-through-8b chain either way (row 8c) — the actual actor
-(row 8d, alongside 8c, never instead of it), any risk acceptance actually
-given — which is the only thing that may **promote** a tree's `BLOCKED` or
-`UNKNOWN` result to `CONDITIONAL`, and which must carry the promoted leaf's
-original verdict, its `resolution_kind`, the accepted risk, and the
+through `resolution_routes[].default_role` and Overlay `team_mapping` (row
+8c) — the actual actor (row 8d, alongside 8c, never instead of it), any risk
+acceptance actually given — which is the only thing that may **promote** a
+tree's `BLOCKED` or `UNKNOWN` result to `CONDITIONAL`, citing a named
+authoriser acting under a role the Overlay's `risk_authorisations[]` actually
+lists for that exact `resolution_kind`, and which must carry the promoted
+leaf's original verdict, its `resolution_kind`, the accepted risk, and the
 underlying evidence gap or blocker forward rather than replacing them (§3.8)
-— and exit/recheck status.
+— and exit/recheck status. **`CONDITIONAL` never becomes `READY`, and never
+eliminates the blocker or gap it was promoted from** — it records that a
+named person accepted a named risk against a named scope, not that the
+activity's evidence changed.
 
 **Nothing in this list may live in a Pack or an Overlay file.** A Pack and an
 Overlay are read many times and written once; runtime evidence is produced
@@ -283,11 +333,11 @@ discarded:
   `rules/` does not exist.
 - **Why not go smaller still (fold the Pack into the Overlay, one file per
   project)?** Rejected because it would destroy the one property that
-  motivated a Pack at all: a *reusable* purpose question (which activities,
-  which evidence requirements, which decision tree) is a different fact from
-  a *project's* policy answer (which team, which cost, which bindings) —
-  folding them into one file per project would mean every project re-authors
-  the MEP → Architecture question from scratch.
+  motivated a Pack at all: a *reusable* purpose question (which directions,
+  which activities, which evidence requirements, which decision tree) is a
+  different fact from a *project's* policy answer (which team, which cost,
+  which bindings) — folding them into one file per project would mean every
+  project re-authors the same coordination-readiness question from scratch.
 
 ---
 
@@ -305,33 +355,34 @@ record`.
 | Field | Owner | Type shape | Notes |
 |---|---|---|---|
 | `pack_id` | Pack | slug | Must match its directory name. |
-| `pack_schema_version` | Pack | slug | Version of the **file format** — which tables/fields this document uses (§3.4a). |
+| `pack_schema_version` | Pack | slug | Version of the **file format** — which tables/fields this document uses; bumped to `"2"` this round for the shape changes below (§3.4a). |
 | `pack_version` | Pack | opaque slug | Version of this Pack's **content**; pinned by exact match, never a range (§3.4b). |
 | `maturity` | Pack | enum (`draft`/`reviewed`/`stable`) | Pack metadata only; never read by the Framework. |
 | `citations` | Pack | list of strings | Free text, provenance for the Pack author's claims. |
-| `direction` | Pack | `{ from: discipline, to: discipline }` | Never derived from `discipline_scope`. |
-| `activities[]` | Pack | list of `{ activity_id, label, evidence_requirement_ids[], decision_root_node }` | `activity_id` is **Pack-local**, not global (§5; **closes gap 5**). |
+| `directions[]` | Pack | list of `{ direction_id, from, to }` | **Plural, replacing the singular `[direction]` table** — a Pack may carry more than one directional handoff under one flagship purpose. `direction_id` unique within the Pack; never derived from `discipline_scope` (§3.2; **closes R5 item 1**). |
+| `activities[]` | Pack | list of `{ activity_id, label, direction_id, evidence_requirement_ids[], decision_root_node }` | `activity_id` is **Pack-local**, not global (§5; **closes gap 5**). `direction_id` must resolve to exactly one `directions[].direction_id`, or the Pack fails to load (**closes R5 item 1**); it does not redefine activity identity, which stays `pack_id::activity_id`. |
 | `evidence_requirements[]` | Pack | list of `{ evidence_requirement_id, answers, binding_source, acceptance_condition, outcomes[], pack_binding?, insufficient_evidence[]? }` | The evidence layer, distinct from validation requirements (§3.2; **closes gap 1**). `evidence_requirement_id` is Pack-local. |
 | `evidence_requirements[].pack_binding` | Pack | `{ ruleset_id, ruleset_version, requirement_keys[] }` | Present only when `binding_source = "pack"` — a general validation requirement the Pack may reference directly (§3.3). |
 | `evidence_requirements[].insufficient_evidence[]` | Pack | list of `{ ruleset_id, ruleset_version, requirement_key, cannot_answer }` | Records a *related but insufficient* validation pass, e.g. R-010 for `cross-model-alignment` (§3.2, §5). |
-| `decision_nodes[]` | Pack | list of `{ node_id, evidence_requirement_id, branches[] }` | Closed decision tree per activity (§3.8; **closes gap 3**, **closes R2 gap 5**). |
-| `decision_nodes[].branches[]` | Pack | list of `{ outcome, verdict?, failure_kind?, gap_kind?, next_node?, renders_inapplicable? }` | Exactly one of `verdict`/`next_node` per branch; `verdict = "BLOCKED"` requires `failure_kind`, `verdict = "UNKNOWN"` requires `gap_kind`, `verdict = "READY"` requires neither; every declared `outcome` covered exactly once, checked at Pack load time (**closes R2 gap 1, gap 2**). `renders_inapplicable[]` names sibling `evidence_requirement_id`s this outcome structurally rules out further down the path — duplicate-free, never the branch's own `evidence_requirement_id`, and never retested by any later node on the same path (§3.8 invariants 12–15; **closes R3 gap 3, closes R4 gap 2**). |
-| `consequence_kinds[]` | Pack | list of `{ activity_id, kinds[] }` | Kind only; no magnitude field exists on a Pack. |
-| `default_responsibility[]` | Pack | list of `{ resolution_kind, role }` | One shared namespace: `resolution_kind` matches either a `BLOCKED` leaf's `failure_kind` or an `UNKNOWN` leaf's `gap_kind` — every leaf of either verdict resolves to a role this way (**closes R2 gap 2**). `resolution_kind` is unique across the list, so every leaf resolves to *exactly* one entry (**closes R3 gap 2**). |
-| `source_fix_guidance[]` | Pack | list of `{ evidence_requirement_id, guidance }` | Free text, tool-specific advice as in Checkpoint B's cases. |
-| `recheck_conditions[]` | Pack | list of `{ activity_id, condition }` | What evidence would end a block/unknown, stated in advance; the only field an override's `field = "recheck_condition"` addresses (§3.6; **closes R2 gap 6**). |
+| `decision_nodes[]` | Pack | list of `{ node_id, evidence_requirement_id, branches[] }` | Closed decision tree per activity (§3.8; **closes gap 3**, **closes R2 gap 5**). Unchanged this round. |
+| `decision_nodes[].branches[]` | Pack | list of `{ outcome, verdict?, failure_kind?, gap_kind?, next_node?, renders_inapplicable? }` | Exactly one of `verdict`/`next_node` per branch; `verdict = "BLOCKED"` requires `failure_kind`, `verdict = "UNKNOWN"` requires `gap_kind`, `verdict = "READY"` requires neither; every declared `outcome` covered exactly once, checked at Pack load time (**closes R2 gap 1, gap 2**). `renders_inapplicable[]` names sibling `evidence_requirement_id`s this outcome structurally rules out further down the path — duplicate-free, never the branch's own `evidence_requirement_id`, and never retested by any later node on the same path (§3.8 invariants 12–15; **closes R3 gap 3, closes R4 gap 2**). Unchanged this round. |
+| `resolution_routes[]` | Pack | list of `{ resolution_kind, default_role, consequence_kinds[], next_action, recheck_condition }` | **The single canonical chain from a non-`READY` leaf to consequence, role, action, and recheck (closes R5 item 2)** — replaces `consequence_kinds[]`, `default_responsibility[]`, `source_fix_guidance[]`, and `recheck_conditions[]`. `resolution_kind` is unique across the list; every `BLOCKED` leaf's `failure_kind` and every `UNKNOWN` leaf's `gap_kind` must match **exactly one** row, and every row must be used by at least one leaf — an orphaned route fails the Pack closed the same way a dangling reference would. |
 | `overlay.packs[]` | Overlay | list of `{ pack_id, pack_version }` | **Plural** — a project may use several Packs (§5; **closes gap 5**). |
 | `overlay.evidence_bindings[]` | Overlay | list of `{ pack_id, evidence_requirement_id, ruleset_id, ruleset_version, requirement_keys[] }` | Satisfies `binding_source = "overlay"` evidence requirements — R-005 lives only here (§3.5; **closes gap 2**). |
 | `overlay.accepted_evidence_methods[]` | Overlay | list of `{ pack_id, evidence_requirement_id, method_id, description }` | Satisfies `binding_source = "assessment"` evidence requirements. |
 | `overlay.team_mapping[]` | Overlay | list of `{ role, team_or_person }` | Project-wide; roles are shared vocabulary across Packs, not Pack-scoped. `role` is unique across the list — every default role a requested activity's reachable non-`READY` leaves might need resolves to exactly one `team_or_person`, or the specific request fails closed (§3.7; **closes R3 gap 2**). |
-| `overlay.risk_authorisation` | Overlay | `{ may_authorise: [role...] }` | Who *may* accept a `CONDITIONAL` risk here — not a specific acceptance. |
+| `overlay.risk_authorisations[]` | Overlay | list of `{ pack_id, resolution_kind, may_authorise_roles[] }` | **Replaces the single project-wide `overlay.risk_authorisation` (closes R5 item 3)** — who *may* authorise a `CONDITIONAL` promotion, addressed per `pack_id::resolution_kind`, never a blanket list; no wildcard, no `"all"`, no default. |
 | `overlay.cost_parameters` | Overlay | project-defined key/value | Magnitude inputs a future runtime step may read; no cost figure is fabricated by this document. |
 | `overlay.conventions[]` | Overlay | list of `{ ruleset_id, ruleset_version, requirement_key, note }` | Optional narrative about a project-specific convention (§3.5). |
-| `overlay.overrides[]` | Overlay | list of `{ pack_id, activity_id, field, permitted_change, note }` | `field` is drawn from a closed enumeration of real Pack sub-fields, addressed structurally, not by a dotted string (§3.6; **closes R2 gap 6**). |
 
 Nothing in either table carries a model version, a finding key, an actual
 verdict, an actual authoriser, an actual cost, or an actual assignee. Those
 stay off both files by construction.
+
+**`overlay.overrides[]` does not appear in this table (closes R5 item 3).**
+The previous revision's structured-field override mechanism is deleted, not
+merely narrowed further; §3.6 records the decision and what a future one
+would have to prove before it could exist.
 
 **The Overlay has no `project_id` field of its own (closes R2 gap 4).** It is
 a table nested inside the same `project.toml` that already declares
@@ -345,6 +396,56 @@ of sync with the one it would have duplicated, which is a stronger guarantee
 than a consistency check on two copies would have been.
 
 ### 3.2 Pack skeleton — design illustration only
+
+**The worked Pack is renamed `interdisciplinary-coordination-readiness`
+(closes R5 item 1).** The previous revisions' `mep-to-architecture-coordination`
+named a single direction as though it were the whole Pack. It is not: the
+flagship product this Pack demonstrates is *Interdisciplinary Coordination
+Readiness*, of which MEP → Architecture is the first worked direction, not
+the only one the shape can carry. Renaming the Pack, rather than adding a
+second Pack per direction, is the point of this round's fix: a Pack that
+could only ever hold one direction would force a new Pack — a new identity,
+a new file, a new `pack_id::activity_id` namespace — for every future
+direction of the *same* purpose (Architecture → MEP, MEP → Structure), even
+though those directions would share the same flagship question, plausibly
+overlapping activities, and a family resemblance in their evidence
+requirements. §3.2's `directions[]` array is the fix: one Pack, several
+directions, each declared once.
+
+**`directions[]` is a Pack-top-level array**, each entry `{ direction_id,
+from, to }`. `direction_id` is unique within the Pack — checked the same way
+`activity_id` and `evidence_requirement_id` are (§3.7). Every
+`activities[]` entry names exactly one `direction_id`, checked to resolve to
+a declared direction at Pack load time; an activity naming an undeclared
+`direction_id`, or naming none, fails the Pack closed (§3.7). This does
+**not** redefine activity identity: an activity is still identified as
+`pack_id::activity_id` (§5), exactly as before — `direction_id` says *which
+direction this activity serves*, a fact about the activity's content, not a
+second identity axis layered on top of it.
+
+**This 0.1.0 worked example declares and implements exactly one direction:**
+
+```text
+direction_id = "mep-to-architecture"
+from = "MEP"
+to = "Architecture"
+```
+
+**No Architecture→MEP or MEP→Structure entries are added.** Inventing empty
+activities or fabricated evidence for directions this repository has not
+worked through would be exactly the mistake Checkpoint B's own prose warns
+against — "every one of those names is an answer, and the question has not
+been asked yet." What §3.2's shape proves is narrower and load-bearing on
+its own: that *when* a future direction is worked through with the same
+rigour Checkpoint B gave MEP → Architecture, adding it to this Pack is a
+matter of appending one `directions[]` entry and pointing new or existing
+activities at its `direction_id` — **no new Pack schema, no second Pack
+identity, no change to §3's field shapes.** Direction remains Pack data,
+never derived from `discipline_scope` — on requirement
+`491a4a0b-9b4a-5f77-b90d-31a7dc8beb44` (R-004A), `discipline_scope` reads
+`HVAC`, an applicability set with no from and no to, exactly as `AGENTS.md`
+and Checkpoint B §1 already establish; `directions[]` is new Pack data
+alongside it, never a reinterpretation of it.
 
 **Every evidence requirement's `outcomes[]` must partition into exactly the
 three states the Framework's own verdict semantics already distinguish (§1;
@@ -441,20 +542,20 @@ runtime fact a future assessment step may keep (Checkpoint D); it is
 additional detail under one verdict, not evidence of two.
 
 **Verdict-class priority is not, by itself, a complete outcome selector for
-every evidence requirement — correcting an overclaim in the previous
-revision (closes R4 gap 1).** `BLOCKED > UNKNOWN > READY` decides which
-*Framework class* an assessed scope's result falls into; it says nothing
-about which *named outcome* to pick when more than one distinct outcome
-exists within, or leads into, that class — and several of this Pack's own
-evidence requirements have exactly that shape. `opening-status` alone has
-**two** distinct `BLOCKED` outcomes, `modelled-not-cross-referenced` and
-`not-modelled`, each with its own `failure_kind`; `penetration-determination`'s
-`no-penetration` (a `READY` leaf carrying `renders_inapplicable`) and
-`penetration-confirmed` (a `next_node` continuing to `opening-status`) are
-two distinct outcomes that are not even in the same class. Class priority
-cannot choose between two tied-class `BLOCKED` outcomes, and must never be
-asked to choose between a terminal `READY` outcome and a continuation —
-those lead to structurally different trees.
+every evidence requirement — correcting an overclaim in a previous
+revision.** `BLOCKED > UNKNOWN > READY` decides which *Framework class* an
+assessed scope's result falls into; it says nothing about which *named
+outcome* to pick when more than one distinct outcome exists within, or leads
+into, that class — and several of this Pack's own evidence requirements have
+exactly that shape. `opening-status` alone has **two** distinct `BLOCKED`
+outcomes, `modelled-not-cross-referenced` and `not-modelled`, each with its
+own `failure_kind`; `penetration-determination`'s `no-penetration` (a
+`READY` leaf carrying `renders_inapplicable`) and `penetration-confirmed` (a
+`next_node` continuing to `opening-status`) are two distinct outcomes that
+are not even in the same class. Class priority cannot choose between two
+tied-class `BLOCKED` outcomes, and must never be asked to choose between a
+terminal `READY` outcome and a continuation — those lead to structurally
+different trees.
 
 **The rule, stated precisely:**
 
@@ -526,16 +627,23 @@ genuinely spans several such facts is exactly where the two counterexamples
 above would first bite.
 
 ```toml
-# purpose-packs/mep-to-architecture-coordination/pack.toml
+# purpose-packs/interdisciplinary-coordination-readiness/pack.toml
 # EXAMPLE, not a live artifact — no such file exists yet.
 
-pack_id = "mep-to-architecture-coordination"
-pack_schema_version = "1"
+pack_id = "interdisciplinary-coordination-readiness"
+pack_schema_version = "2"
 pack_version = "0.1.0"
 maturity = "draft"
 citations = ["docs/product/interdisciplinary-coordination-readiness-mep-to-architecture.md"]
 
-[direction]
+# --- Directions: this flagship purpose can carry more than one directional
+#     handoff. This worked example declares and implements exactly one.
+#     Adding Architecture-to-MEP or MEP-to-Structure later is one new
+#     directions[] entry plus new activities pointing at it -- no new Pack,
+#     no schema change. (closes R5 item 1) ---
+
+[[directions]]
+direction_id = "mep-to-architecture"
 from = "MEP"
 to = "Architecture"
 
@@ -590,92 +698,142 @@ binding_source = "assessment"
 acceptance_condition = "the opening is modelled and a recorded cross-reference to the penetrating element exists"
 outcomes = ["cross-referenced", "modelled-not-cross-referenced", "not-modelled", "not-yet-determined"]
 
-# --- Activities: which evidence requirements each one needs, and where its decision tree starts. ---
+# --- Activities: which direction each one serves, which evidence requirements
+#     it needs, and where its decision tree starts. direction_id must resolve
+#     to a declared direction; it does not change activity identity, which
+#     stays pack_id::activity_id. (closes R5 item 1) ---
 
 [[activities]]
 activity_id = "schedules-and-room-data-sheets"
 label = "Room data sheets and equipment schedules"
+direction_id = "mep-to-architecture"
 evidence_requirement_ids = ["asset-identity"]
 decision_root_node = "asset-identity-node"
 
 [[activities]]
 activity_id = "ceiling-and-bulkhead-geometry"
 label = "Reflected ceiling and bulkhead layout"
+direction_id = "mep-to-architecture"
 evidence_requirement_ids = ["in-model-position", "cross-model-alignment"]
 decision_root_node = "in-model-position-node"
 
 [[activities]]
 activity_id = "builders-work-openings"
 label = "Builder's-work openings"
+direction_id = "mep-to-architecture"
 evidence_requirement_ids = ["penetration-determination", "opening-status"]
 decision_root_node = "penetration-determination-node"
 
-# --- Decision trees are §3.8. Consequence kinds and responsibility follow. ---
+# --- Decision trees are §3.8. Resolution routes -- the single canonical
+#     chain from a non-READY leaf's resolution_kind to consequence, default
+#     role, next action, and recheck condition -- follow. (closes R5 item 2)
+#
+#     Ten rows, not a skeleton: every resolution_kind this Pack's three
+#     trees can produce has a real, filled-in row. A BLOCKED row's
+#     next_action is a source-model fix; an UNKNOWN row's next_action is the
+#     evidence-gathering step that would end it -- never described as a
+#     known model defect, because it is not one. ---
 
-[[consequence_kinds]]
-activity_id = "schedules-and-room-data-sheets"
-kinds = ["work-cannot-start", "re-identification-and-reissue-risk"]
-
-[[consequence_kinds]]
-activity_id = "ceiling-and-bulkhead-geometry"
-kinds = ["work-suspended", "rework-risk"]
-
-[[consequence_kinds]]
-activity_id = "builders-work-openings"
-kinds = ["work-suspended"]
-
-# default_responsibility is keyed by `resolution_kind`, a single shared
-# namespace: every BLOCKED leaf's `failure_kind` and every UNKNOWN leaf's
-# `gap_kind` (§3.8) must match exactly one entry here (closes R2 gap 2).
-# Not knowing something still needs a role tasked with finding out, so the
-# five gap_kind entries below are not optional extras.
-
-[[default_responsibility]]
+[[resolution_routes]]
 resolution_kind = "missing-project-asset-identity"   # BLOCKED, asset-identity
-role = "model-coordination"
+default_role = "model-coordination"
+consequence_kinds = ["work-cannot-start", "re-identification-and-reissue-risk"]
+next_action = "Source-model fix: add EPC_Delivery.AssetTag and EPC_Delivery.SystemCode as instance properties on the affected elements (Revit shared parameters bound to the relevant categories, or the equivalent Tekla user-defined attribute set) and confirm the IFC export mapping emits a distinct EPC_Delivery property set rather than folding the values into Pset_ManufacturerTypeInformation."
+recheck_condition = "Every requirement_key bound to asset-identity evaluates PASS for every element in the assessed scope, with no element left uncovered, on the reissued model."
 
-[[default_responsibility]]
+[[resolution_routes]]
 resolution_kind = "asset-identity-not-evaluated"      # UNKNOWN, asset-identity
-role = "model-coordination"
+default_role = "model-coordination"
+consequence_kinds = ["work-suspended"]
+next_action = "Not a model defect: run (or re-run) the asset-identity evaluation over the full assessed scope so every element it covers actually produces a PASS or FAIL result. The gap is missing coverage of the evaluation itself, not a known failure in the model."
+recheck_condition = "Every element in the assessed scope is covered by an evaluation under the bound requirement_key(s) -- no element is left with no finding at all."
 
-[[default_responsibility]]
+[[resolution_routes]]
 resolution_kind = "mep-element-not-spatially-assigned"   # BLOCKED, in-model-position
-role = "mep-lead"
+default_role = "mep-lead"
+consequence_kinds = ["work-suspended"]
+next_action = "Source-model fix: host the element to its correct level and space before export, avoiding unhosted or unlevelled MEP components, so the export reports an IFCRELCONTAINEDINSPATIALSTRUCTURE relationship for it."
+recheck_condition = "The R-004-bound requirement_key(s) evaluate PASS for the element on the reissued model."
 
-[[default_responsibility]]
+[[resolution_routes]]
 resolution_kind = "in-model-position-not-evaluated"      # UNKNOWN, in-model-position
-role = "mep-lead"
+default_role = "mep-lead"
+consequence_kinds = ["work-suspended"]
+next_action = "Not a model defect: run the in-model-position evaluation over the full assessed scope; where a specific element still produces no finding at all, extend the rule set's applicability to reach it -- a rule-authoring action, not a model edit -- so the position question can be asked of it."
+recheck_condition = "Every element in the assessed scope is covered by a finding under the bound requirement_key(s)."
 
-[[default_responsibility]]
+[[resolution_routes]]
 resolution_kind = "cross-model-misalignment"          # BLOCKED, cross-model-alignment
-role = "model-coordination"
+default_role = "model-coordination"
+consequence_kinds = ["work-suspended"]
+next_action = "Source-model fix: re-acquire the project's shared coordination datum in the authoring tool (Revit: Manage -> Coordinates -> Acquire Coordinates; Tekla: File -> Project properties -> Base points), re-export placement referencing that shared origin rather than moving geometry directly, and re-perform the accepted alignment-confirmation method."
+recheck_condition = "The alignment-confirmation method is re-run against the reissued model versions and reports the models aligned (outcome = confirmed)."
 
-[[default_responsibility]]
+[[resolution_routes]]
 resolution_kind = "cross-model-alignment-not-confirmed"   # UNKNOWN, cross-model-alignment
-role = "model-coordination"
+default_role = "model-coordination"
+consequence_kinds = ["work-suspended", "rework-risk"]
+next_action = "Not a model defect: perform the alignment-confirmation method this project's Overlay accepts (e.g. overlaying both models' exported placements in a common viewer) against the named model versions. The gap is that no confirmation has been produced yet, not a known misalignment."
+recheck_condition = "The alignment-confirmation method is performed and reports the models aligned, against the specific model versions named."
 
-[[default_responsibility]]
+[[resolution_routes]]
 resolution_kind = "penetration-not-determined"        # UNKNOWN, penetration-determination
-role = "model-coordination"
+default_role = "model-coordination"
+consequence_kinds = ["work-suspended"]
+next_action = "Not a model defect: hold the coordination-review determination this project's Overlay accepts, naming either no penetration or the specific architectural element penetrated. The gap is that the determination has not been made yet, not a known defect."
+recheck_condition = "A recorded coordination-review determination exists for the named model versions, naming either no penetration or the architectural element penetrated."
 
-[[default_responsibility]]
+[[resolution_routes]]
 resolution_kind = "opening-not-verifiably-linked"     # BLOCKED, opening-status
-role = "model-coordination"
+default_role = "model-coordination"
+consequence_kinds = ["work-suspended", "rework-risk"]
+next_action = "Source-model fix: add or correct the cross-reference from the modelled architectural opening back to the penetrating MEP element it was cut for, so the link the accepted method checks for actually exists and can be inspected."
+recheck_condition = "The opening-cross-reference-check method is re-run and reports the opening cross-referenced to the penetrating element."
 
-[[default_responsibility]]
+[[resolution_routes]]
 resolution_kind = "missing-corresponding-opening"     # BLOCKED, opening-status
-role = "model-coordination"
+default_role = "model-coordination"
+consequence_kinds = ["work-suspended"]
+next_action = "Source-model fix: model the opening in the architectural model, as a hosted opening or shaft against each storey the penetrating element passes through, rather than as a void carried in the MEP model."
+recheck_condition = "The opening-status evaluation is re-run and reports the opening modelled and cross-referenced (outcome = cross-referenced) for the named model versions."
 
-[[default_responsibility]]
+[[resolution_routes]]
 resolution_kind = "opening-status-not-determined"     # UNKNOWN, opening-status
-role = "model-coordination"
+default_role = "model-coordination"
+consequence_kinds = ["work-suspended"]
+next_action = "Not a model defect: complete the opening-status review this project's Overlay accepts -- whether a corresponding opening is modelled and, if so, whether it is inspectably cross-referenced. The gap is that this review has not been completed yet, not a known missing opening."
+recheck_condition = "The opening-cross-reference-check method is performed and reports a definite result (cross-referenced, modelled-not-cross-referenced, or not-modelled) for the named model versions."
 ```
 
-Ten entries, not four: every `BLOCKED` leaf's `failure_kind` (five of them)
-and every `UNKNOWN` leaf's `gap_kind` (five of them) across all three
-activities' trees resolves to exactly one role here — the rejected round-2
-draft supplied only the five `failure_kind` entries and left every `UNKNOWN`
-leaf with nothing to compose a resolving assignment from at all.
+**Ten rows, not four fields:** every `BLOCKED` leaf's `failure_kind` (five of
+them) and every `UNKNOWN` leaf's `gap_kind` (five of them) across all three
+activities' trees resolves to **exactly one `resolution_routes[]` row**,
+and every row is used by at least one leaf — an orphaned route, a duplicate
+`resolution_kind`, or a leaf whose `resolution_kind` matches no row all fail
+the Pack closed (§3.7). **Because `resolution_kind` is the join key and it
+is unique, two leaves can only ever share a `resolution_kind` by sharing the
+identical route behind it** — there is no way, structurally, for the same
+`resolution_kind` to carry two different roles, consequence sets, actions,
+or recheck conditions; reusing a `resolution_kind` across leaves and
+diverging on any of those four fields is not a case this design can
+express, so leaves that should differ must simply be given different
+`resolution_kind`s, exactly as the ten above already are.
+
+**`opening-not-verifiably-linked` and `missing-corresponding-opening` are
+the two blockers the product review named specifically, and their routes
+are deliberately distinct end to end:** the first's next action *adds a
+cross-reference* to an opening that already exists and recheck *re-runs the
+link check*; the second's next action *models the opening itself* in
+Architecture and recheck *confirms the opening exists and is linked*. Two
+different blockers, two different fixes, two different rechecks — nothing
+about either route could be satisfied by doing the other.
+
+**No `UNKNOWN` route claims a known model defect.** Every `UNKNOWN`
+`next_action` above opens with "not a model defect" and names an
+evidence-gathering step — running an evaluation, performing an accepted
+method, holding a coordination-review determination — because that is what
+Checkpoint B case 3 and case 4 actually established: the question was never
+asked, not asked and answered badly.
 
 Note what changed from the rejected draft, plainly: there is no
 `activities.evidence[].rule_ref` field any more, and no direct pointer from
@@ -734,25 +892,29 @@ that was the error. Three genuinely separate compatibilities replace it:
 
 **a) Pack file/schema format version — `pack_schema_version`.** Names the
 *shape* this `pack.toml` file is written against: which tables and fields a
-loader must understand to parse it at all (e.g. whether `evidence_requirements`
-and `decision_nodes` exist as described here, or a later, differently-shaped
-revision of the format). It changes only when the Pack *file format* changes,
-never when one Pack's content changes. A future loader that does not
-implement a given `pack_schema_version` refuses the file (§3.7).
+loader must understand to parse it at all. It changes only when the Pack
+*file format* changes, never when one Pack's content changes. This round
+bumps it from `"1"` to `"2"`, because the file's shape genuinely changed —
+`directions[]` replaces `[direction]`, `activities[]` gained `direction_id`,
+`resolution_routes[]` replaces four separate arrays, and `overlay.overrides[]`
+no longer exists — and a loader built against schema `"1"` could not
+correctly parse a schema-`"2"` file even though both describe the same
+purpose. A future loader that does not implement a given `pack_schema_version`
+refuses the file (§3.7).
 
 **b) Pack content version — `pack_version`.** An author-declared **opaque
 slug**, not strict semver, validated the same way `ruleset_version` already
 is — by `_require_slug` in `identity.py:87–90` (accepts `[A-Za-z0-9][A-Za-z0-9._-]*`,
 never parsed into numeric segments or compared with `<`/`>=`). Bumped by the
-Pack author whenever activities, evidence requirements, or decision trees
-change. An Overlay pins one exact `pack_version` string per `pack_id`
-(§3.5), and composition fails closed on any mismatch — never a range match.
-Slug-and-exact-match was chosen over strict semver because nothing else in
-this codebase parses or compares version ranges, and every consumer of
-`pack_version` in this design (the Overlay's own pin) checks it by equality;
-introducing range-comparison machinery for a value nothing ever compares as a
-range would be new complexity with no consumer, the same judgement `AGENTS.md`
-already applies to `ruleset_version`.
+Pack author whenever activities, evidence requirements, decision trees, or
+resolution routes change. An Overlay pins one exact `pack_version` string per
+`pack_id` (§3.5), and composition fails closed on any mismatch — never a
+range match. Slug-and-exact-match was chosen over strict semver because
+nothing else in this codebase parses or compares version ranges, and every
+consumer of `pack_version` in this design (the Overlay's own pin) checks it
+by equality; introducing range-comparison machinery for a value nothing ever
+compares as a range would be new complexity with no consumer, the same
+judgement `AGENTS.md` already applies to `ruleset_version`.
 
 **c) Ruleset compatibility — per binding, not per Pack.** Every place a Pack
 or an Overlay references existing validation data — an `evidence_requirements
@@ -780,7 +942,7 @@ exactly the anti-pattern `Agent-product-manager.md` names for
 `AssessmentRun`-shaped objects, applied here to a compatibility field instead
 of a runtime type.
 
-### 3.5 Overlay: pointing at Pack(s), project, and R-005 as the worked binding (closes gap 2)
+### 3.5 Overlay: pointing at Pack(s), project, R-005 as the worked binding, and per-`resolution_kind` risk authorisation (closes gap 2, closes R5 item 3)
 
 ```toml
 # projects/pcert-sample/project.toml — EXCERPT, illustrative addition only.
@@ -793,7 +955,7 @@ of a runtime type.
 # restated (closes R2 gap 4).
 
 [[overlay.packs]]
-pack_id = "mep-to-architecture-coordination"
+pack_id = "interdisciplinary-coordination-readiness"
 pack_version = "0.1.0"
 
 # --- Satisfies the Pack's "asset-identity" evidence requirement. This binding,
@@ -802,7 +964,7 @@ pack_version = "0.1.0"
 #     findings a run against them happens to produce today. ---
 
 [[overlay.evidence_bindings]]
-pack_id = "mep-to-architecture-coordination"
+pack_id = "interdisciplinary-coordination-readiness"
 evidence_requirement_id = "asset-identity"
 ruleset_id = "epc-delivery"
 ruleset_version = "2.2"
@@ -822,19 +984,19 @@ requirement_keys = [
 #     already records. (closes R2 gap 3) ---
 
 [[overlay.accepted_evidence_methods]]
-pack_id = "mep-to-architecture-coordination"
+pack_id = "interdisciplinary-coordination-readiness"
 evidence_requirement_id = "cross-model-alignment"
 method_id = "overlay-comparison"
 description = "Placements from both models overlaid in a common viewer and visually confirmed by model-coordination; reports confirmed, misaligned, or is simply not yet performed."
 
 [[overlay.accepted_evidence_methods]]
-pack_id = "mep-to-architecture-coordination"
+pack_id = "interdisciplinary-coordination-readiness"
 evidence_requirement_id = "penetration-determination"
 method_id = "coordination-review-determination"
 description = "A recorded decision from a joint MEP/Architecture coordination review, naming either no penetration or the specific architectural element penetrated."
 
 [[overlay.accepted_evidence_methods]]
-pack_id = "mep-to-architecture-coordination"
+pack_id = "interdisciplinary-coordination-readiness"
 evidence_requirement_id = "opening-status"
 method_id = "opening-cross-reference-check"
 description = "A recorded check that a modelled architectural opening carries a reference back to the penetrating MEP element it was cut for."
@@ -846,6 +1008,23 @@ team_or_person = "coordination-team"  # EXAMPLE — no real assignment exists
 [[overlay.team_mapping]]
 role = "mep-lead"
 team_or_person = "mep-design-team"  # EXAMPLE — no real assignment exists
+
+# --- Risk authorisation: which roles MAY authorise a CONDITIONAL promotion
+#     for one specific pack_id::resolution_kind. Never a project-wide list.
+#     "information-manager" echoes Checkpoint B's own vocabulary -- the
+#     information manager chairing the coordination review is who
+#     approves, refuses, or qualifies a release in that scenario.
+#     (closes R5 item 3) ---
+
+[[overlay.risk_authorisations]]
+pack_id = "interdisciplinary-coordination-readiness"
+resolution_kind = "cross-model-alignment-not-confirmed"
+may_authorise_roles = ["information-manager"]  # EXAMPLE -- illustrative role, no real acceptance exists
+
+[[overlay.risk_authorisations]]
+pack_id = "interdisciplinary-coordination-readiness"
+resolution_kind = "missing-project-asset-identity"
+may_authorise_roles = ["information-manager"]  # EXAMPLE -- illustrative role, no real acceptance exists
 
 [[overlay.conventions]]
 ruleset_id = "epc-delivery"
@@ -869,12 +1048,23 @@ different ruleset altogether) and the Pack file would not change by one byte.
 default: the Pack does not know R-005 exists.
 
 **Overlay → future runtime assignment (rows 8a–8c)** composes exactly as
-before, for both verdict shapes: the Pack's `default_responsibility` names an
-abstract role for a `resolution_kind` — a `BLOCKED` leaf's `failure_kind` or
+before, for both verdict shapes: `resolution_routes[]` names an abstract
+`default_role` for a `resolution_kind` — a `BLOCKED` leaf's `failure_kind` or
 an `UNKNOWN` leaf's `gap_kind` alike; the Overlay's `team_mapping` names this
 project's actual team for that role; a future runtime step composes the two
 into an actual assignment, which is a runtime fact (row 8c) recorded nowhere
-in either file.
+in either file. The two roles the Pack's ten `resolution_routes[]` entries
+actually use are exactly the two `team_mapping` entries above:
+
+| Pack `default_role` | Used by `resolution_kind`(s) | Overlay `team_or_person` (illustrative) |
+|---|---|---|
+| `model-coordination` | `missing-project-asset-identity`, `asset-identity-not-evaluated`, `cross-model-misalignment`, `cross-model-alignment-not-confirmed`, `penetration-not-determined`, `opening-not-verifiably-linked`, `missing-corresponding-opening`, `opening-status-not-determined` | `coordination-team` |
+| `mep-lead` | `mep-element-not-spatially-assigned`, `in-model-position-not-evaluated` | `mep-design-team` |
+
+This is **project policy for how a role would be staffed, stated in
+advance** — it is not this run's assignment, not an actor, and not a claim
+that anyone has been tasked with anything. The runtime composition it
+enables (rows 8a–8c) still does not exist until Checkpoint D produces one.
 
 **This worked Overlay now composes all three Checkpoint B activities, not
 one.** `asset-identity` binds to R-005A/B (`evidence_bindings`);
@@ -887,91 +1077,104 @@ design requires a project to enable every activity a Pack offers — but
 the moment its unmet evidence requirement was actually assessed (§3.7),
 exactly like `asset-identity` without an `evidence_bindings` entry.
 
-**This worked Overlay now closes the full assignment chain for every
-`BLOCKED`/`UNKNOWN` leaf the Pack's three trees can reach, not only the
-`model-coordination` ones (closes R3 gap 2).** The rejected round-2 draft's
-`team_mapping` mapped only `model-coordination`, so the two
-`mep-lead`-owned leaves (`mep-element-not-spatially-assigned`,
-`in-model-position-not-evaluated`) had a Pack default role with nowhere to
-resolve in this project. The two roles the Pack's ten `default_responsibility`
-entries actually use are exactly the two `team_mapping` entries above:
-
-| Pack `role` | Used by `resolution_kind`(s) | Overlay `team_or_person` (illustrative) |
-|---|---|---|
-| `model-coordination` | `missing-project-asset-identity`, `asset-identity-not-evaluated`, `cross-model-misalignment`, `cross-model-alignment-not-confirmed`, `penetration-not-determined`, `opening-not-verifiably-linked`, `missing-corresponding-opening`, `opening-status-not-determined` | `coordination-team` |
-| `mep-lead` | `mep-element-not-spatially-assigned`, `in-model-position-not-evaluated` | `mep-design-team` |
-
-This is **project policy for how a role would be staffed, stated in
-advance** — it is not this run's assignment, not an actor, and not a claim
-that anyone has been tasked with anything. The runtime composition it
-enables (rows 8a–8c) still does not exist until Checkpoint D produces one.
-
 **Two things this composition must never do, stated affirmatively:**
 
 - **Never silently fall back to the underlying validation rule's
   `owner_role`.** `AGENTS.md` and Checkpoint B §5 row 8a both already settle
   this: `owner_role` is the role a *rule author* expects to answer for the
-  rule — an input a Pack's `default_responsibility` may have been informed
-  by, never a substitute for it, and never a substitute for the Overlay's own
+  rule — an input a Pack's `resolution_routes[]` may have been informed by,
+  never a substitute for it, and never a substitute for the Overlay's own
   `team_mapping` when that mapping happens to be missing. A missing
   `team_mapping` entry is a fail-closed condition (§3.7), not a cue to read
   `Requirement.owner_role` off the bound rule instead.
-- **Never let the abstract Pack `role` string stand in for a project
-  assignment.** `role = "mep-lead"` names a category of responsibility, not a
-  person or a team; only `overlay.team_mapping`'s `team_or_person` value
-  turns it into something a runtime assessment could actually assign work
-  to. Reporting `"mep-lead"` itself as though it were an assignee would be
-  reporting a Pack default as if it were a project decision.
+- **Never let the abstract Pack `default_role` string stand in for a project
+  assignment.** `default_role = "mep-lead"` names a category of
+  responsibility, not a person or a team; only `overlay.team_mapping`'s
+  `team_or_person` value turns it into something a runtime assessment could
+  actually assign work to. Reporting `"mep-lead"` itself as though it were
+  an assignee would be reporting a Pack default as if it were a project
+  decision.
 
-### 3.6 Overrides: explicit and enumerated, never a general patch (closes R2 gap 6)
+**Risk authorisation is a third, separate role from either of these two
+(closes R5 item 3).** `resolution_routes[].default_role` and
+`overlay.team_mapping` compose to say *who resolves* a leaf.
+`overlay.risk_authorisations[]` says *who may accept the risk* of releasing
+work despite that leaf — a different question, answered by a different
+table, and never derived from the first. `may_authorise_roles` is a
+project-declared list of role names, addressed by an explicit
+`pack_id::resolution_kind` pair; there is no wildcard value, no `"all"`
+sentinel, and no rule anywhere in this design that lets the resolving role
+double as the authorising role by default. A project could name the same
+role in both places — `model-coordination` could conceivably resolve *and*
+be trusted to authorise the same `resolution_kind` — but that would be two
+separate, independently-declared facts, not one inferred from the other.
+`overlay.risk_authorisations[]` above deliberately covers only two of the
+ten `resolution_kind`s: **a resolution_kind with no matching row simply has
+no authorisation path — a `BLOCKED` or `UNKNOWN` leaf for it can never be
+promoted to `CONDITIONAL` in this project, full stop, not "authorised by a
+default role."**
 
-`overlay.overrides[]` is a **closed list of named override kinds**, each
-naming exactly which Pack field it may change and how. The rejected
-round-2 draft addressed a target with a single dotted string —
-`"pack_id::activity_id.recheck_condition"` — that did not correspond to any
-real field path: `recheck_conditions[]` is a **top-level** Pack array of
-`{activity_id, condition}` rows, not a field nested on the `activity` object
-itself, so `activity_id.recheck_condition` named a location that does not
-exist in §3.1's actual field shapes.
+### 3.6 Project override policy: deferred, not designed (closes R5 item 3)
 
-**The fix is structured fields, not a better string grammar.** An override
-target is addressed exactly the way the real data is addressed — by walking
-the same keys a loader would — rather than through a parser for a path
-syntax invented solely for overrides:
+A previous revision gave the Overlay a structured, closed-enum override
+mechanism (`{pack_id, activity_id, field, permitted_change, note}`,
+narrowing a Pack's `recheck_conditions[]`). Product review is right that
+this was the wrong shape to ship even in its narrowed form: the mechanism's
+existence, not merely its current single field, is what needed a stated
+bound before this design should carry it at all. **This document deletes
+`overlay.overrides[]` entirely rather than narrowing it further.**
 
-```toml
-[[overlay.overrides]]
-pack_id = "mep-to-architecture-coordination"
-activity_id = "ceiling-and-bulkhead-geometry"
-field = "recheck_condition"          # closed enum; matches a real Pack array
-permitted_change = "narrow-scope"    # a named, enumerated kind — not free text
-note = "This project recheck's alignment confirmation only for ground-floor zones."
-```
+**What stays true, and is a fact about ownership rather than about any
+mechanism:** an Overlay is the right place, in principle, for a project's
+own approved policy overrides against Pack defaults to live, the same way
+`overlay.evidence_bindings[]` and `overlay.accepted_evidence_methods[]`
+already let a project supply data a Pack cannot know in advance. That
+ownership claim is not withdrawn. What is withdrawn is any *current* schema
+for exercising it: **this round ships no override field, no override table,
+and no override TOML example.** Checkpoint D must not implement an override
+capability, and must not assume one exists to design around.
 
-`field` is drawn from a **closed enumeration of real Pack sub-fields**
-(today: `"recheck_condition"`, addressing the `condition` of the
-`recheck_conditions[]` row whose `activity_id` matches — the only field this
-design currently permits an Overlay to narrow). Composition checks, in
-order: `pack_id` names a Pack the Overlay actually uses
-(`overlay.packs[]`); `activity_id` names a real `pack_id::activity_id`
-compound (§5); a `recheck_conditions[]` row with that exact `activity_id`
-exists in the named Pack; and `field` is on the closed enum. Any failure
-fails closed as an illegal or inapplicable override (§3.7) — never applied,
-never ignored. This is not an arbitrary key/value patch mechanism: adding a
-second overridable field means extending the closed enum and stating what it
-addresses, the same discipline `AGENTS.md` already applies to a checker's own
-parameters staying in the rule file rather than becoming a generic payload
-every checker must agree on the shape of.
+**Before any future override design may be proposed, it must be possible to
+machine-verify that the specific override it permits satisfies all four of
+the following, for every case the override could apply to — not merely
+argued to satisfy them in prose:**
 
-**What an Overlay can never override, stated affirmatively:** the Framework's
-four verdict words and their six invariants (§1); a Pack's `direction`; a
-Pack's decision tree (§3.8), including which evidence requirement any node
-tests; and anything in the runtime-assessment column of Checkpoint B §5's
-table. An Overlay may *add* an evidence binding or an accepted method where a
-Pack requires one (`binding_source = "overlay"` / `"assessment"`); it may
-never *redirect* a `binding_source = "pack"` evidence requirement's own
-`pack_binding` to different `requirement_key`s. An override attempting any of
-those is a composition error under §3.7, not a permitted override.
+1. **It does not weaken a Framework invariant** (§1's six, or the fifteen
+   decision-tree structural invariants built on them, §3.8) — the four
+   verdict words, their mutual exclusivity, and the tree's own soundness
+   stay exactly as strict as an Overlay-free Pack.
+2. **It does not weaken a Pack's `acceptance_condition`** for any evidence
+   requirement — an override may narrow what a project chooses to assess,
+   never loosen what "satisfied" means for what it does assess.
+3. **It does not shrink the scope a recheck must still cover** — narrowing
+   *which* activity or model version is in scope for a given assessment is
+   one thing; narrowing *what evidence a recheck within that scope must
+   still show* is the thing no override may do.
+4. **It does not skip an unresolved blocker or evidence gap, and does not
+   turn anything not actually rechecked into `READY`** — the same
+   invariant that already governs `CONDITIONAL` (§1, §3.8) governs any
+   future override: recorded acceptance of risk, never a substitute for
+   evidence.
+
+This is a monotonicity requirement, not a checklist to satisfy by argument:
+a future design earns the right to exist only once these four properties are
+themselves expressed in a form a loader could check, the same discipline
+this document already holds the decision tree to (§3.7, §3.8). **No
+free-text patch, JSON-path expression, or general expression language is an
+acceptable substitute for that verification** — replacing one narrow,
+checkable mechanism with a more expressive but unverifiable one would be a
+regression, not a fix, and is explicitly not the direction this deferral
+points toward.
+
+**What an Overlay can never override, regardless of any future mechanism,
+stated affirmatively:** the Framework's four verdict words and their six
+invariants (§1); a Pack's `directions[]`; a Pack's decision tree (§3.8),
+including which evidence requirement any node tests; and anything in the
+runtime-assessment column of Checkpoint B §5's table. An Overlay may *add*
+an evidence binding, an accepted method, or a risk-authorisation entry where
+a Pack requires or a project chooses to supply one; it may never *redirect*
+a `binding_source = "pack"` evidence requirement's own `pack_binding` to
+different `requirement_key`s, today or under any future override.
 
 ### 3.7 Composition and fail-closed behaviour
 
@@ -992,12 +1195,20 @@ silently declines to evaluate is the worst outcome available":
 | An evidence requirement declares `binding_source = "assessment"` and the Overlay has no matching `accepted_evidence_methods[]` entry | Fail closed, for the same reason. |
 | Two entries in `overlay.packs[]` name the same `pack_id` | Fail closed as a duplicate. |
 | **Two different Packs used by one project's Overlay declare the same local `activity_id` or `evidence_requirement_id`** | **Not an error.** `activity_id` and `evidence_requirement_id` are Pack-local; the actually-unique reference is the compound `pack_id::activity_id` (or `::evidence_requirement_id`), which cannot collide once `pack_id` itself is unique — the same relationship `model_id`/`model_key` already have (`AGENTS.md`, "Adding a project should not touch this package"). This is a correction of the rejected draft, which asserted a collision rule it never actually needed (**closes gap 5**). |
+| Two `directions[]` entries in one Pack share the same `direction_id` | Fail closed as a duplicate, at Pack load time (**closes R5 item 1**). |
+| An `activities[].direction_id` does not name an existing `directions[].direction_id` | Fail closed at Pack load time — every activity must resolve to exactly one declared direction (**closes R5 item 1**). |
 | A decision node's `branches[]` does not cover every `outcome` its `evidence_requirement_id` declares, covers one twice, or a branch carries both `verdict` and `next_node` | Fail closed **at Pack load time**, before any project ever uses it — stronger than a runtime check (**closes gap 3**). |
 | A `BLOCKED` branch has no `failure_kind`, an `UNKNOWN` branch has no `gap_kind`, or a `READY` branch carries either | Fail closed at Pack load time (**closes R2 gap 2**). |
-| A branch's `failure_kind` or `gap_kind` does not match **exactly one** `default_responsibility[].resolution_kind` | Fail closed at Pack load time — every `BLOCKED`/`UNKNOWN` leaf must resolve to a role, not just exist (**closes R2 gap 2**). |
-| `default_responsibility[]` contains two entries with the same `resolution_kind` | Fail closed at Pack load time as a duplicate — the "exactly one" match above depends on this (**closes R3 gap 2**). |
+| A branch's `failure_kind` or `gap_kind` does not match **exactly one** `resolution_routes[].resolution_kind` | Fail closed at Pack load time — every `BLOCKED`/`UNKNOWN` leaf must resolve to a full route, not just exist (**closes R2 gap 2, closes R5 item 2**). |
+| `resolution_routes[]` contains two entries with the same `resolution_kind` | Fail closed at Pack load time as a duplicate — the "exactly one" match above depends on this (**closes R3 gap 2, closes R5 item 2**). |
+| A `resolution_routes[]` entry is missing `resolution_kind`, `default_role`, `consequence_kinds`, `next_action`, or `recheck_condition` | Fail closed at Pack load time as an incomplete route (**closes R5 item 2**). |
+| A `resolution_routes[]` entry's `resolution_kind` is not the `failure_kind` or `gap_kind` of any branch in any of the Pack's decision trees | Fail closed at Pack load time as an orphaned route (**closes R5 item 2**). |
 | `overlay.team_mapping[]` contains two entries with the same `role` | Fail closed at composition time as a duplicate (**closes R3 gap 2**). |
-| **A purpose assessment is requested for an activity whose reachable non-`READY` leaves name a default `role` with no matching `overlay.team_mapping[]` entry** | **Fail closed for that request only.** The project's existing contract 1.6 pipeline, and any other activity or Pack this Overlay does bind completely, are unaffected. Never resolved by reading the bound rule's `owner_role` instead, and never reported as though the bare Pack `role` string were itself an assignment (§3.5; **closes R3 gap 2**). |
+| **A purpose assessment is requested for an activity whose reachable non-`READY` leaves name a default role with no matching `overlay.team_mapping[]` entry** | **Fail closed for that request only.** The project's existing contract 1.6 pipeline, and any other activity or Pack this Overlay does bind completely, are unaffected. Never resolved by reading the bound rule's `owner_role` instead, and never reported as though the bare Pack `default_role` string were itself an assignment (§3.5; **closes R3 gap 2**). |
+| Two `overlay.risk_authorisations[]` entries share the same `{pack_id, resolution_kind}` pair | Fail closed at composition time as a duplicate (**closes R5 item 3**). |
+| An `overlay.risk_authorisations[].resolution_kind` does not match a `resolution_routes[].resolution_kind` in the named `pack_id` | Fail closed at composition time as a dangling reference (**closes R5 item 3**). |
+| An `overlay.risk_authorisations[].may_authorise_roles` is empty, or contains a wildcard, `"all"`, or any similarly unbounded value | Fail closed at composition time — there is no such thing as blanket authorisation in this design (**closes R5 item 3**). |
+| **A `CONDITIONAL` promotion is attempted for a `resolution_kind` with no matching `overlay.risk_authorisations[]` entry** | **Fail closed for that promotion only; the leaf's verdict stays `BLOCKED`/`UNKNOWN`.** `CONDITIONAL` is simply unavailable for that `resolution_kind` in this project — never resolved by falling back to a default role, to `resolution_routes[].default_role`, or to any other role not explicitly listed as an authoriser for that exact `resolution_kind` (§3.5; **closes R5 item 3**). |
 | A decision node's branch names `verdict = "CONDITIONAL"` | Fail closed at Pack load time. `CONDITIONAL` is not a legal leaf value anywhere in a decision tree (§3.8). |
 | `activities[].decision_root_node` does not name an existing `decision_nodes[].node_id` | Fail closed at Pack load time (**closes R2 gap 5**). |
 | A branch's `next_node` does not name an existing `decision_nodes[].node_id` | Fail closed at Pack load time (**closes R2 gap 5**). |
@@ -1015,7 +1226,6 @@ silently declines to evaluate is the worst outcome available":
 | A branch's `renders_inapplicable[]` names the `evidence_requirement_id` of the node the branch itself belongs to | Fail closed at Pack load time (invariant 14) — a branch cannot render its own just-tested requirement inapplicable (**closes R4 gap 2**). |
 | A node testing `evidence_requirement_id` X appears on any path descending from a branch that already rendered X inapplicable, regardless of what verdict that path eventually reaches | Fail closed at Pack load time (invariant 15) — checked over every path prefix, not only `READY`-terminating ones (**closes R4 gap 2**). |
 | A branch's `renders_inapplicable[]` names an `evidence_requirement_id` the branch's own activity does not declare | Fail closed at Pack load time, the same way an out-of-scope `next_node` target would be (**closes R3 gap 3**). |
-| `overlay.overrides[].field` is not on the closed override enumeration, or no `recheck_conditions[]` row exists in the named `pack_id` for the named `activity_id` | Fail closed as an illegal or inapplicable override, not applied and not ignored (§3.6; **closes R2 gap 6**). |
 | **A project's `project.toml` has no `[overlay]` table at all** | **Not an error.** The project simply has no purpose assessment available. `epc-ct run`, `check`, `group`, and every exporter are completely unaffected, because nothing in the current pipeline reads `[overlay]` (**closes gap 5**). |
 | **A purpose assessment is explicitly requested for a `pack_id` the project's Overlay does not list under `overlay.packs[]`** | **Fail closed for that request only.** The project's existing contract 1.6 pipeline continues to run normally; only the specific unbound purpose-assessment request is refused (**closes gap 5**). |
 
@@ -1029,7 +1239,12 @@ repository publishes (`AGENTS.md` rule 1).
 The rejected draft named a `table_id` and deferred the actual shape to
 Checkpoint D. That is corrected here: this section fixes the **data
 structure** a Pack's verdict logic takes. No evaluator that walks it is
-implemented — only the shape a future evaluator would read.
+implemented — only the shape a future evaluator would read. **Nothing in
+this round changes the tree's shape, its outcomes, its fifteen structural
+invariants, or any leaf's `verdict`/`failure_kind`/`gap_kind`** — only the
+Pack's file path/`pack_id` comments change, and every `resolution_kind`
+below now resolves through `resolution_routes[]` (§3.2) rather than the
+retired `default_responsibility[]`.
 
 **Shape.** Each activity names one `decision_root_node`. A decision node
 names one `evidence_requirement_id` and a set of `branches`, one per outcome
@@ -1040,8 +1255,8 @@ where `verdict` is restricted to `READY`, `BLOCKED`, or `UNKNOWN`;
 `verdict = "UNKNOWN"` requires `gap_kind` and forbids `failure_kind`;
 `verdict = "READY"` forbids both. Both `failure_kind` and `gap_kind` draw
 from the same shared `resolution_kind` namespace and must match a
-`default_responsibility[].resolution_kind` (§3.1; **closes R2 gap 2**) — or
-a leaf is instead an interior branch — `{ outcome, next_node,
+`resolution_routes[].resolution_kind` (§3.1; **closes R2 gap 2, closes R5
+item 2**) — or a leaf is instead an interior branch — `{ outcome, next_node,
 renders_inapplicable? }`, pointing at another node that tests a different
 evidence requirement. A branch never carries `verdict` alongside
 `next_node`. **An outcome is never itself a verdict (§3.2; closes R3 gap
@@ -1059,7 +1274,8 @@ exhaustively against the evidence requirement's own declared `outcomes[]` at
 Pack-load time (§3.7).
 
 **Structural invariants, checked at Pack load time, before any project ever
-uses the file (closes R2 gap 5, closes R3 gap 3, closes R4 gap 2):**
+uses the file (closes R2 gap 5, closes R3 gap 3, closes R4 gap 2) — all
+fifteen unchanged this round:**
 
 1. Every `activities[].decision_root_node` names an existing `node_id`.
 2. Every branch's `next_node` names an existing `node_id`.
@@ -1095,20 +1311,17 @@ uses the file (closes R2 gap 5, closes R3 gap 3, closes R4 gap 2):**
     inapplicable* on that path are disjoint, and their union exactly equals
     the activity's declared `evidence_requirement_ids`** (both accumulated
     from the root down to the leaf, over every branch actually taken along
-    the way; **tightened from a one-directional "union covers declared" to
-    an exact, disjoint partition — closes R4 gap 2**). Checked exhaustively
-    over every such path, of which there are finitely many since the tree is
-    finite and acyclic. Every value inside a `renders_inapplicable` list
-    must itself be an `evidence_requirement_id` the same activity declares.
-13. **A branch's `renders_inapplicable[]` contains no duplicate entries**
-    (**closes R4 gap 2**).
+    the way). Checked exhaustively over every such path, of which there are
+    finitely many since the tree is finite and acyclic. Every value inside a
+    `renders_inapplicable` list must itself be an `evidence_requirement_id`
+    the same activity declares.
+13. **A branch's `renders_inapplicable[]` contains no duplicate entries.**
 14. **A branch's `renders_inapplicable[]` never names the
     `evidence_requirement_id` of the node the branch itself belongs to** —
     a branch exists because its own node's evidence requirement was just
     tested, so marking that same requirement inapplicable in the same
     outcome is a direct contradiction, and is checked locally per branch
-    rather than only through the whole-path disjointness in invariant 12
-    (**closes R4 gap 2**).
+    rather than only through the whole-path disjointness in invariant 12.
 15. **Once a branch renders an `evidence_requirement_id` inapplicable, no
     node testing that same `evidence_requirement_id` may appear on any path
     descending from that branch** — checked over every path *prefix* in the
@@ -1116,50 +1329,38 @@ uses the file (closes R2 gap 5, closes R3 gap 3, closes R4 gap 2):**
     `BLOCKED`- or `UNKNOWN`-terminating path cannot silently retest evidence
     an ancestor already ruled out any more than a `READY`-terminating one
     could, which invariant 12 alone — scoped only to `READY`-leaf paths —
-    would not catch (**closes R4 gap 2**).
+    would not catch.
 
-**Invariants 13–15 close three narrower gaps `renders_inapplicable` itself
-could otherwise open.** A duplicate entry (13) is inert but marks an
-authoring mistake worth catching rather than silently accepting. A branch
-marking its own just-tested requirement inapplicable (14) is a direct
-contradiction, catchable without walking any path at all — a cheap, local
-rejection ahead of the more expensive whole-path checks invariant 12 needs.
-And because invariant 12 as stated examines only paths that terminate in
-`READY`, a `renders_inapplicable` declaration followed by a later retest of
-the same requirement on a path that instead terminates in `BLOCKED` or
-`UNKNOWN` would escape it entirely; invariant 15 is scoped to every path
-prefix in the tree for exactly that reason, independent of how the path
-eventually ends. None of the three is exercised by this Pack's one
-`renders_inapplicable` declaration — `no-penetration`'s — which names
-`opening-status`, a requirement `penetration-determination-node` itself does
-not test, appearing nowhere else in `builders-work-openings`'s tree; the
-verification run accompanying this revision constructs each violation
-directly, off the worked Pack, to prove all three fail closed.
+Invariants 13–15 close three narrower gaps `renders_inapplicable` itself
+could otherwise open: a duplicate entry (13) is inert but marks an authoring
+mistake worth catching; a branch marking its own just-tested requirement
+inapplicable (14) is a direct contradiction, catchable without walking any
+path at all; and because invariant 12 examines only paths that terminate in
+`READY`, invariant 15 is scoped to every path prefix so a retest on a
+`BLOCKED`- or `UNKNOWN`-terminating path cannot escape it. None of the three
+is exercised by this Pack's one `renders_inapplicable` declaration —
+`no-penetration`'s.
 
-**Invariants 10 and 11 correct a false claim in the previous revision.**
-Acyclicity (invariant 5) alone does not give every node "exactly one parent
+Invariants 10 and 11 correct a false claim from an earlier revision:
+acyclicity (invariant 5) alone does not give every node "exactly one parent
 chain back to its activity's root" — an acyclic graph can still merge two
-branches into one shared downstream node, and a merged node could let two
-different paths silently disagree about whether an ancestor's outcome had
-already tested some evidence requirement. Invariants 10 and 11 close that
+branches into one shared downstream node. Invariants 10 and 11 close that
 gap directly: every non-root node has exactly one incoming edge, and no node
 is shared between two activities, so each activity's `decision_nodes` really
 are a tree, and every reachable node has one unique path back to its root.
 
-**Even with a genuine tree, invariant 8 alone was never sufficient to prove
-a `READY` path never bypasses applicable evidence — only that a node for
-each declared evidence requirement exists *somewhere* in the tree, not that
-every path to a `READY` leaf passes through it.** `builders-work-openings`'s
-own `no-penetration → READY` branch is the exact counterexample that
-motivated this fix: it is a one-node path testing only
-`penetration-determination`, and `opening-status`'s node exists elsewhere in
-the same tree — reachable only via the `penetration-confirmed` branch —
-without ever being reached from this particular `READY` leaf. Invariant 8
-alone would accept this silently, because a node for `opening-status` does
-exist in the Pack. **Invariant 12 is the actual sufficient condition:** it
-walks every root-to-`READY`-leaf path and requires each declared evidence
-requirement to be either tested on that specific path, or explicitly ruled
-inapplicable by an earlier branch on that same path via
+Even with a genuine tree, invariant 8 alone was never sufficient to prove a
+`READY` path never bypasses applicable evidence — only that a node for each
+declared evidence requirement exists *somewhere* in the tree, not that every
+path to a `READY` leaf passes through it. `builders-work-openings`'s own
+`no-penetration → READY` branch is the exact counterexample that motivated
+this fix: it is a one-node path testing only `penetration-determination`,
+and `opening-status`'s node exists elsewhere in the same tree — reachable
+only via the `penetration-confirmed` branch — without ever being reached
+from this particular `READY` leaf. **Invariant 12 is the actual sufficient
+condition:** it walks every root-to-`READY`-leaf path and requires each
+declared evidence requirement to be either tested on that specific path, or
+explicitly ruled inapplicable by an earlier branch on that same path via
 `renders_inapplicable` — a structured, enumerable field, never a free-text
 waiver, a wildcard, or a default branch. The `no-penetration` branch below
 carries `renders_inapplicable = ["opening-status"]`, which is the one and
@@ -1188,7 +1389,7 @@ not to the one a reader intends. `node_id` is unique within the Pack file,
 checked the same way `activity_id` and `evidence_requirement_id` are (§3.7).
 
 ```toml
-# purpose-packs/mep-to-architecture-coordination/pack.toml — continued.
+# purpose-packs/interdisciplinary-coordination-readiness/pack.toml — continued.
 # EXAMPLE, not a live artifact.
 
 [[decision_nodes]]
@@ -1297,9 +1498,8 @@ ruled out, an opening found and cross-referenced or found and not — none of
 which is live evidence today, and none of which this document asserts as
 having happened. Every `BLOCKED` leaf now carries a `failure_kind` and every
 `UNKNOWN` leaf a `gap_kind`, each matching one of the ten
-`default_responsibility` entries in §3.2 — the rejected round-2 draft left
-five `UNKNOWN` leaves with no resolution key at all. The `no-penetration`
-branch's `renders_inapplicable = ["opening-status"]` is the only structural
+`resolution_routes[]` entries in §3.2. The `no-penetration` branch's
+`renders_inapplicable = ["opening-status"]` is the only structural
 inapplicability declaration any path in these three trees needs (§3.8's
 invariant 12) — every other `READY` leaf's path already tests every
 evidence requirement its own activity declares, with nothing left to
@@ -1311,16 +1511,34 @@ consumes evidence-requirement outcomes, and Checkpoint B's invariant 6 is that
 `CONDITIONAL` must originate in a named authorisation event — a fact no
 evidence outcome can encode. What a future runtime step may do instead is
 **promote** a tree's `BLOCKED` or `UNKNOWN` result to `CONDITIONAL` for one
-specific assessment, citing the named authoriser, the accepted risk, the
-release scope, and the voiding condition. That promotion is additive, never
-substitutive: the runtime record must retain the leaf's original verdict
-(`BLOCKED` or `UNKNOWN`), its `resolution_kind`, the risk actually accepted,
-and the underlying evidence gap or blocker the leaf named — a `CONDITIONAL`
-release with no recorded blocker or gap underneath it would be indistinguishable
-from a fabricated `READY`, exactly the collapse Checkpoint B's invariant 6
-exists to prevent. The promotion is a runtime record layered on top of the
-tree's result, never a change to the tree, and never derived from the tree
-alone.
+specific assessment. That promotion must cite, and the runtime record must
+retain, all of the following (closes R5 item 3):
+
+- the leaf's **original verdict** (`BLOCKED` or `UNKNOWN`);
+- its **`resolution_kind`**;
+- the **underlying evidence gap or blocker** the leaf named;
+- a **named authoriser**;
+- the **Overlay authorisation role** that authoriser acted under — the
+  specific `may_authorise_roles` entry from the `overlay.risk_authorisations[]`
+  row matching this exact `pack_id::resolution_kind` (§3.5, §3.7); a
+  promotion citing a role not listed for this `resolution_kind` is not a
+  `CONDITIONAL`, it is an unauthorised release;
+- the **named model versions** the promotion applies to;
+- the **accepted risk**;
+- the **release scope**;
+- the **voiding or failure condition** that would end the release.
+
+Every one of these is a runtime fact about one assessment; **none of them is
+written into a Pack or an Overlay example anywhere in this document** —
+`overlay.risk_authorisations[]` states only who *may* act, never that anyone
+*has*. The promotion is additive, never substitutive: a `CONDITIONAL`
+release with no recorded blocker or gap underneath it would be
+indistinguishable from a fabricated `READY`, exactly the collapse
+Checkpoint B's invariant 6 exists to prevent. **`CONDITIONAL` never becomes
+`READY`, and it never eliminates the original blocker or gap** — it is a
+recorded acceptance of risk against a real deficiency, layered on top of
+the tree's result, never a change to the tree, and never derived from the
+tree alone.
 
 ---
 
@@ -1370,19 +1588,19 @@ exception carved out for any case, correcting the rejected draft's fourth
 test, which excused a new project's own rows.**
 
 1. **Change only a Purpose** — edit a Pack's `evidence_requirements`,
-   `decision_nodes`, or `default_responsibility` (anything in §3.1's Pack
-   column); touch no project. Expected: `git diff --exit-code -- data/processed
-   reports` passes; `epc-ct snapshot` reports no drift; every
-   `validation_run_id`, `requirement_key`, and `finding_key` in
+   `decision_nodes`, `directions[]`, or `resolution_routes[]` (anything in
+   §3.1's Pack column); touch no project. Expected: `git diff --exit-code --
+   data/processed reports` passes; `epc-ct snapshot` reports no drift;
+   every `validation_run_id`, `requirement_key`, and `finding_key` in
    `data/processed/canonical/` is byte-identical; `contract-1.6.json`'s
    recorded file list and SHA-256s are unchanged.
 2. **Change only an Overlay** — edit `pcert-sample`'s `[overlay]` table
-   (`evidence_bindings`, `team_mapping`, `cost_parameters`, `conventions` —
-   anything in §3.1's Overlay column); touch no model, ruleset, or
-   programme. Expected: identical to (1), for **the entire published output
-   tree of both projects**, not merely "the other project's rows" — nothing
-   in the pipeline reads `[overlay]` today, so neither project's published
-   bytes may move by even one row.
+   (`evidence_bindings`, `team_mapping`, `risk_authorisations`,
+   `cost_parameters`, `conventions` — anything in §3.1's Overlay column);
+   touch no model, ruleset, or programme. Expected: identical to (1), for
+   **the entire published output tree of both projects**, not merely "the
+   other project's rows" — nothing in the pipeline reads `[overlay]` today,
+   so neither project's published bytes may move by even one row.
 3. **Add a second Pack** — a new file under `purpose-packs/`, referenced by
    no project's `overlay.packs[]`. Expected: identical to (1) — an
    unreferenced Pack on disk must not appear in any published artifact,
@@ -1417,20 +1635,25 @@ Stated affirmatively, once, so no later section can drift from it:
 
 - **A project may use more than one Purpose Pack.** `overlay.packs[]` is a
   list (§3.1, §3.5).
+- **A Pack may carry more than one direction of its flagship purpose.**
+  `directions[]` is a list (§3.2); this worked example declares one.
 - **A project has exactly one Overlay** — the singular `[overlay]` table in
   its `project.toml` — which contains the arrays needed to bind however many
   Packs the project actually uses. There is no per-Pack overlay file and no
   `[overlay.<pack_id>]` nesting; every list inside `[overlay]` tags its own
   rows with `pack_id` where disambiguation is needed (`evidence_bindings`,
-  `accepted_evidence_methods`), and leaves rows that are naturally
-  project-wide untagged (`team_mapping`, `cost_parameters`).
-- **`activity_id` and `evidence_requirement_id` are Pack-local identities.**
-  Two different Packs may freely reuse the same local name — `schedules`, say
-  — with no collision, because the identity that must be unique is the
-  compound `pack_id::activity_id`, and `pack_id` is already required unique.
-  This mirrors `model_id` (project-scoped, human-chosen) versus `model_key`
-  (`project_id::model_id`, the actually-unique join identity) exactly as
-  `AGENTS.md` already draws that line for models.
+  `accepted_evidence_methods`, `risk_authorisations`), and leaves rows that
+  are naturally project-wide untagged (`team_mapping`, `cost_parameters`).
+- **`activity_id` and `evidence_requirement_id` are Pack-local identities,
+  and so is `direction_id`.** Two different Packs may freely reuse the same
+  local name — `schedules`, say — with no collision, because the identity
+  that must be unique is the compound `pack_id::activity_id`, and `pack_id`
+  is already required unique. This mirrors `model_id` (project-scoped,
+  human-chosen) versus `model_key` (`project_id::model_id`, the
+  actually-unique join identity) exactly as `AGENTS.md` already draws that
+  line for models. An activity's `direction_id` is a fact about that
+  activity's content, not a second identity axis: `pack_id::activity_id`
+  remains the whole of an activity's identity.
 - **A project with no `[overlay]` table has no purpose assessment, and the
   existing contract 1.6 pipeline is entirely unaffected** — `epc-ct run`,
   `check`, `group`, and every exporter read nothing under `[overlay]` today,
@@ -1446,11 +1669,18 @@ Stated affirmatively, once, so no later section can drift from it:
 
 Proving §3's shape is sufficient, without designing runtime behaviour:
 
-| Checkpoint B activity | `activity_id` (illustrative) | Evidence requirements | Binding | Live verdict (runtime fact, unaffected by this design) |
-|---|---|---|---|---|
-| Room data sheets / equipment schedules | `schedules-and-room-data-sheets` | `asset-identity` | Overlay-bound to R-005A/B's four `requirement_key`s (§3.5) | **BLOCKED** (case 2) |
-| Ceiling / bulkhead geometry | `ceiling-and-bulkhead-geometry` | `in-model-position`, `cross-model-alignment` | Pack-bound to R-004A/B for the first; `assessment` for the second, with R-010 named only as insufficient evidence | **UNKNOWN** (case 3) |
-| Builder's-work openings | `builders-work-openings` | `penetration-determination`, `opening-status` | `assessment` for both — no validation requirement in rule set 2.2 answers either | **UNKNOWN** (case 4) |
+| Checkpoint B activity | `activity_id` (illustrative) | `direction_id` | Evidence requirements | Binding | Live verdict (runtime fact, unaffected by this design) |
+|---|---|---|---|---|---|
+| Room data sheets / equipment schedules | `schedules-and-room-data-sheets` | `mep-to-architecture` | `asset-identity` | Overlay-bound to R-005A/B's four `requirement_key`s (§3.5) | **BLOCKED** (case 2) |
+| Ceiling / bulkhead geometry | `ceiling-and-bulkhead-geometry` | `mep-to-architecture` | `in-model-position`, `cross-model-alignment` | Pack-bound to R-004A/B for the first; `assessment` for the second, with R-010 named only as insufficient evidence | **UNKNOWN** (case 3) |
+| Builder's-work openings | `builders-work-openings` | `mep-to-architecture` | `penetration-determination`, `opening-status` | `assessment` for both — no validation requirement in rule set 2.2 answers either | **UNKNOWN** (case 4) |
+
+**All three activities resolve to the Pack's one declared direction,
+`mep-to-architecture` (§3.2; closes R5 item 1).** Nothing about proving §3's
+shape sufficient for Checkpoint B's scenario required a second direction to
+exist — the point is that the shape does not foreclose one, and §3.2 already
+states exactly what adding one would take: a `directions[]` entry and
+activities pointing at its `direction_id`, nothing more.
 
 **Openings is no longer represented with zero evidence entries.** It names
 exactly the two evidence requirements Checkpoint B case 4 describes, both
@@ -1458,40 +1688,62 @@ currently unsatisfiable by rule set 2.2's evidence — which is why the live
 verdict stays UNKNOWN and is now *representable* as UNKNOWN, rather than
 silently indistinguishable from an activity with no evidence model at all.
 
-**The completed outcome → verdict → resolution-kind/role state space
+**The full resolution trace, for all ten `resolution_kind`s this Pack's
+trees can produce — from `resolution_kind` through verdict class,
+consequence, default role, next action, to recheck condition, in one table
+(closes R5 item 2):**
+
+| `resolution_kind` | Verdict class | Consequence kinds | Default role | Next action | Recheck condition |
+|---|---|---|---|---|---|
+| `missing-project-asset-identity` | BLOCKED | work-cannot-start, re-identification-and-reissue-risk | model-coordination | Add `EPC_Delivery.AssetTag`/`SystemCode` at source and confirm the IFC export emits an `EPC_Delivery` property set | Every bound `requirement_key` evaluates PASS for every element in scope, none uncovered |
+| `asset-identity-not-evaluated` | UNKNOWN | work-suspended | model-coordination | *Not a model defect* — run the evaluation over the full assessed scope | Every element in scope is covered by an evaluation, none absent |
+| `mep-element-not-spatially-assigned` | BLOCKED | work-suspended | mep-lead | Host the element to its correct level/space before export | The R-004-bound requirement_key(s) evaluate PASS for the element |
+| `in-model-position-not-evaluated` | UNKNOWN | work-suspended | mep-lead | *Not a model defect* — run the evaluation; extend rule applicability if a rule authoring gap is the cause | Every element in scope is covered by a finding |
+| `cross-model-misalignment` | BLOCKED | work-suspended | model-coordination | Re-acquire the shared coordination datum and re-export placement against it | The alignment-confirmation method is re-run and reports confirmed |
+| `cross-model-alignment-not-confirmed` | UNKNOWN | work-suspended, rework-risk | model-coordination | *Not a model defect* — perform the accepted alignment-confirmation method | The method is performed and reports confirmed, for the named versions |
+| `penetration-not-determined` | UNKNOWN | work-suspended | model-coordination | *Not a model defect* — hold the coordination-review determination | A recorded determination exists (no-penetration or the element named) |
+| `opening-not-verifiably-linked` | BLOCKED | work-suspended, rework-risk | model-coordination | Add/correct the cross-reference from the modelled opening to the penetrating element | The opening-cross-reference-check is re-run and reports cross-referenced |
+| `missing-corresponding-opening` | BLOCKED | work-suspended | model-coordination | Model the opening in Architecture, hosted against the storey the element passes through | The opening-status evaluation reports cross-referenced |
+| `opening-status-not-determined` | UNKNOWN | work-suspended | model-coordination | *Not a model defect* — complete the opening-status review | The review reports a definite result (cross-referenced, modelled-not-cross-referenced, or not-modelled) |
+
+**A reviewer can now start from any non-`READY` leaf's `resolution_kind`
+alone and reach the full chain — consequence, resolving role, next action,
+recheck — through one table, not three separately-addressed fields.** The
+two blockers product review named specifically stay traceably distinct
+end to end: `opening-not-verifiably-linked`'s action *adds a link*, its
+recheck *re-checks the link*; `missing-corresponding-opening`'s action
+*models the opening*, its recheck *confirms the opening exists and is
+linked*.
+
+**The completed outcome → verdict → `resolution_kind`/route state space
 (§3.8), for all three activities, with the live path in each tree marked:**
 
-| Activity | Evidence requirement | Outcome | Verdict | `resolution_kind` | Default role |
-|---|---|---|---|---|---|
-| Schedules | `asset-identity` | satisfied | READY | — | — |
-| Schedules | `asset-identity` | **unmet (live)** | **BLOCKED** | `missing-project-asset-identity` | `model-coordination` |
-| Schedules | `asset-identity` | not-yet-evaluated | UNKNOWN | `asset-identity-not-evaluated` | `model-coordination` |
-| Ceiling | `in-model-position` | **satisfied (live)** | *(→ cross-model-alignment)* | — | — |
-| Ceiling | `in-model-position` | unmet | BLOCKED | `mep-element-not-spatially-assigned` | `mep-lead` |
-| Ceiling | `in-model-position` | not-yet-evaluated | UNKNOWN | `in-model-position-not-evaluated` | `mep-lead` |
-| Ceiling | `cross-model-alignment` | confirmed | READY | — | — |
-| Ceiling | `cross-model-alignment` | misaligned | BLOCKED | `cross-model-misalignment` | `model-coordination` |
-| Ceiling | `cross-model-alignment` | **not-yet-confirmed (live)** | **UNKNOWN** | `cross-model-alignment-not-confirmed` | `model-coordination` |
-| Openings | `penetration-determination` | no-penetration | READY | — | — |
-| Openings | `penetration-determination` | **not-yet-determined (live)** | **UNKNOWN** | `penetration-not-determined` | `model-coordination` |
-| Openings | `penetration-determination` | penetration-confirmed | *(→ opening-status)* | — | — |
-| Openings | `opening-status` | cross-referenced | READY | — | — |
-| Openings | `opening-status` | modelled-not-cross-referenced | BLOCKED | `opening-not-verifiably-linked` | `model-coordination` |
-| Openings | `opening-status` | not-modelled | BLOCKED | `missing-corresponding-opening` | `model-coordination` |
-| Openings | `opening-status` | not-yet-determined | UNKNOWN | `opening-status-not-determined` | `model-coordination` |
+| Activity | Evidence requirement | Outcome | Verdict | `resolution_kind` |
+|---|---|---|---|---|
+| Schedules | `asset-identity` | satisfied | READY | — |
+| Schedules | `asset-identity` | **unmet (live)** | **BLOCKED** | `missing-project-asset-identity` |
+| Schedules | `asset-identity` | not-yet-evaluated | UNKNOWN | `asset-identity-not-evaluated` |
+| Ceiling | `in-model-position` | **satisfied (live)** | *(→ cross-model-alignment)* | — |
+| Ceiling | `in-model-position` | unmet | BLOCKED | `mep-element-not-spatially-assigned` |
+| Ceiling | `in-model-position` | not-yet-evaluated | UNKNOWN | `in-model-position-not-evaluated` |
+| Ceiling | `cross-model-alignment` | confirmed | READY | — |
+| Ceiling | `cross-model-alignment` | misaligned | BLOCKED | `cross-model-misalignment` |
+| Ceiling | `cross-model-alignment` | **not-yet-confirmed (live)** | **UNKNOWN** | `cross-model-alignment-not-confirmed` |
+| Openings | `penetration-determination` | no-penetration | READY | — |
+| Openings | `penetration-determination` | **not-yet-determined (live)** | **UNKNOWN** | `penetration-not-determined` |
+| Openings | `penetration-determination` | penetration-confirmed | *(→ opening-status)* | — |
+| Openings | `opening-status` | cross-referenced | READY | — |
+| Openings | `opening-status` | modelled-not-cross-referenced | BLOCKED | `opening-not-verifiably-linked` |
+| Openings | `opening-status` | not-modelled | BLOCKED | `missing-corresponding-opening` |
+| Openings | `opening-status` | not-yet-determined | UNKNOWN | `opening-status-not-determined` |
 
 The three live rows compose to the same **BLOCKED / UNKNOWN / UNKNOWN** this
-design has stated since the first revision — none of the six fixes in this
-round changed a single live verdict, only completed the paths this run's
-evidence never travels down. Round 3 changed nothing in this table; it
-tightened the evidence-outcome priority order and the responsibility chain
-around it (§3.2, §3.5), and the tree's structural guarantees (§3.8), neither
-of which moves a live outcome. Round 4 changed nothing here either: it
-corrected the *general* claim about aggregating multiple underlying
-observations into one outcome (§3.2), and tightened `renders_inapplicable`'s
-own structural rules (§3.8, invariants 12–15) — neither is exercised by this
-Pack's single live scope per evidence requirement, so no live path, verdict,
-or `resolution_kind` moves.
+design has stated since the first revision. Renaming the Pack, adding
+`directions[]`, consolidating four fields into `resolution_routes[]`,
+restructuring risk authorisation, and deferring overrides move none of
+them — every fix in this round completes or reorganises the fixed inputs
+around this run's evidence; none of it is evidence, and none of it computes
+a verdict.
 
 **Every root-to-`READY`-leaf path in all three trees (§3.8, invariants
 12–15): tested and inapplicable evidence are disjoint, and their union
@@ -1505,12 +1757,7 @@ exactly equals the declared set:**
 | Openings | `penetration-determination = penetration-confirmed` → `opening-status = cross-referenced` | {`penetration-determination`, `opening-status`} | {} | Yes | Yes — declared = {`penetration-determination`, `opening-status`} |
 
 Four `READY` paths total across the three trees, and every one accounts for
-its activity's full declared evidence set — the openings activity has two
-`READY` paths precisely because `penetration-determination`'s
-`no-penetration` and `penetration-confirmed` outcomes lead to different
-onward requirements, and `renders_inapplicable` is what lets the shorter
-path close without a spurious node testing evidence the no-penetration
-determination has already made moot.
+its activity's full declared evidence set.
 
 Confirmed, restated as constraints this design satisfies rather than data it
 asserts:
@@ -1523,12 +1770,14 @@ asserts:
   `insufficient_evidence[]` with its limit stated in the same entry — never
   promoted to alignment evidence by anything in this design.
 - **R-010's applicability/checker divergence is out of scope here**,
-  unchanged from the prior revision: this document changes nothing about
+  unchanged from every prior revision: this document changes nothing about
   `rules/epc-delivery/R-010.toml` or the `completeness` checker and does not
   depend on that divergence being fixed.
 - **`discipline_scope` remains validation applicability only.** §3.2's
-  `direction` table is new Pack data, never a reinterpretation of
+  `directions[]` table is new Pack data, never a reinterpretation of
   `discipline_scope`.
+- **R-005 enters this design only through `overlay.evidence_bindings[]`**
+  (§3.5), never through the Pack, in this or any prior revision.
 
 ---
 
@@ -1568,15 +1817,20 @@ Overlay configuration file is added — every fragment in §3 is illustrative
 and explicitly marked as such. `data/processed/`, `reports/`, any snapshot,
 and contract 1.6 are untouched. No Doctor, Registry, exporter, database, AI
 agent, knowledge graph, automatic IFC patching, or cross-run ledger is
-designed. Nothing is merged, tagged, or released. Checkpoint D is not
-started.
+designed. **No project override capability is implemented or assumed —
+§3.6 defers the entire mechanism, not merely narrows it.** Nothing is
+merged, tagged, or released. Checkpoint D is not started.
 
 ## Consequences
 
 This document commits a future implementation to: two file locations
 (`purpose-packs/<pack_id>/pack.toml`, `projects/<id>/project.toml`'s
-singular `[overlay]` table, which may bind several Packs); a two-layer
-evidence design in which an activity names Pack-owned **evidence
+singular `[overlay]` table, which may bind several Packs); a Pack that names
+one flagship purpose and may carry **several directions** of it, each
+declared once in `directions[]` and referenced by every activity's
+`direction_id` — never redefining activity identity, which stays
+`pack_id::activity_id`, and never derived from `discipline_scope`; a
+two-layer evidence design in which an activity names Pack-owned **evidence
 requirements**, never a validation requirement directly, and each evidence
 requirement is satisfied by a Pack-owned binding (general validation data), an
 Overlay-owned binding (project-specific validation data — R-005's only
@@ -1591,43 +1845,45 @@ every evidence requirement's outcome vocabulary partitioned into exactly
 standing in for a verdict, since only a tree's terminal leaf is one; a
 verdict-class priority (a known failure always dominates a mere coverage
 gap) that is a complete outcome selector only where an evidence requirement
-has exactly one named outcome per class — as this Pack's two
-validation-backed evidence requirements both do — and that must never be
-used to pick among two or more distinct named outcomes an assessed scope's
-underlying observations disagree on, whether or not those outcomes share a
-class; in that case the assessed scope must instead be partitioned into
-outcome-homogeneous subscopes before the tree runs, each producing its own
-verdict, with subscope construction, identity, and recording left to
-Checkpoint D; `CONDITIONAL` reachable only as a runtime promotion that must
-retain the promoted leaf's original verdict, resolution kind, and evidence;
-a single `resolution_kind` namespace shared by `BLOCKED`'s `failure_kind`
-and `UNKNOWN`'s `gap_kind`, each unique within a Pack and each resolved by
-an Overlay `team_mapping` entry that is itself unique per `role`, so every
-role a requested activity's reachable non-`READY` leaves can name — not
-only `BLOCKED` ones — composes to exactly one project assignee or fails
-closed for that request alone, never by falling back to a rule's
-`owner_role` or reporting a bare Pack role as though it were an assignment;
-fifteen structural invariants a Pack's decision trees must satisfy at load
-time, covering root/edge existence, uniqueness, true per-activity tree
-shape (not a DAG with merged branches), the sufficient condition for
-`READY`-path closure — that every root-to-`READY`-leaf path tests and
-structurally rules inapplicable, via a closed, duplicate-free, non-
-self-referential `renders_inapplicable` field, a disjoint and exactly
-covering partition of every evidence requirement its activity declares —
-and that no node may retest evidence any ancestor already ruled
-inapplicable, on any path regardless of that path's eventual verdict; three
-independent compatibility axes — Pack schema format, Pack content version,
-and per-binding ruleset identity — with
-Framework machine-contract compatibility named as not yet nameable rather
-than fabricated; a project that may use multiple Packs through one Overlay,
-with Pack-local `activity_id`/`evidence_requirement_id` disambiguated only by
-`pack_id`, and no Overlay-owned project identity duplicating
-`[project].project_id`; an override addressed by structured
-`{pack_id, activity_id, field}` fields matching the real Pack schema rather
-than a dotted string grammar; fail-closed composition with no silent
-defaults, including a project with no Overlay leaving the existing pipeline
-untouched; and the four changed-input counterfactuals in §4 — all of them,
-with no exception — as the acceptance test for Checkpoint D's identity
-claims. It commits nothing about how a decision tree is actually evaluated
-at runtime, how `AssessmentRun`-shaped state (if any) is named, or when
-Checkpoint D begins — those remain open, and deliberately so.
+has exactly one named outcome per class, and that must never be used to
+pick among two or more distinct named outcomes an assessed scope's
+underlying observations disagree on — in that case the assessed scope must
+instead be partitioned into outcome-homogeneous subscopes before the tree
+runs, with subscope construction, identity, and recording left to
+Checkpoint D; fifteen structural invariants a Pack's decision tree must
+satisfy at load time, unchanged this round, covering root/edge existence,
+uniqueness, true per-activity tree shape, and the sufficient condition for
+`READY`-path closure; **one canonical `resolution_routes[]` table**, keyed
+by `resolution_kind` and reachable from any `BLOCKED`/`UNKNOWN` leaf,
+carrying default role, consequence kinds, next action, and recheck
+condition together — replacing four separately-addressed fields, with an
+orphaned route, a duplicate `resolution_kind`, an incomplete row, or a leaf
+matching no row all failing the Pack closed, and with reuse of one
+`resolution_kind` across leaves only ever meaning identical treatment, by
+construction; `CONDITIONAL` reachable only as a runtime promotion that must
+cite and retain the promoted leaf's original verdict, `resolution_kind`,
+underlying blocker or gap, a named authoriser, the specific Overlay
+authorisation role that authoriser acted under, named model versions, the
+accepted risk, the release scope, and a voiding condition — and that can
+never become `READY` or erase the deficiency it was promoted from; a
+**per-`pack_id::resolution_kind` risk-authorisation table**, never a
+project-wide blanket list, with no wildcard, no `"all"`, and no derivation
+of an authoriser from a resolving role — a `resolution_kind` with no
+matching authorisation row simply has no path to `CONDITIONAL`, not a
+default one; **no project-override capability**, with any future one
+required to be machine-verifiably monotone against four named properties
+before it may even be proposed, and never a free-text patch or expression
+language; three independent compatibility axes — Pack schema format (bumped
+to `"2"` this round), Pack content version, and per-binding ruleset
+identity — with Framework machine-contract compatibility named as not yet
+nameable rather than fabricated; a project that may use multiple Packs
+through one Overlay, with Pack-local `activity_id`/`evidence_requirement_id`
+/`direction_id` disambiguated only by `pack_id`, and no Overlay-owned
+project identity duplicating `[project].project_id`; fail-closed composition
+with no silent defaults, including a project with no Overlay leaving the
+existing pipeline untouched; and the four changed-input counterfactuals in
+§4 — all of them, with no exception — as the acceptance test for Checkpoint
+D's identity claims. It commits nothing about how a decision tree is
+actually evaluated at runtime, how subscopes or `AssessmentRun`-shaped state
+(if any) are named, when a future override capability might be designed, or
+when Checkpoint D begins — those remain open, and deliberately so.
