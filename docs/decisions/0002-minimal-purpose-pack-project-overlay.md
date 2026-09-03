@@ -130,7 +130,13 @@
     verdict, or structural invariant 1–15 moved — §6 re-proves both the ten
     routes' one-to-one correspondence with the ten non-`READY` leaves and the
     four `READY` paths' closure under invariant 12, and the live verdicts remain
-    **BLOCKED / UNKNOWN / UNKNOWN**.
+    **BLOCKED / UNKNOWN / UNKNOWN**. Product audit of that closure (at
+    `849a55c`, before this revision landed) returned **AT RISK** on one
+    remaining item, E-6, which is a runtime-record question closed in
+    [`0003`](0003-runtime-purpose-assessment-shape.md); it also asked that the
+    `subject_classes` matching rule be recorded as the product decision it is
+    rather than left as an implementation detail, which §3.2 now does. This
+    revision is still one revision and keeps one history entry.
 - **Scope:** Checkpoint C only — the representation, ownership and identity
   boundary of a Purpose Pack and a Project Overlay. It does not design or
   execute runtime assessment (Checkpoint D), does not touch contract 1.6, and
@@ -710,6 +716,37 @@ stays a subject under this rule while the two proxies do not. The list names
 object kinds; findings never enter the question. A class a project's model
 happens not to contain is not an error — a Pack is reusable, and a project with
 no chimneys simply has no chimney subjects.
+
+**`subject_classes` v1 matches `ifc_class` exactly and does not walk the IFC
+inheritance graph (product decision, recorded here because this is where the
+field is defined).** An `IfcChimney` is admitted by a list naming
+`IfcChimney`, and by a list naming `IfcBuildingElement` or `IfcProduct` it is
+not. That is a decision, not an oversight, and it is deliberately the narrow
+one:
+
+- Subtype expansion would make a Pack depend on **one IFC schema's type
+  hierarchy**. The fixture is IFC4; a Pack is meant to outlive a schema
+  version, and a list whose meaning changes when the hierarchy underneath it
+  changes is not the enumerable, closed thing this list exists to be.
+- It would also let an activity's object scope **grow silently** — a model
+  using a subtype the Pack author never considered would be swept in without
+  anyone declaring it. Growing an activity's scope is exactly the act that
+  should require an author to write a class name down.
+
+The cost is real, and it is made visible rather than hidden: a project whose
+models use a subtype the Pack did not name sees those elements in that
+activity's `out_of_subject_class[]` (Checkpoint D,
+[`0003`](0003-runtime-purpose-assessment-shape.md) §3.3), each with the
+`ifc_class` that excluded it. That list *is* the divergence signal between a
+Pack's vocabulary and a project's models, and reading it is how the question
+gets asked at all.
+
+**Whether that divergence is eventually better answered by widening a Pack's
+list, by a project-level class-mapping layer in the Overlay, or by subtype
+expansion after all is deferred until a second real Pack and a second real
+project make the trade-off concrete.** No mapping layer is designed here, none
+is implied, and Checkpoint D must not assume one exists — the same treatment
+§3.6 gives the deferred override capability.
 
 **An element the list excludes is not silently dropped.** For each requested
 activity the runtime record accounts for every declared scope key as either a
