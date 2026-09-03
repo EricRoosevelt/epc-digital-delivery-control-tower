@@ -13,6 +13,45 @@
   without redesigning that format, and so that running an assessment is
   structurally incapable of moving a published byte.
 - **Date:** 2026-09-03.
+- **Revision history:**
+  - Refines the version at `954fee6` (2026-09-03), which **BIM domain review
+    returned AT RISK** on the composed Checkpoint C + D design, for four
+    reasons, all four re-checked against `data/processed/canonical/` and
+    against Checkpoint B's text before being accepted. Two of the four are
+    Checkpoint C data-shape questions and are closed in
+    [`0002-minimal-purpose-pack-project-overlay.md`](0002-minimal-purpose-pack-project-overlay.md)
+    (E-1, resolving roles; E-2's Pack fields); this document takes their
+    runtime consequences and closes three further items of its own. **E-2** —
+    `opening-status` read exactly one outcome per penetrating element, so a
+    chimney needing a slab opening and a roof opening in different states, and
+    a shared shaft opening serving several MEP lines, were both
+    inexpressible; the grain is now Pack-declared and `opening-status` reads
+    at a *(penetrating element, penetrated architectural element)* pair, both
+    members of which exist whenever the pair does, so D-1's no-phantom-key rule
+    is satisfied rather than relaxed. **E-3** — §2.1/§3.1 expanded a
+    `model_key` in scope to every element of that model and handed all of them
+    to every requested activity, which made `pcert-sample`'s two
+    `IfcBuildingElementProxy` setout markers subjects of the ceiling activity
+    and produced an `UNKNOWN` about a survey marker; subjects are now admitted
+    by the activity's declared `subject_classes`, never by which elements carry
+    findings, and every excluded key is recorded per activity so nothing in a
+    declared scope disappears. **E-4 supersedes D-4, at the technical
+    director's direction**: a `CONDITIONAL` promotion now continues with the
+    record while its own voiding condition holds and the model-version context
+    is unchanged, and lapses — recorded, never silently — on any change; §4.5
+    states why, and states that the rule is negotiable in a later product
+    round. **E-5** — the document defined only a `recheck` successor, and the
+    real sequence is an `UNKNOWN` record signed off in the coordination review
+    that reads it; §4.5 adds the `authorisation` successor kind, whose claim
+    of unchanged evidence is proved by re-derivation rather than asserted, and
+    fixes that a record is sealed once its `assessment_digest` is computed and
+    is never rewritten. Accepted unchanged and carried forward: the pipeline
+    position and input/output boundary, the subject/reading/grain trichotomy,
+    the within-subject-only `FAIL` precedence, `BLOCKED`/`UNKNOWN` as distinct
+    states, `CONDITIONAL` as additive-never-substitutive, R-010's `PASS` as
+    `insufficient_evidence[]` context only, no roll-up above the subscope, the
+    §7 fail-closed map (added to, never altered), the six §8 counterfactuals,
+    and the one-way identity dependency.
 - **Scope:** Checkpoint D runtime design only — the request boundary, the
   subscope construction rule ADR 0002 §3.2 explicitly left here, the
   assessment record shape, the runtime identity boundary, and the
@@ -24,7 +63,7 @@
   identity.
 - **Depends on:**
   - the four-layer ownership boundary, the field shapes, the closed decision
-    tree and its fifteen structural invariants, the ten `resolution_routes[]`,
+    tree and its eighteen structural invariants, the ten `resolution_routes[]`,
     the per-`pack_id::resolution_kind` risk-authorisation table, and the four
     changed-input counterfactuals fixed in
     [`0002-minimal-purpose-pack-project-overlay.md`](0002-minimal-purpose-pack-project-overlay.md)
@@ -55,7 +94,8 @@
 | 1 | The assessed scope: its definition, its source, and its relationship to the model-version context | §2 |
 | 2 | How a subscope is constructed, identified, and recorded (ADR 0002 §3.2 left this here) | §3 |
 | 3 | Where the assessment step sits in the pipeline, and its input/output boundary | §1 |
-| 4 | What one assessment records, including every field a `CONDITIONAL` promotion must carry | §4 |
+| 4 | What one assessment records, including every field a `CONDITIONAL` promotion must carry, and the total accounting of the declared scope | §4, §3.3 |
+| 4a | How a record is sealed, what a successor record is, and how a `CONDITIONAL` promotion continues or lapses across records | §4.5 |
 | 5 | Whether any runtime identity is minted, and the constraints on it | §5 |
 | 6 | How several subscopes of one activity with different verdicts are presented, under Framework invariant 1 | §6 |
 | 7 | How every missing input (evidence, binding, role, authorisation, method) fails closed, mapped row-by-row to ADR 0002 §3.7 | §7 |
@@ -106,8 +146,13 @@ An assessment reads, and only reads:
    before `group`: the `Requirement` set, the `Finding` set (each with its
    `status`, and its `is_issue` **as the contract 1.6 validation fact it is —
    never reinterpreted as a readiness outcome**; see §3.4), the project's
-   model element inventory, the project programme / milestone dates, and the
+   model element inventory **including each element's published `ifc_class`**
+   (`elements.csv`), the project programme / milestone dates, and the
    `validation_run_id`, `ruleset_id`, and `ruleset_version` of that run.
+   `ifc_class` is read for one purpose only — admitting an element as an
+   observation subject of an activity whose `subject_classes` name that class
+   (§3.1) — and is never read as a readiness signal, an applicability
+   substitute, or a proxy for whether a rule reached the element.
 2. **The composed Pack(s) and Overlay for the project** — produced and
    fail-closed-validated by the loading/composition route item that follows
    this one. This document *consumes* that composed structure; it does not
@@ -180,6 +225,40 @@ element inventory — which is what makes an unevaluated element appear as a
 scope exactly as declared; the assessment resolves coverage *within* it and
 never widens or narrows it silently.
 
+**The declared scope is one thing; which of its elements a given activity is
+*about* is another, and the second is Pack data (closes E-3).** Expanding a
+`model_key` and then handing every element to every requested activity was
+the shape this design previously had, and `pcert-sample`'s own `hvac` model
+shows what it produces: the two `IfcBuildingElementProxy` setout markers
+`origin` and `geo-reference` — no storey, outside R-004's and R-005's
+applicability, `geo-reference` with no finding of any kind — would become
+subjects of the ceiling activity and yield an `UNKNOWN` *about a survey
+marker*, routed to an action that extends the rule set until a setout marker
+reports a storey. The verdict would be correct about the evidence and about
+the wrong object.
+
+Each requested activity therefore admits subjects from the declared scope by
+the activity's own `subject_classes` (ADR 0002 §3.2), and by nothing else
+(§3.1). Two properties of that rule matter more than the mechanism:
+
+- **It is class data, never coverage data.** Admission never consults whether
+  an element has a finding, an applicable requirement, or a binding. Letting
+  coverage decide is the case-4 trap in a second costume: the `IfcChimney`
+  `hvac::3dkFAzOGrAIuOzY_RdrdVv` produces **zero** findings, is admitted by
+  every one of this Pack's three activities because it is an `IfcChimney`,
+  and reaches the `not-yet-evaluated` reading it should. The two proxies are
+  excluded because of what they *are*, not because of what the rules did or
+  did not do to them.
+- **Nothing declared silently disappears.** For every requested activity, every
+  declared scope key is accounted for as either an admitted subject or an
+  explicitly listed out-of-class key carrying the `ifc_class` that excluded it
+  (§3.3). A key outside *every* requested activity's classes is therefore
+  listed under every one of them; the request-level statement "this key was in
+  your scope and no requested activity was about it" is a rendering of those
+  per-activity lists, not a separate fact. A mistyped class name in a Pack
+  surfaces here as elements the activity declined to be about — visibly — and
+  never as a scope that quietly shrank.
+
 The **release scope** of a future `CONDITIONAL` promotion (§4.4) is a
 separate, possibly narrower, named scope — "ground-floor ceiling zones only"
 in Checkpoint B case 3's counterfactual. It is never the assessed scope by
@@ -216,9 +295,12 @@ artefacts the verdict is true of:
   no validated facts it may honestly attribute to those versions.
 - A verdict is only ever true of the exact versions named. Re-issuing either
   model makes every prior verdict for that context **stale**, requiring a
-  fresh assessment; a recheck (§4.5) re-confirms both that the underlying
-  evidence still reads as before **and** that the context is still current,
-  by comparing content identifiers — a value comparison, never a clock read.
+  fresh assessment; a successor record (§4.5) re-confirms both that the
+  underlying evidence still reads as before **and** that the context is still
+  current, by comparing content identifiers — a value comparison, never a
+  clock read. That same comparison is what an `authorisation` successor must
+  pass identically, and what a continued `CONDITIONAL` promotion lapses on
+  when it fails.
 - The validation run's logical `as_of` is configuration
   (`AGENTS.md` rule 1) and part of `validation_run_id`; it is provenance of
   the context, not itself a model version, and the assessment reads no other
@@ -238,38 +320,91 @@ technical-director review).
 
 ### 3.1 Observation subjects, readings, and grain
 
-Three terms, kept distinct:
+Three terms, kept distinct. The trichotomy is unchanged; what changed this
+round is that **grain is now read from the Pack rather than assigned here**
+(ADR 0002 §3.1, `evidence_requirements[].subject_grain`), and that a subject
+may be a pair (closes E-2):
 
 - An **observation subject** is the thing a subscope's membership is a *set
   of*, and the only thing that is split, ordered, and recorded as a
-  subscope's members. It is always a key that actually exists: an
-  `element_key`, or — for an activity whose every evidence requirement is
-  `whole-scope` (below) — the single model-pair subject
-  `(producing model_key, consuming model_key)`. An activity's observation
-  subjects are its assessed scope (§2.1), resolved against the producing
-  model version, to the finest grain any of its evidence requirements reads
-  at. In this worked Pack every activity's subjects are `element_key`s.
+  subscope's members. It is always a key, or a tuple of keys, **every member
+  of which actually exists**:
+  - an `element_key`;
+  - a **penetration pair** `(penetrating element_key, penetrated
+    architectural element_key)` — the subject a `per-subject-pair` evidence
+    requirement reads at (below);
+  - or — for an activity whose every evidence requirement is `whole-scope` —
+    the single model-pair subject `(producing model_key, consuming
+    model_key)`.
+
+  An activity's observation subjects are derived from the assessed scope
+  (§2.1) in two declarative steps, in this order:
+
+  1. **Class admission.** Each `element_key` the declared scope resolves to,
+     against the producing model version, is admitted as a subject of this
+     activity **iff** its published `ifc_class` is one of the activity's
+     `subject_classes` (ADR 0002 §3.2), compared by exact string equality.
+     Admission reads class and only class: never a finding, never a binding,
+     never an applicability set. For `pcert-sample`'s `hvac` model and this
+     Pack's three activities, that admits the duct, the two air terminals and
+     the `IfcChimney` — including the chimney's **zero** findings, which is
+     the entire point — and excludes the `origin` and `geo-reference`
+     `IfcBuildingElementProxy` setout markers. An activity whose every
+     evidence requirement is `whole-scope` declares no `subject_classes`,
+     admits no element subject, and has the model-pair subject instead.
+  2. **Refinement.** A subject is refined into finer subjects at, and only at,
+     a node whose evidence requirement declares a finer grain than the
+     subject currently carries (§3.2 step 2). In this Pack that happens
+     exactly once: at `opening-status-node`, an admitted `element_key` whose
+     `penetration-determination` reading was `penetration-confirmed` refines
+     into one penetration pair per architectural element that determination
+     named. Refinement never adds an element to the scope and never removes
+     one: every refined subject carries the admitted `element_key` it came
+     from, and that provenance is recorded (§3.3).
+
 - A **reading** is one evidence requirement's outcome for one subject: the
   subject paired with one binding of that evidence requirement — a
   `requirement_key`, or an accepted `method_id` — reducing to exactly one of
   the evidence requirement's declared `outcomes[]`. A reading is what ADR
   0002 §3.2 calls an *atomic observation unit*; it is hung on a subject,
-  never a subject itself.
-- A **grain** is how an evidence requirement's readings relate to subjects:
+  never a subject itself. **A reading reduces to exactly one outcome, and
+  this is why the pair grain was needed rather than a list-valued reading:** a
+  reading holding two outcomes at once would put the disagreement inside the
+  atom, where the partitioning rule has no carrier to split on.
+- A **grain** is declared by the Pack on each evidence requirement and says
+  how that requirement's readings key onto subjects:
 
-| Grain | Meaning | This Pack |
+| Grain (Pack-declared) | Meaning | This Pack |
 |---|---|---|
-| `per-subject` | one reading per observation subject | `asset-identity`, `in-model-position` (subject × each bound `requirement_key` that applies to it); `penetration-determination` (the penetrating `element_key`); `opening-status` (the penetrating `element_key` — any corresponding opening is an *attribute* of that subject's determination, present or a named absence, never a second key) |
 | `whole-scope` | exactly one reading for the entire assessed scope, hung identically on every subject that reaches the node | `cross-model-alignment` (one fact about the model pair) |
+| `per-subject` | one reading per observation subject | `asset-identity`, `in-model-position` (subject × each bound `requirement_key` that applies to it); `penetration-determination` (the penetrating `element_key`) |
+| `per-subject-pair` | one reading per *(subject, counterpart)* pair, the counterparts named by the determination the requirement's `pair_source` points at | `opening-status` (one reading per *(penetrating element, penetrated architectural element)*; the opening itself is an **attribute** of that pair's determination — present, or a named absence — never a key) |
 
 A `whole-scope` evidence requirement contributes **no subject of its own**
 and, by definition, cannot be heterogeneous across subjects. A future Pack
 that needs a finer alignment fact — per storey, say — declares it
-`per-subject` at that grain, and it then splits like any other. A grain is
-never finer than the subject and never introduces a key that might not
-exist — which is why `opening-status` is keyed by the penetrating element and
-not by a penetration/opening pair whose second member is absent exactly when
-the outcome is `not-modelled`.
+`per-subject` at that grain, and it then splits like any other.
+
+**No grain ever introduces a key that might not exist.** The previous
+revision kept `opening-status` at `per-subject` for exactly this reason — an
+opening/penetration pair whose second member is absent precisely when the
+outcome is `not-modelled` would be a phantom key — and that rule is not
+relaxed, it is satisfied by a different pair. The `per-subject-pair` grain's
+second member is the **penetrated architectural element**, which exists
+whether or not anyone has cut an opening in it, and which the
+`penetration-confirmed` determination named as an `element_key` of the
+consuming model version. So both members exist whenever the pair does, the
+assessment invents neither, and the thing that may be absent — the opening —
+stays where D-1 put it: an attribute of the reading, recorded as a named
+absence.
+
+**A `penetration-confirmed` determination that names no architectural
+element, or names a key absent from the consuming model version in the
+model-version context, is not admissible evidence.** It produces no
+`penetration-confirmed` reading; the subject reads `not-yet-determined` and
+routes to `UNKNOWN` / `penetration-not-determined` (§7.3). This is the
+fail-closed direction: an inadmissible determination is no determination, and
+never a pair with a member the assessment had to invent.
 
 **Within-subject reading rule** (from ADR 0002 §3.2, restated): for a
 `per-subject` finding-backed evidence requirement, take every finding for the
@@ -284,9 +419,12 @@ construction ADR 0002 §3.2 delegates here: it refines §3.2's "subscopes …
 carrying the units that read [an outcome]" to *subjects*, and is monotone
 with §3.2's precedence — a `FAIL` under any applicable key still dominates.
 The precedence is **only** a within-subject rule and never a cross-subject
-selector. For a `per-subject` assessment-backed evidence requirement the
-reading is the recorded determination for that subject, or its `not-yet-*`
-outcome when none exists.
+selector. For a `per-subject` or `per-subject-pair` assessment-backed evidence
+requirement the reading is the recorded determination for that subject — for a
+pair, the determination about *that* opening — or its `not-yet-*` outcome when
+none exists. No finding-backed evidence requirement in this Pack reads at pair
+grain, and none has to: the rule above is stated over subjects, and a pair is
+a subject.
 
 An `insufficient_evidence[]` entry (R-010 under `cross-model-alignment`) is
 **never** a reading: its `PASS` is recorded as context only and produces none
@@ -297,11 +435,16 @@ of the outcomes, exactly as ADR 0002 §3.2 states.
 **Answer (construction).** For one activity, one assessed scope, one
 model-version context:
 
-1. **Resolve the observation subjects** (§3.1) and put them in `element_key`
-   lexicographic order (equivalently `(model_key, ifc_guid)` ascending) — a
-   frozen string key, so the order is deterministic with no clock, no set
-   iteration, and no filesystem ordering (`AGENTS.md` rule 1). An activity
-   with a single model-pair subject needs no ordering. `whole-scope` evidence
+1. **Admit the observation subjects** (§3.1 step 1) — the declared scope's
+   `element_key`s whose published `ifc_class` is one of the activity's
+   `subject_classes` — and put them in `element_key` lexicographic order
+   (equivalently `(model_key, ifc_guid)` ascending): a frozen string key, so
+   the order is deterministic with no clock, no set iteration, and no
+   filesystem ordering (`AGENTS.md` rule 1). Every declared key the class
+   admission excluded is recorded, for this activity, with the `ifc_class`
+   that excluded it (§3.3) — the accounting is total, and this step is the
+   only place an element leaves an activity's reckoning. An activity with a
+   single model-pair subject needs no ordering. `whole-scope` evidence
    requirements contribute nothing to this order; their one reading is
    recorded on the path (§3.3), not as a subject.
 2. **Walk the decision tree from `activities[].decision_root_node`, carrying
@@ -319,18 +462,55 @@ model-version context:
      already split at an earlier `per-subject` node, the one `whole-scope`
      reading rides along identically with every surviving subgroup that
      reaches this node.
+   - **`per-subject-pair` evidence requirement: refine first, then read.**
+     Before the node is read, each subject in the subgroup is replaced by one
+     pair subject per counterpart the `pair_source` determination named for
+     it — for `opening-status`, one `(penetrating element, penetrated
+     architectural element)` pair per architectural element the
+     `penetration-confirmed` determination listed. The node is then read
+     exactly like any other `per-subject` node, over the refined subjects:
+     pairs reading the same outcome stay one subgroup, pairs reading
+     different outcomes split. Refinement is why a chimney through a floor
+     slab and then the roof can reach `cross-referenced` for one pair and
+     `not-modelled` for the other instead of collapsing to one of them, and
+     why one shared shaft opening serving three MEP lines is three pairs
+     naming the same counterpart, each asking whether that opening is
+     inspectably linked to *its own* penetrating element. Refinement changes
+     the grain of the carrier and nothing else: it adds no element to the
+     assessed scope, removes none, and every refined subject records the
+     admitted `element_key` it came from (§3.3). A subject refines at most
+     once on any path, because invariant 17 makes a pair-grained node
+     reachable only below its own `pair_source` branch and invariant 15
+     forbids retesting an evidence requirement an ancestor already ruled out.
    - a subject the branch structure never routes to a node — an element
      whose `penetration-determination = no-penetration` branch carries
      `renders_inapplicable = ["opening-status"]` and terminates at `READY` —
-     produces no reading for that node's evidence requirement at all. "The
-     pair's second member does not exist" never arises: an absent opening is
-     an attribute of the penetrating subject's determination (a named
-     absence, §3.3), just as an absent finding is.
+     produces no reading for that node's evidence requirement at all, and is
+     never refined, since refinement happens only at the node that declares
+     the finer grain. "The pair's second member does not exist" never arises:
+     both members of a penetration pair are elements the determination named
+     or the scope declared, and the thing that may be absent — the opening —
+     is an attribute of the pair's determination (a named absence, §3.3),
+     just as an absent finding is.
 3. **A subscope is a subgroup that has reached a terminal leaf:** the
-   maximal set of observation subjects that traversed the **identical
-   ordered path** of `(node_id, outcome)` pairs from the root to that leaf.
-   The partition of the activity's assessed scope is the set of these
-   leaf-terminal subscopes.
+   maximal set of observation subjects — *as they stand at that leaf*, refined
+   or not — that traversed the **identical ordered path** of
+   `(node_id, outcome)` pairs from the root to that leaf. The partition of the
+   activity's admitted scope is the set of these leaf-terminal subscopes.
+
+   **Refinement means one admitted element may appear in more than one
+   subscope, and that is the design, not a violation of Framework invariant
+   1.** A penetration pair is not the element it refined from; it is one
+   opening to cut, which is the unit of labour `builders-work-openings`
+   decides about — Checkpoint B's question is "can Architecture cut the
+   builder's work openings", not "is this chimney good". Invariant 1 attaches
+   one verdict to one *(activity × assessed scope × model-version context)*
+   cell, and each subscope is its own such cell (§6); a chimney whose slab
+   opening is cross-referenced and whose roof opening is not modelled has two
+   pieces of labour in two states, and reporting one verdict for it would
+   discard exactly the distinction the partition exists to hold. Every pair
+   still names its admitted element, so nothing about which elements the
+   verdicts concern is lost.
 
 **Splitting is incremental, down the tree — never an up-front cross-product
 of every evidence requirement's outcome vocabulary.** A subgroup splits only
@@ -367,18 +547,26 @@ split.
 **Answer (identification).** Within one assessment record, a subscope is
 identified by its **ordinal** in the canonical ordering of that activity's
 partition: by the subscope's root-to-leaf outcome sequence (lexicographic
-over outcome names), then by its smallest member subject key. The ordinal,
+over outcome names), then by its smallest member subject key. A pair
+subject's key orders as the tuple *(penetrating `element_key`, counterpart
+`element_key`)*, both frozen strings, so the ordering is total and clock-free
+whatever grain the leaf's members carry; within one leaf every member has the
+same grain by construction, since refinement applies to a whole subgroup. The ordinal,
 together with the record's `assessment_digest` (§5) and the
 `pack_id::activity_id`, is the handle a resolving assignment (§4.3), a
-`CONDITIONAL` promotion (§4.4), and a later recheck (§4.5) point at.
+`CONDITIONAL` promotion (§4.4), and a later successor record of either kind
+(§4.5) point at.
 
 **Answer (recording — the carrier and the readings hung on it, kept
 separate).** Per requested activity, the record carries an ordered list of
 subscope entries. Each entry separates:
 
 - **the carrier** — `members`: the ordered observation subjects in the
-  subscope (`element_key`s, or the lone model-pair subject). This is the set
-  the subscope *is*.
+  subscope (`element_key`s, penetration pairs, or the lone model-pair
+  subject). This is the set the subscope *is*. A pair member records both its
+  keys **and** the admitted `element_key` it refined from, so a reader can go
+  from any verdict back to the element in the declared scope that it concerns
+  without re-deriving the partition.
 - **the path** — the ordered `(node_id, evidence_requirement_id, grain,
   outcome)` quadruples from root to leaf, and for each node:
   - a `per-subject` node: the per-subject readings — for each member
@@ -392,6 +580,29 @@ subscope entries. Each entry separates:
   `resolution_routes[]` row for that `resolution_kind` (`consequence_kinds[]`,
   `default_role`, `next_action`, `recheck_condition`); and the resolving
   assignment (§4.3).
+
+**Answer (recording — the total accounting of the declared scope, closes
+E-3).** Alongside the partition, each requested activity records
+`out_of_subject_class[]`: the declared assessed-scope keys the activity's
+class admission excluded, each with the `ifc_class` that excluded it, in the
+same `element_key` lexicographic order. It carries **no verdict, no
+`resolution_kind`, no route, and no assignment**, and it is not a subscope:
+an out-of-class key is not an *(activity × scope × model-version)* cell, and
+minting a verdict for it would invent a Framework object for "the readiness of
+something this activity is not about". What it is, is a completeness
+statement, and the property it makes checkable is total accounting:
+
+> For every requested activity, every key the declared assessed scope resolves
+> to appears **exactly once** in either that activity's admitted subjects — at
+> its coarsest form, before any refinement — or that activity's
+> `out_of_subject_class[]`, and never in both.
+
+The request-level observation a caller usually wants — "these keys were in my
+scope and none of the activities I asked about was about them" — is the
+intersection of those per-activity lists, and is a **rendering** of them in
+exactly the sense §6's human summary is a rendering of the partition: it
+states nothing the record does not already state, carries no verdict, and is
+never an input to anything.
 
 A subscope has **no identity that outlives its assessment record**. A recheck
 names the prior record's `assessment_digest` + activity + subscope ordinal,
@@ -435,15 +646,30 @@ assessment; none is written back into a Pack or an Overlay.
   bindings resolved against (§3.3 of ADR 0002: `requirement_key` proves the
   row was found, `ruleset_id` + `ruleset_version` prove it still means what
   the binding assumed);
+- the **successor reference**, when this record is one (§4.5): its `kind`
+  (`recheck` or `authorisation`), and the prior record's `assessment_digest`,
+  activity, and subscope ordinal it succeeds. Absent on an originating
+  record;
 - `assessment_digest` (§5) — a digest of this whole completed record, request
   and resolved result together, not of the request alone; logically the last
-  thing written.
+  thing written, and the point at which the record is **sealed** (§4.5).
 
 ### 4.2 Per activity, per subscope
 
-Everything in §3.3: `members`, `path`, `verdict`, `resolution_kind`, the
-resolved `resolution_routes[]` chain, the evidence citations and
-named-absence markers.
+Everything in §3.3: `members` (with each pair member's originating
+`element_key`), `path`, `verdict`, `resolution_kind`, the resolved
+`resolution_routes[]` chain, the evidence citations and named-absence
+markers.
+
+**Per activity, additionally:** `out_of_subject_class[]` (§3.3) — the declared
+scope keys this activity's class admission excluded, each with its
+`ifc_class`, carrying no verdict. An activity whose admitted subject set is
+**empty** — every declared key out of class — records that partition as empty
+and reaches **no verdict at all**: there is no cell for a verdict to attach
+to. The absence is stated in the record rather than left to inference, and
+**nothing downstream may read an empty partition as a release**; `READY` is
+reached only by a subject traversing a path to a `READY` leaf, and an activity
+with no subjects has no such traversal.
 
 ### 4.3 The resolving assignment (Checkpoint B §5 rows 8a–8d)
 
@@ -458,8 +684,11 @@ For every non-`READY` subscope, recorded in one direction only:
   and the bare `default_role` string is never recorded as though it were an
   assignee (ADR 0002 §3.5).
 - `actual_actor` — an execution fact, recorded **in addition to**
-  `assigned_team_or_person` if and when someone acts (row 8d), never instead
-  of it. Its absence is the legible state "assigned, not yet started".
+  `assigned_team_or_person` (row 8d), never instead of it. Its absence is the
+  legible state "assigned, not yet started". Because a record is sealed at
+  §4.5, an actor who acts after this record was written is not patched into
+  it: the actor is carried by whichever successor record is written next, and
+  this record keeps saying what was true when it was written.
 
 ### 4.4 A `CONDITIONAL` promotion
 
@@ -495,30 +724,116 @@ that the evidence changed (ADR 0002 §1, Checkpoint B §1). A `CONDITIONAL`
 release with no recorded blocker or gap beneath it would be indistinguishable
 from a fabricated `READY`, and is not a state this shape can express.
 
-### 4.5 Exit / recheck status
+### 4.5 Exit status, successor records, sealing, and how a promotion continues
 
 - The `recheck_condition` for every non-`READY` subscope, copied from the
   pinned Pack's route (so a later reader is not renegotiating it —
-  Checkpoint B §5 item 9);
-- for a recheck assessment: the prior **record's** `assessment_digest` +
-  activity + subscope ordinal it re-examines, and whether that subscope's
-  `recheck_condition` is now met **and** the model-version context is still
-  current (§2.3). A recheck is a new record with its own `assessment_digest`
-  (§5); the prior record is unchanged.
+  Checkpoint B §5 item 9).
 
-**A recheck does not inherit a prior record's `CONDITIONAL` promotion
-(D-4).** A `CONDITIONAL` is a record that a named person accepted a named
-risk against a named scope *at one point in time* (ADR 0002 §3.8; §1
-invariant 6). On a recheck — even against the identical model-version
-context — if the deficiency has cleared, the subscope reaches `READY` /
-`BLOCKED` / `UNKNOWN` on its own current evidence and no `CONDITIONAL` is
-written. If the deficiency persists and the release is to continue, the
-recheck record must carry its **own** `CONDITIONAL` promotion, with a current
-authoriser, the currently accepted risk, and the still-applicable voiding
-condition re-stated — never carried forward silently. Letting an acceptance
-roll over untouched would let it outlive the authoriser's knowledge of the
-current state, one step removed from the "knowing a risk exists is not the
-same as someone having accepted it" trap Checkpoint B §1 names.
+**A record is sealed when its `assessment_digest` is computed (closes E-5).**
+No field of a sealed record is ever rewritten, corrected, appended to, or
+deleted — not a verdict later shown wrong, not an assignment later
+reassigned, not an actor who acted afterwards, not a promotion that later
+lapses. Every later fact about the same assessment is a **new record citing
+the sealed one**. The digest is what makes this checkable rather than merely
+promised: it is a hash of the whole resolved record (§5), so a rewritten
+record no longer matches its own digest, and the references other records
+hold to it break loudly instead of silently pointing at changed content.
+This is the same discipline the published contract already runs on, applied
+to a tree the contract does not cover.
+
+**Two kinds of successor record, and no others.** Each carries the successor
+reference of §4.1 — `kind`, plus the prior record's `assessment_digest`,
+activity, and subscope ordinal — and each is a full new record with its own
+`assessment_digest`. The prior record is untouched in both cases.
+
+**`kind = "recheck"` — the evidence is read again.** It re-derives subscope
+membership and every reading from the current evidence, and records whether
+the cited subscope's `recheck_condition` is now met **and** whether the
+model-version context is still current (§2.3), by comparing content
+identifiers. Its verdict may differ from the cited record's; that is what it
+is for.
+
+**`kind = "authorisation"` — the evidence is unchanged and an authorisation
+is what is new (closes E-5).** This is the shape the real sequence needs and
+the previous revision had no way to express: an assessment produces `UNKNOWN`,
+the coordination review that reads it accepts the risk in the room, and the
+minutes cite a record that carries the signature. Writing that as a
+`recheck` would misdescribe it — nothing was rechecked — and patching it into
+the `UNKNOWN` record is forbidden by sealing. So it is its own kind, and its
+defining constraint is that its claim of "evidence unchanged" is **proved,
+never asserted**:
+
+- it re-derives the cited subscope exactly as a recheck does, and **requires**
+  the re-derived membership, path, every reading with its citations, the
+  verdict, and the `resolution_kind` to be identical to the cited record's;
+- it requires the model-version context, the cited `validation_run_id`,
+  `ruleset_id`, `ruleset_version`, and the composed Pack's `pack_version` to
+  be identical too;
+- if **anything** differs, it is not an authorisation record. The assessment
+  refuses to write it as one and says which comparison failed; what the
+  situation actually calls for is a `recheck`, which may then carry its own
+  promotion. There is no "assume unchanged" path, and no partial write.
+
+An authorisation record carries the `CONDITIONAL` promotion of §4.4 with all
+nine fields, and may carry an `actual_actor` (§4.3). It changes no verdict:
+the subscope's original verdict, `resolution_kind`, and underlying blocker or
+gap are re-derived identically and stand, with the promotion layered on top,
+exactly as §4.4 requires.
+
+**How a `CONDITIONAL` promotion continues across records (closes E-4; this
+supersedes the D-4 ruling the previous revision recorded, at the technical
+director's direction).** The earlier rule was that a promotion is never
+inherited and must be re-authorised in every successor record. The rule is
+now:
+
+> A promotion **continues with the record** — carried forward and restated in
+> full, never silently — for as long as **both** of the following hold: its
+> own recorded voiding / failure condition (field 9) has not been met, and
+> the model-version context is unchanged. If **either** changes, the
+> promotion **lapses**, and continuing the release requires a fresh
+> authorisation.
+
+Four things that rule does not relax. A continued promotion is still
+**additive**: the subscope's own current verdict, `resolution_kind`, and
+underlying blocker or gap are re-derived and recorded, with the promotion on
+top — it never becomes `READY` and never erases the deficiency. It is still
+carried **in full**: all nine §4.4 fields are restated in the successor
+record, and a successor that cannot restate them all does not carry the
+promotion. It is still **bounded by its release scope**: continuation covers
+only members inside the promotion's recorded release scope and among the
+members it was granted over — a subject that appears in the subscope for the
+first time on a later record is not covered, and gets no promotion. And it
+still requires an **authorisation role listed for this exact
+`pack_id::resolution_kind`**; nothing about continuation creates one.
+
+When the deficiency has cleared, there is nothing to continue: the subscope
+reaches its own verdict on current evidence and the record states that the
+promotion is no longer applicable. When it lapses, the successor record says
+so and why — voiding condition met, or model version changed — and shows the
+subscope's own verdict standing alone. **A lapse is always recorded; a
+promotion never expires by going unmentioned.**
+
+**Why the reversal, stated plainly, because the earlier reasoning was not
+wrong about the risk it named.** The concern was that an acceptance could
+outlive the authoriser's knowledge of the current state. But the ninth field
+exists precisely to bound that: a promotion that must name the condition that
+would end it is an authorisation that expires on its own terms, and requiring
+a fresh signature at every recheck as well ties **signing frequency to query
+frequency**. That is the perverse incentive: a team that rechecks weekly
+needs a weekly signature, and the cheapest way to reduce signatures is to
+recheck less often — which suppresses exactly the activity that would surface
+the change that should void the promotion. Continuation on stated conditions
+keeps the acceptance bounded and makes rechecking free.
+
+**This rule is negotiable and is flagged as such.** It trades a re-signature
+per query against a re-signature per material change, and which of those a
+project wants is a product question about how authorisation is governed, not
+a structural property of the record. A later product round may move it; what
+must not move with it is any of the four non-relaxations above — additive,
+carried in full, bounded by release scope, authorised for this exact
+`pack_id::resolution_kind` — since each of those is a consequence of Framework
+invariant 6 rather than a policy choice.
 
 ### 4.6 Consequence magnitude is cited, never computed
 
@@ -556,14 +871,21 @@ the record is complete, over its canonically-ordered content:
   sorted assessed-scope keys, the model-version context (both `model_key`s,
   both content identifiers, the handover event fields), and the **cited**
   `ruleset_id`, `ruleset_version`, `validation_run_id`;
-- the resolved result — for every requested activity, the ordered
-  observation subjects, and every subscope's `path` (with its per-subject and
-  `whole-scope` readings, each carrying its cited `finding_key`s /
-  determination references / named-absence markers), `verdict`,
-  `resolution_kind`, resolved route, and assignment;
-- any `CONDITIONAL` promotion (§4.4), with all nine of its fields;
-- for a recheck, the prior record's `assessment_digest` it re-examines
-  (§4.5) — already final, so no cycle.
+- the resolved result — for every requested activity, the ordered admitted
+  observation subjects, that activity's ordered `out_of_subject_class[]` with
+  each key's `ifc_class` (§3.3), and every subscope's `path` (with its
+  `whole-scope`, `per-subject` and `per-subject-pair` readings, each pair
+  member carrying both its keys and the admitted `element_key` it refined
+  from, and each reading carrying its cited `finding_key`s / determination
+  references / named-absence markers), `verdict`, `resolution_kind`, resolved
+  route, and assignment;
+- any `CONDITIONAL` promotion (§4.4), with all nine of its fields, whether
+  first granted in this record or continued into it (§4.5) — a continued
+  promotion is hashed as the content it is, so a record that carries one is
+  never byte-identical to the same record without it;
+- for a successor record, its `kind` and the prior record's
+  `assessment_digest`, activity, and subscope ordinal it succeeds (§4.5) —
+  already final, so no cycle.
 
 It changes whenever the evidence read or a verdict reached changes — which is
 exactly when §3.3 and §4.5 need a different handle — and is identical for two
@@ -588,8 +910,12 @@ byte-identical records (§8, determinism paragraph).
   does not change this — a cited value flowing *into* the digest never makes
   the digest flow *out* into what it cited.
 - **Confined to the record.** It appears only in the assessment record and in
-  the recheck references between records (§4.5). It is never exported,
+  the successor references between records (§4.5). It is never exported,
   snapshotted, or joined against a published CSV.
+- **The seal.** Because it covers the whole resolved record, it is also what
+  makes §4.5's no-rewrite rule checkable: a record edited after its digest was
+  computed no longer hashes to the digest other records cite. Sealing is not a
+  new mechanism, it is this one read as a guarantee.
 
 A subscope-level digest is not minted; the ordinal (§3.3) is the within-record
 handle. If one were ever added it would obey every rule above and stay inside
@@ -634,15 +960,23 @@ exactly one verdict, so:
      Framework object it would require. Asking "the verdict of the whole
      requested scope" returns the partition.
 - When the partition is trivial (one part — the live case throughout ADR
-  0002 §6), there is exactly one subscope = the whole assessed scope = one
+  0002 §6), there is exactly one subscope = the whole admitted scope = one
   verdict, and presentation is identical to an un-partitioned assessment.
+- When the partition is **empty** — no declared scope key was admitted by the
+  activity's `subject_classes` (§3.1) — there is no cell, and therefore **no
+  verdict**. The record says so explicitly, alongside the
+  `out_of_subject_class[]` list that explains it (§4.2). An empty partition is
+  read as "this activity is about none of what you asked about", never as
+  `READY`: nothing traversed a path to a `READY` leaf, and an absence of
+  blockers among zero subjects is not the absence of blockers invariant 3
+  means.
 
 **A non-authoritative human summary** may be shown alongside the partition —
 counts per verdict class, the most severe class present. It is a rendering
 *of* the partition: it states nothing the partition does not already state,
 carries no verdict of its own, is never stored as one, and is never an input
 to the resolving assignment (§4.3), a `CONDITIONAL` promotion (§4.4), a
-recheck (§4.5), or anything downstream. Summarising verdict classes across
+successor record (§4.5), or anything downstream. Summarising verdict classes across
 subscopes is a different act from selecting a named outcome inside one
 evidence requirement — the latter is what ADR 0002 §3.2 forbids, and this
 summary does not do it. There is no authoritative activity-level verdict
@@ -670,6 +1004,13 @@ No case below resolves by picking a default, taking the first match in an
 unordered collection, or reading anything time-dependent (`AGENTS.md` rule 1;
 ADR 0002 §3.7 closing paragraph).
 
+**Every row the previous revision carried is unchanged, row for row, in
+wording and in its mapping to ADR 0002 §3.7.** This round adds rows and
+removes none: five in §7.1 for the request-side consequences of a declared
+object scope and a Pack-declared grain, one in §7.2 for a promotion whose
+continuation is not covered, and one in §7.3 for an inadmissible penetration
+determination.
+
 ### 7.1 Composition / request defects — the assessment refuses
 
 | Missing / wrong input | Assessment behaviour | ADR 0002 §3.7 row |
@@ -685,7 +1026,12 @@ ADR 0002 §3.7 closing paragraph).
 | A requested activity has a reachable non-`READY` leaf whose `resolution_routes[].default_role` has no `overlay.team_mapping[]` row | Refuse this request only; contract 1.6 pipeline and any fully-bound activity unaffected; never read the bound rule's `owner_role`; never record the bare `default_role` string as an assignment | "A purpose assessment is requested for an activity whose reachable non-`READY` leaves name a default role with no matching `overlay.team_mapping[]` entry" |
 | The request omits the assessed scope | Refuse — scope is a required input, never defaulted to "whatever has findings" (§2.1) | (new to this checkpoint; consistent with ADR 0002 §3.2's coverage-is-not-scope rule and `AGENTS.md`'s "worst outcome available" principle) |
 | No `validation_run_id` exists for the project / the model versions in the context, or the cited run did not validate those versions | Refuse — there are no validated facts the assessment may honestly cite (§2.3) | (new to this checkpoint; the assessment reads post-`check` facts and cannot run without them) |
-| Any Pack-load structural invariant fails (dangling node, cycle, uncovered `outcome`, `CONDITIONAL` leaf, orphaned/duplicate `resolution_kind`, out-of-scope `next_node`, `renders_inapplicable` violation, unresolved `direction_id`, …) | Composition already failed closed at Pack load; the assessment has no valid tree and refuses | the fifteen Pack-load rows and the `resolution_routes[]` / `directions[]` / `decision_nodes[]` rows of ADR 0002 §3.7 |
+| The request's assessed scope names an `element_key` absent from the producing model version's element inventory | Refuse — a key with no `ifc_class` cannot be admitted or excluded, so the total accounting of §3.3 could not be produced for it, and silently dropping it is the failure mode this checkpoint's whole scope rule exists to prevent | (new to this round; follows from the class admission in §3.1 and from ADR 0002 §3.2's coverage-is-not-scope rule) |
+| A requested activity declares element-grained evidence and the composed Pack gives it no `subject_classes` (or gives an empty, duplicated, or wildcard list) | Composition already failed closed at Pack load; the assessment has no admissible subject rule and refuses | ADR 0002 §3.7's two `subject_classes` rows (**closes E-3**) |
+| An evidence requirement of a requested activity carries no `subject_grain`, or a `per-subject-pair` grain with no `pair_source` (or the reverse) | Composition already failed closed at Pack load; the assessment cannot key the requirement's readings and refuses | ADR 0002 §3.7's `subject_grain` / `pair_source` rows, and invariant 16 (**closes E-2**) |
+| A successor record with `kind = "authorisation"` re-derives evidence that differs from the record it cites — in membership, path, any reading, verdict, `resolution_kind`, model-version context, cited run, ruleset, or `pack_version` | Refuse to write it as an authorisation, naming which comparison failed; the correct successor is a `recheck`, which may carry its own promotion. Never written as a partial record, and never with "unchanged" asserted rather than proved (§4.5) | (new to this round; **closes E-5**) |
+| Any write is attempted against a record whose `assessment_digest` has been computed | Refuse — a sealed record is never rewritten, corrected, appended to, or deleted; every later fact is a new record citing it (§4.5) | (new to this round; **closes E-5**) |
+| Any Pack-load structural invariant fails (dangling node, cycle, uncovered `outcome`, `CONDITIONAL` leaf, orphaned/duplicate `resolution_kind`, out-of-scope `next_node`, `renders_inapplicable` violation, unresolved `direction_id`, `pair_source` violation, …) | Composition already failed closed at Pack load; the assessment has no valid tree and refuses | the eighteen Pack-load invariant rows and the `resolution_routes[]` / `directions[]` / `decision_nodes[]` rows of ADR 0002 §3.7 |
 
 ### 7.2 `CONDITIONAL` promotion defects — the promotion refuses, the leaf stands
 
@@ -695,6 +1041,7 @@ ADR 0002 §3.7 closing paragraph).
 | The promotion cites an authoriser role not in `may_authorise_roles` for that exact `pack_id::resolution_kind` | Refuse to record it as `CONDITIONAL` — it is an unauthorised release, not a promotion | ADR 0002 §3.8: "a promotion citing a role not listed for this `resolution_kind` is not a `CONDITIONAL`, it is an unauthorised release" |
 | The promotion omits any of the nine §4.4 fields | Refuse — an additive promotion that cannot name its original verdict, blocker/gap, authoriser, role, versions, risk, release scope, and voiding condition is indistinguishable from a fabricated `READY` | ADR 0002 §3.8 promotion field list; §1 invariant 6 |
 | `overlay.risk_authorisations[].may_authorise_roles` is empty or contains a wildcard / `"all"` | Composition already failed closed; no promotion is possible | "An `overlay.risk_authorisations[].may_authorise_roles` is empty, or contains a wildcard, `"all"`, or any similarly unbounded value" |
+| A successor record would continue a promotion whose voiding condition is met, whose model-version context has changed, or over a member outside the promotion's recorded release scope or outside the members it was granted over | The promotion **lapses**, or does not extend to that member; the record states the lapse and its reason and shows the subscope's own verdict standing alone. Never continued silently, and never widened to cover a member it was not granted over (§4.5) | (new to this round; **closes E-4**; ADR 0002 §3.8 promotion field list, fields 6, 8 and 9) |
 
 ### 7.3 Unresolved outcomes — not failures, routed as `UNKNOWN`
 
@@ -703,7 +1050,8 @@ ADR 0002 §3.7 closing paragraph).
 | A validation-backed reading (subject × bound `requirement_key`) has **no finding at all** (an absent finding — the chimney; or `check` has not evaluated this handover) | The subject reads `not-yet-evaluated` for that evidence requirement; its subscope reaches the `UNKNOWN` leaf carrying the `gap_kind`; the named absence is recorded (§3.3, §4.2) | ADR 0002 §3.2: "`not-yet-evaluated` … describe a binding that exists but has not yet produced an admissible result … never a missing binding" |
 | An assessment-bound evidence requirement has a method in the Overlay but **no recorded determination** for these model versions yet | Unit reads `not-yet-confirmed` / `not-yet-determined`; subscope reaches the `UNKNOWN` leaf with its `gap_kind` | ADR 0002 §3.2; the `no-penetration` vs `not-yet-determined` distinction |
 | An R-010 `PASS` exists but no accepted `cross-model-alignment` method has produced a determination | `cross-model-alignment` stays `not-yet-confirmed`; the R-010 `PASS` is recorded as context only and never read as any of the three outcomes | ADR 0002 §3.2 `insufficient_evidence[]` entry: "a `PASS` is not alignment evidence" |
-| A subgroup's subjects disagree on the named outcome at a node | Split into outcome-homogeneous child subgroups (§3.2) — not a failure, and never collapsed by priority | ADR 0002 §3.2 partitioning rule |
+| A recorded `penetration-confirmed` determination names no architectural element, or names a key absent from the consuming model version in the context | Not admissible evidence, so it produces no `penetration-confirmed` reading: the subject reads `not-yet-determined` and reaches `UNKNOWN` / `penetration-not-determined`. The assessment never invents a counterpart to make a pair (§3.1) | ADR 0002 §3.2's `acceptance_condition` for `penetration-determination` (**closes E-2**) |
+| A subgroup's subjects disagree on the named outcome at a node, before or after refinement | Split into outcome-homogeneous child subgroups (§3.2) — not a failure, and never collapsed by priority. A chimney whose slab opening is cross-referenced and whose roof opening is not modelled splits into two pair subscopes with two verdicts | ADR 0002 §3.2 partitioning rule |
 
 ### 7.4 Not errors — the pipeline is untouched
 
@@ -750,7 +1098,9 @@ future Checkpoint D implementation is judged against them:**
 **This checkpoint adds two commitments of the same kind:**
 
 5. **Run an assessment, store an assessment record, or promote a
-   `CONDITIONAL`** — for any project, any Pack, any request. Identical to (1):
+   `CONDITIONAL`** — for any project, any Pack, any request, including a
+   successor record of either kind (§4.5), a continued promotion, and every
+   `out_of_subject_class[]` list (§3.3). Identical to (1):
    the assessment record lives outside `data/processed/`, `reports/`, `ids/`,
    and the contract snapshot; `epc-ct run`, `check`, `group`, every exporter,
    the snapshot, and both `Legacy…` writers never read it; every published
@@ -780,8 +1130,10 @@ reading is implemented. No Pack/Overlay loader and no
 fail-closed *composition* logic is implemented — that is the next route item;
 §7 fixes only how the assessment step behaves when handed an incomplete
 composed input. No `AssessmentRun`, `AssessmentItem`, `EvidenceGap`,
-`BlockerCandidate`, `Subscope`, or promotion object is created or named as
-approved; `assessment_digest` is the one identifier this document
+`BlockerCandidate`, `Subscope`, penetration-pair, out-of-class-ledger, or
+promotion object is created or named as approved — the pair subject and the
+out-of-class list are described shapes inside a record, not runtime types with
+identities of their own; `assessment_digest` is the one identifier this document
 contemplates, and only under the §5 constraints. No project override
 capability is implemented or assumed — ADR 0002 §3.6 defers the entire
 mechanism, and this document designs around no such capability existing. No
@@ -803,13 +1155,21 @@ contract path; an **assessed scope that is a required, explicit request
 input** — an ordered set of `element_key`/`model_key` values resolved
 against, and paired with, an explicit **model-version context**, together
 forming one Framework-invariant-1 cell, never inferred from which findings
-exist and never owned by Pack, Overlay, or direction; **subscopes constructed
-as equivalence classes of observation subjects** — the existing keys a
-subscope is a set of — **split incrementally down the decision tree** (never
-an up-front cross-product), with each evidence requirement's readings hung on
-the subjects at its declared grain (`per-subject` or `whole-scope`),
-identified by ordinal within a record, and recorded with the carrier
-(`members`) and the per-node readings kept separate; an assessment record
+exist and never owned by Pack, Overlay, or direction; **observation subjects admitted from that
+scope by the activity's Pack-declared `subject_classes`** — object-class data,
+never a filter on which elements carry findings, with every excluded key
+recorded per activity so that the accounting of a declared scope is total;
+**subscopes constructed as equivalence classes of observation subjects** — the
+existing keys, or tuples of existing keys, a subscope is a set of — **split
+incrementally down the decision tree** (never an up-front cross-product), with
+each evidence requirement's readings hung on the subjects at the grain the
+Pack declares (`whole-scope`, `per-subject`, or `per-subject-pair`, the last
+refining a subject into one *(penetrating element, penetrated architectural
+element)* pair per counterpart an earlier determination named — both members
+existing whenever the pair does, the opening remaining an attribute and never
+a key), identified by ordinal within a record, and recorded with the carrier
+(`members`, each pair member naming the admitted element it refined from) and
+the per-node readings kept separate; an assessment record
 that **cites** frozen identities and is cited by none; **exactly one minted
 identifier, `assessment_digest`**, a deterministic hash of the whole resolved
 assessment record (request, evidence readings, verdicts, any promotion) —
@@ -818,8 +1178,14 @@ never of raw bytes, never an input to `validation_run_id` / `requirement_key`
 exists only as an additive promotion** carrying all nine ADR 0002 §3.8
 fields, refusing to record without an authoriser role listed for the exact
 `pack_id::resolution_kind`, never becoming `READY` or erasing its deficiency,
-and **never inherited by a recheck** — a continued release is re-authorised
-in the recheck record or it lapses; **no roll-up above the subscope** — a
+and **continuing with the record while its own voiding condition holds and the
+model-version context is unchanged, lapsing recorded on any change** — carried
+forward in full and bounded by its release scope, never silently, and never
+extended to a member it was not granted over; **records sealed at their
+digest and never rewritten**, with every later fact — an authorisation, a
+recheck, an actor, a lapse — arriving as one of exactly two kinds of successor
+record, the `authorisation` kind proving rather than asserting that the
+evidence it cites is unchanged; **no roll-up above the subscope** — a
 heterogeneous assessed scope is presented as its partition of
 `(subscope → verdict)` pairs, each satisfying invariant 1 for its own scope,
 the decision not to define an activity-level verdict being this checkpoint's
