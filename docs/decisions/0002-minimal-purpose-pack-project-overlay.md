@@ -496,50 +496,59 @@ is a fact about one assessment of one pair of model versions, exactly as
 undecided today as it may be resolved tomorrow.
 
 **For validation-backed evidence — `asset-identity`, `in-model-position` —
-the same three states read off `PASS`/`FAIL`/coverage directly, and Checkpoint
-B case 4's own warning governs the third. A fixed, deterministic priority
-order makes the three states mutually exclusive and jointly exhaustive
-(closes R3 gap 1):**
+the three states read off `PASS`/`FAIL`/coverage directly, one *atomic
+observation unit* at a time. An atomic observation unit is one element
+paired with one bound `requirement_key`; each unit reads to exactly one of
+the three names (closes R3 gap 1):**
 
-1. **`unmet`** — at least one element in the assessed scope that a bound
-   `requirement_key` applies to evaluates `FAIL`. Checked **first, and
-   unconditionally**: a known unmet requirement makes the evidence
-   requirement `unmet` regardless of whether some other element in the same
-   scope also happens to be uncovered.
-2. **`not-yet-evaluated`** — reached only when no element evaluates `FAIL`,
-   and at least one element in the assessed scope is **not covered by any
-   evaluation** under the bound `requirement_key`(s) — either because the
-   rule's applicability never reaches it at all (an absent finding, exactly
+1. **`unmet`** — the unit's own findings under that `requirement_key`
+   include at least one `FAIL`.
+2. **`not-yet-evaluated`** — the unit has no finding at all: the rule's
+   applicability never reaches this element (an absent finding, exactly
    Checkpoint B case 4's chimney: "the absence of a finding is invisible in
-   every count the system reports"), or because this assessment has not yet
-   run the evaluation for this handover.
-3. **`satisfied`** — reached only when no element evaluates `FAIL` and every
-   element in the assessed scope is covered (which, having ruled out `FAIL`,
-   means every covered element evaluates `PASS`).
+   every count the system reports"), or this assessment has not yet run the
+   evaluation for this handover.
+3. **`satisfied`** — the unit has at least one finding and none is `FAIL`
+   (so, `FAIL` ruled out, every finding for it is `PASS`).
 
-This ordering — a known failure always dominates a mere coverage gap — is
-the general rule this design applies for `asset-identity` and
-`in-model-position`, and it is safe to use as a **complete outcome
-selector**, not merely a class selector, for exactly one reason: each of
-these two evidence requirements has **exactly one named outcome per
-Framework class** — `unmet` is the only `BLOCKED`-shaped outcome,
-`not-yet-evaluated` the only `UNKNOWN`-shaped one, `satisfied` the only
-`READY`/continuing one — so picking the dominant class and picking the
-dominant named outcome are the same operation here. §3.5's worked Overlay
-and every live case in §6 use it this way. **A single verdict does not mean
-discarding the other facts a mixed scope contains.** Suppose, purely
-illustratively, `asset-identity`'s live scope (Checkpoint B case 2's three
-HVAC elements, six `FAIL` findings) also included a fourth element never
-evaluated under R-005 — `hvac::EXAMPLE`, not a live element. The priority
-order still selects exactly one outcome, `unmet`, because the three live
-`FAIL`s are checked first and already decide it; the fourth element's
-coverage gap never gets a chance to compete for the outcome, and the
-evidence requirement never reaches two outcomes at once. Framework invariant
-1 (§1) requires exactly one verdict per activity × scope × model-version —
-it does not require forgetting that `hvac::EXAMPLE` was also never checked.
-Recording that alongside a `BLOCKED` verdict is a legitimate, separate
-runtime fact a future assessment step may keep (Checkpoint D); it is
-additional detail under one verdict, not evidence of two.
+The precedence `FAIL` > not-covered > `PASS` is **only a within-unit reading
+rule** — how a single unit's own findings collapse to one of the three
+names if, for instance, a checker emits both a `PASS` and a `FAIL` for the
+same element under the same key. It is **not** a way to pick an outcome for
+a scope that spans several units. The earlier "checked **first, and
+unconditionally**" phrasing applied that precedence to the whole assessed
+scope, and that was the overreach this round removes.
+
+**Across units, the evidence requirement's outcome is decided by
+aggregation, never by priority — the same rule the partitioning rule below
+states for every other evidence requirement (closes R3 gap 1):**
+
+- If every unit in the assessed scope reads the **same** named outcome, that
+  is the evidence requirement's outcome — plain aggregation, no choice.
+- If the units read **two or more different** named outcomes, the assessed
+  scope **must be partitioned into outcome-homogeneous subscopes before the
+  decision tree runs** — one subscope per distinct named outcome actually
+  observed, each carrying the units that read it — and each subscope then
+  follows its own path through the tree. A mixed scope is **never** collapsed
+  to one outcome by any priority, any text or alphabetic order, or any
+  default; `unmet` does not dominate `not-yet-evaluated` just because a
+  `FAIL` reads as worse than a coverage gap.
+
+**Worked illustration.** Suppose, purely illustratively, `asset-identity`'s
+live scope (Checkpoint B case 2's three HVAC elements, six `FAIL` findings)
+also included a fourth element never evaluated under R-005 —
+`hvac::EXAMPLE`, not a live element. The three live elements' units read
+`unmet`; `hvac::EXAMPLE`'s unit reads `not-yet-evaluated`. Two distinct
+named outcomes, so the scope is partitioned into two subscopes: `{the three
+live elements}` carries `unmet` and reaches `BLOCKED`; `{hvac::EXAMPLE}`
+carries `not-yet-evaluated` and reaches `UNKNOWN`. Two subscopes, two
+verdicts, each satisfying Framework invariant 1 (§1) — exactly one verdict
+per activity × scope × model-version — for its own scope. The coverage gap
+is neither discarded nor folded into the blocker; it is its own subscope
+with its own verdict. `asset-identity` and `in-model-position` are **not**
+exempt from partitioning — they simply do not exercise it on this run's
+live evidence, where every unit in each activity's live assessed scope
+reads the same outcome (§6).
 
 **Verdict-class priority is not, by itself, a complete outcome selector for
 every evidence requirement — correcting an overclaim in a previous
@@ -616,8 +625,11 @@ is the constraint any future partitioning must satisfy: an assessed scope
 may never be forced through the decision tree as a single unit when its own
 underlying observations disagree on the named outcome, whether or not those
 outcomes share a Framework class. `asset-identity` and `in-model-position`
-need no partitioning, because each has only one named outcome per class to
-begin with (above); the assessment-bound evidence requirements in this
+are **not exempt** — a scope whose atomic units disagree on the named
+outcome (some `unmet`, some `not-yet-evaluated`) is partitioned exactly like
+any other, as the worked illustration above shows — but no live case in §6
+exercises it, because every unit in each activity's live assessed scope
+reads the same outcome; the assessment-bound evidence requirements in this
 Pack — `cross-model-alignment`, `penetration-determination`, `opening-status`
 — each describe a single fact about the assessed scope as a whole in this
 worked Pack (whether the two models share a datum; whether one penetrating
@@ -766,7 +778,7 @@ recheck_condition = "Every element in the assessed scope is covered by a finding
 resolution_kind = "cross-model-misalignment"          # BLOCKED, cross-model-alignment
 default_role = "model-coordination"
 consequence_kinds = ["work-suspended"]
-next_action = "Source-model fix: re-acquire the project's shared coordination datum in the authoring tool (Revit: Manage -> Coordinates -> Acquire Coordinates; Tekla: File -> Project properties -> Base points), re-export placement referencing that shared origin rather than moving geometry directly, and re-perform the accepted alignment-confirmation method."
+next_action = "Source-model fix: re-acquire the project's shared coordination datum in the authoring tool, re-export placement referencing that shared origin rather than moving geometry directly, and re-perform the accepted alignment-confirmation method. Which authoring-tool command produces the re-acquired datum is project- and tool-specific; the Pack does not name it, the same way the asset-identity route above does not name the properties its own fix touches."
 recheck_condition = "The alignment-confirmation method is re-run against the reissued model versions and reports the models aligned (outcome = confirmed)."
 
 [[resolution_routes]]
@@ -933,13 +945,16 @@ version field would erase.
 **d) Framework machine-contract compatibility — explicitly deferred, not
 faked.** `README.md`'s "Not implemented" section and `AGENTS.md` both treat a
 stable, published Framework machine contract as future work, and the
-technical director's routing places that surface at **Checkpoint E**, not C.
-This document therefore names **no** Framework-compatibility field at all —
-not a version string, not a range, not a placeholder. When Checkpoint E
-defines what a Framework machine contract's own identity looks like, a
-Pack-level compatibility field against *that* becomes designable; inventing
-its shape now, or approximating it with contract 1.6's own version number,
-would be guessing at a checkpoint's output before that checkpoint runs —
+technical director's approved route places that surface at the
+**deterministic machine contract and CLI** route item — several items after
+Checkpoint C, and after Checkpoint D and the runtime-evidence work it
+depends on. This document therefore names **no** Framework-compatibility
+field at all — not a version string, not a range, not a placeholder. When
+that route item defines what a Framework machine contract's own identity
+looks like, a Pack-level compatibility field against *that* becomes
+designable; inventing its shape now, or approximating it with contract
+1.6's own version number, would be guessing at a later route item's output
+before it runs —
 exactly the anti-pattern `Agent-product-manager.md` names for
 `AssessmentRun`-shaped objects, applied here to a compatibility field instead
 of a runtime type.
@@ -1844,15 +1859,15 @@ proves identity but not semantic version; a closed decision tree, not a flat
 table or an expression language, as the shape of verdict/blocker logic, with
 every evidence requirement's outcome vocabulary partitioned into exactly
 `READY`/`BLOCKED`/`UNKNOWN`-mapping states, with an outcome itself never
-standing in for a verdict, since only a tree's terminal leaf is one; a
-verdict-class priority (a known failure always dominates a mere coverage
-gap) that is a complete outcome selector only where an evidence requirement
-has exactly one named outcome per class, and that must never be used to
-pick among two or more distinct named outcomes an assessed scope's
-underlying observations disagree on — in that case the assessed scope must
-instead be partitioned into outcome-homogeneous subscopes before the tree
-runs, with subscope construction, identity, and recording left to
-Checkpoint D; fifteen structural invariants a Pack's decision tree must
+standing in for a verdict, since only a tree's terminal leaf is one; an
+atomic observation unit (one element × one bound `requirement_key`) whose
+own `FAIL` / not-covered / `PASS` findings collapse to one outcome by a
+within-unit reading rule in which a known failure dominates a coverage gap
+**only inside that one unit** — never across units, where an assessed scope
+whose units disagree on the named outcome is partitioned into
+outcome-homogeneous subscopes before the tree runs (no priority, no text
+order, no default picks one for it), with subscope construction, identity,
+and recording left to Checkpoint D; fifteen structural invariants a Pack's decision tree must
 satisfy at load time, unchanged this round, covering root/edge existence,
 uniqueness, true per-activity tree shape, and the sufficient condition for
 `READY`-path closure; **one canonical `resolution_routes[]` table**, keyed
