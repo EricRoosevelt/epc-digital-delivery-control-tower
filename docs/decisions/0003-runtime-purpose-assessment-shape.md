@@ -226,64 +226,136 @@ artefacts the verdict is true of:
 
 ---
 
-## 3. Underlying observations, atomic observation units, and outcome-homogeneous subscopes
+## 3. Observation subjects, readings, and outcome-homogeneous subscopes
 
 ADR 0002 §3.2 fixed the *constraint* — "an assessed scope may never be forced
 through the decision tree as a single unit when its own underlying
 observations disagree on the named outcome, whether or not those outcomes
 share a Framework class" — and explicitly left construction, identification,
-recording, and any roll-up "to Checkpoint D". This section fixes them.
+recording, and any roll-up "to Checkpoint D". This section fixes them, and
+separates the *carrier* of a split from the *readings* hung on it (D-1 of the
+technical-director review).
 
-### 3.1 Atomic observation unit
+### 3.1 Observation subjects, readings, and grain
 
-The **atomic observation unit** is the finest grain at which an evidence
-requirement's `acceptance_condition` reduces to exactly one of that
-requirement's declared `outcomes[]`. ADR 0002 §3.2 already names it for
-validation-backed evidence — **one element paired with one bound
-`requirement_key`** — and its within-unit reading rule: a unit's own findings
-collapse to one named outcome by the precedence `FAIL` > not-covered >
-`PASS`, which is **only** a within-unit rule and never a cross-unit selector.
-Restated for both binding kinds:
+Three terms, kept distinct:
 
-| Evidence `binding_source` | Atomic observation unit | Reduces to |
+- An **observation subject** is the thing a subscope's membership is a *set
+  of*, and the only thing that is split, ordered, and recorded as a
+  subscope's members. It is always a key that actually exists: an
+  `element_key`, or — for an activity whose every evidence requirement is
+  `whole-scope` (below) — the single model-pair subject
+  `(producing model_key, consuming model_key)`. An activity's observation
+  subjects are its assessed scope (§2.1), resolved against the producing
+  model version, to the finest grain any of its evidence requirements reads
+  at. In this worked Pack every activity's subjects are `element_key`s.
+- A **reading** is one evidence requirement's outcome for one subject: the
+  subject paired with one binding of that evidence requirement — a
+  `requirement_key`, or an accepted `method_id` — reducing to exactly one of
+  the evidence requirement's declared `outcomes[]`. A reading is what ADR
+  0002 §3.2 calls an *atomic observation unit*; it is hung on a subject,
+  never a subject itself.
+- A **grain** is how an evidence requirement's readings relate to subjects:
+
+| Grain | Meaning | This Pack |
 |---|---|---|
-| `pack` / `overlay` (validation-backed) | `element_key` × bound `requirement_key` | `satisfied` / `unmet` / `not-yet-evaluated`, by ADR 0002 §3.2's within-unit rule: `unmet` if any `FAIL`; `not-yet-evaluated` if no finding at all (the named absence — recorded, §4); `satisfied` if ≥1 finding and none `FAIL`. |
-| `assessment` | one recorded determination at the grain the accepted method declares — the model pair for `cross-model-alignment`; the penetrating `element_key` for `penetration-determination`; the penetration/opening pair for `opening-status` | the method's declared outcome, or the `not-yet-*` outcome when no admissible determination exists yet. |
+| `per-subject` | one reading per observation subject | `asset-identity`, `in-model-position` (subject × each bound `requirement_key` that applies to it); `penetration-determination` (the penetrating `element_key`); `opening-status` (the penetrating `element_key` — any corresponding opening is an *attribute* of that subject's determination, present or a named absence, never a second key) |
+| `whole-scope` | exactly one reading for the entire assessed scope, hung identically on every subject that reaches the node | `cross-model-alignment` (one fact about the model pair) |
+
+A `whole-scope` evidence requirement contributes **no subject of its own**
+and, by definition, cannot be heterogeneous across subjects. A future Pack
+that needs a finer alignment fact — per storey, say — declares it
+`per-subject` at that grain, and it then splits like any other. A grain is
+never finer than the subject and never introduces a key that might not
+exist — which is why `opening-status` is keyed by the penetrating element and
+not by a penetration/opening pair whose second member is absent exactly when
+the outcome is `not-modelled`.
+
+**Within-subject reading rule** (from ADR 0002 §3.2, restated): for a
+`per-subject` finding-backed evidence requirement, take every finding for the
+subject under every bound `requirement_key` that applies to it; if there is
+no such finding at all the reading is `not-yet-evaluated` (the named
+absence — recorded, §3.3); otherwise the findings collapse to one outcome by
+the precedence `FAIL` > not-covered > `PASS` — extended across the subject's
+several applicable `requirement_key`s the same way, so that every subject has
+exactly one reading per evidence requirement and the carrier of a split is
+always a whole subject, never a subject/key fragment. This is the
+construction ADR 0002 §3.2 delegates here: it refines §3.2's "subscopes …
+carrying the units that read [an outcome]" to *subjects*, and is monotone
+with §3.2's precedence — a `FAIL` under any applicable key still dominates.
+The precedence is **only** a within-subject rule and never a cross-subject
+selector. For a `per-subject` assessment-backed evidence requirement the
+reading is the recorded determination for that subject, or its `not-yet-*`
+outcome when none exists.
 
 An `insufficient_evidence[]` entry (R-010 under `cross-model-alignment`) is
-**never** an atomic observation unit: its `PASS` is recorded as context only
-and can produce none of the three outcomes, exactly as ADR 0002 §3.2 states.
+**never** a reading: its `PASS` is recorded as context only and produces none
+of the outcomes, exactly as ADR 0002 §3.2 states.
 
-### 3.2 Construction — partition by identical decision path
+### 3.2 Construction — split subjects incrementally down the tree
 
 **Answer (construction).** For one activity, one assessed scope, one
 model-version context:
 
-1. Enumerate the activity's atomic observation units for every evidence
-   requirement its decision tree can test, in the total order
-   `(model_key, ifc_guid, requirement_key | method_grain)` ascending — all
-   frozen string keys, so the order is deterministic with no clock, no set
-   iteration, and no filesystem ordering (`AGENTS.md` rule 1).
-2. Walk the decision tree from `activities[].decision_root_node`. At each
-   node, read every unit in the current group to its per-unit outcome for
-   that node's `evidence_requirement_id`. Units that read the **same** outcome
-   stay together and follow that outcome's branch; units that read
-   **different** outcomes **split** into sibling child groups, one per
-   distinct outcome actually observed, each continuing independently down its
-   own branch (or to its own leaf).
-3. A **subscope** is a group that has reached a terminal leaf: the maximal set
-   of atomic observation units that traversed the **identical ordered path**
-   of `(node_id, outcome)` pairs from the root to that leaf.
+1. **Resolve the observation subjects** (§3.1) and put them in `element_key`
+   lexicographic order (equivalently `(model_key, ifc_guid)` ascending) — a
+   frozen string key, so the order is deterministic with no clock, no set
+   iteration, and no filesystem ordering (`AGENTS.md` rule 1). An activity
+   with a single model-pair subject needs no ordering. `whole-scope` evidence
+   requirements contribute nothing to this order; their one reading is
+   recorded on the path (§3.3), not as a subject.
+2. **Walk the decision tree from `activities[].decision_root_node`, carrying
+   a current subgroup of subjects — initially all of them.** At each node:
+   - **`per-subject` evidence requirement:** read every subject in the
+     subgroup (§3.1's within-subject rule, or its recorded determination).
+     Subjects that read the **same** outcome stay one subgroup and follow
+     that outcome's branch; subjects that read **different** outcomes
+     **split** into sibling subgroups, one per distinct outcome actually
+     observed, each continuing independently down its own branch or to its
+     own leaf.
+   - **`whole-scope` evidence requirement:** there is exactly one reading;
+     every subject in the subgroup takes it and follows the same branch —
+     **the subgroup never splits at a `whole-scope` node.** If the subgroup
+     already split at an earlier `per-subject` node, the one `whole-scope`
+     reading rides along identically with every surviving subgroup that
+     reaches this node.
+   - a subject the branch structure never routes to a node — an element
+     whose `penetration-determination = no-penetration` branch carries
+     `renders_inapplicable = ["opening-status"]` and terminates at `READY` —
+     produces no reading for that node's evidence requirement at all. "The
+     pair's second member does not exist" never arises: an absent opening is
+     an attribute of the penetrating subject's determination (a named
+     absence, §3.3), just as an absent finding is.
+3. **A subscope is a subgroup that has reached a terminal leaf:** the
+   maximal set of observation subjects that traversed the **identical
+   ordered path** of `(node_id, outcome)` pairs from the root to that leaf.
+   The partition of the activity's assessed scope is the set of these
+   leaf-terminal subscopes.
 
-The partition of an assessed scope for an activity is the set of these
-leaf-terminal subscopes. When every unit reads the same outcome at every
-node, the partition has exactly **one** part — the whole assessed scope — and
-this is the live §6-of-ADR-0002 situation, where no live case exercises
-splitting. When units disagree at any node, the partition has ≥2 parts, each
-outcome-homogeneous by construction, each reaching its own leaf and therefore
-its own verdict — exactly ADR 0002 §3.2's worked illustration (three `unmet`
+**Splitting is incremental, down the tree — never an up-front cross-product
+of every evidence requirement's outcome vocabulary.** A subgroup splits only
+at the node that actually distinguishes its subjects, into the outcomes
+actually seen there. This is the reason ADR 0002 §3.8 gives for choosing a
+decision tree over "a flat table of `(evidence outcome combinations) →
+verdict` rows": a cross-product "manufactures meaningless rows for
+combinations that can never be asked (e.g. an opening's cross-reference
+status when no penetration exists)". Partitioning the assessed scope up front
+by the cross-product of every evidence requirement's outcomes would
+manufacture exactly those subscopes — a part for "no penetration × opening
+not modelled" that the tree can never reach. Incremental splitting visits
+`opening-status` only for the subgroup that reached `penetration-confirmed`,
+so a subject is asked for an opening determination only where its own
+penetration makes the question real — the structural conditional relevance
+§3.8 credits the tree with, preserved in the partition.
+
+When every subject reads the same outcome at every node, the partition has
+exactly **one** part — the whole assessed scope — which is the live
+situation throughout ADR 0002 §6, where no case exercises splitting. When
+subjects disagree at some node, the partition has ≥2 parts, each
+outcome-homogeneous by construction, each reaching its own leaf and its own
+verdict — exactly ADR 0002 §3.2's worked illustration (three `unmet`
 elements → `BLOCKED`; one `not-yet-evaluated` element → `UNKNOWN`; the
-coverage gap is its own subscope, never folded into the blocker).
+coverage gap its own subscope, never folded into the blocker).
 
 Nothing here reintroduces a priority rule: `BLOCKED > UNKNOWN > READY` orders
 Framework *classes*, never selects a named outcome for a heterogeneous scope
@@ -294,44 +366,44 @@ split.
 
 **Answer (identification).** Within one assessment record, a subscope is
 identified by its **ordinal** in the canonical ordering of that activity's
-partition. The canonical order is: by the subscope's root-to-leaf outcome
-sequence (lexicographic over outcome names), then by the smallest member unit
-key. The ordinal is the handle that a resolving assignment (§4.3), a
-`CONDITIONAL` promotion (§4.4), and a later recheck (§4.5) point at, together
-with the `assessment_digest` (§5) and the `pack_id::activity_id`.
+partition: by the subscope's root-to-leaf outcome sequence (lexicographic
+over outcome names), then by its smallest member subject key. The ordinal,
+together with the record's `assessment_digest` (§5) and the
+`pack_id::activity_id`, is the handle a resolving assignment (§4.3), a
+`CONDITIONAL` promotion (§4.4), and a later recheck (§4.5) point at.
 
-**Answer (recording).** Per requested activity, the record carries an ordered
-list of subscope entries, each with:
+**Answer (recording — the carrier and the readings hung on it, kept
+separate).** Per requested activity, the record carries an ordered list of
+subscope entries. Each entry separates:
 
-- `members` — the ordered atomic observation units (`element_key` or
-  `model_key`, plus the bound `requirement_key` or the `method_id`);
-- `path` — the ordered `(node_id, evidence_requirement_id, outcome)` triples
-  from root to leaf;
-- `verdict` — the leaf's `verdict` (`READY` / `BLOCKED` / `UNKNOWN` only; an
-  outcome is never itself a verdict, per ADR 0002 §3.8);
-- `resolution_kind` — present iff `verdict ≠ READY`; equal to the leaf's
-  `failure_kind` (`BLOCKED`) or `gap_kind` (`UNKNOWN`);
-- the resolved route, referenced from the pinned Pack's `resolution_routes[]`
-  row for that `resolution_kind`: `consequence_kinds[]`, `default_role`,
-  `next_action`, `recheck_condition`;
-- the resolving assignment (§4.3);
-- evidence citations: the `finding_key`s read for each validation-backed
-  unit; an explicit **named-absence marker** for each unit that read
-  `not-yet-evaluated` with no finding at all (Checkpoint B §5 item 6); the
-  `method_id` and recorded-determination reference for each assessment-bound
-  unit, or a named-absence marker where none exists yet.
+- **the carrier** — `members`: the ordered observation subjects in the
+  subscope (`element_key`s, or the lone model-pair subject). This is the set
+  the subscope *is*.
+- **the path** — the ordered `(node_id, evidence_requirement_id, grain,
+  outcome)` quadruples from root to leaf, and for each node:
+  - a `per-subject` node: the per-subject readings — for each member
+    subject, `(requirement_key | method_id, outcome, finding_key[] |
+    determination reference | named-absence marker)`;
+  - a `whole-scope` node: the single reading shared by every member —
+    `(method_id, outcome, determination reference | named-absence marker)`.
+- **the leaf** — `verdict` (`READY` / `BLOCKED` / `UNKNOWN` only; an outcome
+  is never itself a verdict, per ADR 0002 §3.8); `resolution_kind` iff
+  `verdict ≠ READY` (the leaf's `failure_kind` or `gap_kind`); the resolved
+  `resolution_routes[]` row for that `resolution_kind` (`consequence_kinds[]`,
+  `default_role`, `next_action`, `recheck_condition`); and the resolving
+  assignment (§4.3).
 
 A subscope has **no identity that outlives its assessment record**. A recheck
-references the prior `assessment_digest` + activity + subscope ordinal, then
-re-derives subscope membership from the current evidence to compare — it does
-not assume the partition is stable across runs.
+names the prior record's `assessment_digest` + activity + subscope ordinal,
+then re-derives subscope membership from the current evidence to compare — it
+does not assume the partition is stable across records.
 
 ### 3.4 What the assessment must never do with validation metadata
 
 Reading a `Finding` is reading a validation fact. The assessment:
 
 - reads `status` (`PASS`/`FAIL`) and the presence/absence of a finding, and
-  nothing else, to reduce an atomic observation unit;
+  nothing else, to reduce a reading (§3.1);
 - **never** reads `Finding.is_issue`, `Issue`, or a `Requirement`'s
   `owner_role`, `severity`, `stage`, `priority`, or `labels` as a readiness
   concept. `is_issue` means "this check failed in a way that warrants a
@@ -363,7 +435,9 @@ assessment; none is written back into a Pack or an Overlay.
   bindings resolved against (§3.3 of ADR 0002: `requirement_key` proves the
   row was found, `ruleset_id` + `ruleset_version` prove it still means what
   the binding assumed);
-- `assessment_digest` (§5).
+- `assessment_digest` (§5) — a digest of this whole completed record, request
+  and resolved result together, not of the request alone; logically the last
+  thing written.
 
 ### 4.2 Per activity, per subscope
 
@@ -426,10 +500,25 @@ from a fabricated `READY`, and is not a state this shape can express.
 - The `recheck_condition` for every non-`READY` subscope, copied from the
   pinned Pack's route (so a later reader is not renegotiating it —
   Checkpoint B §5 item 9);
-- for a recheck assessment: which prior `assessment_digest` + activity +
-  subscope ordinal it re-examines, and whether that subscope's
+- for a recheck assessment: the prior **record's** `assessment_digest` +
+  activity + subscope ordinal it re-examines, and whether that subscope's
   `recheck_condition` is now met **and** the model-version context is still
-  current (§2.3).
+  current (§2.3). A recheck is a new record with its own `assessment_digest`
+  (§5); the prior record is unchanged.
+
+**A recheck does not inherit a prior record's `CONDITIONAL` promotion
+(D-4).** A `CONDITIONAL` is a record that a named person accepted a named
+risk against a named scope *at one point in time* (ADR 0002 §3.8; §1
+invariant 6). On a recheck — even against the identical model-version
+context — if the deficiency has cleared, the subscope reaches `READY` /
+`BLOCKED` / `UNKNOWN` on its own current evidence and no `CONDITIONAL` is
+written. If the deficiency persists and the release is to continue, the
+recheck record must carry its **own** `CONDITIONAL` promotion, with a current
+authoriser, the currently accepted risk, and the still-applicable voiding
+condition re-stated — never carried forward silently. Letting an acceptance
+roll over untouched would let it outlive the authoriser's knowledge of the
+current state, one step removed from the "knowing a risk exists is not the
+same as someone having accepted it" trap Checkpoint B §1 names.
 
 ### 4.6 Consequence magnitude is cited, never computed
 
@@ -443,44 +532,68 @@ repeatedly: "no magnitudes").
 
 ## 5. Runtime identity: what is minted, what is forbidden
 
-**Answer (does it mint identity).** A runtime assessment mints **at most one**
-identifier — here called `assessment_digest`; the final name is Checkpoint
-D's to choose — and mints nothing else. Subscopes are referenced by ordinal
-(§3.3), not by a minted key. No `AssessmentRun` id, verdict id, subscope id,
-or promotion id is created; naming a tidy runtime object here is exactly the
-mistake `Agent-product-manager.md` warns against.
+**Answer (does it mint identity).** A runtime assessment mints **exactly
+one** identifier — here called `assessment_digest`; the final name is
+Checkpoint D's to choose — and mints nothing else. Subscopes are referenced
+by ordinal within a record (§3.3), not by a minted key; no `AssessmentRun`
+id, verdict id, subscope id, or promotion id is created. Naming a tidy
+runtime object here is exactly the mistake `Agent-product-manager.md` warns
+against.
 
-**Answer (constraints on it).** `assessment_digest`, if minted, is a
-**deterministic hash of the fully resolved, canonically-ordered assessment
-inputs** — `pack_id`, `pack_version`, `pack_schema_version`, `direction_id`,
-the sorted `activity_ids[]`, the sorted assessed-scope keys, the
-model-version context (both `model_key`s, both content identifiers, the
-handover event fields), and the **cited** `ruleset_id`, `ruleset_version`,
-and `validation_run_id`. It obeys, without exception:
+**Answer (what it identifies — the completed record, not the request).** The
+technical-director review (D-2) is right that a digest used to reference one
+prior record must identify *that record*, not the request that could produce
+many. After an alignment determination is performed, the models, the
+ruleset, the `as_of`, the `validation_run_id`, and the request are all
+unchanged, yet the subscope's verdict moves from `UNKNOWN` to `READY` — two
+records a request-only digest could not tell apart, though §3.3 and §4.5 use
+the digest precisely to tell them apart. So `assessment_digest` is a
+**deterministic hash of the fully resolved assessment record**, computed once
+the record is complete, over its canonically-ordered content:
 
-- **Parsed, sorted structure only — never raw bytes.** It hashes the resolved
-  request structure after parsing and total ordering, the same discipline
+- the request and provenance of §4.1 — `pack_id`, `pack_version`,
+  `pack_schema_version`, `direction_id`, the sorted `activity_ids[]`, the
+  sorted assessed-scope keys, the model-version context (both `model_key`s,
+  both content identifiers, the handover event fields), and the **cited**
+  `ruleset_id`, `ruleset_version`, `validation_run_id`;
+- the resolved result — for every requested activity, the ordered
+  observation subjects, and every subscope's `path` (with its per-subject and
+  `whole-scope` readings, each carrying its cited `finding_key`s /
+  determination references / named-absence markers), `verdict`,
+  `resolution_kind`, resolved route, and assignment;
+- any `CONDITIONAL` promotion (§4.4), with all nine of its fields;
+- for a recheck, the prior record's `assessment_digest` it re-examines
+  (§4.5) — already final, so no cycle.
+
+It changes whenever the evidence read or a verdict reached changes — which is
+exactly when §3.3 and §4.5 need a different handle — and is identical for two
+byte-identical records (§8, determinism paragraph).
+
+**Answer (constraints, unchanged in force).** `assessment_digest`:
+
+- **Parsed, sorted structure only — never raw bytes.** It hashes the
+  resolved record after parsing and total ordering — the discipline
   `build_ruleset_normalized_digest` (`identity.py:109`) already applies and
-  the same one ADR 0002 §4 pre-commits any future Pack/Overlay content
-  identity to. It never hashes TOML or CSV file bytes, file names, mtimes, or
-  any filesystem ordering, and it reads no clock (`AGENTS.md` rule 1).
-- **Never an input to frozen identity.** `assessment_digest` is never fed
-  into `validation_run_id` (`identity.py:167`, six inputs — none of them a
-  Pack, Overlay, or assessment value), `requirement_key` (`identity.py:99`,
-  built from `rule_id` + `requirement_id` only), `finding_key`,
-  `ruleset_normalized_digest`, `issue_key`, `group_ref`, any legacy
-  identity, `contract-1.6.json`, or anything under `data/processed/`,
-  `reports/`, or `ids/`. The dependency is one-way: the assessment cites
-  those; none of them cites the assessment.
+  ADR 0002 §4 pre-commits any future Pack/Overlay content identity to. It
+  never hashes TOML or CSV file bytes, file names, mtimes, or filesystem
+  ordering, and it reads no clock (`AGENTS.md` rule 1).
+- **Never an input to frozen identity.** It is never fed into
+  `validation_run_id` (`identity.py:167`, six inputs — none a Pack, Overlay,
+  or assessment value), `requirement_key` (`identity.py:99`, `rule_id` +
+  `requirement_id` only), `finding_key`, `ruleset_normalized_digest`,
+  `issue_key`, `group_ref`, any legacy identity, `contract-1.6.json`, or
+  anything under `data/processed/`, `reports/`, or `ids/`. The dependency is
+  one-way: the record cites those; none of them cites the record. That the
+  digest now also covers cited `finding_key`s and determination outcomes
+  does not change this — a cited value flowing *into* the digest never makes
+  the digest flow *out* into what it cited.
 - **Confined to the record.** It appears only in the assessment record and in
-  recheck references between assessment records. It is never exported, never
-  snapshotted, never joined against a published CSV.
+  the recheck references between records (§4.5). It is never exported,
+  snapshotted, or joined against a published CSV.
 
-If a subscope-level content digest is ever also minted (for a stabler
-recheck reference than the ordinal), it obeys every rule above — a digest of
-the resolved, sorted subscope entry (`members` + `path`), never raw bytes —
-and stays inside the record. This document does not mint it; it only fixes
-the constraint.
+A subscope-level digest is not minted; the ordinal (§3.3) is the within-record
+handle. If one were ever added it would obey every rule above and stay inside
+the record.
 
 ---
 
@@ -493,28 +606,47 @@ presented as the **ordered set of `(subscope ordinal → verdict)` pairs** from
 exactly one verdict, so:
 
 - Framework **invariant 1** holds for every
-  *(activity × subscope × model-version context)* triple — which is the
-  granularity invariant 1 actually ranges over. ADR 0002 §3.2's worked
-  illustration states this directly: "Two subscopes, two verdicts, each
-  satisfying Framework invariant 1 … for its own scope."
-- A **heterogeneous requested assessed scope has no single verdict by
-  construction.** Asking "the verdict of the whole requested scope" returns
-  the partition, not a collapsed word. This is the design, not a gap: every
-  candidate collapse selector — class priority, text order, alphabetic order,
-  a default — is forbidden by ADR 0002 §3.2, so no authoritative collapse is
-  possible without weakening ADR 0002, and the partition itself is therefore
-  the representation.
-- When the partition is trivial (one part — the live case throughout ADR 0002
-  §6), there is exactly one subscope = the whole assessed scope = one
+  *(activity × subscope × model-version context)* triple — the granularity
+  invariant 1 actually ranges over. ADR 0002 §3.2's worked illustration says
+  so directly: "Two subscopes, two verdicts, each satisfying Framework
+  invariant 1 … for its own scope."
+- A **heterogeneous requested assessed scope has no single verdict**, and
+  this is a design decision with its own reasons, not a limit forced by ADR
+  0002:
+  1. Invariant 1 attaches a verdict to an outcome-homogeneous
+     *(activity × scope × model-version)* cell. A heterogeneous requested
+     scope is not one cell; its subscopes are. An authoritative single
+     verdict for the heterogeneous scope would be a **new Framework
+     object** — "the verdict of a scope whose own evidence disagrees" —
+     needing its own semantics (what does `BLOCKED` beside `UNKNOWN` beside
+     `READY` reduce to?), its own invariants, and its own place in the
+     four-state vocabulary. That vocabulary is the Framework's, owned by
+     Checkpoint B and ADR 0002 §1; this checkpoint's scope explicitly
+     excludes changing it.
+  2. Any reduced value also **discards what the partition is for**: which
+     subjects are `BLOCKED` under which `resolution_kind`, which are only
+     `UNKNOWN`, which are `READY` and could proceed now. Checkpoint B §1 ("a
+     single 'is the MEP model good?' verdict would be useless here") is the
+     whole argument that the partial answer is the useful one; a roll-up
+     re-collapses precisely what the partition exists to hold apart.
+  3. ADR 0002 §3.2 left an activity-level roll-up "to Checkpoint D … if ever
+     needed". This document finds it is not needed and declines to mint the
+     Framework object it would require. Asking "the verdict of the whole
+     requested scope" returns the partition.
+- When the partition is trivial (one part — the live case throughout ADR
+  0002 §6), there is exactly one subscope = the whole assessed scope = one
   verdict, and presentation is identical to an un-partitioned assessment.
 
-**On roll-up, which ADR 0002 §3.2 explicitly left to this checkpoint:** a
-non-authoritative **human summary** may accompany the partition — counts per
-verdict class, the most severe class present — strictly for display. It
+**A non-authoritative human summary** may be shown alongside the partition —
+counts per verdict class, the most severe class present. It is a rendering
+*of* the partition: it states nothing the partition does not already state,
 carries no verdict of its own, is never stored as one, and is never an input
 to the resolving assignment (§4.3), a `CONDITIONAL` promotion (§4.4), a
-recheck (§4.5), or anything downstream. There is no authoritative
-activity-level verdict above the subscope.
+recheck (§4.5), or anything downstream. Summarising verdict classes across
+subscopes is a different act from selecting a named outcome inside one
+evidence requirement — the latter is what ADR 0002 §3.2 forbids, and this
+summary does not do it. There is no authoritative activity-level verdict
+above the subscope.
 
 ---
 
@@ -568,10 +700,10 @@ ADR 0002 §3.7 closing paragraph).
 
 | Situation | Assessment behaviour | Basis |
 |---|---|---|
-| A validation-backed atomic observation unit has **no finding at all** (an absent finding — the chimney; or `check` has not evaluated this handover) | Unit reads `not-yet-evaluated`; its subscope reaches the `UNKNOWN` leaf carrying the evidence requirement's `gap_kind`; the named absence is recorded (§3.3, §4.2) | ADR 0002 §3.2: "`not-yet-evaluated` … describe a binding that exists but has not yet produced an admissible result … never a missing binding" |
+| A validation-backed reading (subject × bound `requirement_key`) has **no finding at all** (an absent finding — the chimney; or `check` has not evaluated this handover) | The subject reads `not-yet-evaluated` for that evidence requirement; its subscope reaches the `UNKNOWN` leaf carrying the `gap_kind`; the named absence is recorded (§3.3, §4.2) | ADR 0002 §3.2: "`not-yet-evaluated` … describe a binding that exists but has not yet produced an admissible result … never a missing binding" |
 | An assessment-bound evidence requirement has a method in the Overlay but **no recorded determination** for these model versions yet | Unit reads `not-yet-confirmed` / `not-yet-determined`; subscope reaches the `UNKNOWN` leaf with its `gap_kind` | ADR 0002 §3.2; the `no-penetration` vs `not-yet-determined` distinction |
 | An R-010 `PASS` exists but no accepted `cross-model-alignment` method has produced a determination | `cross-model-alignment` stays `not-yet-confirmed`; the R-010 `PASS` is recorded as context only and never read as any of the three outcomes | ADR 0002 §3.2 `insufficient_evidence[]` entry: "a `PASS` is not alignment evidence" |
-| A subscope's units disagree on the named outcome at a node | Split into outcome-homogeneous child subscopes (§3.2) — not a failure, and never collapsed by priority | ADR 0002 §3.2 partitioning rule |
+| A subgroup's subjects disagree on the named outcome at a node | Split into outcome-homogeneous child subgroups (§3.2) — not a failure, and never collapsed by priority | ADR 0002 §3.2 partitioning rule |
 
 ### 7.4 Not errors — the pipeline is untouched
 
@@ -625,7 +757,8 @@ future Checkpoint D implementation is judged against them:**
    byte, count, and SHA-256 is unchanged, and `epc-ct snapshot` reports no
    drift.
 6. **Mint or change an `assessment_digest`** — by any change to the request,
-   the Pack version, or the cited run. No `validation_run_id`,
+   the Pack version, the cited run, the evidence read, or a verdict reached
+   (§5: the digest is over the whole resolved record). No `validation_run_id`,
    `requirement_key`, `finding_key`, `issue_key`, `group_ref`,
    `ruleset_normalized_digest`, legacy identity, or `contract-1.6.json` value
    moves, because none of them takes an assessment value as input
@@ -642,8 +775,8 @@ list — all unchanged under every one of the six counterfactuals above.
 
 ## 9. Explicitly out of scope for this document
 
-No evaluator that walks a decision tree, resolves a binding, or reduces an
-atomic observation unit is implemented. No Pack/Overlay loader and no
+No evaluator that walks a decision tree, resolves a binding, or reduces a
+reading is implemented. No Pack/Overlay loader and no
 fail-closed *composition* logic is implemented — that is the next route item;
 §7 fixes only how the assessment step behaves when handed an incomplete
 composed input. No `AssessmentRun`, `AssessmentItem`, `EvidenceGap`,
@@ -671,25 +804,30 @@ input** — an ordered set of `element_key`/`model_key` values resolved
 against, and paired with, an explicit **model-version context**, together
 forming one Framework-invariant-1 cell, never inferred from which findings
 exist and never owned by Pack, Overlay, or direction; **subscopes constructed
-as equivalence classes of atomic observation units that traverse an identical
-decision path**, identified by ordinal within a record, recorded with their
-members, path, verdict, `resolution_kind`, resolved route, assignment, and
-evidence citations including named absences, and carrying no identity beyond
-their record; an assessment record that **cites** frozen identities and is
-cited by none; **at most one minted identifier, `assessment_digest`**, a
-deterministic hash of resolved, sorted request structure, never of raw bytes,
-never an input to `validation_run_id` / `requirement_key` / `finding_key` or
-any published-contract value; a **`CONDITIONAL` that exists only as an
-additive promotion** carrying all nine ADR 0002 §3.8 fields, refusing to
-record without an authoriser role listed for the exact
-`pack_id::resolution_kind`, and never becoming `READY` or erasing its
-deficiency; **no roll-up above the subscope** — a heterogeneous assessed
-scope is presented as its partition of `(subscope → verdict)` pairs, each
-satisfying invariant 1 for its own scope, with only a non-authoritative human
-summary permitted alongside; **every missing binding, method, role, or
-authorisation failing closed** per §7, mapped row-by-row to ADR 0002 §3.7,
-with a missing *binding* refusing the request and a missing *result* routed
-as `UNKNOWN`; and **the six changed-input counterfactuals in §8 — the four
+as equivalence classes of observation subjects** — the existing keys a
+subscope is a set of — **split incrementally down the decision tree** (never
+an up-front cross-product), with each evidence requirement's readings hung on
+the subjects at its declared grain (`per-subject` or `whole-scope`),
+identified by ordinal within a record, and recorded with the carrier
+(`members`) and the per-node readings kept separate; an assessment record
+that **cites** frozen identities and is cited by none; **exactly one minted
+identifier, `assessment_digest`**, a deterministic hash of the whole resolved
+assessment record (request, evidence readings, verdicts, any promotion) —
+never of raw bytes, never an input to `validation_run_id` / `requirement_key`
+/ `finding_key` or any published-contract value; a **`CONDITIONAL` that
+exists only as an additive promotion** carrying all nine ADR 0002 §3.8
+fields, refusing to record without an authoriser role listed for the exact
+`pack_id::resolution_kind`, never becoming `READY` or erasing its deficiency,
+and **never inherited by a recheck** — a continued release is re-authorised
+in the recheck record or it lapses; **no roll-up above the subscope** — a
+heterogeneous assessed scope is presented as its partition of
+`(subscope → verdict)` pairs, each satisfying invariant 1 for its own scope,
+the decision not to define an activity-level verdict being this checkpoint's
+to make (ADR 0002 §3.2), with only a non-authoritative human summary
+permitted alongside; **every missing binding, method, role, or authorisation
+failing closed** per §7, mapped row-by-row to ADR 0002 §3.7, with a missing
+*binding* refusing the request and a missing *result* routed as `UNKNOWN`;
+and **the six changed-input counterfactuals in §8 — the four
 from ADR 0002 §4 with no exemption, plus running an assessment and minting an
 `assessment_digest` — as the acceptance test for Checkpoint D's identity and
 determinism claims.** It commits nothing about how the tree is evaluated in
