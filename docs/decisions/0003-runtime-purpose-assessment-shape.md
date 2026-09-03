@@ -37,8 +37,9 @@
     findings, and every excluded key is recorded per activity so nothing in a
     declared scope disappears. **E-4 supersedes D-4, at the technical
     director's direction**: a `CONDITIONAL` promotion now continues with the
-    record while its own voiding condition holds and the model-version context
-    is unchanged, and lapses — recorded, never silently — on any change; §4.5
+    record while its own voiding condition **remains unmet** and the
+    model-version context is unchanged, and lapses — recorded, never
+    silently — on any change; §4.5
     states why, and states that the rule is negotiable in a later product
     round. **E-5** — the document defined only a `recheck` successor, and the
     real sequence is an `UNKNOWN` record signed off in the coordination review
@@ -52,6 +53,45 @@
     `insufficient_evidence[]` context only, no roll-up above the subscope, the
     §7 fail-closed map (added to, never altered), the six §8 counterfactuals,
     and the one-way identity dependency.
+  - Refines the version at `849a55c` (2026-09-03), which **product audit
+    returned AT RISK** on one remaining item. The continuation policy itself
+    was approved — a `CONDITIONAL` promotion re-authorised on substantial
+    change rather than on every query — and what was not approved was that the
+    policy, as written, could not be *proved*: §4.5 said a promotion continues
+    while its voiding condition remains unmet without saying how anyone knows
+    that, which left it satisfiable either by an evaluator forming its own
+    opinion of a prose condition or by nobody forming one at all and the
+    release carrying on unmentioned. **E-6** closes it. A continuation is now
+    written only when four things are proved on the record that carries it: a
+    recorded, attributable **voiding-condition determination** reading `unmet`;
+    an unchanged model-version context; the promotion's cited authorisation
+    role **still listed** in the Overlay composed for this record — a check
+    that was genuinely absent, so an Overlay that dropped a role would have
+    gone on carrying releases authorised under it; and coverage not widened.
+    The assessment never interprets field 9 itself — it cites a determination
+    about it, the same discipline §1.2 item 4 already fixes for
+    `accepted_evidence_methods[]` outputs. No determination, an
+    `undeterminable` determination, and a `met` determination are three
+    distinct states, none of them continuing, each recorded with its reason;
+    and every successor record must state exactly one of continuation, lapse
+    with reason, or no-longer-applicable, so that silence neither continues a
+    release nor ends one. §7.2 gains six rows, adding to the fail-closed map
+    and altering none of it. Two lines that read against §4.5's own body —
+    "while its own voiding condition holds", in this revision history and in
+    the Consequences — are corrected to "remains unmet"; §4.5's rule keeps its
+    wording. This round also records three product decisions once each: the
+    `subject_classes` matching rule in
+    [`0002`](0002-minimal-purpose-pack-project-overlay.md) §3.2 where the field
+    is defined; the per-activity object-scope test obligation as §8's seventh
+    acceptance commitment, which leaves §8's six counterfactuals exactly six;
+    and the independence of the resolving assignment from the authorisation in
+    §4.4, including that this document does not require them to be different
+    people and that separation of duties is recorded as not implemented.
+    Unchanged: the continuation policy, the four non-relaxations, the
+    `subject_classes` class-data semantics, the pair grain and invariants
+    16–18, the decision tree and the ten routes' correspondence with the ten
+    non-`READY` leaves, the six §8 counterfactuals, sealing, and the two
+    successor kinds. No Pack, loader, or runtime is implemented.
 - **Scope:** Checkpoint D runtime design only — the request boundary, the
   subscope construction rule ADR 0002 §3.2 explicitly left here, the
   assessment record shape, the runtime identity boundary, and the
@@ -95,7 +135,7 @@
 | 2 | How a subscope is constructed, identified, and recorded (ADR 0002 §3.2 left this here) | §3 |
 | 3 | Where the assessment step sits in the pipeline, and its input/output boundary | §1 |
 | 4 | What one assessment records, including every field a `CONDITIONAL` promotion must carry, and the total accounting of the declared scope | §4, §3.3 |
-| 4a | How a record is sealed, what a successor record is, and how a `CONDITIONAL` promotion continues or lapses across records | §4.5 |
+| 4a | How a record is sealed, what a successor record is, and how a `CONDITIONAL` promotion continues, is proved to continue, or lapses across records | §4.5 |
 | 5 | Whether any runtime identity is minted, and the constraints on it | §5 |
 | 6 | How several subscopes of one activity with different verdicts are presented, under Framework invariant 1 | §6 |
 | 7 | How every missing input (evidence, binding, role, authorisation, method) fails closed, mapped row-by-row to ADR 0002 §3.7 | §7 |
@@ -724,6 +764,29 @@ that the evidence changed (ADR 0002 §1, Checkpoint B §1). A `CONDITIONAL`
 release with no recorded blocker or gap beneath it would be indistinguishable
 from a fabricated `READY`, and is not a state this shape can express.
 
+**The resolver and the authoriser are two records, and neither is derived from
+the other (product decision, recorded once, here).** §4.3's
+`assigned_team_or_person` — `default_role` resolved through
+`overlay.team_mapping[]` — is who this assessment tasks with *resolving* the
+leaf. Fields 4 and 5 above are who *accepted the risk* of releasing despite it
+and the Overlay role they acted under. Each is recorded independently and in
+full; neither is ever computed from the other, and neither stands in for the
+other when it is missing — a missing assignment fails the request closed
+(§4.3), a missing or unlisted authoriser refuses the promotion (§7.2). ADR
+0002 §3.5 settles the same separation on the configuration side, for
+`team_mapping` against `risk_authorisations[]`; this is its runtime-record
+counterpart and the two statements are not restatements of each other.
+
+**This document does not require the two to be different people.** A project
+where the person who would resolve a leaf is also trusted to authorise a
+release against it is expressible today and is not an error here — ADR 0002
+§3.5 already allows a role to appear in both tables as two independently
+declared facts. Whether separation of duties should be *enforced* is a
+governance question that would belong to Overlay policy, and it is **recorded
+as not implemented**: no field expresses it, nothing in this design infers it,
+and Checkpoint D must not assume one exists — the same treatment ADR 0002 §3.6
+gives the deferred override capability.
+
 ### 4.5 Exit status, successor records, sealing, and how a promotion continues
 
 - The `recheck_condition` for every non-`READY` subscope, copied from the
@@ -794,6 +857,101 @@ now:
 > promotion **lapses**, and continuing the release requires a fresh
 > authorisation.
 
+**What "both of the following hold" has to be, before a continuation may be
+written (closes E-6).** The rule above says when a promotion continues; it did
+not say how anyone knows. As written it could be satisfied by an evaluator
+forming its own opinion of a prose voiding condition, or by nobody forming one
+at all and the promotion carrying on because no one said otherwise. Neither is
+a thing this design may express. **A continuation is written only when all
+four of the following are proved on the record that carries it, and it is
+never the default:**
+
+| # | What must be proved | How it is proved | If it is not proved |
+|---|---|---|---|
+| 1 | the promotion's **voiding / failure condition (field 9) remains unmet** | a recorded **voiding-condition determination** reading `unmet`, cited by reference (below) — never the evaluator's own reading of field 9 | the promotion **lapses**; the reason is recorded |
+| 2 | the **model-version context is unchanged** | value comparison of both models' content identifiers against the promotion's field 6 (§2.3) — a comparison, never a clock read | the promotion **lapses**; the reason is recorded |
+| 3 | the promotion's cited **authorisation role is still listed** in the composed Overlay's `may_authorise_roles` for that exact `pack_id::resolution_kind` | membership test against the Overlay composed for *this* record, not the one composed when the promotion was granted | the promotion **lapses**; the reason is recorded |
+| 4 | **coverage has not widened** | every member the continuation covers is inside the promotion's recorded release scope (field 8) **and** among the members it was granted over | the continuation does not extend to the uncovered member; that member has no promotion |
+
+Checks 1 and 2 are the rule's own two conditions, now carrying how each is
+established rather than leaving it to whoever reads the record. Check 4 is one
+of the four non-relaxations below, restated as a per-record proof. **The four
+together are the complete set of preconditions for a continuation, so the
+rule's "if either changes" names two lapse causes and not all of them** — the
+rule's wording is left exactly as it stands, and this table is what it means.
+
+**Check 3 is new and was genuinely missing:** §4.4 requires the
+authorisation role to be listed at the moment a promotion is granted, and
+nothing re-examined it afterwards, so a project that removed a role from
+`overlay.risk_authorisations[].may_authorise_roles` would have gone on
+carrying releases authorised under a role it no longer permits anyone to
+authorise under. An Overlay change of that kind is exactly a substantial
+change, and it now ends the release the same way a model re-issue does.
+
+**The voiding-condition determination (closes E-6).** Field 9 is prose,
+written by a person for people. **The assessment does not parse it, interpret
+it, or decide it.** It reads a *determination about* it, by reference, and
+records which reference it read — the identical discipline §1.2 item 4 already
+fixes for every `overlay.accepted_evidence_methods[]` output: the assessment
+cites a coordination-review determination rather than deciding a penetration
+itself, and it cites a voiding-condition determination rather than deciding a
+voiding condition itself. A determination carries four things, and a record
+missing any one of them **is not a determination**:
+
+1. the **determiner** — a named person, and the role they acted under, both
+   recorded as stated and neither derived from anything;
+2. the **basis** — what was actually examined, cited by reference the way
+   every other evidence citation in this record is: determination references,
+   `finding_key`s, model content identifiers, the promotion's own field 9 as
+   the thing being judged. A conclusion with no cited basis is not a basis;
+3. the **outcome** — exactly one of `unmet`, `met`, or `undeterminable`
+   (below);
+4. the **owning record** — the `assessment_digest` of the record that carries
+   it, plus the activity and subscope ordinal. Because records are sealed, a
+   determination belongs to exactly one record and is traceable to it from
+   every later record that cites it.
+
+This document does **not** fix which role is entitled to make such a
+determination. That is a governance question, it would be Overlay policy if it
+were answered, and it is **recorded as not implemented** — no field expresses
+it and Checkpoint D must not assume one exists. What makes the gap safe to
+leave open is the direction the missing case falls: an absent determination
+does not permit a continuation, so nothing can be released by nobody having
+been entitled to say anything.
+
+**Three states that are not `unmet`, kept distinct, none of them continuing.**
+The distinction matters because the three have different next actions, and
+collapsing them would hide which one a team is actually in:
+
+| State | What it means | Continuation | What the record says |
+|---|---|---|---|
+| **no determination** | none was made for this record — nobody looked | never | the promotion **lapses**, reason: no voiding-condition determination |
+| **`undeterminable`** | one was made and could not decide: the basis was insufficient, **or** field 9 is written so that no evidence could decide it | never | the promotion **lapses**, reason: undeterminable, carrying the determination's determiner and basis so that *which* of the two it was is inspectable |
+| **`met`** | the condition has occurred | never | the promotion **lapses**, reason: voiding condition met |
+
+A determination missing any of its four fields is read as **no determination**
+and lapses under the first row — attributability is not a formality here, it
+is the whole of what distinguishes a determination from an assertion. And an
+`undeterminable` outcome caused by an undecidable field 9 is worth stating
+separately from an insufficient basis because the fixes differ: one is
+gathering evidence, the other is that the release was authorised against a
+condition that could never end it, which is a fact about the promotion rather
+than about the world.
+
+**Silence is neither continuation nor lapse (closes E-6).**
+
+> For every subscope whose cited record carried a promotion — granted there or
+> continued into it — a successor record must record **exactly one** of: a
+> continuation with all four checks of the table above proved; a **lapse**,
+> with its reason; or that the promotion is **no longer applicable** because
+> the deficiency it was granted against has cleared. A successor record that
+> records none of the three is not a legal record and is refused (§7.2).
+
+A promotion therefore never ends by going unmentioned, and never survives by
+going unmentioned either. Every determination, every lapse and its reason, and
+every continuation with the four proofs behind it is part of the record and so
+is covered by its `assessment_digest` (§5).
+
 Four things that rule does not relax. A continued promotion is still
 **additive**: the subscope's own current verdict, `resolution_kind`, and
 underlying blocker or gap are re-derived and recorded, with the promotion on
@@ -807,12 +965,12 @@ first time on a later record is not covered, and gets no promotion. And it
 still requires an **authorisation role listed for this exact
 `pack_id::resolution_kind`**; nothing about continuation creates one.
 
-When the deficiency has cleared, there is nothing to continue: the subscope
-reaches its own verdict on current evidence and the record states that the
-promotion is no longer applicable. When it lapses, the successor record says
-so and why — voiding condition met, or model version changed — and shows the
-subscope's own verdict standing alone. **A lapse is always recorded; a
-promotion never expires by going unmentioned.**
+Two of those four are checks 3 and 4 of the table above, and they are the
+same statement read from the other end: what a continuation must prove is what
+the rule refuses to relax. The third of the three legal outcomes is the easy
+one — when the deficiency has cleared there is nothing to continue, the
+subscope reaches its own verdict on current evidence, and the record states
+that the promotion is no longer applicable.
 
 **Why the reversal, stated plainly, because the earlier reasoning was not
 wrong about the risk it named.** The concern was that an acceptance could
@@ -883,6 +1041,13 @@ the record is complete, over its canonically-ordered content:
   first granted in this record or continued into it (§4.5) — a continued
   promotion is hashed as the content it is, so a record that carries one is
   never byte-identical to the same record without it;
+- for every subscope whose cited record carried a promotion, which of the
+  three legal outcomes this record reached (§4.5) — a continuation with its
+  four proofs, a lapse with its reason, or no-longer-applicable — together
+  with any voiding-condition determination the record carries, all four of its
+  fields included. A record that continues a promotion and one that lapses it
+  therefore hash differently, which is what makes a lapse checkable rather
+  than merely stated;
 - for a successor record, its `kind` and the prior record's
   `assessment_digest`, activity, and subscope ordinal it succeeds (§4.5) —
   already final, so no cycle.
@@ -1004,12 +1169,15 @@ No case below resolves by picking a default, taking the first match in an
 unordered collection, or reading anything time-dependent (`AGENTS.md` rule 1;
 ADR 0002 §3.7 closing paragraph).
 
-**Every row the previous revision carried is unchanged, row for row, in
-wording and in its mapping to ADR 0002 §3.7.** This round adds rows and
-removes none: five in §7.1 for the request-side consequences of a declared
-object scope and a Pack-declared grain, one in §7.2 for a promotion whose
-continuation is not covered, and one in §7.3 for an inadmissible penetration
-determination.
+**Every row a previous revision carried is unchanged, row for row, in wording
+and in its mapping to ADR 0002 §3.7.** Each round adds rows and removes none.
+The E-2/E-3/E-4/E-5 round added five in §7.1 for the request-side consequences
+of a declared object scope and a Pack-declared grain, one in §7.2 for a
+promotion whose continuation is not covered, and one in §7.3 for an
+inadmissible penetration determination. This round adds six more to §7.2, all
+of them about how a continuation is *proved* rather than about what the
+continuation rule says; the row that round added stays exactly as it was, and
+these are strictly finer than it.
 
 ### 7.1 Composition / request defects — the assessment refuses
 
@@ -1042,6 +1210,12 @@ determination.
 | The promotion omits any of the nine §4.4 fields | Refuse — an additive promotion that cannot name its original verdict, blocker/gap, authoriser, role, versions, risk, release scope, and voiding condition is indistinguishable from a fabricated `READY` | ADR 0002 §3.8 promotion field list; §1 invariant 6 |
 | `overlay.risk_authorisations[].may_authorise_roles` is empty or contains a wildcard / `"all"` | Composition already failed closed; no promotion is possible | "An `overlay.risk_authorisations[].may_authorise_roles` is empty, or contains a wildcard, `"all"`, or any similarly unbounded value" |
 | A successor record would continue a promotion whose voiding condition is met, whose model-version context has changed, or over a member outside the promotion's recorded release scope or outside the members it was granted over | The promotion **lapses**, or does not extend to that member; the record states the lapse and its reason and shows the subscope's own verdict standing alone. Never continued silently, and never widened to cover a member it was not granted over (§4.5) | (new to this round; **closes E-4**; ADR 0002 §3.8 promotion field list, fields 6, 8 and 9) |
+| A continuation is attempted and **no voiding-condition determination** exists for this record | The promotion **lapses**; the reason (no determination) is recorded. The assessment never forms its own reading of field 9 to fill the gap, and an unexamined condition is never treated as unmet (§4.5) | (**closes E-6**; the same discipline §1.2 item 4 fixes for `accepted_evidence_methods[]` outputs — cite a determination, never adjudicate) |
+| A voiding-condition determination exists but is missing its determiner, its cited basis, its outcome, or its owning record | It **is not a determination**: it is read as the absent state and the promotion lapses under the row above. An unattributable assertion is not evidence that a condition remains unmet (§4.5) | (**closes E-6**) |
+| A voiding-condition determination reads **`undeterminable`** — the basis was insufficient, or field 9 is written so that no evidence could decide it | The promotion **lapses**; the reason is recorded together with the determination's determiner and basis, so which of the two causes it was stays inspectable. `undeterminable` is never read as `unmet` (§4.5) | (**closes E-6**) |
+| A voiding-condition determination reads **`met`** | The promotion **lapses**; the reason is recorded and the subscope's own verdict stands alone (§4.5) | (**closes E-6**; ADR 0002 §3.8 promotion field 9) |
+| A continuation is attempted and the promotion's cited authorisation role is **no longer listed** in the Overlay composed for this record, under `may_authorise_roles` for that exact `pack_id::resolution_kind` | The promotion **lapses**; the reason is recorded. The role listed when the promotion was granted is not re-used, and no other listed role is substituted for it (§4.5, check 3) | (**closes E-6**; ADR 0002 §3.5's per-`pack_id::resolution_kind` authorisation table, §3.8's promotion field 5) |
+| A successor record cites a record that carried a promotion over members of this subscope, and records **none** of: a continuation with its four proofs, a lapse with its reason, or that the promotion is no longer applicable | **Refuse the record.** Silence neither continues a promotion nor ends one, and a record that leaves a release's status unstated is not a legal record (§4.5) | (**closes E-6**; §1 invariant 6 — an acceptance that nobody restated and nobody ended is indistinguishable from one nobody gave) |
 
 ### 7.3 Unresolved outcomes — not failures, routed as `UNKNOWN`
 
@@ -1114,6 +1288,23 @@ future Checkpoint D implementation is judged against them:**
    moves, because none of them takes an assessment value as input
    (`identity.py:99`, `:109`, `:167`; §5).
 
+**One further acceptance commitment, of a different kind — a test obligation
+rather than a byte-invariance counterfactual, so the six above remain exactly
+six:**
+
+7. **Prove that an activity's object scope is genuinely per-activity.** All
+   three activities in ADR 0002's worked Pack declare the same three
+   `subject_classes`, and ADR 0002 §6 already records that this is a fact
+   about this Pack — MEP work products handed to Architecture — and not a
+   property of the design. A future machine test must therefore not take those
+   three identical lists as its evidence, because a test in which every
+   activity is about the same classes would pass whether the field were
+   per-activity or Pack-wide, and so would prove nothing about the thing it
+   exists to test. It must exercise **activities whose `subject_classes`
+   differ from one another**, and assert that one and the same declared
+   assessed scope admits **different subjects per activity** and produces a
+   **different `out_of_subject_class[]` per activity**.
+
 What a future test plan must diff is exactly ADR 0002 §4's list — the full
 set of `requirement_key`, `finding_key`, `issue_key`, and `validation_run_id`
 in `data/processed/canonical/{requirements,findings,issues}.csv`; every
@@ -1178,10 +1369,19 @@ never of raw bytes, never an input to `validation_run_id` / `requirement_key`
 exists only as an additive promotion** carrying all nine ADR 0002 §3.8
 fields, refusing to record without an authoriser role listed for the exact
 `pack_id::resolution_kind`, never becoming `READY` or erasing its deficiency,
-and **continuing with the record while its own voiding condition holds and the
-model-version context is unchanged, lapsing recorded on any change** — carried
-forward in full and bounded by its release scope, never silently, and never
-extended to a member it was not granted over; **records sealed at their
+and **continuing with the record while its own voiding condition remains unmet
+and the model-version context is unchanged, lapsing recorded on any change** —
+carried forward in full and bounded by its release scope, never silently, and
+never extended to a member it was not granted over; **a continuation proved,
+never assumed**, on four checks per record — a recorded, attributable
+voiding-condition determination reading `unmet`, an unchanged model-version
+context, the cited authorisation role still listed for that exact
+`pack_id::resolution_kind`, and coverage not widened — with the assessment
+never itself interpreting a prose voiding condition, with no determination, an
+undeterminable one, and a `met` one kept distinct and none of them continuing,
+and with exactly one of continuation, lapse-with-reason, or
+no-longer-applicable required on every successor record so that silence
+neither continues nor ends a release; **records sealed at their
 digest and never rewritten**, with every later fact — an authorisation, a
 recheck, an actor, a lapse — arriving as one of exactly two kinds of successor
 record, the `authorisation` kind proving rather than asserting that the
