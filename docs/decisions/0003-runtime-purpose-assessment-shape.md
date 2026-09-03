@@ -92,6 +92,56 @@
     16–18, the decision tree and the ten routes' correspondence with the ten
     non-`READY` leaves, the six §8 counterfactuals, sealing, and the two
     successor kinds. No Pack, loader, or runtime is implemented.
+  - Refines the version at `d290245` (2026-09-04), which technical-director
+    review returned **CONDITIONAL** — E-6's substance accepted in full (the
+    four proofs and their table, the three non-`unmet` states each lapsing with
+    a recorded reason, the exactly-one-of-three rule against silence, and the
+    newly added check 3 on the authorisation role) — for **one** item, **D-5**:
+    the voiding-condition determination's fourth field, "the
+    `assessment_digest` of the record that carries it", was not computable.
+    Under §5's own enumeration that digest covered all four fields, so the
+    fourth was an input to the value it named; and it could not be re-read as
+    pointing at an earlier record either, since a promotion has nothing to
+    determine when it is granted, the moment needing a determination is the
+    continuation itself, and §4.5 admits exactly two successor kinds with no
+    third whose job is to carry one. The review also found the document saying
+    two incompatible things about where a determination lives: §4.5 check 1
+    called it "cited by reference" (§1.2 item 4's external model) while §5 and
+    §7.2 treated it as record-internal content. **The external model is
+    adopted**, because it is what every other determination in this design
+    already does and what E-6 asked for: a determination is produced outside
+    the assessment, carries its own reference identity, and the record cites
+    that reference and records the outcome read — nothing about a record is an
+    input to a determination it cites, so the fixed point is gone. The fourth
+    field becomes **which promotion the determination judges** — the *sealed*
+    prior record's `assessment_digest`, activity and subscope ordinal, plus the
+    model-version context — which is computable at the only moment it is
+    needed, since that record was sealed before any continuation of it could be
+    attempted. Field 4 names the record in which the promotion was **granted**,
+    not the immediately preceding one, so a promotion continued more than once
+    has one stable anchor for every determination along the chain; a
+    continuation therefore records the promotion's **origin reference**
+    alongside §4.1's successor reference, as continuation bookkeeping and not
+    as a tenth promotion field — §4.4's nine are still nine and still all
+    restated. "Missing attribution is not a determination, and lapses" is
+    preserved and widened: an unresolvable reference, a missing determiner,
+    basis or outcome, **or** a determination naming a different promotion or
+    context is read as the absent state and lapses. §5's enumeration now covers
+    the reference and the outcome rather than four fields, §7.2's attribution
+    row is corrected and one row is added for a determination that names
+    another promotion or context, and §1.2 item 4 names the voiding-condition
+    determination alongside the three `accepted_evidence_methods[]` outputs,
+    noting the one respect in which it differs — no Pack or Overlay declares a
+    method for it, because which role may make one is deliberately not fixed.
+    One consequence is stated rather than left implicit: because field 4 pins a
+    determination to one promotion and one context, **one determination may
+    support more than one continuation** while both still hold, which is
+    deliberate — requiring a fresh one per record would put the determiner's
+    signature back on the per-query footing E-4 removed. Unchanged: the four
+    proofs and their table, the three non-`unmet` states, the
+    exactly-one-of-three rule, check 3, sealing, the two successor kinds, §8's
+    six counterfactuals and its seventh commitment, and the recording places of
+    the three product decisions.
 - **Scope:** Checkpoint D runtime design only — the request boundary, the
   subscope construction rule ADR 0002 §3.2 explicitly left here, the
   assessment record shape, the runtime identity boundary, and the
@@ -203,12 +253,18 @@ An assessment reads, and only reads:
 3. **The assessment request**:
    `{ project_id, pack_id, pack_version, direction_id, activity_ids[],
    assessed_scope, model_version_context }` (§2).
-4. **Recorded determinations for assessment-bound evidence** — the outputs of
-   the `overlay.accepted_evidence_methods[]` methods (an alignment
-   confirmation, a coordination-review determination, an opening
-   cross-reference check). These are runtime evidence; their production and
-   storage are not designed here. The assessment reads them **by reference**
-   and records which references it read (§4).
+4. **Recorded determinations** — the outputs of the
+   `overlay.accepted_evidence_methods[]` methods (an alignment confirmation, a
+   coordination-review determination, an opening cross-reference check), and
+   the **voiding-condition determination** a `CONDITIONAL` continuation rests
+   on (§4.5). These are runtime evidence; their production and storage are not
+   designed here. The assessment reads them **by reference** and records which
+   references it read, together with the outcome each one reported (§4). It
+   adjudicates none of them: a determination is admitted or found
+   inadmissible, never decided. The voiding-condition determination differs
+   from the other three in one respect only — no Pack or Overlay declares a
+   method for it, because which role may make one is deliberately not fixed
+   (§4.5) — and in every other respect it is read exactly like them.
 
 ### 1.3 Output boundary — one record, outside the published tree
 
@@ -888,28 +944,91 @@ carrying releases authorised under a role it no longer permits anyone to
 authorise under. An Overlay change of that kind is exactly a substantial
 change, and it now ends the release the same way a model re-issue does.
 
-**The voiding-condition determination (closes E-6).** Field 9 is prose,
-written by a person for people. **The assessment does not parse it, interpret
-it, or decide it.** It reads a *determination about* it, by reference, and
-records which reference it read — the identical discipline §1.2 item 4 already
-fixes for every `overlay.accepted_evidence_methods[]` output: the assessment
-cites a coordination-review determination rather than deciding a penetration
-itself, and it cites a voiding-condition determination rather than deciding a
-voiding condition itself. A determination carries four things, and a record
-missing any one of them **is not a determination**:
+**The voiding-condition determination (closes E-6; its location and its fourth
+field corrected, closes D-5).** Field 9 is prose, written by a person for
+people. **The assessment does not parse it, interpret it, or decide it.** It
+reads a *determination about* it, by reference, and records which reference it
+read — the identical discipline §1.2 item 4 already fixes for every
+`overlay.accepted_evidence_methods[]` output: the assessment cites a
+coordination-review determination rather than deciding a penetration itself,
+and it cites a voiding-condition determination rather than deciding a voiding
+condition itself.
+
+**A voiding-condition determination lives outside the assessment record, and
+this document previously said two incompatible things about that.** Check 1
+above calls it "cited by reference", which is the external model; §5 and §7.2
+described it as content the record carries; and its fourth field named "the
+`assessment_digest` of the record that carries it", which under §5's own
+enumeration would have been part of the input to the digest it names — a
+value that cannot be computed, since it would have to be known before it could
+be produced. Nor could it be read as living in some earlier record: at the
+moment a promotion is *granted* there is nothing yet to determine, the moment
+that needs a determination is the continuation itself, and §4.5 admits exactly
+two kinds of successor record with no third kind whose purpose is to carry a
+determination. **The external model is the correct one and is the one adopted
+here**, for the same reason every other determination in this design is
+external: it is made by people, in a process this document does not design,
+and the assessment's whole discipline toward it is to cite rather than
+adjudicate.
+
+So: **the determination is produced outside the assessment and carries its own
+reference identity. The record cites that reference and records the outcome it
+read, and nothing else about it** — exactly the shape §3.3 already uses for
+every other determination reading, `(reference, outcome)`. Nothing about a
+record is an input to a determination the record cites, so no value depends on
+itself.
+
+**What the determination must itself carry for the assessment to admit it**,
+checked when it is read, and failing any of which it **is not a determination**
+at all:
 
 1. the **determiner** — a named person, and the role they acted under, both
-   recorded as stated and neither derived from anything;
-2. the **basis** — what was actually examined, cited by reference the way
-   every other evidence citation in this record is: determination references,
-   `finding_key`s, model content identifiers, the promotion's own field 9 as
-   the thing being judged. A conclusion with no cited basis is not a basis;
+   stated in the determination and neither derived from anything;
+2. the **basis** — what was actually examined, cited by reference: other
+   determination references, `finding_key`s, model content identifiers, and
+   the promotion's own field 9 as the thing being judged. A conclusion with no
+   cited basis is not a basis;
 3. the **outcome** — exactly one of `unmet`, `met`, or `undeterminable`
    (below);
-4. the **owning record** — the `assessment_digest` of the record that carries
-   it, plus the activity and subscope ordinal. Because records are sealed, a
-   determination belongs to exactly one record and is traceable to it from
-   every later record that cites it.
+4. **which promotion it judges** — the `assessment_digest` of the **sealed
+   record in which that promotion was granted**, plus the activity and
+   subscope ordinal, **and** the model-version context it was made against
+   (both content identifiers). This is what the fourth field should have been.
+   It is computable at the only moment it is needed: the granting record was
+   sealed before any continuation of it could be attempted, so its digest
+   already exists when a determiner writes one down. And it is what makes the
+   determination *this* continuation's rather than a free-floating opinion —
+   the assessment admits it only when the promotion and the context it names
+   are exactly the ones being continued (§7.2).
+
+**The granting record, not the immediately preceding one, is what field 4
+names**, and the difference shows up as soon as a promotion is continued more
+than once. In a chain — record A grants, B continues, C continues — both A and
+B carry the promotion, so "the record that carries it" would have been
+ambiguous at C. A promotion has one origin, so its origin is the stable anchor:
+every determination along the chain names A. For C to be able to name A, a
+record that continues a promotion records the promotion's **origin reference**
+(A's `assessment_digest`, activity, subscope ordinal) alongside the successor
+reference of §4.1, which points at the immediately prior record and is a
+different thing. The origin reference is continuation bookkeeping carried
+forward unchanged along the chain; it is **not** a tenth promotion field, and
+§4.4's nine are still nine and still all restated.
+
+This is the same admissibility discipline §3.1 already applies to a
+`penetration-confirmed` determination that names no architectural element: an
+inadmissible determination is no determination, and the direction it falls is
+closed.
+
+**One determination may support more than one continuation, and only while
+what it names still holds.** Because field 4 pins it to one promotion and one
+model-version context, a determination reading `unmet` supports continuations
+of that promotion under that context and nothing else; re-issue either model
+and it no longer names the context being continued, so it can support nothing.
+This is deliberate rather than a gap left open: requiring a *fresh*
+determination on every successor record would put the determiner's signature
+back on a per-query footing, which is exactly the incentive the E-4 reversal
+removed. What bounds the release is the promotion's own field 9 and the four
+checks, not how often somebody is made to sign.
 
 This document does **not** fix which role is entitled to make such a
 determination. That is a governance question, it would be Overlay policy if it
@@ -925,13 +1044,16 @@ collapsing them would hide which one a team is actually in:
 
 | State | What it means | Continuation | What the record says |
 |---|---|---|---|
-| **no determination** | none was made for this record — nobody looked | never | the promotion **lapses**, reason: no voiding-condition determination |
-| **`undeterminable`** | one was made and could not decide: the basis was insufficient, **or** field 9 is written so that no evidence could decide it | never | the promotion **lapses**, reason: undeterminable, carrying the determination's determiner and basis so that *which* of the two it was is inspectable |
+| **no determination** | none the record can cite names this promotion and this context — nobody looked | never | the promotion **lapses**, reason: no voiding-condition determination |
+| **`undeterminable`** | one was made and could not decide: the basis was insufficient, **or** field 9 is written so that no evidence could decide it | never | the promotion **lapses**, reason: undeterminable, citing the determination — whose determiner and basis show *which* of the two it was |
 | **`met`** | the condition has occurred | never | the promotion **lapses**, reason: voiding condition met |
 
-A determination missing any of its four fields is read as **no determination**
-and lapses under the first row — attributability is not a formality here, it
-is the whole of what distinguishes a determination from an assertion. And an
+A determination the record cannot cite by a resolvable reference, or one
+missing any of the four things above, is read as **no determination** and
+lapses under the first row — attributability is not a formality here, it is
+the whole of what distinguishes a determination from an assertion, and a
+determination that names no promotion is not attributable to the release it
+would extend. And an
 `undeterminable` outcome caused by an undecidable field 9 is worth stating
 separately from an insufficient basis because the fixes differ: one is
 gathering evidence, the other is that the release was authorised against a
@@ -948,9 +1070,12 @@ than about the world.
 > records none of the three is not a legal record and is refused (§7.2).
 
 A promotion therefore never ends by going unmentioned, and never survives by
-going unmentioned either. Every determination, every lapse and its reason, and
-every continuation with the four proofs behind it is part of the record and so
-is covered by its `assessment_digest` (§5).
+going unmentioned either. Which of the three a record reached, every lapse and
+its reason, every continuation with the four proofs behind it, and the
+reference and outcome of any voiding-condition determination it read are all
+part of the record and so are covered by its `assessment_digest` (§5). The
+determination's own content is not: it lives outside the record, at the
+reference the record cites, and is audited there.
 
 Four things that rule does not relax. A continued promotion is still
 **additive**: the subscope's own current verdict, `resolution_kind`, and
@@ -1044,10 +1169,13 @@ the record is complete, over its canonically-ordered content:
 - for every subscope whose cited record carried a promotion, which of the
   three legal outcomes this record reached (§4.5) — a continuation with its
   four proofs, a lapse with its reason, or no-longer-applicable — together
-  with any voiding-condition determination the record carries, all four of its
-  fields included. A record that continues a promotion and one that lapses it
-  therefore hash differently, which is what makes a lapse checkable rather
-  than merely stated;
+  together with, for a continuation or a determination-driven lapse, the
+  promotion's **origin reference**, the **reference** of the voiding-condition
+  determination the record read, and the **outcome** it reported (§4.5) — the reference and the outcome, not the
+  determination's own content, which lives outside the record and is not an
+  input to this digest. A record that continues a promotion and one that
+  lapses it therefore hash differently, which is what makes a lapse checkable
+  rather than merely stated;
 - for a successor record, its `kind` and the prior record's
   `assessment_digest`, activity, and subscope ordinal it succeeds (§4.5) —
   already final, so no cycle.
@@ -1210,9 +1338,10 @@ these are strictly finer than it.
 | The promotion omits any of the nine §4.4 fields | Refuse — an additive promotion that cannot name its original verdict, blocker/gap, authoriser, role, versions, risk, release scope, and voiding condition is indistinguishable from a fabricated `READY` | ADR 0002 §3.8 promotion field list; §1 invariant 6 |
 | `overlay.risk_authorisations[].may_authorise_roles` is empty or contains a wildcard / `"all"` | Composition already failed closed; no promotion is possible | "An `overlay.risk_authorisations[].may_authorise_roles` is empty, or contains a wildcard, `"all"`, or any similarly unbounded value" |
 | A successor record would continue a promotion whose voiding condition is met, whose model-version context has changed, or over a member outside the promotion's recorded release scope or outside the members it was granted over | The promotion **lapses**, or does not extend to that member; the record states the lapse and its reason and shows the subscope's own verdict standing alone. Never continued silently, and never widened to cover a member it was not granted over (§4.5) | (new to this round; **closes E-4**; ADR 0002 §3.8 promotion field list, fields 6, 8 and 9) |
-| A continuation is attempted and **no voiding-condition determination** exists for this record | The promotion **lapses**; the reason (no determination) is recorded. The assessment never forms its own reading of field 9 to fill the gap, and an unexamined condition is never treated as unmet (§4.5) | (**closes E-6**; the same discipline §1.2 item 4 fixes for `accepted_evidence_methods[]` outputs — cite a determination, never adjudicate) |
-| A voiding-condition determination exists but is missing its determiner, its cited basis, its outcome, or its owning record | It **is not a determination**: it is read as the absent state and the promotion lapses under the row above. An unattributable assertion is not evidence that a condition remains unmet (§4.5) | (**closes E-6**) |
-| A voiding-condition determination reads **`undeterminable`** — the basis was insufficient, or field 9 is written so that no evidence could decide it | The promotion **lapses**; the reason is recorded together with the determination's determiner and basis, so which of the two causes it was stays inspectable. `undeterminable` is never read as `unmet` (§4.5) | (**closes E-6**) |
+| A continuation is attempted and the record cites **no voiding-condition determination** | The promotion **lapses**; the reason (no determination) is recorded. The assessment never forms its own reading of field 9 to fill the gap, and an unexamined condition is never treated as unmet (§4.5) | (**closes E-6**; the same discipline §1.2 item 4 fixes for `accepted_evidence_methods[]` outputs — cite a determination, never adjudicate) |
+| The cited voiding-condition determination cannot be resolved from its reference, or is missing its determiner, its cited basis, or its outcome | It **is not a determination**: it is read as the absent state and the promotion lapses under the row above. An unattributable assertion is not evidence that a condition remains unmet (§4.5) | (**closes E-6**; corrected shape, **closes D-5**) |
+| The cited voiding-condition determination names a different promotion — a granting record `assessment_digest`, activity, or subscope ordinal other than this promotion's origin reference — or a model-version context other than the one being continued | It is not a determination **about this continuation**: it is read as the absent state and the promotion lapses under the row above. A determination is never widened to a promotion or a context it did not name (§4.5, field 4) | (**closes D-5**) |
+| A voiding-condition determination reads **`undeterminable`** — the basis was insufficient, or field 9 is written so that no evidence could decide it | The promotion **lapses**; the reason and the determination's reference are recorded, and the determination's own determiner and basis show which of the two causes it was. `undeterminable` is never read as `unmet` (§4.5) | (**closes E-6**) |
 | A voiding-condition determination reads **`met`** | The promotion **lapses**; the reason is recorded and the subscope's own verdict stands alone (§4.5) | (**closes E-6**; ADR 0002 §3.8 promotion field 9) |
 | A continuation is attempted and the promotion's cited authorisation role is **no longer listed** in the Overlay composed for this record, under `may_authorise_roles` for that exact `pack_id::resolution_kind` | The promotion **lapses**; the reason is recorded. The role listed when the promotion was granted is not re-used, and no other listed role is substituted for it (§4.5, check 3) | (**closes E-6**; ADR 0002 §3.5's per-`pack_id::resolution_kind` authorisation table, §3.8's promotion field 5) |
 | A successor record cites a record that carried a promotion over members of this subscope, and records **none** of: a continuation with its four proofs, a lapse with its reason, or that the promotion is no longer applicable | **Refuse the record.** Silence neither continues a promotion nor ends one, and a record that leaves a release's status unstated is not a legal record (§4.5) | (**closes E-6**; §1 invariant 6 — an acceptance that nobody restated and nobody ended is indistinguishable from one nobody gave) |
@@ -1376,8 +1505,14 @@ never extended to a member it was not granted over; **a continuation proved,
 never assumed**, on four checks per record — a recorded, attributable
 voiding-condition determination reading `unmet`, an unchanged model-version
 context, the cited authorisation role still listed for that exact
-`pack_id::resolution_kind`, and coverage not widened — with the assessment
-never itself interpreting a prose voiding condition, with no determination, an
+`pack_id::resolution_kind`, and coverage not widened — with that determination
+**produced outside the record and read by reference**, like every other
+determination in this design, carrying its own determiner, cited basis,
+outcome, and the sealed record's `assessment_digest` plus activity, subscope
+ordinal and model-version context naming **which promotion it judges**, so
+that the record cites a reference and an outcome and no value is ever an input
+to itself; with the assessment never itself interpreting a prose voiding
+condition, with no determination, an
 undeterminable one, and a `met` one kept distinct and none of them continuing,
 and with exactly one of continuation, lapse-with-reason, or
 no-longer-applicable required on every successor record so that silence
