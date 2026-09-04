@@ -196,6 +196,51 @@
     besides the above: sealing, the two successor kinds, §4.4's nine fields
     still nine, §8's six counterfactuals and its seventh commitment. No Pack,
     loader, or runtime is implemented.
+  - Refines the version at `3cea316` (2026-09-04), which technical-director
+    review returned **CONDITIONAL** — E-7a, E-7b and E-7c all accepted and not
+    reopened (checks 5, 6 and 7, check 1's maximum over the enumerated
+    determinations, the terminal lapse, the widened silence trigger, the
+    nine-field derivation table's structure, and the honest statement of what
+    cannot be checked) — for **one** item, **D-6**: the derivation table
+    justified field 1 as covered "via 5" on the lemma that "each
+    `resolution_kind` belongs to exactly one leaf (ADR 0002 §3.2)". **ADR 0002
+    guarantees no such thing, and the citation pointed at a section saying
+    something else.** What §3.2 fixes runs one way: every leaf's
+    `failure_kind`/`gap_kind` matches *exactly one* route row, and every row is
+    used by *at least one* leaf. At-most-one is never required — §3.2 states
+    that "two leaves can only ever share a `resolution_kind` by sharing the
+    identical route behind it", the Consequences record "reuse of one
+    `resolution_kind` across leaves only ever meaning identical treatment", and
+    §3.8 puts `failure_kind` and `gap_kind` in one shared namespace. So a legal
+    Pack may carry one kind on a `BLOCKED` leaf and an `UNKNOWN` leaf at once,
+    and a kind-only check 5 would pass while the verdict flipped from `UNKNOWN`
+    to `BLOCKED` — E-7's own failure mode re-entering through the weakest row of
+    the table meant to justify it. ADR 0002's worked Pack does not exercise it
+    (ten routes, ten non-`READY` leaves, one-to-one), but both documents are
+    general designs. **Check 5 is widened rather than a new invariant being
+    imposed on Packs:** it now compares the re-derived **verdict**,
+    **`resolution_kind`** and **terminal outcome** against the promotion's
+    fields 1, 2 and 3 — three values the promotion already records — so it means
+    "the leaf is the leaf that was authorised". The alternative, making
+    "one kind, at most one leaf" an explicit precondition enforced by a
+    nineteenth ADR 0002 §3.8 Pack-load invariant, is recorded as considered and
+    declined: it narrows what Pack authors may write, in a merged document, to
+    spare a continuation three comparisons against values it already holds. The
+    derivation table's field 1, 3 and 7 rows are re-grounded accordingly — 1, 2
+    and 3 each compared directly rather than inferred from one another, field 7
+    pinned only as far as its kind is pinned — and field 7's prose statement
+    joins field 4 and field 7's magnitude among the things named as uncheckable.
+    §7.2 gains one row for a re-derived verdict or terminal outcome that is not
+    the one authorised. The previous round's "add rows, change none" instruction
+    is lifted for exactly two rows, which are brought into line with the text
+    around them: the E-4 row's list of lapse causes and the E-6 silence row's
+    count of proofs — neither rule changed, both rows had been left behind by
+    later rounds — and the §7 paragraph explaining how to read the stale wording
+    is deleted. No other §7.2 row is added, changed, or removed. Unchanged:
+    checks 1–4, 6 and 7, determinations external with their four requisites, the
+    origin reference, the terminal lapse, the silence rule, sealing, the two
+    successor kinds, §4.4's nine fields, §8's six counterfactuals and its
+    seventh commitment, and the recording places of the three product decisions.
 - **Scope:** Checkpoint D runtime design only — the request boundary, the
   subscope construction rule ADR 0002 §3.2 explicitly left here, the
   assessment record shape, the runtime identity boundary, and the
@@ -982,7 +1027,7 @@ never the default:**
 | 2 | the **model-version context is unchanged** | value comparison of both models' content identifiers against the promotion's field 6 (§2.3) — a comparison, never a clock read | the promotion **lapses**; the reason is recorded |
 | 3 | the promotion's cited **authorisation role is still listed** in the composed Overlay's `may_authorise_roles` for that exact `pack_id::resolution_kind` | membership test against the Overlay composed for *this* record, not the one composed when the promotion was granted | the promotion **lapses**; the reason is recorded |
 | 4 | **coverage has not widened** | every member the continuation covers is inside the promotion's recorded release scope (field 8) **and** among the members it was granted over | the continuation does not extend to the uncovered member; that member has no promotion |
-| 5 | the **currently re-derived `resolution_kind` is the promotion's field 2** | the subscope is re-derived from current evidence like any other, and its leaf's `failure_kind`/`gap_kind` is compared, as a value, to the `resolution_kind` the promotion names | the promotion **lapses**; the reason is recorded — **the risk changed kind** (closes E-7a) |
+| 5 | the **re-derived subscope reaches the leaf the promotion was granted against** — its `verdict`, its `resolution_kind`, and its terminal outcome are the promotion's fields 1, 2 and 3 | the subscope is re-derived from current evidence like any other, and all three are compared as values against what the promotion recorded | the promotion **lapses**; the reason is recorded — **the risk changed** (closes E-7a; widened to fields 1 and 3, closes D-6) |
 | 6 | the composed Pack's **`pack_version` is the one the granting record recorded** | value comparison against the granting record's §4.1 provenance | the promotion **lapses**; the reason is recorded (closes E-7c) |
 | 7 | **no sealed record in this promotion's chain has already recorded its lapse** | walk the chain by the origin reference; a lapse anywhere in it is terminal | there is no continuation to write: the promotion is **already ended**, and only a new promotion can release the work (closes E-7b) |
 
@@ -994,6 +1039,42 @@ the hole E-7 names. **Check 3 tests the promotion's field 2 kind: the kind the
 authorisation was actually given for.** Check 5 makes that the same value as the
 currently re-derived one, so the two can no longer diverge without the
 continuation stopping.
+
+**Check 5 compares three values, not one, and the reason is that a
+`resolution_kind` does not identify a leaf (closes D-6).** An earlier revision
+compared the kind alone, on the stated ground that "each `resolution_kind`
+belongs to exactly one leaf". **ADR 0002 gives no such guarantee, and that
+lemma is withdrawn.** What it actually fixes runs one way only: every
+`BLOCKED` leaf's `failure_kind` and every `UNKNOWN` leaf's `gap_kind` must
+match **exactly one** `resolution_routes[]` row, and every row must be used by
+**at least one** leaf (§3.2). At-most-one is nowhere required — ADR 0002 §3.2
+says in terms that "two leaves can only ever share a `resolution_kind` by
+sharing the identical route behind it", and its Consequences record "reuse of
+one `resolution_kind` across leaves only ever meaning identical treatment, by
+construction". `failure_kind` and `gap_kind` also draw from **one shared
+namespace** (§3.8). Put together, a perfectly legal Pack may carry one
+`resolution_kind` on a `BLOCKED` leaf and on an `UNKNOWN` leaf at once,
+provided the single route behind it fits both — and then a kind-only check 5
+would pass while the verdict flipped from `UNKNOWN` to `BLOCKED`. That is
+exactly the failure E-7 exists to stop, re-entering through the weakest row of
+the derivation table below. ADR 0002's own worked Pack does not exercise it —
+its ten routes and ten non-`READY` leaves are one-to-one (§6) — but ADR 0002 is
+a general design and this document is a general design over it.
+
+Comparing `verdict`, `resolution_kind` and terminal outcome together is what
+makes check 5 mean *"the leaf is the leaf that was authorised"*, which is what
+it was always supposed to mean: those three are precisely what the promotion's
+fields 1, 2 and 3 already record about the leaf, so the check compares recorded
+values and needs nothing new to be written down.
+
+**The alternative was considered and not taken.** One could instead make
+"a `resolution_kind` is used by at most one leaf" an explicit precondition this
+design places on a Pack, and require a loader to enforce it — a nineteenth
+Pack-load structural invariant in ADR 0002 §3.8. It would work, but it buys
+the runtime nothing it cannot get for itself: it narrows what Pack authors may
+write, in a merged document, to spare a continuation three value comparisons
+against fields it already holds. The cheaper correction is the one that changes
+no Pack's vocabulary.
 
 **Why the risk changing kind is not covered by any of checks 1–4, and what it
 looks like in this Pack.** A promotion accepts **one named risk of one named
@@ -1019,8 +1100,12 @@ become a *different* deficiency. This Pack has the case built into it:
   route, a different fix. And ADR 0002 §3.5's worked Overlay authorises
   **nobody** for `cross-model-misalignment`: it has no
   `risk_authorisations[]` row at all.
-- With check 5 the re-derived kind is `cross-model-misalignment`, which is not
-  field 2, so the promotion **lapses** and — by check 7 — lapses terminally.
+- With check 5 the re-derived leaf is a different leaf: the kind is
+  `cross-model-misalignment` rather than field 2's
+  `cross-model-alignment-not-confirmed`, the verdict is `BLOCKED` rather than
+  field 1's `UNKNOWN`, and the terminal outcome is `misaligned` rather than
+  field 3's `not-yet-confirmed`. All three disagree, and any one of them is
+  enough: the promotion **lapses** and — by check 7 — lapses terminally.
   Re-releasing would need a **new** promotion for `cross-model-misalignment`,
   which §7.2's first row refuses in this project because no role may authorise
   that kind here. **The path stops at the lapse**, which is the only correct
@@ -1063,25 +1148,31 @@ that each thing the authorisation was given against still names what it named:
 
 | Promotion field | What still has to hold | Check |
 |---|---|---|
-| 1 original verdict | unchanged — each `resolution_kind` belongs to exactly one leaf (ADR 0002 §3.2), so the same kind is the same leaf and the same verdict | via 5 |
-| 2 `resolution_kind` | the re-derived kind is still this one | **5** |
-| 3 underlying blocker/gap | the same leaf's terminal outcome, over the same members | via 5 and 6* |
+| 1 original verdict | the re-derived verdict is compared, as a value, to this field | **5** |
+| 2 `resolution_kind` | the re-derived kind is compared, as a value, to this field | **5** |
+| 3 underlying blocker/gap | its terminal outcome is compared to this field's; its affected members are covered by the coverage check | **5** and **4** |
 | 4 named authoriser | **not checkable** — see below | — |
 | 5 authorisation role | still listed for field 2's kind | **3** |
 | 6 named model versions | both content identifiers unchanged | **2** |
-| 7 accepted risk | its *kind* is field 2; its magnitude is never computed (§4.6) | via 5 |
+| 7 accepted risk | pinned only as far as its **kind** is pinned, which check 5 does directly by comparing field 2; the prose statement is not re-read and the magnitude is never computed at all (§4.6) | **5**, partially — see below |
 | 8 release scope | coverage not widened | **4** |
-| 9 voiding condition | determined to remain unmet | **1** |
-| — the Pack semantics field 2 resolves through | `pack_version` unchanged | **6** |
+| 9 voiding condition | reduced to `unmet` over every enumerated determination | **1** |
+| — the Pack semantics fields 2 and 3 resolve through | `pack_version` unchanged | **6** |
 | — monotonicity | no prior lapse of this promotion | **7** |
 
-\* field 3's members are covered by check 4, its outcome by check 5.
+**No row in this table now leans on a property ADR 0002 does not guarantee.**
+Fields 1, 2 and 3 are each compared directly against a re-derived value rather
+than inferred from one another, which is the correction D-6 required: the
+previous version derived fields 1, 3 and 7 from field 2 through a lemma about
+leaves that ADR 0002 does not supply.
 
-**Two things this design cannot check, stated rather than papered over.** Field
-4 is a **named person**, and nothing here observes whether that person is still
-in the role, still employed, or would still accept today; the design records who
+**What this design cannot check, stated rather than papered over.** Field 4 is
+a **named person**, and nothing here observes whether that person is still in
+the role, still employed, or would still accept today; the design records who
 accepted and bounds the acceptance by fields 8 and 9, and that is the whole of
-what it can do. Field 7's **magnitude** is never computed at all (§4.6). So the
+what it can do. Field 7 is **prose**: its kind is pinned by check 5, but the
+sentence a person wrote about the risk they accepted is not re-read against the
+world, and its **magnitude** is never computed at all (§4.6). So the
 honest claim is not that the set is complete against every risk, but that it is
 **complete against the nine fields, by construction** — every field is either
 checked, derived from a checked one, or named above as uncheckable. A future
@@ -1377,10 +1468,10 @@ the record is complete, over its canonically-ordered content:
   together with, for a continuation or a determination-driven lapse, the
   promotion's **origin reference**, the **references of every
   voiding-condition determination** the record enumerated for that promotion
-  and context, the **reduced outcome** those yielded, the **`resolution_kind`
-  re-derived for the subscope** and the **`pack_version`** compared against the
-  granting record, and whether a prior lapse of this promotion was found in the
-  chain (§4.5) — the reference and the outcome, not the
+  and context, the **reduced outcome** those yielded, the **verdict,
+  `resolution_kind` and terminal outcome re-derived for the subscope** and the
+  **`pack_version`**, each compared against what the granting record holds, and
+  whether a prior lapse of this promotion was found in the chain (§4.5) — the reference and the outcome, not the
   determination's own content, which lives outside the record and is not an
   input to this digest. A record that continues a promotion and one that
   lapses it therefore hash differently, which is what makes a lapse checkable
@@ -1511,24 +1602,16 @@ and in its mapping to ADR 0002 §3.7.** Each round adds rows and removes none.
 The E-2/E-3/E-4/E-5 round added five in §7.1 for the request-side consequences
 of a declared object scope and a Pack-declared grain, one in §7.2 for a
 promotion whose continuation is not covered, and one in §7.3 for an
-inadmissible penetration determination. The D-5 round added one to §7.2 and
-corrected one, under an explicit instruction to bring that row into line. This
-round adds **six more to §7.2 and changes none at all** — E-7a's kind check,
-E-7c's `pack_version` check, and four for E-7b: the reduction over several
-determinations, the store that cannot be enumerated exhaustively, the terminal
-lapse, and the widened silence trigger.
-
-Two earlier rows now read against text that has moved on, and are deliberately
-left byte-identical rather than tidied: the E-4 row still lists the voiding
-condition, the context and the member scope as the continuation's lapse causes,
-and the E-6 silence row still says "its four proofs". **Both rules are exactly
-as true as they were** — every cause they name still lapses a promotion, and
-silence is still refused. What has changed is that there are now more causes and
-more proofs, which the new rows above them state; **read "the four proofs" in
-the E-6 row as "the checks of §4.5's table", which this round takes to seven.**
-Correcting the numeral would mean editing a row this round has no instruction
-to edit, and a fail-closed map whose rows are rewritten as prose drifts is worth
-less than one whose rows only ever accumulate.
+inadmissible penetration determination. The E-7 round added six to §7.2 — the
+re-derived kind, `pack_version`, the reduction over several determinations, a
+store that cannot be enumerated exhaustively, the terminal lapse, and the
+widened silence trigger. This round adds one more, for a re-derived verdict or
+terminal outcome that is not the one authorised, and brings **two** earlier
+rows into line with the text around them: the E-4 row's list of lapse causes,
+and the E-6 silence row's count of the proofs a continuation must carry.
+Neither rule changed — every cause the E-4 row named still lapses a promotion,
+and silence is still refused — the rows had simply been left behind by rounds
+that added causes and proofs above them.
 
 ### 7.1 Composition / request defects — the assessment refuses
 
@@ -1560,7 +1643,7 @@ less than one whose rows only ever accumulate.
 | The promotion cites an authoriser role not in `may_authorise_roles` for that exact `pack_id::resolution_kind` | Refuse to record it as `CONDITIONAL` — it is an unauthorised release, not a promotion | ADR 0002 §3.8: "a promotion citing a role not listed for this `resolution_kind` is not a `CONDITIONAL`, it is an unauthorised release" |
 | The promotion omits any of the nine §4.4 fields | Refuse — an additive promotion that cannot name its original verdict, blocker/gap, authoriser, role, versions, risk, release scope, and voiding condition is indistinguishable from a fabricated `READY` | ADR 0002 §3.8 promotion field list; §1 invariant 6 |
 | `overlay.risk_authorisations[].may_authorise_roles` is empty or contains a wildcard / `"all"` | Composition already failed closed; no promotion is possible | "An `overlay.risk_authorisations[].may_authorise_roles` is empty, or contains a wildcard, `"all"`, or any similarly unbounded value" |
-| A successor record would continue a promotion whose voiding condition is met, whose model-version context has changed, or over a member outside the promotion's recorded release scope or outside the members it was granted over | The promotion **lapses**, or does not extend to that member; the record states the lapse and its reason and shows the subscope's own verdict standing alone. Never continued silently, and never widened to cover a member it was not granted over (§4.5) | (new to this round; **closes E-4**; ADR 0002 §3.8 promotion field list, fields 6, 8 and 9) |
+| A successor record would continue a promotion when any of §4.5's seven checks is not proved — the enumerated determinations do not reduce to `unmet`, the model-version context has changed, the authorisation role is no longer listed, the re-derived leaf is not the one authorised, `pack_version` has moved, a prior lapse stands, or a member lies outside the recorded release scope or the members it was granted over | The promotion **lapses**, or does not extend to that member; the record states the lapse and its reason and shows the subscope's own verdict standing alone. Never continued silently, and never widened to cover a member it was not granted over (§4.5) | (**closes E-4**, causes since widened by E-6 and E-7; ADR 0002 §3.8 promotion field list) |
 | A continuation is attempted and the record cites **no voiding-condition determination** | The promotion **lapses**; the reason (no determination) is recorded. The assessment never forms its own reading of field 9 to fill the gap, and an unexamined condition is never treated as unmet (§4.5) | (**closes E-6**; the same discipline §1.2 item 4 fixes for `accepted_evidence_methods[]` outputs — cite a determination, never adjudicate) |
 | The cited voiding-condition determination cannot be resolved from its reference, or is missing its determiner, its cited basis, or its outcome | It **is not a determination**: it is read as the absent state and the promotion lapses under the row above. An unattributable assertion is not evidence that a condition remains unmet (§4.5) | (**closes E-6**; corrected shape, **closes D-5**) |
 | The cited voiding-condition determination names a different promotion — a granting record `assessment_digest`, activity, or subscope ordinal other than this promotion's origin reference — or a model-version context other than the one being continued | It is not a determination **about this continuation**: it is read as the absent state and the promotion lapses under the row above. A determination is never widened to a promotion or a context it did not name (§4.5, field 4) | (**closes D-5**) |
@@ -1568,12 +1651,13 @@ less than one whose rows only ever accumulate.
 | A voiding-condition determination reads **`met`** | The promotion **lapses**; the reason is recorded and the subscope's own verdict stands alone (§4.5) | (**closes E-6**; ADR 0002 §3.8 promotion field 9) |
 | A continuation is attempted and the promotion's cited authorisation role is **no longer listed** in the Overlay composed for this record, under `may_authorise_roles` for that exact `pack_id::resolution_kind` | The promotion **lapses**; the reason is recorded. The role listed when the promotion was granted is not re-used, and no other listed role is substituted for it (§4.5, check 3) | (**closes E-6**; ADR 0002 §3.5's per-`pack_id::resolution_kind` authorisation table, §3.8's promotion field 5) |
 | A continuation is attempted and the subscope's **currently re-derived `resolution_kind` is not the promotion's field 2** | The promotion **lapses**; the reason recorded is that the risk changed kind, and it is **not** recorded as "no longer applicable" — the deficiency did not clear, it became a different deficiency. Re-releasing needs a new promotion for the new kind, which must pass this table's first row (§4.5, check 5) | (**closes E-7a**; ADR 0002 §3.8's promotion field 2, §3.2's one-`resolution_kind`-per-leaf rule) |
+| A continuation is attempted and the subscope's re-derived **verdict is not the promotion's field 1**, or its **terminal outcome is not the promotion's field 3** | The promotion **lapses**, recorded as the risk having changed, exactly as a changed `resolution_kind` is. Necessary because ADR 0002 permits one `resolution_kind` on more than one leaf, including a `BLOCKED` and an `UNKNOWN` one, so the kind alone does not identify the leaf that was authorised (§4.5, check 5) | (**closes D-6**; ADR 0002 §3.2's at-least-one-leaf-per-route rule and its Consequences on reuse, §3.8's shared `failure_kind`/`gap_kind` namespace) |
 | A continuation is attempted and the composed Pack's `pack_version` differs from the one the granting record recorded | The promotion **lapses**; the reason is recorded. The same `resolution_kind` may resolve to a different route across a version bump, and an Overlay pins `pack_version` by exact match, so the bump is a deliberate edit (§4.5, check 6) | (**closes E-7c**; ADR 0002 §3.4b, §3.2's `resolution_routes[]`) |
 | Two or more admissible voiding-condition determinations name this promotion and context, and at least one reads `met` or `undeterminable` | The reduction yields that value under the fixed order `met` > `undeterminable` > `unmet`, so the promotion **lapses** with that reason. The outcome is a maximum over the enumerated set, never a function of which determination the record cited first or at all (§4.5, check 1) | (**closes E-7b**) |
 | The determinations naming this promotion and context cannot be **exhaustively enumerated** | Check 1 is **not proved** and the promotion lapses. A store that cannot answer "every determination for this promotion and context" cannot support a continuation, and the assessment never assumes the one it was handed is the only one (§4.5, check 1) | (**closes E-7b**) |
 | A continuation is attempted for a promotion whose lapse any sealed record in its chain has already recorded | **No continuation is possible.** The lapse is terminal for that promotion; releasing the work again requires a **new** promotion with all nine §4.4 fields, its own authoriser, and a role listed for the *current* `resolution_kind` (§4.5, check 7) | (**closes E-7b**; §1 invariant 6) |
 | A successor record whose subscope's **promotion chain is non-empty** — some sealed record in it granted, continued, or lapsed a promotion — records none of the three legal outcomes | **Refuse the record.** This is the widened trigger: the record that lapses a promotion neither grants nor continues one, so keying the obligation to "the cited record carried a promotion" let every record after a lapse fall silent about it (§4.5) | (**closes E-7b**; extends, and does not replace, the row below) |
-| A successor record cites a record that carried a promotion over members of this subscope, and records **none** of: a continuation with its four proofs, a lapse with its reason, or that the promotion is no longer applicable | **Refuse the record.** Silence neither continues a promotion nor ends one, and a record that leaves a release's status unstated is not a legal record (§4.5) | (**closes E-6**; §1 invariant 6 — an acceptance that nobody restated and nobody ended is indistinguishable from one nobody gave) |
+| A successor record cites a record that carried a promotion over members of this subscope, and records **none** of: a continuation with every check of §4.5's table proved, a lapse with its reason, or that the promotion is no longer applicable | **Refuse the record.** Silence neither continues a promotion nor ends one, and a record that leaves a release's status unstated is not a legal record (§4.5) | (**closes E-6**, trigger since widened by E-7b to the promotion chain; §1 invariant 6 — an acceptance that nobody restated and nobody ended is indistinguishable from one nobody gave) |
 
 ### 7.3 Unresolved outcomes — not failures, routed as `UNKNOWN`
 
@@ -1736,10 +1820,12 @@ nine fields rather than assembled by inspection — every enumerated
 voiding-condition determination reducing to `unmet` under the fixed order
 `met` > `undeterminable` > `unmet`, an unchanged model-version context, the
 cited authorisation role still listed for the promotion's **field 2**
-`resolution_kind`, coverage not widened, the **currently re-derived
-`resolution_kind` still being that field 2 kind** so that a risk which has
-become a different kind of risk ends the release instead of inheriting its
-authorisation, an unchanged `pack_version`, and no prior lapse of this
+`resolution_kind`, coverage not widened, the **re-derived subscope still reaching
+the leaf the promotion was granted against** — its verdict, its
+`resolution_kind` and its terminal outcome all compared against fields 1, 2 and
+3, because ADR 0002 permits one `resolution_kind` on more than one leaf and the
+kind alone therefore does not identify one — so that a risk which has become a
+different risk ends the release instead of inheriting its authorisation, an unchanged `pack_version`, and no prior lapse of this
 promotion anywhere in its chain — with a **lapse terminal**, so that
 re-releasing requires a new promotion with all nine fields rather than an older
 and friendlier determination, and with the two fields no design here can
