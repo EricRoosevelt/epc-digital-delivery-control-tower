@@ -6,7 +6,7 @@
   This round corrects Checkpoint C's own fixed inputs — how a Purpose Pack
   and a Project Overlay are shaped — and asserts nothing about a runtime
   having been built.
-- **Date:** 2026-08-28.
+- **Date:** 2026-09-03 (revised; first written 2026-08-28).
 - **Revision history:**
   - Supersedes the version at `bc4a142` (2026-08-26), which technical-director
     review **REJECTED** for six reasons: it treated an activity's necessary
@@ -97,6 +97,46 @@
     patch mechanism against Pack fields with no stated bound on what future
     override kinds could do to Framework or Pack guarantees. All three are
     closed below, each marked **(closes R5 item N)**.
+  - Refines the version merged at `f8fd104` (2026-09-03), which **BIM
+    domain review returned AT RISK** on the composed Checkpoint C + D design,
+    for four reasons, all four confirmed against this repository's own data and
+    against Checkpoint B's text before being accepted: the ten
+    `resolution_routes[]` assigned `model-coordination` eight times and
+    `mep-lead` twice and Architecture never, although
+    `missing-corresponding-opening` and `opening-not-verifiably-linked` both
+    describe drawing in the architectural model — Checkpoint B's own fix is to
+    model it there "so it exists in the discipline that owns the fabric" —
+    while `in-model-position-not-evaluated`, whose action is the rule-authoring
+    step Checkpoint B assigns to the information manager, was given to the MEP
+    lead; `penetration-determination`'s `acceptance_condition` named "the
+    architectural element penetrated" in the singular and `opening-status` read
+    exactly one outcome per penetrating element, while the same file's
+    `missing-corresponding-opening` fix said to model an opening "against each
+    storey the penetrating element passes through", so a chimney needing a slab
+    opening and a roof opening in different states — and a shared shaft opening
+    serving several MEP lines — were both inexpressible; `activities[]` carried
+    no declaration of which class of object an activity is about, so an assessed
+    scope declared as a whole `model_key` made `pcert-sample`'s two
+    `IfcBuildingElementProxy` setout markers subjects of the ceiling activity and
+    produced an `UNKNOWN` about a survey marker together with an action to extend
+    the rule set until one reported a storey; and the two remaining items
+    (`CONDITIONAL` continuation across records, and the shape of a successor
+    record that adds only an authorisation) are runtime-record questions closed
+    on the Checkpoint D side in
+    [`0003-runtime-purpose-assessment-shape.md`](0003-runtime-purpose-assessment-shape.md).
+    The three Checkpoint C items are closed below, each marked **(closes E-N)**;
+    the role correction is E-1, the cardinality correction E-2, and the declared
+    object scope E-3. No `resolution_kind`, branch, outcome vocabulary, leaf
+    verdict, or structural invariant 1–15 moved — §6 re-proves both the ten
+    routes' one-to-one correspondence with the ten non-`READY` leaves and the
+    four `READY` paths' closure under invariant 12, and the live verdicts remain
+    **BLOCKED / UNKNOWN / UNKNOWN**. Product audit of that closure (at
+    `849a55c`, before this revision landed) returned **AT RISK** on one
+    remaining item, E-6, which is a runtime-record question closed in
+    [`0003`](0003-runtime-purpose-assessment-shape.md); it also asked that the
+    `subject_classes` matching rule be recorded as the product decision it is
+    rather than left as an implementation detail, which §3.2 now does. This
+    revision is still one revision and keeps one history entry.
 - **Scope:** Checkpoint C only — the representation, ownership and identity
   boundary of a Purpose Pack and a Project Overlay. It does not design or
   execute runtime assessment (Checkpoint D), does not touch contract 1.6, and
@@ -152,9 +192,12 @@ No Pack and no Overlay may redefine what any of the four words mean or narrow
 the set of legal transitions between them. A Pack that shipped its own meaning
 for `READY` would not be a different purpose; it would be a different
 framework wearing a purpose's name — the same sentence Checkpoint B used, and
-still true here. Nothing in this round touches these six invariants, the
-fifteen decision-tree structural invariants built on top of them (§3.8), or
-the `BLOCKED`/`UNKNOWN`/`READY` semantics of any leaf in the worked Pack.
+still true here. Nothing in this round touches these six invariants, or the
+`BLOCKED`/`UNKNOWN`/`READY` semantics of any leaf in the worked Pack. The
+decision-tree structural invariants built on top of them (§3.8) go from
+fifteen to eighteen: the original fifteen are restated unchanged and
+unweakened, and the three added govern the new `subject_grain` /`pair_source`
+declaration and nothing else.
 
 ### Purpose Pack (reusable across projects, and across directions of one flagship purpose)
 
@@ -167,15 +210,24 @@ Owns:
   `direction_id` (§3.2; **closes R5 item 1**) — never derivable from
   `discipline_scope`, which stays applicability-only (`AGENTS.md`).
 - The production activities at stake for this purpose, each naming **which
-  direction it serves** and the **evidence requirements** it needs a
-  decision — never a validation requirement directly (§3.2, §3.8; **closes
-  gap 1**).
-- What each evidence requirement means, what would satisfy it, and — for a
-  reusable, non-project-specific question — how it binds to existing
-  validation data by `ruleset_id` + `ruleset_version` + `requirement_key`
-  (§3.3). A project-specific evidence requirement (e.g. asset identity) is
-  declared here only as a *question*; **which validation data answers it for
-  a given project is Overlay data, never Pack data** (§3.5; **closes gap 2**).
+  direction it serves**, **which class of model object its labour is about**
+  (`subject_classes`, §3.2; **closes E-3**), and the **evidence
+  requirements** it needs a decision — never a validation requirement
+  directly (§3.2, §3.8; **closes gap 1**). The object-class list is
+  declarative Pack data about kinds of thing; it is never a filter on which
+  elements happen to carry findings, because an element of a declared class
+  with no finding at all is exactly the case Checkpoint B case 4 exists to
+  keep visible.
+- What each evidence requirement means, what would satisfy it, **at what
+  grain its readings are keyed** (`subject_grain`, and `pair_source` where
+  that grain is a pair, §3.2; **closes E-2**), and — for a reusable,
+  non-project-specific question — how it binds to existing validation data by
+  `ruleset_id` + `ruleset_version` + `requirement_key` (§3.3). Grain is Pack
+  data for the same reason `outcomes[]` is: how many answers a question has
+  is a property of the question, not of a run. A project-specific evidence
+  requirement (e.g. asset identity) is declared here only as a *question*;
+  **which validation data answers it for a given project is Overlay data,
+  never Pack data** (§3.5; **closes gap 2**).
 - Verdict / blocker decision logic for this purpose, expressed as a closed
   decision tree over evidence-requirement outcomes, entirely **within** the
   Framework's four states — `CONDITIONAL` is categorically excluded as a leaf
@@ -360,8 +412,11 @@ record`.
 | `maturity` | Pack | enum (`draft`/`reviewed`/`stable`) | Pack metadata only; never read by the Framework. |
 | `citations` | Pack | list of strings | Free text, provenance for the Pack author's claims. |
 | `directions[]` | Pack | list of `{ direction_id, from, to }` | **Plural, replacing the singular `[direction]` table** — a Pack may carry more than one directional handoff under one flagship purpose. `direction_id` unique within the Pack; never derived from `discipline_scope` (§3.2; **closes R5 item 1**). |
-| `activities[]` | Pack | list of `{ activity_id, label, direction_id, evidence_requirement_ids[], decision_root_node }` | `activity_id` is **Pack-local**, not global (§5; **closes gap 5**). `direction_id` must resolve to exactly one `directions[].direction_id`, or the Pack fails to load (**closes R5 item 1**); it does not redefine activity identity, which stays `pack_id::activity_id`. |
-| `evidence_requirements[]` | Pack | list of `{ evidence_requirement_id, answers, binding_source, acceptance_condition, outcomes[], pack_binding?, insufficient_evidence[]? }` | The evidence layer, distinct from validation requirements (§3.2; **closes gap 1**). `evidence_requirement_id` is Pack-local. |
+| `activities[]` | Pack | list of `{ activity_id, label, direction_id, subject_classes[], evidence_requirement_ids[], decision_root_node }` | `activity_id` is **Pack-local**, not global (§5; **closes gap 5**). `direction_id` must resolve to exactly one `directions[].direction_id`, or the Pack fails to load (**closes R5 item 1**); it does not redefine activity identity, which stays `pack_id::activity_id`. |
+| `activities[].subject_classes` | Pack | list of IFC entity names | **Which class of model object this activity's labour is about (closes E-3).** A closed, duplicate-free list of `ifc_class` values, matched by exact string equality against `elements.csv`'s published `ifc_class`; no wildcard, no pattern, no `"all"`. It is **declarative Pack data about object kinds, never a filter on which elements happen to carry a finding** — an element of a declared class with zero findings is exactly the case the list exists to keep visible (Checkpoint B case 4's `IfcChimney`). Required for every activity that declares at least one `per-subject`- or `per-subject-pair`-grained evidence requirement; forbidden for an activity all of whose evidence requirements are `whole-scope` (§3.7). |
+| `evidence_requirements[]` | Pack | list of `{ evidence_requirement_id, answers, binding_source, subject_grain, acceptance_condition, outcomes[], pair_source?, pack_binding?, insufficient_evidence[]? }` | The evidence layer, distinct from validation requirements (§3.2; **closes gap 1**). `evidence_requirement_id` is Pack-local. |
+| `evidence_requirements[].subject_grain` | Pack | enum (`whole-scope` / `per-subject` / `per-subject-pair`) | **How this evidence requirement's readings are keyed onto observation subjects (closes E-2).** `whole-scope`: exactly one reading for the entire assessed scope. `per-subject`: one reading per element subject. `per-subject-pair`: one reading per *(element subject, counterpart element)* pair named by an earlier determination — the grain that lets one penetrating element need several openings, and one opening serve several penetrating elements. Grain was previously assigned at runtime rather than declared here, which left a Pack's cardinality unstated in the Pack; it is Pack data because it is a property of the question, not of a run. |
+| `evidence_requirements[].pair_source` | Pack | `{ from_evidence_requirement_id, on_outcome, counterpart_description }` | Present **iff** `subject_grain = "per-subject-pair"`. Names the evidence requirement whose determination supplies the counterpart keys, and the single outcome of it under which those counterparts exist. `counterpart_description` is narrative, like `answers`, and is never machine-interpreted. Checked at Pack load by invariants 16–18 (§3.8). |
 | `evidence_requirements[].pack_binding` | Pack | `{ ruleset_id, ruleset_version, requirement_keys[] }` | Present only when `binding_source = "pack"` — a general validation requirement the Pack may reference directly (§3.3). |
 | `evidence_requirements[].insufficient_evidence[]` | Pack | list of `{ ruleset_id, ruleset_version, requirement_key, cannot_answer }` | Records a *related but insufficient* validation pass, e.g. R-010 for `cross-model-alignment` (§3.2, §5). |
 | `decision_nodes[]` | Pack | list of `{ node_id, evidence_requirement_id, branches[] }` | Closed decision tree per activity (§3.8; **closes gap 3**, **closes R2 gap 5**). Unchanged this round. |
@@ -638,6 +693,172 @@ case in §6 exercises partitioning either; a future Pack whose assessed scope
 genuinely spans several such facts is exactly where the two counterexamples
 above would first bite.
 
+**What an activity is *about*, declared rather than inferred (closes E-3).**
+Every activity that reads any evidence at element grain declares
+`subject_classes` — the closed list of `ifc_class` values its labour concerns.
+Without it, an assessed scope declared as a whole `model_key` expands to *every*
+element of that model version, and this repository's own fixture shows what that
+produces: `pcert-sample`'s `hvac` model carries two `IfcBuildingElementProxy`
+setout markers, `origin` and `geo-reference`, both with an empty `storey`, both
+outside R-004's and R-005's applicability, and `geo-reference` with no finding of
+any kind. Expanded blindly they would become subjects of the ceiling activity and
+produce an `UNKNOWN` *about a survey marker*, resolved by a route whose next
+action is to extend the rule set until a setout marker reports a storey. That
+verdict is not wrong about the evidence; it is about the wrong object.
+
+**The fix is declarative object-class data, and it must not become "whatever
+has a finding."** Filtering the scope by which elements happen to carry findings
+would re-open exactly the trap Checkpoint B case 4 exists to close —
+`hvac::3dkFAzOGrAIuOzY_RdrdVv`, the `IfcChimney`, produces **zero** findings and
+is the single most important element in that case. It is an `IfcChimney`, so it
+is precisely the class every one of this Pack's three activities is about, and it
+stays a subject under this rule while the two proxies do not. The list names
+object kinds; findings never enter the question. A class a project's model
+happens not to contain is not an error — a Pack is reusable, and a project with
+no chimneys simply has no chimney subjects.
+
+**`subject_classes` v1 matches `ifc_class` exactly and does not walk the IFC
+inheritance graph (product decision, recorded here because this is where the
+field is defined).** An `IfcChimney` is admitted by a list naming
+`IfcChimney`, and by a list naming `IfcBuildingElement` or `IfcProduct` it is
+not. That is a decision, not an oversight, and it is deliberately the narrow
+one:
+
+- Subtype expansion would make a Pack depend on **one IFC schema's type
+  hierarchy**. The fixture is IFC4; a Pack is meant to outlive a schema
+  version, and a list whose meaning changes when the hierarchy underneath it
+  changes is not the enumerable, closed thing this list exists to be.
+- It would also let an activity's object scope **grow silently** — a model
+  using a subtype the Pack author never considered would be swept in without
+  anyone declaring it. Growing an activity's scope is exactly the act that
+  should require an author to write a class name down.
+
+The cost is real, and it is made visible rather than hidden: a project whose
+models use a subtype the Pack did not name sees those elements in that
+activity's `out_of_subject_class[]` (Checkpoint D,
+[`0003`](0003-runtime-purpose-assessment-shape.md) §3.3), each with the
+`ifc_class` that excluded it. That list *is* the divergence signal between a
+Pack's vocabulary and a project's models, and reading it is how the question
+gets asked at all.
+
+**Whether that divergence is eventually better answered by widening a Pack's
+list, by a project-level class-mapping layer in the Overlay, or by subtype
+expansion after all is deferred until a second real Pack and a second real
+project make the trade-off concrete.** No mapping layer is designed here, none
+is implied, and Checkpoint D must not assume one exists — the same treatment
+§3.6 gives the deferred override capability.
+
+**An element the list excludes is not silently dropped.** For each requested
+activity the runtime record accounts for every declared scope key as either a
+subject of that activity or an explicitly listed out-of-class key, with the
+`ifc_class` that placed it there (Checkpoint D,
+[`0003`](0003-runtime-purpose-assessment-shape.md) §3.1 and §3.3).
+A mistyped class name therefore surfaces as elements the activity declined to be
+about, not as a scope that quietly shrank.
+
+**Cardinality: an evidence requirement declares the grain its readings are keyed
+at (closes E-2).** `subject_grain` is Pack data for the same reason `outcomes[]`
+is: how many answers a question has is a property of the question, not of a run.
+Three values, and this Pack uses all three:
+
+| `subject_grain` | One reading per | This Pack |
+|---|---|---|
+| `whole-scope` | the entire assessed scope | `cross-model-alignment` — one fact about the model pair |
+| `per-subject` | one element subject | `asset-identity`, `in-model-position`, `penetration-determination` |
+| `per-subject-pair` | one *(element subject, counterpart element)* pair | `opening-status` — one reading per *(penetrating element, penetrated architectural element)* |
+
+**Why `opening-status` needed the third grain, and why the pair is keyed the way
+it is.** A previous revision keyed `opening-status` by the penetrating element
+alone, one reading each, while `penetration-determination`'s
+`acceptance_condition` named "**the** architectural element penetrated" in the
+singular — and, in the same file, `missing-corresponding-opening`'s fix said to
+model an opening "against **each** storey the penetrating element passes
+through." Those cannot all be true at once. A chimney that passes through a floor
+slab and then the roof needs **two** openings, and the common live state is that
+one of them is modelled and cross-referenced while the other is not modelled at
+all; a shared shaft opening serving several MEP lines is the same mismatch
+inverted. Neither was expressible.
+
+Four keyings were considered:
+
+- **Keep one reading per penetrating element, and let that reading carry a list
+  of per-opening outcomes.** Rejected: a reading must reduce to exactly one of
+  the evidence requirement's declared `outcomes[]`. A reading holding two
+  outcomes at once is precisely the heterogeneity this section forbids
+  collapsing, and it would have no carrier to split on — the disagreement would
+  live *inside* an atom.
+- **Key by the opening.** Rejected outright: the opening does not exist exactly
+  when the outcome is `not-modelled`, so the key would be absent precisely when
+  it is most needed. That is the phantom key a previous review round removed,
+  and nothing here brings it back.
+- **Key by *(penetrating element, storey)*.** Rejected: `storey` is a published
+  element attribute that is legitimately empty — both setout proxies above have
+  none — an opening is hosted in a fabric element rather than in a storey, and
+  Checkpoint B's own source fix is to model it "so it exists in the discipline
+  that owns the fabric": the fabric element is what the opening hangs on.
+- **Key by *(penetrating element, penetrated architectural element)*.
+  Chosen.** Both members exist whenever the pair exists — the penetrating
+  element is in the assessed scope, and the penetrated architectural element is
+  named by the `penetration-confirmed` determination itself — so the assessment
+  invents neither. The pair is the unit of labour the activity is actually
+  about, one opening to cut, which is why it carries exactly one verdict.
+  Several openings for one penetrating element are several pairs; one shared
+  opening serving several penetrating elements is several pairs naming the same
+  counterpart, each asking whether that opening is inspectably linked to *its
+  own* penetrating element — which is what "inspectably linked" means. And the
+  opening stays what it already was: an **attribute** of the pair's
+  determination, present or a named absence, never a key.
+
+`penetration-determination`'s `acceptance_condition` is pluralised to match: a
+`penetration-confirmed` determination names **every** architectural element the
+penetrating element passes through, each an `element_key` of the consuming model
+version in the model-version context. A determination that claims a penetration
+while naming no such element is not admissible evidence and produces no
+`penetration-confirmed` reading — it reads `not-yet-determined`, which is the
+fail-closed direction.
+
+**This changes no outcome vocabulary, no branch, and no leaf.** The tree's
+shape, its fifteen structural invariants, the ten `resolution_routes[]`, and the
+one-to-one correspondence between non-`READY` leaves and routes are re-proved
+unchanged in §3.8 and §6; `subject_grain` says how many readings a node
+consumes, never what a branch does with one.
+
+**Resolving roles, corrected against Checkpoint B's own text (closes E-1).**
+Three of the ten `resolution_routes[]` rows named a role that does not do the
+work the row's own `next_action` describes:
+
+- `missing-corresponding-opening` and `opening-not-verifiably-linked` both act
+  **in the architectural model** — the first models the opening, the second adds
+  the cross-reference the opening carries. Checkpoint B case 4 is explicit about
+  why the work lands there: model it in the architectural model "so it exists in
+  the discipline that owns the fabric." Both move from `model-coordination` to
+  **`architecture-lead`**.
+- `in-model-position-not-evaluated`'s `next_action` is the only route in the
+  Pack that contains a rule-authoring step — extend the rule set's applicability
+  so an element the rules never reach can be asked the position question at all.
+  Checkpoint B names the actor in the same breath: "the information manager
+  extends the rule set so `IfcChimney` is in scope; no model changes." It moves
+  from `mep-lead` to **`information-manager`**.
+
+Both role names are existing repository vocabulary, not new words:
+`architecture-lead` is the `owner_role` of R-001, R-002 and R-006, and
+`information-manager` of R-009. That they already exist is what makes them
+available to a route author; it does not license reading either one *off* a
+bound rule, which §3.5 forbids and continues to forbid.
+
+**The other seven rows are unchanged, and the reasons are in their own
+`next_action` text.** `asset-identity-not-evaluated` stays `model-coordination`
+because, unlike `in-model-position-not-evaluated`, it names no rule-authoring
+step: the only act it describes is re-running an evaluation whose binding is the
+project's own Overlay convention. `penetration-not-determined` and
+`opening-status-not-determined` stay `model-coordination` because Checkpoint B
+says their evidence needs "the MEP lead and Architecture lead together in a
+coordination review, since neither model alone contains the answer" — convening
+that review is the coordination function, and naming either discipline alone as
+the resolver would misdescribe a joint determination.
+`mep-element-not-spatially-assigned` stays `mep-lead`: hosting an element to its
+correct level is work in the MEP model.
+
 ```toml
 # purpose-packs/interdisciplinary-coordination-readiness/pack.toml
 # EXAMPLE, not a live artifact — no such file exists yet.
@@ -665,6 +886,7 @@ to = "Architecture"
 evidence_requirement_id = "asset-identity"
 answers = "each equipment element in the assessed scope carries the project's asset identity"
 binding_source = "overlay"   # project-specific: the Pack asks the question, the Overlay supplies the answer (closes gap 2)
+subject_grain = "per-subject"
 acceptance_condition = "every element in the assessed scope that a bound requirement_key applies to evaluates PASS, and every such element is covered by an evaluation at all -- an element with no finding under the binding is not covered, and not-covered is never read as satisfied"
 outcomes = ["satisfied", "unmet", "not-yet-evaluated"]
 
@@ -672,6 +894,7 @@ outcomes = ["satisfied", "unmet", "not-yet-evaluated"]
 evidence_requirement_id = "in-model-position"
 answers = "each MEP element in the assessed scope is assigned to a storey Architecture also models"
 binding_source = "pack"      # a general coordination requirement, not a project convention
+subject_grain = "per-subject"
 acceptance_condition = "every element in the assessed scope that a bound requirement_key applies to evaluates PASS, and every such element is covered by an evaluation at all"
 outcomes = ["satisfied", "unmet", "not-yet-evaluated"]
 
@@ -687,6 +910,7 @@ outcomes = ["satisfied", "unmet", "not-yet-evaluated"]
 evidence_requirement_id = "cross-model-alignment"
 answers = "the producing and consuming models sit on a common, agreed datum"
 binding_source = "assessment"   # no validation requirement in rule set 2.2 answers this
+subject_grain = "whole-scope"   # one fact about the model pair, not one per element
 acceptance_condition = "a recorded alignment confirmation exists for the named model versions, produced by a method the project's Overlay accepts, and it reports the models aligned"
 outcomes = ["confirmed", "misaligned", "not-yet-confirmed"]
 
@@ -698,27 +922,48 @@ outcomes = ["confirmed", "misaligned", "not-yet-confirmed"]
 
 [[evidence_requirements]]
 evidence_requirement_id = "penetration-determination"
-answers = "whether an MEP element penetrates architectural fabric, and if so which architectural element"
+answers = "whether an MEP element penetrates architectural fabric, and if so which architectural elements"
 binding_source = "assessment"
-acceptance_condition = "a recorded coordination-review determination exists for the named model versions, either naming no penetration or naming the architectural element penetrated"
+subject_grain = "per-subject"
+acceptance_condition = "a recorded coordination-review determination exists for the named model versions, either naming no penetration or naming every architectural element the penetrating element passes through, each as an element_key of the consuming model version; a determination claiming a penetration while naming no such element is not admissible and produces no penetration-confirmed reading (closes E-2)"
 outcomes = ["no-penetration", "penetration-confirmed", "not-yet-determined"]
 
 [[evidence_requirements]]
 evidence_requirement_id = "opening-status"
-answers = "whether a corresponding architectural opening exists and is inspectably linked to the penetrating element"
+answers = "for each architectural element an MEP element penetrates, whether the corresponding opening exists and is inspectably linked to that penetrating element"
 binding_source = "assessment"
-acceptance_condition = "the opening is modelled and a recorded cross-reference to the penetrating element exists"
+subject_grain = "per-subject-pair"   # one reading per (penetrating element, penetrated architectural element) (closes E-2)
+acceptance_condition = "for the pair, the opening is modelled in the penetrated architectural element and a recorded cross-reference to this penetrating element exists"
 outcomes = ["cross-referenced", "modelled-not-cross-referenced", "not-modelled", "not-yet-determined"]
 
-# --- Activities: which direction each one serves, which evidence requirements
-#     it needs, and where its decision tree starts. direction_id must resolve
-#     to a declared direction; it does not change activity identity, which
-#     stays pack_id::activity_id. (closes R5 item 1) ---
+  [evidence_requirements.pair_source]
+  from_evidence_requirement_id = "penetration-determination"
+  on_outcome = "penetration-confirmed"
+  counterpart_description = "Each architectural element the determination named as penetrated. Both members of the pair exist whenever the pair does; the opening itself is an attribute of the pair reading -- present, or a named absence -- and is never a key."
+
+# --- Activities: which direction each one serves, which class of model object
+#     it is about, which evidence requirements it needs, and where its decision
+#     tree starts. direction_id must resolve to a declared direction; it does
+#     not change activity identity, which stays pack_id::activity_id.
+#     (closes R5 item 1)
+#
+#     subject_classes is the declared object scope (closes E-3): the ifc_class
+#     values this activity's labour concerns, matched by exact string equality
+#     against elements.csv. It is never a finding filter. That all three
+#     activities of this Pack happen to declare the same three classes is a fact
+#     about this Pack -- MEP work products handed to Architecture -- not about
+#     the schema: an activity about architectural fabric would declare fabric
+#     classes, which is why the list lives on the activity. The two
+#     IfcBuildingElementProxy setout markers in pcert-sample's hvac model
+#     (origin, geo-reference) are outside all three lists and are therefore
+#     subjects of none of these activities; the IfcChimney with zero findings is
+#     inside all three and stays a subject of each. ---
 
 [[activities]]
 activity_id = "schedules-and-room-data-sheets"
 label = "Room data sheets and equipment schedules"
 direction_id = "mep-to-architecture"
+subject_classes = ["IfcDuctSegment", "IfcAirTerminal", "IfcChimney"]
 evidence_requirement_ids = ["asset-identity"]
 decision_root_node = "asset-identity-node"
 
@@ -726,6 +971,7 @@ decision_root_node = "asset-identity-node"
 activity_id = "ceiling-and-bulkhead-geometry"
 label = "Reflected ceiling and bulkhead layout"
 direction_id = "mep-to-architecture"
+subject_classes = ["IfcDuctSegment", "IfcAirTerminal", "IfcChimney"]
 evidence_requirement_ids = ["in-model-position", "cross-model-alignment"]
 decision_root_node = "in-model-position-node"
 
@@ -733,6 +979,7 @@ decision_root_node = "in-model-position-node"
 activity_id = "builders-work-openings"
 label = "Builder's-work openings"
 direction_id = "mep-to-architecture"
+subject_classes = ["IfcDuctSegment", "IfcAirTerminal", "IfcChimney"]
 evidence_requirement_ids = ["penetration-determination", "opening-status"]
 decision_root_node = "penetration-determination-node"
 
@@ -769,7 +1016,7 @@ recheck_condition = "The R-004-bound requirement_key(s) evaluate PASS for the el
 
 [[resolution_routes]]
 resolution_kind = "in-model-position-not-evaluated"      # UNKNOWN, in-model-position
-default_role = "mep-lead"
+default_role = "information-manager"   # the only route carrying a rule-authoring step (closes E-1)
 consequence_kinds = ["work-suspended"]
 next_action = "Not a model defect: run the in-model-position evaluation over the full assessed scope; where a specific element still produces no finding at all, extend the rule set's applicability to reach it -- a rule-authoring action, not a model edit -- so the position question can be asked of it."
 recheck_condition = "Every element in the assessed scope is covered by a finding under the bound requirement_key(s)."
@@ -797,17 +1044,17 @@ recheck_condition = "A recorded coordination-review determination exists for the
 
 [[resolution_routes]]
 resolution_kind = "opening-not-verifiably-linked"     # BLOCKED, opening-status
-default_role = "model-coordination"
+default_role = "architecture-lead"   # the cross-reference is carried by the opening, in the architectural model (closes E-1)
 consequence_kinds = ["work-suspended", "rework-risk"]
-next_action = "Source-model fix: add or correct the cross-reference from the modelled architectural opening back to the penetrating MEP element it was cut for, so the link the accepted method checks for actually exists and can be inspected."
-recheck_condition = "The opening-cross-reference-check method is re-run and reports the opening cross-referenced to the penetrating element."
+next_action = "Source-model fix: add or correct the cross-reference from the modelled architectural opening back to the penetrating MEP element it was cut for, so the link the accepted method checks for actually exists and can be inspected. One such link per (penetrating element, penetrated architectural element) pair: a shared opening serving several penetrating elements needs a cross-reference to each of them."
+recheck_condition = "The opening-cross-reference-check method is re-run and reports the opening cross-referenced to the penetrating element, for the pair."
 
 [[resolution_routes]]
 resolution_kind = "missing-corresponding-opening"     # BLOCKED, opening-status
-default_role = "model-coordination"
+default_role = "architecture-lead"   # so it exists in the discipline that owns the fabric (closes E-1)
 consequence_kinds = ["work-suspended"]
-next_action = "Source-model fix: model the opening in the architectural model, as a hosted opening or shaft against each storey the penetrating element passes through, rather than as a void carried in the MEP model."
-recheck_condition = "The opening-status evaluation is re-run and reports the opening modelled and cross-referenced (outcome = cross-referenced) for the named model versions."
+next_action = "Source-model fix: model the opening in the architectural model, as a hosted opening or shaft in the architectural element this penetration passes through, rather than as a void carried in the MEP model. An element that passes through several architectural elements needs one such opening in each of them -- one per pair."
+recheck_condition = "The opening-status evaluation is re-run and reports the opening modelled and cross-referenced (outcome = cross-referenced) for this pair, for the named model versions."
 
 [[resolution_routes]]
 resolution_kind = "opening-status-not-determined"     # UNKNOWN, opening-status
@@ -1026,6 +1273,20 @@ team_or_person = "coordination-team"  # EXAMPLE — no real assignment exists
 role = "mep-lead"
 team_or_person = "mep-design-team"  # EXAMPLE — no real assignment exists
 
+# --- Two further rows, because the corrected routes now reach two further
+#     roles (closes E-1). A team_mapping row staffs a *resolving* role only; it
+#     never staffs an authoriser, and information-manager appearing both here
+#     and in risk_authorisations below stays two independently declared facts,
+#     not one inferred from the other. ---
+
+[[overlay.team_mapping]]
+role = "architecture-lead"
+team_or_person = "architecture-design-team"  # EXAMPLE — no real assignment exists
+
+[[overlay.team_mapping]]
+role = "information-manager"
+team_or_person = "information-management-team"  # EXAMPLE — no real assignment exists
+
 # --- Risk authorisation: which roles MAY authorise a CONDITIONAL promotion
 #     for one specific pack_id::resolution_kind. Never a project-wide list.
 #     "information-manager" echoes Checkpoint B's own vocabulary -- the
@@ -1070,13 +1331,22 @@ before, for both verdict shapes: `resolution_routes[]` names an abstract
 an `UNKNOWN` leaf's `gap_kind` alike; the Overlay's `team_mapping` names this
 project's actual team for that role; a future runtime step composes the two
 into an actual assignment, which is a runtime fact (row 8c) recorded nowhere
-in either file. The two roles the Pack's ten `resolution_routes[]` entries
-actually use are exactly the two `team_mapping` entries above:
+in either file. The four roles the Pack's ten `resolution_routes[]` entries
+actually use are exactly the four `team_mapping` entries above:
 
 | Pack `default_role` | Used by `resolution_kind`(s) | Overlay `team_or_person` (illustrative) |
 |---|---|---|
-| `model-coordination` | `missing-project-asset-identity`, `asset-identity-not-evaluated`, `cross-model-misalignment`, `cross-model-alignment-not-confirmed`, `penetration-not-determined`, `opening-not-verifiably-linked`, `missing-corresponding-opening`, `opening-status-not-determined` | `coordination-team` |
-| `mep-lead` | `mep-element-not-spatially-assigned`, `in-model-position-not-evaluated` | `mep-design-team` |
+| `model-coordination` | `missing-project-asset-identity`, `asset-identity-not-evaluated`, `cross-model-misalignment`, `cross-model-alignment-not-confirmed`, `penetration-not-determined`, `opening-status-not-determined` | `coordination-team` |
+| `mep-lead` | `mep-element-not-spatially-assigned` | `mep-design-team` |
+| `architecture-lead` | `opening-not-verifiably-linked`, `missing-corresponding-opening` | `architecture-design-team` |
+| `information-manager` | `in-model-position-not-evaluated` | `information-management-team` |
+
+Six, one, two and one: ten `resolution_kind`s, each mapped exactly once, and
+every role a reachable non-`READY` leaf can name resolving to exactly one
+`team_or_person` — which is what §3.7 requires before an activity may be
+assessed at all. **The correction moved roles between rows; it added no row,
+removed none, and changed no `resolution_kind`, consequence, action, or
+recheck condition.**
 
 This is **project policy for how a role would be staffed, stated in
 advance** — it is not this run's assignment, not an actor, and not a claim
@@ -1156,7 +1426,7 @@ machine-verify that the specific override it permits satisfies all four of
 the following, for every case the override could apply to — not merely
 argued to satisfy them in prose:**
 
-1. **It does not weaken a Framework invariant** (§1's six, or the fifteen
+1. **It does not weaken a Framework invariant** (§1's six, or the eighteen
    decision-tree structural invariants built on them, §3.8) — the four
    verdict words, their mutual exclusivity, and the tree's own soundness
    stay exactly as strict as an Overlay-free Pack.
@@ -1243,6 +1513,13 @@ silently declines to evaluate is the worst outcome available":
 | A branch's `renders_inapplicable[]` names the `evidence_requirement_id` of the node the branch itself belongs to | Fail closed at Pack load time (invariant 14) — a branch cannot render its own just-tested requirement inapplicable (**closes R4 gap 2**). |
 | A node testing `evidence_requirement_id` X appears on any path descending from a branch that already rendered X inapplicable, regardless of what verdict that path eventually reaches | Fail closed at Pack load time (invariant 15) — checked over every path prefix, not only `READY`-terminating ones (**closes R4 gap 2**). |
 | A branch's `renders_inapplicable[]` names an `evidence_requirement_id` the branch's own activity does not declare | Fail closed at Pack load time, the same way an out-of-scope `next_node` target would be (**closes R3 gap 3**). |
+| An `activities[]` entry declares at least one `per-subject`- or `per-subject-pair`-grained evidence requirement and has no `subject_classes`, or declares only `whole-scope` evidence requirements and has one | Fail closed at Pack load time — an activity that reads element-grained evidence must say which class of object it is about, and one that reads none has no element subjects to declare classes for (**closes E-3**). |
+| An `activities[].subject_classes` is empty, contains a duplicate, or contains a wildcard, a pattern, or `"all"` | Fail closed at Pack load time — the list is closed and enumerable, exactly like `renders_inapplicable[]` and every `outcomes[]` list (**closes E-3**). |
+| An `evidence_requirements[]` entry has no `subject_grain`, or a `subject_grain` outside `whole-scope` / `per-subject` / `per-subject-pair` | Fail closed at Pack load time (**closes E-2**). |
+| An evidence requirement has `subject_grain = "per-subject-pair"` and no `pair_source`, or has a `pair_source` without that grain | Fail closed at Pack load time (invariant 16; **closes E-2**). |
+| A `pair_source.from_evidence_requirement_id` is not declared by every activity that declares the pair-grained requirement, or its `on_outcome` is not one of that requirement's declared `outcomes[]` | Fail closed at Pack load time (invariant 16; **closes E-2**). |
+| A node testing a `per-subject-pair` evidence requirement is reachable by any path whose prefix does not include the pair source's node taking exactly `on_outcome` | Fail closed at Pack load time (invariant 17) — a pair-keyed reading may never be asked where no pair has been named (**closes E-2**). |
+| The pair source's `on_outcome` branch is a leaf rather than a `next_node` branch | Fail closed at Pack load time (invariant 18) — an outcome that names counterparts and then terminates could never have them read (**closes E-2**). |
 | **A project's `project.toml` has no `[overlay]` table at all** | **Not an error.** The project simply has no purpose assessment available. `epc-ct run`, `check`, `group`, and every exporter are completely unaffected, because nothing in the current pipeline reads `[overlay]` (**closes gap 5**). |
 | **A purpose assessment is explicitly requested for a `pack_id` the project's Overlay does not list under `overlay.packs[]`** | **Fail closed for that request only.** The project's existing contract 1.6 pipeline continues to run normally; only the specific unbound purpose-assessment request is refused (**closes gap 5**). |
 
@@ -1256,12 +1533,20 @@ repository publishes (`AGENTS.md` rule 1).
 The rejected draft named a `table_id` and deferred the actual shape to
 Checkpoint D. That is corrected here: this section fixes the **data
 structure** a Pack's verdict logic takes. No evaluator that walks it is
-implemented — only the shape a future evaluator would read. **Nothing in
-this round changes the tree's shape, its outcomes, its fifteen structural
-invariants, or any leaf's `verdict`/`failure_kind`/`gap_kind`** — only the
-Pack's file path/`pack_id` comments change, and every `resolution_kind`
-below now resolves through `resolution_routes[]` (§3.2) rather than the
-retired `default_responsibility[]`.
+implemented — only the shape a future evaluator would read. **This round
+changes the tree's shape not at all: the same five nodes, the same sixteen
+branches — fourteen leaves and two `next_node` edges — the same four `READY`
+leaves, five `BLOCKED` leaves and five `UNKNOWN` leaves, the same `failure_kind`s and
+`gap_kind`s, and the same fifteen structural invariants, every one of which
+is restated below unweakened.** What this round adds is three further
+invariants, 16–18, which constrain the *new* `subject_grain` /`pair_source`
+declaration and nothing else, and which no existing invariant depends on. A
+grain says how many readings a node consumes; it never changes what a branch
+does with one, so 1–15 are untouched by construction. §6 re-proves the two
+properties a reader would reasonably suspect this round of having moved: the
+ten `resolution_routes[]` still stand in exact one-to-one correspondence with
+the ten non-`READY` leaves, and all four root-to-`READY`-leaf paths still
+close under invariant 12.
 
 **Shape.** Each activity names one `decision_root_node`. A decision node
 names one `evidence_requirement_id` and a set of `branches`, one per outcome
@@ -1292,7 +1577,8 @@ Pack-load time (§3.7).
 
 **Structural invariants, checked at Pack load time, before any project ever
 uses the file (closes R2 gap 5, closes R3 gap 3, closes R4 gap 2) — all
-fifteen unchanged this round:**
+fifteen below unchanged this round, with three further ones added after them
+(closes E-2):**
 
 1. Every `activities[].decision_root_node` names an existing `node_id`.
 2. Every branch's `next_node` names an existing `node_id`.
@@ -1347,6 +1633,35 @@ fifteen unchanged this round:**
     an ancestor already ruled out any more than a `READY`-terminating one
     could, which invariant 12 alone — scoped only to `READY`-leaf paths —
     would not catch.
+
+**Three further invariants, added this round, governing `subject_grain` and
+`pair_source` only (closes E-2):**
+
+16. An evidence requirement declares `pair_source` **iff** its `subject_grain`
+    is `per-subject-pair`. That `pair_source` names a
+    `from_evidence_requirement_id` that exists in `evidence_requirements[]`
+    and that **every** activity declaring the pair-grained requirement also
+    declares, and an `on_outcome` that is one of the named requirement's own
+    declared `outcomes[]`.
+17. **Every node testing a `per-subject-pair` evidence requirement is
+    reachable only along paths whose prefix contains a branch of the pair
+    source's node taking exactly `on_outcome`** — checked over every path
+    prefix, the same way invariant 15 is. This is what makes the counterpart
+    keys exist before anything is keyed by them: a pair-grained reading is
+    structurally unaskable until the determination that names its counterparts
+    has been taken.
+18. **That `on_outcome` branch is a `next_node` branch, never a leaf.** An
+    outcome whose whole point is to name counterparts, that then terminated
+    the path, could never have those counterparts read, and would make
+    invariant 17 vacuously satisfiable by an unreachable node.
+
+In this Pack the three are exercised exactly once, by `opening-status`:
+`pair_source` names `penetration-determination` on `penetration-confirmed`
+(16); `opening-status-node` is reachable only through that branch (17); and
+that branch carries `next_node = "opening-status-node"` rather than a verdict
+(18). Nothing about invariants 1–15 is relaxed to make room for them — 16–18
+add checks, they remove none, and a Pack that fails any of 1–15 still fails
+closed exactly as before.
 
 Invariants 13–15 close three narrower gaps `renders_inapplicable` itself
 could otherwise open: a duplicate entry (13) is inert but marks an authoring
@@ -1692,6 +2007,15 @@ Proving §3's shape is sufficient, without designing runtime behaviour:
 | Ceiling / bulkhead geometry | `ceiling-and-bulkhead-geometry` | `mep-to-architecture` | `in-model-position`, `cross-model-alignment` | Pack-bound to R-004A/B for the first; `assessment` for the second, with R-010 named only as insufficient evidence | **UNKNOWN** (case 3) |
 | Builder's-work openings | `builders-work-openings` | `mep-to-architecture` | `penetration-determination`, `opening-status` | `assessment` for both — no validation requirement in rule set 2.2 answers either | **UNKNOWN** (case 4) |
 
+**All three activities declare the same three `subject_classes`
+(`IfcDuctSegment`, `IfcAirTerminal`, `IfcChimney`) — the MEP work products
+this direction hands to Architecture.** The coincidence is a fact about this
+Pack, not about the schema; an activity about architectural fabric would
+declare fabric classes, which is why the list lives on the activity rather
+than on the Pack. What it excludes in `pcert-sample` is exactly the two
+`IfcBuildingElementProxy` setout markers, `origin` and `geo-reference`; what
+it keeps is the `IfcChimney` that carries no finding at all.
+
 **All three activities resolve to the Pack's one declared direction,
 `mep-to-architecture` (§3.2; closes R5 item 1).** Nothing about proving §3's
 shape sufficient for Checkpoint B's scenario required a second direction to
@@ -1715,12 +2039,12 @@ consequence, default role, next action, to recheck condition, in one table
 | `missing-project-asset-identity` | BLOCKED | work-cannot-start, re-identification-and-reissue-risk | model-coordination | Populate or correct the project-required asset-identity values at source per the Overlay binding and re-export; which properties/fields is project-specific and not named by the Pack | Every bound `requirement_key` evaluates PASS for every element in scope, none uncovered |
 | `asset-identity-not-evaluated` | UNKNOWN | work-suspended | model-coordination | *Not a model defect* — run the evaluation over the full assessed scope | Every element in scope is covered by an evaluation, none absent |
 | `mep-element-not-spatially-assigned` | BLOCKED | work-suspended | mep-lead | Host the element to its correct level/space before export | The R-004-bound requirement_key(s) evaluate PASS for the element |
-| `in-model-position-not-evaluated` | UNKNOWN | work-suspended | mep-lead | *Not a model defect* — run the evaluation; extend rule applicability if a rule authoring gap is the cause | Every element in scope is covered by a finding |
+| `in-model-position-not-evaluated` | UNKNOWN | work-suspended | **information-manager** | *Not a model defect* — run the evaluation; extend rule applicability if a rule authoring gap is the cause | Every element in scope is covered by a finding |
 | `cross-model-misalignment` | BLOCKED | work-suspended | model-coordination | Re-acquire the shared coordination datum and re-export placement against it | The alignment-confirmation method is re-run and reports confirmed |
 | `cross-model-alignment-not-confirmed` | UNKNOWN | work-suspended, rework-risk | model-coordination | *Not a model defect* — perform the accepted alignment-confirmation method | The method is performed and reports confirmed, for the named versions |
 | `penetration-not-determined` | UNKNOWN | work-suspended | model-coordination | *Not a model defect* — hold the coordination-review determination | A recorded determination exists (no-penetration or the element named) |
-| `opening-not-verifiably-linked` | BLOCKED | work-suspended, rework-risk | model-coordination | Add/correct the cross-reference from the modelled opening to the penetrating element | The opening-cross-reference-check is re-run and reports cross-referenced |
-| `missing-corresponding-opening` | BLOCKED | work-suspended | model-coordination | Model the opening in Architecture, hosted against the storey the element passes through | The opening-status evaluation reports cross-referenced |
+| `opening-not-verifiably-linked` | BLOCKED | work-suspended, rework-risk | **architecture-lead** | Add/correct the cross-reference from the modelled opening to the penetrating element, one per pair | The opening-cross-reference-check is re-run and reports cross-referenced, for the pair |
+| `missing-corresponding-opening` | BLOCKED | work-suspended | **architecture-lead** | Model the opening in Architecture, hosted in the architectural element this penetration passes through — one per pair | The opening-status evaluation reports cross-referenced for the pair |
 | `opening-status-not-determined` | UNKNOWN | work-suspended | model-coordination | *Not a model defect* — complete the opening-status review | The review reports a definite result (cross-referenced, modelled-not-cross-referenced, or not-modelled) |
 
 **A reviewer can now start from any non-`READY` leaf's `resolution_kind`
@@ -1796,6 +2120,73 @@ asserts:
 - **R-005 enters this design only through `overlay.evidence_bindings[]`**
   (§3.5), never through the Pack, in this or any prior revision.
 
+**Re-proof 1 — the ten `resolution_routes[]` still stand in exact one-to-one
+correspondence with the ten non-`READY` leaves.** This round changed three
+rows' `default_role` and two rows' `next_action` / `recheck_condition`
+wording. It added no route, removed none, renamed no `resolution_kind`, and
+touched no branch. Enumerated from §3.8's five nodes:
+
+| Node | `BLOCKED` leaves → `failure_kind` | `UNKNOWN` leaves → `gap_kind` |
+|---|---|---|
+| `asset-identity-node` | `unmet` → `missing-project-asset-identity` | `not-yet-evaluated` → `asset-identity-not-evaluated` |
+| `in-model-position-node` | `unmet` → `mep-element-not-spatially-assigned` | `not-yet-evaluated` → `in-model-position-not-evaluated` |
+| `cross-model-alignment-node` | `misaligned` → `cross-model-misalignment` | `not-yet-confirmed` → `cross-model-alignment-not-confirmed` |
+| `penetration-determination-node` | — | `not-yet-determined` → `penetration-not-determined` |
+| `opening-status-node` | `modelled-not-cross-referenced` → `opening-not-verifiably-linked`; `not-modelled` → `missing-corresponding-opening` | `not-yet-determined` → `opening-status-not-determined` |
+
+Five `failure_kind`s and five `gap_kind`s, ten distinct values, each matching
+exactly one of the ten `resolution_routes[]` rows, and every row used by at
+least one leaf. Unchanged from the previous revision, value for value.
+
+**Re-proof 2 — all four root-to-`READY`-leaf paths still close under
+invariant 12, and the four-path table above still holds line for line.**
+`subject_grain`, `pair_source` and `subject_classes` are not evidence
+requirements and appear nowhere in a path, so nothing this round touches enters
+the tested-versus-inapplicable accounting at all: the same four paths, the same
+tested sets, the same one `renders_inapplicable` declaration, the same
+disjointness, the same union. Invariants 16–18 add three checks over that same
+unchanged structure and relax none of 1–15 — `opening-status` declares
+`pair_source` and carries the pair grain (16); `opening-status-node` is
+reachable only through the `penetration-confirmed` branch (17); and that branch
+is a `next_node` branch rather than a leaf (18).
+
+**Re-proof 3 — the live verdicts are unmoved.** The three rows of §6's
+scenario table are still **BLOCKED / UNKNOWN / UNKNOWN**, on the same evidence,
+for the assessed scope Checkpoint B walked. Roles say *who resolves* a
+non-`READY` leaf and never *which* leaf is reached; `subject_classes` excludes
+only the two setout proxies, neither of which is in any Checkpoint B case's
+scope; and the pair grain applies only below `penetration-confirmed`, a branch
+no live evidence reaches — case 4 is live at `not-yet-determined`, one node
+above it.
+
+**What the pair grain and the class list *do* change is what a broader request
+can now express, and both are worth stating because both were previously
+inexpressible:**
+
+- A request scoping the ceiling activity to the whole `hvac` `model_key` now
+  yields two subscopes rather than one confused one: the duct and two air
+  terminals, which pass R-004 and continue to `cross-model-alignment =
+  not-yet-confirmed` → `UNKNOWN` / `cross-model-alignment-not-confirmed`; and
+  the `IfcChimney`, which no R-004 requirement reaches → `UNKNOWN` /
+  `in-model-position-not-evaluated`, whose corrected role is now the
+  information manager who would extend the rule set. That is Checkpoint B case
+  4's gap 1 and case 3, side by side, each with its own gap kind and its own
+  resolver — and the two setout proxies are in neither subscope, listed instead
+  as out-of-class for the activity.
+- A chimney determined to penetrate both a floor slab and the roof yields two
+  `opening-status` pair readings. The common live shape — the slab opening
+  modelled and cross-referenced, the roof opening not modelled — now partitions
+  into one `READY` pair and one `BLOCKED` /`missing-corresponding-opening`
+  pair, instead of collapsing into a single reading that could only be one or
+  the other. The reverse cardinality is the same mechanism: one shared shaft
+  opening serving three MEP lines is three pairs naming the same counterpart,
+  each asking whether that opening is inspectably linked to its own penetrating
+  element.
+
+Neither bullet asserts live evidence. Both are counterfactuals in exactly the
+sense §3.2's two worked counterexamples already are — what the shape can now
+carry, stated so a reviewer can check that it can.
+
 ---
 
 ## 7. Future pipeline boundary (recorded, not built)
@@ -1867,13 +2258,24 @@ within-unit reading rule in which a known failure dominates a coverage gap
 whose units disagree on the named outcome is partitioned into
 outcome-homogeneous subscopes before the tree runs (no priority, no text
 order, no default picks one for it), with subscope construction, identity,
-and recording left to Checkpoint D; fifteen structural invariants a Pack's decision tree must
-satisfy at load time, unchanged this round, covering root/edge existence,
-uniqueness, true per-activity tree shape, and the sufficient condition for
-`READY`-path closure; **one canonical `resolution_routes[]` table**, keyed
+and recording left to Checkpoint D; **a declared object scope per activity**
+(`subject_classes`) and **a declared grain per evidence requirement**
+(`subject_grain`, with `pair_source` for the pair grain), so that what an
+activity is about and how many readings a question has are both Pack data
+rather than runtime inference — the class list never a findings filter, the
+pair grain keyed on two elements that both exist so no key is ever minted for
+an opening that is not there; eighteen structural invariants a Pack's decision
+tree must satisfy at load time — the original fifteen unchanged and
+unweakened, covering root/edge existence, uniqueness, true per-activity tree
+shape, and the sufficient condition for `READY`-path closure, plus three
+governing the pair grain and nothing else; **one canonical `resolution_routes[]` table**, keyed
 by `resolution_kind` and reachable from any `BLOCKED`/`UNKNOWN` leaf,
 carrying default role, consequence kinds, next action, and recheck
-condition together — replacing four separately-addressed fields, with an
+condition together — with each row's `default_role` naming the role that does
+the work that row's own `next_action` describes, so that openings work in the
+architectural model resolves to `architecture-lead` and a rule-authoring gap
+to `information-manager` rather than to whichever role happened to be nearby —
+replacing four separately-addressed fields, with an
 orphaned route, a duplicate `resolution_kind`, an incomplete row, or a leaf
 matching no row all failing the Pack closed, and with reuse of one
 `resolution_kind` across leaves only ever meaning identical treatment, by
