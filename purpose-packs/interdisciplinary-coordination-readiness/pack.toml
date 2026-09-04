@@ -1,0 +1,367 @@
+# Interdisciplinary Coordination Readiness — the flagship Purpose Pack.
+#
+# A Pack states a reusable *question*: which production activities a handover
+# is deciding about, what evidence each needs, and how those evidence outcomes
+# reach a verdict. It states nothing about any project. Which validation data
+# answers a project-specific question, who is staffed, who may accept risk, and
+# what method a project accepts are all Project Overlay data — see
+# `projects/pcert-sample/project.toml`'s `[overlay]` table.
+#
+# The shape is fixed by docs/decisions/0002-minimal-purpose-pack-project-overlay.md
+# and every field below is checked at load time; see §3.7's fail-closed table
+# and §3.8's eighteen structural invariants. Nothing here is evaluated by
+# `epc-ct run` — a purpose assessment is a separate, demand-driven operation
+# that reads validated facts and writes outside every published path
+# (docs/decisions/0003-runtime-purpose-assessment-shape.md).
+#
+# This file contains no verdict, no evidence outcome, no assignment and no risk
+# acceptance, and it cannot: none of those has a field here.
+
+pack_id = "interdisciplinary-coordination-readiness"
+
+# The *file format* this Pack is written against. Published, and therefore
+# frozen: fields are not added to, removed from, or retyped within format "1".
+pack_schema_version = "1"
+
+# This Pack's *content* version. An opaque slug, pinned by an Overlay by exact
+# equality and never by range.
+pack_version = "0.1.0"
+
+maturity = "draft"
+citations = [
+  "docs/product/interdisciplinary-coordination-readiness-mep-to-architecture.md",
+  "docs/decisions/0002-minimal-purpose-pack-project-overlay.md",
+]
+
+# --- Directions -------------------------------------------------------------
+#
+# One flagship purpose may carry several directional handoffs. This worked
+# example declares and implements exactly one. Adding Architecture-to-MEP or
+# MEP-to-Structure later is one more [[directions]] entry plus activities
+# pointing at its direction_id — no new Pack, no schema change.
+#
+# Direction is Pack data. It is never derived from a rule's discipline_scope,
+# which is validation applicability and carries no arrow.
+
+[[directions]]
+direction_id = "mep-to-architecture"
+from = "MEP"
+to = "Architecture"
+
+# --- Evidence requirements --------------------------------------------------
+#
+# What an activity needs to *know*, which is not the same as a validation
+# requirement. Each declares where its binding comes from (`pack`, `overlay`,
+# or `assessment`), at what grain its readings are keyed, what would satisfy
+# it, and the closed outcome vocabulary a decision tree branches on.
+#
+# Every outcomes[] list names all three states the Framework distinguishes:
+# evidence produced and satisfying its acceptance_condition; evidence produced
+# and failing it; and no admissible evidence yet. An outcome is never itself a
+# verdict — only a tree leaf is.
+
+[[evidence_requirements]]
+evidence_requirement_id = "asset-identity"
+answers = "each equipment element in the assessed scope carries the project's asset identity"
+binding_source = "overlay"
+subject_grain = "per-subject"
+acceptance_condition = "every element in the assessed scope that a bound requirement_key applies to evaluates PASS, and every such element is covered by an evaluation at all -- an element with no finding under the binding is not covered, and not-covered is never read as satisfied"
+outcomes = ["satisfied", "unmet", "not-yet-evaluated"]
+
+[[evidence_requirements]]
+evidence_requirement_id = "in-model-position"
+answers = "each MEP element in the assessed scope is assigned to a storey Architecture also models"
+binding_source = "pack"
+subject_grain = "per-subject"
+acceptance_condition = "every element in the assessed scope that a bound requirement_key applies to evaluates PASS, and every such element is covered by an evaluation at all"
+outcomes = ["satisfied", "unmet", "not-yet-evaluated"]
+
+  # A general coordination requirement, so the Pack may bind it directly. The
+  # ruleset id and version travel with the keys: a requirement_key proves the
+  # row was found, not that it still means what this Pack assumed.
+  [evidence_requirements.pack_binding]
+  ruleset_id = "epc-delivery"
+  ruleset_version = "2.2"
+  requirement_keys = [
+    "491a4a0b-9b4a-5f77-b90d-31a7dc8beb44",  # R-004A, duct segment spatial assignment
+    "2ead0930-568e-5d49-9708-716c5c740846",  # R-004B, air terminal spatial assignment
+  ]
+
+[[evidence_requirements]]
+evidence_requirement_id = "cross-model-alignment"
+answers = "the producing and consuming models sit on a common, agreed datum"
+binding_source = "assessment"
+subject_grain = "whole-scope"
+acceptance_condition = "a recorded alignment confirmation exists for the named model versions, produced by a method the project's Overlay accepts, and it reports the models aligned"
+outcomes = ["confirmed", "misaligned", "not-yet-confirmed"]
+
+  # A related but *insufficient* validation pass. This is deliberately a
+  # different shape from a pack_binding: it records a rule that is adjacent to
+  # the question and cannot answer it. Collapsing the two into "a list of
+  # requirement_keys" would destroy exactly that distinction.
+  [[evidence_requirements.insufficient_evidence]]
+  ruleset_id = "epc-delivery"
+  ruleset_version = "2.2"
+  requirement_key = "acb11f11-bf18-5516-a6f2-21e451a6e410"  # R-010
+  cannot_answer = "R-010 witnesses a shared marker (name + cross-model GlobalId) only; a PASS is not alignment evidence and must never be read as satisfying this evidence requirement, in any of its three outcomes."
+
+[[evidence_requirements]]
+evidence_requirement_id = "penetration-determination"
+answers = "whether an MEP element penetrates architectural fabric, and if so which architectural elements"
+binding_source = "assessment"
+subject_grain = "per-subject"
+acceptance_condition = "a recorded coordination-review determination exists for the named model versions, either naming no penetration or naming every architectural element the penetrating element passes through, each as an element_key of the consuming model version; a determination claiming a penetration while naming no such element is not admissible and produces no penetration-confirmed reading"
+outcomes = ["no-penetration", "penetration-confirmed", "not-yet-determined"]
+
+[[evidence_requirements]]
+evidence_requirement_id = "opening-status"
+answers = "for each architectural element an MEP element penetrates, whether the corresponding opening exists and is inspectably linked to that penetrating element"
+binding_source = "assessment"
+subject_grain = "per-subject-pair"
+acceptance_condition = "for the pair, the opening is modelled in the penetrated architectural element and a recorded cross-reference to this penetrating element exists"
+outcomes = ["cross-referenced", "modelled-not-cross-referenced", "not-modelled", "not-yet-determined"]
+
+  # One reading per (penetrating element, penetrated architectural element).
+  # Both members of the pair exist whenever the pair does — the counterpart is
+  # named by the penetration determination itself — so the opening stays an
+  # attribute of the reading, present or a named absence, and never a key.
+  [evidence_requirements.pair_source]
+  from_evidence_requirement_id = "penetration-determination"
+  on_outcome = "penetration-confirmed"
+  counterpart_description = "Each architectural element the determination named as penetrated. Both members of the pair exist whenever the pair does; the opening itself is an attribute of the pair reading -- present, or a named absence -- and is never a key."
+
+# --- Activities -------------------------------------------------------------
+#
+# Which direction each serves, which class of model object its labour is about,
+# which evidence it needs, and where its decision tree starts.
+#
+# subject_classes is declarative object-class data, matched against a published
+# ifc_class by exact string equality. It is never a filter on which elements
+# happen to carry a finding: an IfcChimney with zero findings is precisely the
+# element this list exists to keep in view. That all three activities here
+# declare the same three classes is a fact about this Pack — they are the MEP
+# work products this direction hands to Architecture — not a property of the
+# schema; an activity about architectural fabric would declare fabric classes,
+# which is why the list lives on the activity.
+
+[[activities]]
+activity_id = "schedules-and-room-data-sheets"
+label = "Room data sheets and equipment schedules"
+direction_id = "mep-to-architecture"
+subject_classes = ["IfcDuctSegment", "IfcAirTerminal", "IfcChimney"]
+evidence_requirement_ids = ["asset-identity"]
+decision_root_node = "asset-identity-node"
+
+[[activities]]
+activity_id = "ceiling-and-bulkhead-geometry"
+label = "Reflected ceiling and bulkhead layout"
+direction_id = "mep-to-architecture"
+subject_classes = ["IfcDuctSegment", "IfcAirTerminal", "IfcChimney"]
+evidence_requirement_ids = ["in-model-position", "cross-model-alignment"]
+decision_root_node = "in-model-position-node"
+
+[[activities]]
+activity_id = "builders-work-openings"
+label = "Builder's-work openings"
+direction_id = "mep-to-architecture"
+subject_classes = ["IfcDuctSegment", "IfcAirTerminal", "IfcChimney"]
+evidence_requirement_ids = ["penetration-determination", "opening-status"]
+decision_root_node = "penetration-determination-node"
+
+# --- Resolution routes ------------------------------------------------------
+#
+# The single canonical chain from a non-READY leaf's resolution_kind to
+# consequence kinds, default role, next action, and recheck condition. Ten
+# rows, one per resolution_kind the three trees can produce, each used by at
+# least one leaf.
+#
+# A BLOCKED row's next_action is a source-model fix. An UNKNOWN row's
+# next_action is the evidence-gathering step that would end it, and opens by
+# saying so — not knowing something is not a known model defect.
+#
+# default_role names the role that does the work the row's own next_action
+# describes. It is a Pack default and an *input* to an assignment, never an
+# assignment: only an Overlay's team_mapping turns it into something a runtime
+# could task, and a missing mapping fails closed rather than falling back to
+# the bound rule's owner_role.
+
+[[resolution_routes]]
+resolution_kind = "missing-project-asset-identity"   # BLOCKED, asset-identity
+default_role = "model-coordination"
+consequence_kinds = ["work-cannot-start", "re-identification-and-reissue-risk"]
+next_action = "Source-model fix: populate or correct the project-required asset-identity values on the affected source elements according to the project's active Overlay binding and convention, then re-export the model so the bound requirement_keys can be evaluated. Which properties, authoring-tool fields, and export mapping this requires is project- and convention-specific; the Pack does not name them, because that binding belongs to the Overlay."
+recheck_condition = "Every requirement_key bound to asset-identity evaluates PASS for every element in the assessed scope, with no element left uncovered, on the reissued model."
+
+[[resolution_routes]]
+resolution_kind = "asset-identity-not-evaluated"      # UNKNOWN, asset-identity
+default_role = "model-coordination"
+consequence_kinds = ["work-suspended"]
+next_action = "Not a model defect: run (or re-run) the asset-identity evaluation over the full assessed scope so every element it covers actually produces a PASS or FAIL result. The gap is missing coverage of the evaluation itself, not a known failure in the model."
+recheck_condition = "Every element in the assessed scope is covered by an evaluation under the bound requirement_key(s) -- no element is left with no finding at all."
+
+[[resolution_routes]]
+resolution_kind = "mep-element-not-spatially-assigned"   # BLOCKED, in-model-position
+default_role = "mep-lead"
+consequence_kinds = ["work-suspended"]
+next_action = "Source-model fix: host the element to its correct level and space before export, avoiding unhosted or unlevelled MEP components, so the export reports an IFCRELCONTAINEDINSPATIALSTRUCTURE relationship for it."
+recheck_condition = "The R-004-bound requirement_key(s) evaluate PASS for the element on the reissued model."
+
+[[resolution_routes]]
+resolution_kind = "in-model-position-not-evaluated"      # UNKNOWN, in-model-position
+default_role = "information-manager"
+consequence_kinds = ["work-suspended"]
+next_action = "Not a model defect: run the in-model-position evaluation over the full assessed scope; where a specific element still produces no finding at all, extend the rule set's applicability to reach it -- a rule-authoring action, not a model edit -- so the position question can be asked of it."
+recheck_condition = "Every element in the assessed scope is covered by a finding under the bound requirement_key(s)."
+
+[[resolution_routes]]
+resolution_kind = "cross-model-misalignment"          # BLOCKED, cross-model-alignment
+default_role = "model-coordination"
+consequence_kinds = ["work-suspended"]
+next_action = "Source-model fix: re-acquire the project's shared coordination datum in the authoring tool, re-export placement referencing that shared origin rather than moving geometry directly, and re-perform the accepted alignment-confirmation method. Which authoring-tool command produces the re-acquired datum is project- and tool-specific; the Pack does not name it, the same way the asset-identity route does not name the properties its own fix touches."
+recheck_condition = "The alignment-confirmation method is re-run against the reissued model versions and reports the models aligned (outcome = confirmed)."
+
+[[resolution_routes]]
+resolution_kind = "cross-model-alignment-not-confirmed"   # UNKNOWN, cross-model-alignment
+default_role = "model-coordination"
+consequence_kinds = ["work-suspended", "rework-risk"]
+next_action = "Not a model defect: perform the alignment-confirmation method this project's Overlay accepts (e.g. overlaying both models' exported placements in a common viewer) against the named model versions. The gap is that no confirmation has been produced yet, not a known misalignment."
+recheck_condition = "The alignment-confirmation method is performed and reports the models aligned, against the specific model versions named."
+
+[[resolution_routes]]
+resolution_kind = "penetration-not-determined"        # UNKNOWN, penetration-determination
+default_role = "model-coordination"
+consequence_kinds = ["work-suspended"]
+next_action = "Not a model defect: hold the coordination-review determination this project's Overlay accepts, naming either no penetration or the specific architectural elements penetrated. The gap is that the determination has not been made yet, not a known defect."
+recheck_condition = "A recorded coordination-review determination exists for the named model versions, naming either no penetration or the architectural elements penetrated."
+
+[[resolution_routes]]
+resolution_kind = "opening-not-verifiably-linked"     # BLOCKED, opening-status
+default_role = "architecture-lead"
+consequence_kinds = ["work-suspended", "rework-risk"]
+next_action = "Source-model fix: add or correct the cross-reference from the modelled architectural opening back to the penetrating MEP element it was cut for, so the link the accepted method checks for actually exists and can be inspected. One such link per (penetrating element, penetrated architectural element) pair: a shared opening serving several penetrating elements needs a cross-reference to each of them."
+recheck_condition = "The opening-cross-reference-check method is re-run and reports the opening cross-referenced to the penetrating element, for the pair."
+
+[[resolution_routes]]
+resolution_kind = "missing-corresponding-opening"     # BLOCKED, opening-status
+default_role = "architecture-lead"
+consequence_kinds = ["work-suspended"]
+next_action = "Source-model fix: model the opening in the architectural model, as a hosted opening or shaft in the architectural element this penetration passes through, rather than as a void carried in the MEP model. An element that passes through several architectural elements needs one such opening in each of them -- one per pair."
+recheck_condition = "The opening-status evaluation is re-run and reports the opening modelled and cross-referenced (outcome = cross-referenced) for this pair, for the named model versions."
+
+[[resolution_routes]]
+resolution_kind = "opening-status-not-determined"     # UNKNOWN, opening-status
+default_role = "model-coordination"
+consequence_kinds = ["work-suspended"]
+next_action = "Not a model defect: complete the opening-status review this project's Overlay accepts -- whether a corresponding opening is modelled and, if so, whether it is inspectably cross-referenced. The gap is that this review has not been completed yet, not a known missing opening."
+recheck_condition = "The opening-cross-reference-check method is performed and reports a definite result (cross-referenced, modelled-not-cross-referenced, or not-modelled) for the named model versions."
+
+# --- Decision trees ---------------------------------------------------------
+#
+# One node per evidence requirement per activity, one branch per declared
+# outcome, checked exhaustively at load time. A branch is either a leaf
+# (verdict, plus failure_kind for BLOCKED or gap_kind for UNKNOWN) or an
+# interior branch (next_node). Never both. CONDITIONAL is not a legal leaf
+# value anywhere: it must originate in a named authorisation event, which no
+# evidence outcome can encode.
+#
+# decision_nodes is a Pack-top-level array. A node is reached only by an
+# activity's decision_root_node or by another node's next_node, so nothing
+# about tree membership needs TOML nesting.
+
+[[decision_nodes]]
+node_id = "asset-identity-node"
+evidence_requirement_id = "asset-identity"
+
+  [[decision_nodes.branches]]
+  outcome = "satisfied"
+  verdict = "READY"
+
+  [[decision_nodes.branches]]
+  outcome = "unmet"
+  verdict = "BLOCKED"
+  failure_kind = "missing-project-asset-identity"
+
+  [[decision_nodes.branches]]
+  outcome = "not-yet-evaluated"
+  verdict = "UNKNOWN"
+  gap_kind = "asset-identity-not-evaluated"
+
+[[decision_nodes]]
+node_id = "in-model-position-node"
+evidence_requirement_id = "in-model-position"
+
+  [[decision_nodes.branches]]
+  outcome = "satisfied"
+  next_node = "cross-model-alignment-node"
+
+  [[decision_nodes.branches]]
+  outcome = "unmet"
+  verdict = "BLOCKED"
+  failure_kind = "mep-element-not-spatially-assigned"
+
+  [[decision_nodes.branches]]
+  outcome = "not-yet-evaluated"
+  verdict = "UNKNOWN"
+  gap_kind = "in-model-position-not-evaluated"
+
+[[decision_nodes]]
+node_id = "cross-model-alignment-node"
+evidence_requirement_id = "cross-model-alignment"
+
+  [[decision_nodes.branches]]
+  outcome = "confirmed"
+  verdict = "READY"
+
+  [[decision_nodes.branches]]
+  outcome = "misaligned"
+  verdict = "BLOCKED"
+  failure_kind = "cross-model-misalignment"
+
+  [[decision_nodes.branches]]
+  outcome = "not-yet-confirmed"
+  verdict = "UNKNOWN"
+  gap_kind = "cross-model-alignment-not-confirmed"
+
+[[decision_nodes]]
+node_id = "penetration-determination-node"
+evidence_requirement_id = "penetration-determination"
+
+  [[decision_nodes.branches]]
+  outcome = "no-penetration"
+  verdict = "READY"
+  # The one inapplicability declaration this Pack needs: an element that
+  # penetrates nothing needs no opening, so opening-status is structurally
+  # ruled out along this path rather than waived by free text.
+  renders_inapplicable = ["opening-status"]
+
+  [[decision_nodes.branches]]
+  outcome = "not-yet-determined"
+  verdict = "UNKNOWN"
+  gap_kind = "penetration-not-determined"
+
+  [[decision_nodes.branches]]
+  outcome = "penetration-confirmed"
+  next_node = "opening-status-node"
+
+[[decision_nodes]]
+node_id = "opening-status-node"
+evidence_requirement_id = "opening-status"
+
+  [[decision_nodes.branches]]
+  outcome = "cross-referenced"
+  verdict = "READY"
+
+  [[decision_nodes.branches]]
+  outcome = "modelled-not-cross-referenced"
+  verdict = "BLOCKED"
+  failure_kind = "opening-not-verifiably-linked"
+
+  [[decision_nodes.branches]]
+  outcome = "not-modelled"
+  verdict = "BLOCKED"
+  failure_kind = "missing-corresponding-opening"
+
+  [[decision_nodes.branches]]
+  outcome = "not-yet-determined"
+  verdict = "UNKNOWN"
+  gap_kind = "opening-status-not-determined"
