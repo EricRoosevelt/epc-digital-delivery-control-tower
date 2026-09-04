@@ -137,6 +137,28 @@
     `subject_classes` matching rule be recorded as the product decision it is
     rather than left as an implementation detail, which §3.2 now does. This
     revision is still one revision and keeps one history entry.
+  - Amended at the Pack/Overlay **loading and composition** checkpoint, under
+    an explicit technical-director authorisation to make two schema-level
+    additions in that checkpoint rather than after it. **(1) `decision_basis`
+    (closes D-7).** Every row of the three Overlay tables that state *project
+    policy* — `team_mapping[]`, `risk_authorisations[]`,
+    `accepted_evidence_methods[]` — now declares whether it records a decision
+    the project has actually taken (`project-decision`) or a value written to
+    demonstrate the shape (`illustrative`). It is required, has no default,
+    fails composition closed when missing or unrecognised (§3.7), and is
+    carried into the composed object so no consumer can lose it. Every such row
+    in `pcert-sample`'s worked Overlay is `illustrative`: this repository has
+    never recorded a real staffing decision, risk-authorisation policy, or
+    accepted method. `evidence_bindings[]` and `conventions[]` deliberately do
+    not carry it — they name which of this repository's real rules answer a
+    question and what one of them means here, which are facts rather than
+    policy. **(2) `pack_schema_version` `"1"` is published** as of that same
+    checkpoint (§3.4a): a loader now implements it, so its shape is frozen and
+    a change of shape is format `"2"`. The two land together deliberately —
+    adding a required field to a published format one round later would create
+    the migration obligation §3.4a exists to avoid. Nothing else moves: no
+    field is removed or retyped, no invariant is relaxed, no route, tree, leaf,
+    verdict, or live verdict changes.
 - **Scope:** Checkpoint C only — the representation, ownership and identity
   boundary of a Purpose Pack and a Project Overlay. It does not design or
   execute runtime assessment (Checkpoint D), does not touch contract 1.6, and
@@ -424,9 +446,10 @@ record`.
 | `resolution_routes[]` | Pack | list of `{ resolution_kind, default_role, consequence_kinds[], next_action, recheck_condition }` | **The single canonical chain from a non-`READY` leaf to consequence, role, action, and recheck (closes R5 item 2)** — replaces `consequence_kinds[]`, `default_responsibility[]`, `source_fix_guidance[]`, and `recheck_conditions[]`. `resolution_kind` is unique across the list; every `BLOCKED` leaf's `failure_kind` and every `UNKNOWN` leaf's `gap_kind` must match **exactly one** row, and every row must be used by at least one leaf — an orphaned route fails the Pack closed the same way a dangling reference would. |
 | `overlay.packs[]` | Overlay | list of `{ pack_id, pack_version }` | **Plural** — a project may use several Packs (§5; **closes gap 5**). |
 | `overlay.evidence_bindings[]` | Overlay | list of `{ pack_id, evidence_requirement_id, ruleset_id, ruleset_version, requirement_keys[] }` | Satisfies `binding_source = "overlay"` evidence requirements — R-005 lives only here (§3.5; **closes gap 2**). |
-| `overlay.accepted_evidence_methods[]` | Overlay | list of `{ pack_id, evidence_requirement_id, method_id, description }` | Satisfies `binding_source = "assessment"` evidence requirements. |
-| `overlay.team_mapping[]` | Overlay | list of `{ role, team_or_person }` | Project-wide; roles are shared vocabulary across Packs, not Pack-scoped. `role` is unique across the list — every default role a requested activity's reachable non-`READY` leaves might need resolves to exactly one `team_or_person`, or the specific request fails closed (§3.7; **closes R3 gap 2**). |
-| `overlay.risk_authorisations[]` | Overlay | list of `{ pack_id, resolution_kind, may_authorise_roles[] }` | **Replaces the single project-wide `overlay.risk_authorisation` (closes R5 item 3)** — who *may* authorise a `CONDITIONAL` promotion, addressed per `pack_id::resolution_kind`, never a blanket list; no wildcard, no `"all"`, no default. |
+| `overlay.accepted_evidence_methods[]` | Overlay | list of `{ pack_id, evidence_requirement_id, method_id, description, decision_basis }` | Satisfies `binding_source = "assessment"` evidence requirements. |
+| `overlay.team_mapping[]` | Overlay | list of `{ role, team_or_person, decision_basis }` | Project-wide; roles are shared vocabulary across Packs, not Pack-scoped. `role` is unique across the list — every default role a requested activity's reachable non-`READY` leaves might need resolves to exactly one `team_or_person`, or the specific request fails closed (§3.7; **closes R3 gap 2**). |
+| `overlay.risk_authorisations[]` | Overlay | list of `{ pack_id, resolution_kind, may_authorise_roles[], decision_basis }` | **Replaces the single project-wide `overlay.risk_authorisation` (closes R5 item 3)** — who *may* authorise a `CONDITIONAL` promotion, addressed per `pack_id::resolution_kind`, never a blanket list; no wildcard, no `"all"`, no default. |
+| `decision_basis` (on `team_mapping[]`, `risk_authorisations[]`, `accepted_evidence_methods[]`) | Overlay | enum (`project-decision` / `illustrative`) | **Required on every row of those three tables; no default, and a missing or unrecognised value fails composition closed (§3.7).** Says whether the row records a decision this project has actually taken, or a value written to demonstrate the shape. It is carried into the composed object, so a consumer can never mistake one for the other. The three tables it applies to are the three that state **project policy** — who is staffed, who may accept risk, and what method the project accepts — and policy is exactly the kind of thing a worked example fills in plausibly and a reader then mistakes for a decision. `evidence_bindings[]` and `conventions[]` deliberately do **not** carry it: they state which validation data answers a question and what a project's own rule convention means, both of which are facts about this repository's real rule set rather than policy anyone has to have decided. A boolean was rejected for the same reason a wildcard is rejected elsewhere — it has an obvious default, and the whole point is that there is none. |
 | `overlay.cost_parameters` | Overlay | project-defined key/value | Magnitude inputs a future runtime step may read; no cost figure is fabricated by this document. |
 | `overlay.conventions[]` | Overlay | list of `{ ruleset_id, ruleset_version, requirement_key, note }` | Optional narrative about a project-specific convention (§3.5). |
 
@@ -1163,6 +1186,19 @@ not a revision of anything a loader would already exist for. A future
 loader that does not implement a given, *published* `pack_schema_version`
 refuses the file (§3.7).
 
+**Format `"1"` is published as of the Pack/Overlay loading checkpoint
+(technical-director ruling, recorded here).** Until a loader existed, format
+`"1"` was a shape this document described and nothing read; a loader that
+implements it makes it a format other things may now be written against. From
+that point its shape is frozen: **fields are not added to, removed from, or
+retyped within format `"1"`**, and a change of shape is format `"2"` with a
+loader that says so. That is why the `decision_basis` field above lands in the
+same checkpoint as the loader rather than after it — a required field added to
+a published format one round later would be exactly the silent migration
+obligation this section exists to avoid. A loader refuses any
+`pack_schema_version` it does not implement, and refusing is the whole
+behaviour; there is no "load with reduced capability".
+
 **b) Pack content version — `pack_version`.** An author-declared **opaque
 slug**, not strict semver, validated the same way `ruleset_version` already
 is — by `_require_slug` in `identity.py:87–90` (accepts `[A-Za-z0-9][A-Za-z0-9._-]*`,
@@ -1252,26 +1288,40 @@ pack_id = "interdisciplinary-coordination-readiness"
 evidence_requirement_id = "cross-model-alignment"
 method_id = "overlay-comparison"
 description = "Placements from both models overlaid in a common viewer and visually confirmed by model-coordination; reports confirmed, misaligned, or is simply not yet performed."
+decision_basis = "illustrative"
 
 [[overlay.accepted_evidence_methods]]
 pack_id = "interdisciplinary-coordination-readiness"
 evidence_requirement_id = "penetration-determination"
 method_id = "coordination-review-determination"
 description = "A recorded decision from a joint MEP/Architecture coordination review, naming either no penetration or the specific architectural element penetrated."
+decision_basis = "illustrative"
 
 [[overlay.accepted_evidence_methods]]
 pack_id = "interdisciplinary-coordination-readiness"
 evidence_requirement_id = "opening-status"
 method_id = "opening-cross-reference-check"
 description = "A recorded check that a modelled architectural opening carries a reference back to the penetrating MEP element it was cut for."
+decision_basis = "illustrative"
+
+# --- Every row of the three policy tables declares its decision_basis. In
+#     this project all of them read "illustrative": this repository has never
+#     recorded a real staffing decision, a real risk-authorisation policy, or a
+#     real accepted method, and a worked example that looked like one would be
+#     the easiest and least visible fabrication available. evidence_bindings
+#     and conventions above carry no decision_basis and need none — they state
+#     which of this repository's real rules answer a question, and what one of
+#     them means here, which are facts rather than policy. ---
 
 [[overlay.team_mapping]]
 role = "model-coordination"
-team_or_person = "coordination-team"  # EXAMPLE — no real assignment exists
+team_or_person = "coordination-team"
+decision_basis = "illustrative"
 
 [[overlay.team_mapping]]
 role = "mep-lead"
-team_or_person = "mep-design-team"  # EXAMPLE — no real assignment exists
+team_or_person = "mep-design-team"
+decision_basis = "illustrative"
 
 # --- Two further rows, because the corrected routes now reach two further
 #     roles (closes E-1). A team_mapping row staffs a *resolving* role only; it
@@ -1281,11 +1331,13 @@ team_or_person = "mep-design-team"  # EXAMPLE — no real assignment exists
 
 [[overlay.team_mapping]]
 role = "architecture-lead"
-team_or_person = "architecture-design-team"  # EXAMPLE — no real assignment exists
+team_or_person = "architecture-design-team"
+decision_basis = "illustrative"
 
 [[overlay.team_mapping]]
 role = "information-manager"
-team_or_person = "information-management-team"  # EXAMPLE — no real assignment exists
+team_or_person = "information-management-team"
+decision_basis = "illustrative"
 
 # --- Risk authorisation: which roles MAY authorise a CONDITIONAL promotion
 #     for one specific pack_id::resolution_kind. Never a project-wide list.
@@ -1297,12 +1349,14 @@ team_or_person = "information-management-team"  # EXAMPLE — no real assignment
 [[overlay.risk_authorisations]]
 pack_id = "interdisciplinary-coordination-readiness"
 resolution_kind = "cross-model-alignment-not-confirmed"
-may_authorise_roles = ["information-manager"]  # EXAMPLE -- illustrative role, no real acceptance exists
+may_authorise_roles = ["information-manager"]
+decision_basis = "illustrative"   # no real acceptance policy exists
 
 [[overlay.risk_authorisations]]
 pack_id = "interdisciplinary-coordination-readiness"
 resolution_kind = "missing-project-asset-identity"
-may_authorise_roles = ["information-manager"]  # EXAMPLE -- illustrative role, no real acceptance exists
+may_authorise_roles = ["information-manager"]
+decision_basis = "illustrative"   # no real acceptance policy exists
 
 [[overlay.conventions]]
 ruleset_id = "epc-delivery"
@@ -1490,6 +1544,7 @@ silently declines to evaluate is the worst outcome available":
 | `resolution_routes[]` contains two entries with the same `resolution_kind` | Fail closed at Pack load time as a duplicate — the "exactly one" match above depends on this (**closes R3 gap 2, closes R5 item 2**). |
 | A `resolution_routes[]` entry is missing `resolution_kind`, `default_role`, `consequence_kinds`, `next_action`, or `recheck_condition` | Fail closed at Pack load time as an incomplete route (**closes R5 item 2**). |
 | A `resolution_routes[]` entry's `resolution_kind` is not the `failure_kind` or `gap_kind` of any branch in any of the Pack's decision trees | Fail closed at Pack load time as an orphaned route (**closes R5 item 2**). |
+| A row of `overlay.team_mapping[]`, `overlay.risk_authorisations[]`, or `overlay.accepted_evidence_methods[]` has no `decision_basis`, or one outside `project-decision` / `illustrative` | Fail closed at composition time. There is no default: a policy row whose standing is unstated is exactly the row a reader would take for a decision, and the value must reach the composed object so no consumer can lose it (**closes D-7**). |
 | `overlay.team_mapping[]` contains two entries with the same `role` | Fail closed at composition time as a duplicate (**closes R3 gap 2**). |
 | **A purpose assessment is requested for an activity whose reachable non-`READY` leaves name a default role with no matching `overlay.team_mapping[]` entry** | **Fail closed for that request only.** The project's existing contract 1.6 pipeline, and any other activity or Pack this Overlay does bind completely, are unaffected. Never resolved by reading the bound rule's `owner_role` instead, and never reported as though the bare Pack `default_role` string were itself an assignment (§3.5; **closes R3 gap 2**). |
 | Two `overlay.risk_authorisations[]` entries share the same `{pack_id, resolution_kind}` pair | Fail closed at composition time as a duplicate (**closes R5 item 3**). |
