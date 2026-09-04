@@ -1018,7 +1018,7 @@ not say how anyone knows. As written it could be satisfied by an evaluator
 forming its own opinion of a prose voiding condition, or by nobody forming one
 at all and the promotion carrying on because no one said otherwise. Neither is
 a thing this design may express. **A continuation is written only when all
-four of the following are proved on the record that carries it, and it is
+seven of the following are proved on the record that carries it, and it is
 never the default:**
 
 | # | What must be proved | How it is proved | If it is not proved |
@@ -1308,7 +1308,7 @@ and it no longer names the context being continued, so it can support nothing.
 This is deliberate rather than a gap left open: requiring a *fresh*
 determination on every successor record would put the determiner's signature
 back on a per-query footing, which is exactly the incentive the E-4 reversal
-removed. What bounds the release is the promotion's own field 9 and the four
+removed. What bounds the release is the promotion's own field 9 and the seven
 checks, not how often somebody is made to sign.
 
 This document does **not** fix which role is entitled to make such a
