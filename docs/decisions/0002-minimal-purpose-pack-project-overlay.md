@@ -158,7 +158,16 @@
     adding a required field to a published format one round later would create
     the migration obligation §3.4a exists to avoid. Nothing else moves: no
     field is removed or retyped, no invariant is relaxed, no route, tree, leaf,
-    verdict, or live verdict changes.
+    verdict, or live verdict changes. **(3)** Product review of the built
+    checkpoint found four illustration texts still describing a determination as
+    naming *the* architectural element penetrated, in the singular, after the
+    E-2 round had made a determination name every element it passes through:
+    `penetration-not-determined`'s `next_action` and `recheck_condition` in
+    §3.2, `coordination-review-determination`'s `description` in §3.5, and the
+    resolution-trace cell in §6 are aligned word for word with the files this
+    checkpoint ships, while the two passages in this history and in §3.2 that
+    *describe* the singular as the defect it was are deliberately left standing,
+    since correcting them would erase the record of the correction.
 - **Scope:** Checkpoint C only — the representation, ownership and identity
   boundary of a Purpose Pack and a Project Overlay. It does not design or
   execute runtime assessment (Checkpoint D), does not touch contract 1.6, and
@@ -1062,8 +1071,8 @@ recheck_condition = "The alignment-confirmation method is performed and reports 
 resolution_kind = "penetration-not-determined"        # UNKNOWN, penetration-determination
 default_role = "model-coordination"
 consequence_kinds = ["work-suspended"]
-next_action = "Not a model defect: hold the coordination-review determination this project's Overlay accepts, naming either no penetration or the specific architectural element penetrated. The gap is that the determination has not been made yet, not a known defect."
-recheck_condition = "A recorded coordination-review determination exists for the named model versions, naming either no penetration or the architectural element penetrated."
+next_action = "Not a model defect: hold the coordination-review determination this project's Overlay accepts, naming either no penetration or the specific architectural elements penetrated. The gap is that the determination has not been made yet, not a known defect."
+recheck_condition = "A recorded coordination-review determination exists for the named model versions, naming either no penetration or the architectural elements penetrated."
 
 [[resolution_routes]]
 resolution_kind = "opening-not-verifiably-linked"     # BLOCKED, opening-status
@@ -1294,7 +1303,7 @@ decision_basis = "illustrative"
 pack_id = "interdisciplinary-coordination-readiness"
 evidence_requirement_id = "penetration-determination"
 method_id = "coordination-review-determination"
-description = "A recorded decision from a joint MEP/Architecture coordination review, naming either no penetration or the specific architectural element penetrated."
+description = "A recorded decision from a joint MEP/Architecture coordination review, naming either no penetration or the specific architectural elements penetrated."
 decision_basis = "illustrative"
 
 [[overlay.accepted_evidence_methods]]
@@ -2097,7 +2106,7 @@ consequence, default role, next action, to recheck condition, in one table
 | `in-model-position-not-evaluated` | UNKNOWN | work-suspended | **information-manager** | *Not a model defect* — run the evaluation; extend rule applicability if a rule authoring gap is the cause | Every element in scope is covered by a finding |
 | `cross-model-misalignment` | BLOCKED | work-suspended | model-coordination | Re-acquire the shared coordination datum and re-export placement against it | The alignment-confirmation method is re-run and reports confirmed |
 | `cross-model-alignment-not-confirmed` | UNKNOWN | work-suspended, rework-risk | model-coordination | *Not a model defect* — perform the accepted alignment-confirmation method | The method is performed and reports confirmed, for the named versions |
-| `penetration-not-determined` | UNKNOWN | work-suspended | model-coordination | *Not a model defect* — hold the coordination-review determination | A recorded determination exists (no-penetration or the element named) |
+| `penetration-not-determined` | UNKNOWN | work-suspended | model-coordination | *Not a model defect* — hold the coordination-review determination | A recorded determination exists (no-penetration or the elements named) |
 | `opening-not-verifiably-linked` | BLOCKED | work-suspended, rework-risk | **architecture-lead** | Add/correct the cross-reference from the modelled opening to the penetrating element, one per pair | The opening-cross-reference-check is re-run and reports cross-referenced, for the pair |
 | `missing-corresponding-opening` | BLOCKED | work-suspended | **architecture-lead** | Model the opening in Architecture, hosted in the architectural element this penetration passes through — one per pair | The opening-status evaluation reports cross-referenced for the pair |
 | `opening-status-not-determined` | UNKNOWN | work-suspended | model-coordination | *Not a model defect* — complete the opening-status review | The review reports a definite result (cross-referenced, modelled-not-cross-referenced, or not-modelled) |
