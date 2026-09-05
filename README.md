@@ -396,18 +396,87 @@ The sample files are licensed under the
 The IDS rules and normalization logic are authored for this portfolio
 prototype and are not official buildingSMART delivery requirements.
 
+## Purpose Packs and Project Overlays
+
+A **Purpose Pack** states a reusable question: which production activities a
+handover is deciding about, what evidence each needs, and how those evidence
+outcomes would reach a verdict. It names no project. A **Project Overlay** is
+one project's policy against the Pack(s) it uses — which of that project's
+validation rules answer a project-specific question, which methods it accepts,
+how a role is staffed, and who may authorise a release. Neither holds an answer.
+
+Both exist as files and both are read:
+
+```text
+purpose-packs/interdisciplinary-coordination-readiness/pack.toml
+projects/pcert-sample/project.toml        # its [overlay] table
+```
+
+`epc_control_tower/purpose/` loads them and composes them for a project, or
+refuses. Refusing is the whole behaviour on any defect: every version, binding,
+reference and role must resolve, and the eighteen structural invariants a
+decision tree must satisfy are checked at load time, before any project uses the
+file. There is no partial load and no reduced-capability mode. Each refusal
+carries a code naming the rule it enforces, so the mapping between the design
+and the loader is a test rather than a claim.
+
+**This is the input side, and only the input side.** What the composition
+produces is validated *configuration*. It contains no verdict, no evidence
+outcome, no reading, no assigned team, and no risk acceptance — not as a field,
+not as a cached value. In particular:
+
+* **Nothing evaluates a decision tree.** No evaluator exists. A Pack's tree is
+  checked as a graph and never walked against a model.
+* **Nothing records an assessment.** There is no assessment record, no
+  `CONDITIONAL` promotion, and no place for either to be written.
+* **A default role is not an assignment.** Composition checks that a Pack's
+  `default_role` resolves through the Overlay's `team_mapping` — that the
+  mapping *exists*. It does not produce the resolved assignment, because an
+  assignment is a decision made against particular model versions, and this
+  object has none.
+
+So: readiness still cannot be computed here, and none of the boundaries in the
+next section has moved.
+
+**Nothing in the pipeline reads either file.** `epc-ct run`, `check`, `group`
+and every exporter are unaffected by their presence, their contents, or their
+absence; the loader is not a `Checker`, a `GroupingPolicy` or an `Exporter`, and
+appears in no registry. That is measured rather than assumed: the test suite
+runs the whole pipeline twice into the same destination — editing a Pack,
+editing an Overlay, adding a Pack no project references, and giving a second
+project an Overlay — and diffs every output byte.
+
+**The worked Overlay's policy rows are illustrative, and say so.** Every row of
+`pcert-sample`'s `team_mapping`, `risk_authorisations` and
+`accepted_evidence_methods` carries `decision_basis = "illustrative"`: this
+repository has never recorded a real staffing decision, risk-authorisation
+policy, or accepted evidence method, and none of those nine rows should be read
+as one. The field is required, has no default, and a row without it is refused —
+so a demonstration value cannot quietly pass for a decision. The evidence
+bindings and the convention note carry no such field and need none; they state
+which of this repository's real rules answer a question, which is a fact rather
+than a policy.
+
+The shapes both files take, and why, are fixed in
+[`docs/decisions/0002-minimal-purpose-pack-project-overlay.md`](docs/decisions/0002-minimal-purpose-pack-project-overlay.md).
+What a runtime assessment *would* look like, if one were ever built, is designed
+but not implemented in
+[`docs/decisions/0003-runtime-purpose-assessment-shape.md`](docs/decisions/0003-runtime-purpose-assessment-shape.md).
+
 ## Not implemented
 
-Named here because they are discussed around this project and are easy to
-assume exist. None of these appear anywhere in the code.
+Named here because they are discussed around this project and are easy to assume
+exist. Treat each as named-but-unbuilt, and do not infer a design from the name.
 
-The next phase's route and its fixed boundaries have been approved. What has
-**not** been approved is the detailed data structure of the Purpose slice, and
-none of it is written: no schema, no types, no stages. Treat everything below as
-named-but-unbuilt, and do not infer a design from the name.
+The Purpose *inputs* above are built. Everything that would turn them into an
+answer is not, and that is the boundary this section is about.
 
-* **Purpose Packs** — no purpose-scoped bundle of requirements exists.
-* **Overlays** — no mechanism layers one requirement set over another.
+* **Purpose assessment** — nothing walks a Pack's decision tree against a
+  model, and no assessment record exists. Loading and composing a Pack and an
+  Overlay establishes that the question is well-formed and that this project has
+  supplied what the question needs; it produces no verdict, and there is no code
+  that could. A second Pack, a Pack registry, and any Overlay override mechanism
+  are likewise absent.
 * **Readiness** — nothing computes whether a deliverable is ready. In
   particular, `Finding.is_issue` and the `Issue` record are *validation*
   concepts: `is_issue` says a check failed in a way that warrants a topic, and
@@ -432,7 +501,9 @@ named-but-unbuilt, and do not infer a design from the name.
 
 The three seams in `AGENTS.md` (`Checker`, `GroupingPolicy`, `Exporter`) are
 extension points of the pipeline as it stands. They are not a roadmap, and none
-of the above is a matter of implementing one of them.
+of the above is a matter of implementing one of them — including the Purpose
+loader above, which is deliberately none of the three and is registered
+nowhere.
 
 ## Current Limitations
 

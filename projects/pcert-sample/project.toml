@@ -67,3 +67,148 @@ due = "2026-08-01T00:00:00Z"
 [[milestones]]
 stage = "Handover"
 due = "2026-12-01T00:00:00Z"
+
+# --- Project Overlay --------------------------------------------------------
+#
+# This project's policy against the Purpose Pack(s) it uses. The Pack asks the
+# reusable question; the Overlay supplies what only this project can know.
+#
+# Nothing in this table is read by `epc-ct run`, `check`, `group`, or any
+# exporter — adding it moves no published byte. It is read only when a purpose
+# assessment is explicitly requested, which is a separate, demand-driven
+# operation that does not exist yet.
+#
+# The Overlay declares no project_id: it is nested inside the project.toml that
+# already declares one, so its project identity is inherited by nesting rather
+# than restated.
+#
+# It also contains no verdict, no evidence outcome, no assignment, no risk
+# acceptance and no alignment confirmation. Those are runtime facts about one
+# assessment of two specific model versions, and filing any of them here would
+# make a per-run result look like a standing project setting.
+
+[overlay]
+
+[[overlay.packs]]
+pack_id = "interdisciplinary-coordination-readiness"
+pack_version = "0.1.0"          # pinned by exact equality, never a range
+
+# --- Evidence bindings: which of this repository's real rules answer a
+#     project-specific question. This is where R-005 enters the design, and the
+#     only place it does — the Pack does not know R-005 exists, which is why a
+#     project that omitted this row would fail closed rather than fall back to
+#     it. Exactly the four requirement_keys R-005A/B key, not the six findings
+#     a run against them happens to produce today.
+#
+#     No decision_basis here: which rules answer a question is a fact about
+#     this repository's rule set, not a policy decision anyone had to take. ---
+
+[[overlay.evidence_bindings]]
+pack_id = "interdisciplinary-coordination-readiness"
+evidence_requirement_id = "asset-identity"
+ruleset_id = "epc-delivery"
+ruleset_version = "2.2"
+requirement_keys = [
+  "842a37c7-3183-5fce-ab45-b93c37ec7a08",  # R-005A EPC_Delivery.AssetTag
+  "9321298b-4a9f-5a3e-9d10-6668b736d465",  # R-005A EPC_Delivery.SystemCode
+  "a1402559-dcfc-5af4-a222-3a13eaf2b161",  # R-005B EPC_Delivery.AssetTag
+  "fd49c300-7ef6-5a8d-825f-53210dd579fe",  # R-005B EPC_Delivery.SystemCode
+]
+
+# --- Accepted evidence methods: which method this project would accept as
+#     producing each outcome vocabulary, for the three evidence requirements no
+#     validation requirement can ever answer.
+#
+#     decision_basis is "illustrative" on all three: this repository has never
+#     recorded a real acceptance of a method. Declaring a method is not a claim
+#     that it has been run, that either model is aligned, or that any
+#     penetration or opening has been determined. ---
+
+[[overlay.accepted_evidence_methods]]
+pack_id = "interdisciplinary-coordination-readiness"
+evidence_requirement_id = "cross-model-alignment"
+method_id = "overlay-comparison"
+description = "Placements from both models overlaid in a common viewer and visually confirmed by model-coordination; reports confirmed, misaligned, or is simply not yet performed."
+decision_basis = "illustrative"
+
+[[overlay.accepted_evidence_methods]]
+pack_id = "interdisciplinary-coordination-readiness"
+evidence_requirement_id = "penetration-determination"
+method_id = "coordination-review-determination"
+description = "A recorded decision from a joint MEP/Architecture coordination review, naming either no penetration or the specific architectural elements penetrated."
+decision_basis = "illustrative"
+
+[[overlay.accepted_evidence_methods]]
+pack_id = "interdisciplinary-coordination-readiness"
+evidence_requirement_id = "opening-status"
+method_id = "opening-cross-reference-check"
+description = "A recorded check that a modelled architectural opening carries a reference back to the penetrating MEP element it was cut for."
+decision_basis = "illustrative"
+
+# --- Team mapping: how this project would staff each Pack default_role.
+#
+#     Four roles, because the Pack's ten resolution routes reach four. Writing
+#     only coordination and MEP would leave two activities' blockers with no
+#     resolvable assignee, and composition would refuse rather than guess.
+#
+#     A team_mapping row staffs a *resolving* role only. It never staffs an
+#     authoriser, and information-manager appearing both here and in
+#     risk_authorisations below stays two independently declared facts.
+#
+#     decision_basis is "illustrative" throughout: no real team has been
+#     assigned to anything in this repository. ---
+
+[[overlay.team_mapping]]
+role = "model-coordination"
+team_or_person = "coordination-team"
+decision_basis = "illustrative"
+
+[[overlay.team_mapping]]
+role = "mep-lead"
+team_or_person = "mep-design-team"
+decision_basis = "illustrative"
+
+[[overlay.team_mapping]]
+role = "architecture-lead"
+team_or_person = "architecture-design-team"
+decision_basis = "illustrative"
+
+[[overlay.team_mapping]]
+role = "information-manager"
+team_or_person = "information-management-team"
+decision_basis = "illustrative"
+
+# --- Risk authorisation: which roles MAY authorise a CONDITIONAL promotion,
+#     per pack_id::resolution_kind. Never a project-wide list, no wildcard, no
+#     "all", no default.
+#
+#     Only two of the ten resolution_kinds are covered, and that is the point:
+#     a resolution_kind with no row here simply has no authorisation path in
+#     this project, so a blocker or gap of that kind can never be promoted to
+#     CONDITIONAL — not "authorised by a default role".
+#
+#     decision_basis is "illustrative": no risk-authorisation policy has been
+#     decided here, and this table states who *may* act, never that anyone
+#     has. ---
+
+[[overlay.risk_authorisations]]
+pack_id = "interdisciplinary-coordination-readiness"
+resolution_kind = "cross-model-alignment-not-confirmed"
+may_authorise_roles = ["information-manager"]
+decision_basis = "illustrative"
+
+[[overlay.risk_authorisations]]
+pack_id = "interdisciplinary-coordination-readiness"
+resolution_kind = "missing-project-asset-identity"
+may_authorise_roles = ["information-manager"]
+decision_basis = "illustrative"
+
+# --- Conventions: narrative about a project-specific convention. Like the
+#     evidence bindings, a fact about this repository's rules rather than a
+#     policy decision, so no decision_basis. ---
+
+[[overlay.conventions]]
+ruleset_id = "epc-delivery"
+ruleset_version = "2.2"
+requirement_key = "842a37c7-3183-5fce-ab45-b93c37ec7a08"
+note = "EPC_Delivery.AssetTag is pcert-sample's own convention, asserted by the rule's own ProjectAssumption label, not a general obligation."
