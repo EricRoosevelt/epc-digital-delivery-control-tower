@@ -36,7 +36,12 @@ from epc_control_tower.purpose import (
     load_project_overlay,
     load_purpose_pack,
 )
-from helpers import PROJECT_ROOT, shipped_run_config, writable_test_directory
+from helpers import (
+    PROJECT_ROOT,
+    shipped_pipeline_result,
+    shipped_run_config,
+    writable_test_directory,
+)
 from purpose_fixtures import (
     PACK_PATH,
     base_pack_document,
@@ -215,7 +220,7 @@ class PublishedTreeIsUnmovedTests(unittest.TestCase):
         self.assertIsNone(load_project_overlay(ISO_MANIFEST))
 
     def test_counterfactual_5_composing_the_inputs_writes_nothing(self):
-        """ADR 0003 §8's fifth commitment, as far as this checkpoint reaches."""
+        """ADR 0003 §8's fifth commitment, for the composition half."""
 
         from test_purpose_composition import _requirement_keys
 
@@ -236,6 +241,119 @@ class PublishedTreeIsUnmovedTests(unittest.TestCase):
                 if path.is_file()
             }
         self.assertEqual(before, after)
+
+    def test_counterfactual_5_running_an_assessment_and_storing_a_record(self):
+        """The rest of commitment 5: run one, materialise it, move nothing.
+
+        The record is written to a scratch directory rather than kept in memory,
+        because the commitment is about *storing* one. Storage is a later
+        decision, so what is exercised here is the shape the assessment offers a
+        future store — the canonical document — put somewhere on disk that is not
+        ``data/processed/``, ``reports/``, ``ids/``, or the contract snapshot.
+        """
+
+        import assessment_fixtures as fixtures
+        from epc_control_tower.determinism import json_bytes
+        from epc_control_tower.purpose import assess_purpose
+
+        with writable_test_directory("purpose-cf5b") as scratch:
+            out = scratch / "out"
+            out.mkdir()
+            before = _run_into(out)
+
+            facts = fixtures.assessment_facts()
+            record = assess_purpose(
+                request=fixtures.fixture_request(
+                    activity_ids=(
+                        "schedules-and-room-data-sheets",
+                        "ceiling-and-bulkhead-geometry",
+                        "builders-work-openings",
+                    ),
+                    facts=facts,
+                ),
+                composed=fixtures.fixture_composed(),
+                facts=facts,
+                determinations=fixtures.fixture_determinations(),
+            )
+            self.assertTrue(record.assessment_digest)
+            store = scratch / "assessments"
+            store.mkdir()
+            (store / f"{record.assessment_digest}.json").write_bytes(
+                json_bytes(record.as_document())
+            )
+
+            after = {
+                path.relative_to(out).as_posix(): sha256_file(path)
+                for path in sorted(out.rglob("*"))
+                if path.is_file()
+            }
+            self.assertEqual(sorted(store.iterdir()).__len__(), 1)
+
+        self.assertEqual(before, after)
+
+    def test_counterfactual_6_minting_a_digest_moves_no_frozen_identity(self):
+        """ADR 0003 §8's sixth commitment: the dependency really is one-way.
+
+        Two assessments whose digests differ — the second reads one determination
+        fewer, so a verdict moves — over the *same* validated facts. Every
+        ``validation_run_id``, ``requirement_key`` and ``finding_key`` the run
+        produced is compared before and after, because "no identity takes an
+        assessment value as input" is a claim about values and not about
+        signatures.
+        """
+
+        import assessment_fixtures as fixtures
+        from epc_control_tower.purpose import assess_purpose
+
+        def identities(bundle):
+            return (
+                bundle.run.validation_run_id,
+                tuple(sorted(item.requirement_key for item in bundle.ruleset.requirements)),
+                tuple(sorted(item.finding_key for item in bundle.findings)),
+                tuple(sorted(item.issue_key for item in bundle.issues)),
+                bundle.ruleset.normalized_digest,
+            )
+
+        with writable_test_directory("purpose-cf6") as scratch:
+            out = scratch / "out"
+            out.mkdir()
+            before = _run_into(out)
+            bundle_before = identities(shipped_pipeline_result().bundle)
+
+            facts = fixtures.assessment_facts()
+            composed = fixtures.fixture_composed()
+            activities = (
+                "schedules-and-room-data-sheets",
+                "ceiling-and-bulkhead-geometry",
+                "builders-work-openings",
+            )
+            first = assess_purpose(
+                request=fixtures.fixture_request(activity_ids=activities, facts=facts),
+                composed=composed,
+                facts=facts,
+                determinations=fixtures.fixture_determinations(),
+            )
+            second = assess_purpose(
+                request=fixtures.fixture_request(activity_ids=activities, facts=facts),
+                composed=composed,
+                facts=facts,
+                determinations=fixtures.fixture_determinations(alignment=False),
+            )
+            self.assertNotEqual(first.assessment_digest, second.assessment_digest)
+
+            after = {
+                path.relative_to(out).as_posix(): sha256_file(path)
+                for path in sorted(out.rglob("*"))
+                if path.is_file()
+            }
+            bundle_after = identities(shipped_pipeline_result().bundle)
+
+        self.assertEqual(before, after)
+        self.assertEqual(bundle_before, bundle_after)
+        for digest in (first.assessment_digest, second.assessment_digest):
+            with self.subTest(digest=digest[:12]):
+                self.assertNotIn(digest, bundle_after[0])
+                self.assertNotIn(digest, str(bundle_after))
 
 
 class PipelineDoesNotKnowAboutPurposeTests(unittest.TestCase):
@@ -400,79 +518,37 @@ class IdentityBoundaryTests(unittest.TestCase):
 class SubjectClassIndependenceTests(unittest.TestCase):
     """ADR 0003 §8 commitment 7: object scope is genuinely per-activity.
 
-    The shipped Pack's three activities declare the same three classes, which is
-    a fact about this Pack and would make a test that used it prove nothing. So
-    this uses a fixture whose activities differ, and asserts that one declared
-    scope admits different subjects — and leaves different keys out of class —
-    per activity.
+    The commitment's substance — that one declared scope admits different
+    subjects and leaves different keys out of class per activity — now runs
+    through the evaluator, in
+    ``test_purpose_assessment.DeclaredScopeTests.test_one_scope_admits_different_subjects_per_activity``.
+    It used to be computed here instead, because the evaluator did not exist;
+    that expectation has moved, as the note here said it would.
 
-    The admitted/out-of-class split is computed *here* rather than called,
-    because the evaluator that would compute it does not exist yet. When it
-    does, this expectation moves to it; what is being pinned now is that the
-    Pack data supports the distinction at all.
+    What stays is the fact that made the move necessary. The shipped Pack's three
+    activities declare the same three classes, so a test drawing its evidence
+    from them would pass whether the field were per-activity or Pack-wide — and
+    the shipped Pack must not be bent into differing just to make a test look
+    like it proves something.
     """
 
-    #: A declared scope, as elements with the ifc_class elements.csv publishes.
-    SCOPE = {
-        "hvac::duct": "IfcDuctSegment",
-        "hvac::terminal": "IfcAirTerminal",
-        "hvac::chimney": "IfcChimney",
-        "hvac::origin": "IfcBuildingElementProxy",
-    }
-
-    @classmethod
-    def setUpClass(cls):
-        document = mutated(base_pack_document())
-        document["activities"][0]["subject_classes"] = ["IfcDuctSegment"]
-        document["activities"][1]["subject_classes"] = ["IfcAirTerminal", "IfcChimney"]
-        document["activities"][2]["subject_classes"] = ["IfcChimney"]
-        cls._scratch = PROJECT_ROOT / "tests" / ".purpose-classes"
-        shutil.rmtree(cls._scratch, ignore_errors=True)
-        cls._scratch.mkdir()
-        cls.pack = load_purpose_pack(write_pack(cls._scratch, document))
-
-    @classmethod
-    def tearDownClass(cls):
-        shutil.rmtree(cls._scratch, ignore_errors=True)
-
-    def _split(self, activity):
-        declared = set(activity.subject_classes)
-        admitted = {key for key, cls in self.SCOPE.items() if cls in declared}
-        return admitted, set(self.SCOPE) - admitted
-
-    def test_one_scope_admits_different_subjects_per_activity(self):
-        splits = {
-            activity.activity_id: self._split(activity) for activity in self.pack.activities
-        }
-        admitted = [frozenset(value[0]) for value in splits.values()]
-        self.assertEqual(len(set(admitted)), 3, "each activity must admit a different set")
-        out_of_class = [frozenset(value[1]) for value in splits.values()]
-        self.assertEqual(len(set(out_of_class)), 3)
-
-    def test_the_accounting_is_total_for_every_activity(self):
-        for activity in self.pack.activities:
-            admitted, out_of_class = self._split(activity)
-            with self.subTest(activity=activity.activity_id):
-                self.assertEqual(admitted | out_of_class, set(self.SCOPE))
-                self.assertEqual(admitted & out_of_class, set())
-
-    def test_a_zero_finding_element_is_admitted_by_class_not_by_coverage(self):
-        """The chimney is in, and the setout proxy is out, for what they are."""
-
-        for activity in self.pack.activities:
-            admitted, out_of_class = self._split(activity)
-            with self.subTest(activity=activity.activity_id):
-                self.assertIn("hvac::origin", out_of_class)
-        by_id = {activity.activity_id: activity for activity in self.pack.activities}
-        admitted, _ = self._split(by_id["builders-work-openings"])
-        self.assertEqual(admitted, {"hvac::chimney"})
-
     def test_the_shipped_pack_keeps_one_shared_class_list(self):
-        """The fixture differentiates; the shipped Pack must not be bent to match."""
-
         shipped = load_purpose_pack(PACK_PATH)
         lists = {tuple(activity.subject_classes) for activity in shipped.activities}
         self.assertEqual(len(lists), 1)
+        self.assertEqual(
+            lists, {("IfcDuctSegment", "IfcAirTerminal", "IfcChimney")}
+        )
+
+    def test_the_commitment_is_discharged_against_differing_activities(self):
+        """The moved test exists, and exercises classes that actually differ."""
+
+        source = (PROJECT_ROOT / "tests" / "test_purpose_assessment.py").read_text(
+            encoding="utf-8"
+        )
+        self.assertIn("test_one_scope_admits_different_subjects_per_activity", source)
+        self.assertIn('["IfcDuctSegment"]', source)
+        self.assertIn('["IfcChimney"]', source)
 
 
 if __name__ == "__main__":  # pragma: no cover

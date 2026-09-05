@@ -9,9 +9,9 @@ no reading, no subscope, no resolving assignment, no risk acceptance — not as 
 field, not as a cached property, not as a method. A Pack states the question a
 purpose asks; an Overlay states what one project supplies to it; the answer is
 a runtime fact about one assessment of two specific model versions, and it
-lives in an assessment record that does not exist yet. Giving the composed
-object somewhere to put an answer is how a per-run result quietly becomes a
-project setting.
+lives in the assessment record :mod:`~.assessment` builds and seals. Giving the
+composed object somewhere to put an answer is how a per-run result quietly
+becomes a project setting.
 
 **It cannot collapse the assignment chain.** Checkpoint B separated three
 things: a Pack's default responsibility policy (8a), a project's role-to-team
