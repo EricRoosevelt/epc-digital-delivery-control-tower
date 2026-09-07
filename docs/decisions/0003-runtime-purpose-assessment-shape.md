@@ -241,6 +241,125 @@
     origin reference, the terminal lapse, the silence rule, sealing, the two
     successor kinds, §4.4's nine fields, §8's six counterfactuals and its
     seventh commitment, and the recording places of the three product decisions.
+  - Refines the version merged at `65d0b0b` (2026-09-04), on 2026-09-07 — the
+    first round in which this document is refined *after* something implements
+    it rather than before. Technical-director review of the first implementation
+    (`fe00ee9`, PR #6) returned **CONDITIONAL**: the implementation, the
+    boundaries, the refusal diagnostic, the partition, determination
+    admissibility, determinism, sealing and isolation were all accepted and are
+    not reopened, and the code is not to move. **D-7** is the one item, and it
+    is a documentation defect rather than a behavioural one. The implementation
+    added a precondition the product ruled this round — an assessment will not
+    found a resolving assignment on an `overlay.team_mapping[]` row whose
+    `decision_basis` is not `project-decision` — and §4.3 described only the
+    *missing-row* precondition, saying nothing about `decision_basis` at all.
+    So a released behaviour lived only in code, and a reviewer reading the
+    design would not have found it. That is the drift `AGENTS.md` rule 6 exists
+    to stop and that this project has now caught twice, which is why closing it
+    is worth a round of its own. §4.3 gains the precondition, its static
+    reading over an activity's *reachable* non-`READY` leaves — the identical
+    semantics §7.1's existing missing-row row already carries — the consequence
+    that a refusal therefore names every blocking row rather than only the rows
+    live evidence reached (all four, for `pcert-sample`), and the requirement
+    that a refusal name each row's `role`, `team_or_person`, `decision_basis`
+    and the leaves it would have founded. §7.1 gains **one** row for it, kept
+    deliberately distinct from the missing-row row above it because a row that
+    is absent and a row that is a demonstration value fail closed for different
+    reasons and must not be reported as the same defect. Two further decisions
+    the technical director approved in the same review are recorded in §3.1,
+    where grain and readings are defined: a `whole-scope` determination is
+    addressed by the *(producing, consuming)* `model_key` pair, so a
+    confirmation produced for one pair of models is never read as one about
+    another; and an evidence requirement's absent state must be exactly one of
+    `not-yet-evaluated` / `not-yet-confirmed` / `not-yet-determined`, refusing
+    rather than defaulting when a Pack names none or several. Nothing else
+    moves: no §7 row is changed or removed, the §7 ledger paragraph is brought
+    forward to account for this round, and no Pack, Overlay, code, published
+    artifact, or contract value is touched by this document.
+  - Refines the version at `a84872a` (2026-09-07), on 2026-09-07. Product paused
+    the next round of extension to close the determination-admissibility chain
+    first, and **D-8** is that closure. §1.2 item 4 fixed where a determination
+    comes from — by reference, admitted or found inadmissible, never decided —
+    and did not say when one may be *believed*. Three gaps followed from the
+    silence, all three measured against the running implementation rather than
+    argued: a determination was consumed although the
+    `overlay.accepted_evidence_methods[]` row behind it read `illustrative`, and
+    the repository's own positive fixture was sitting on exactly that, going
+    green on a check that did not exist; a determination carried no model-version
+    attribution at all, so evidence produced against an earlier export applied
+    silently to a later one, which the existing context check cannot see because
+    it asks a different question; and two determinations that disagreed — one
+    reference offered with two contents, or two references reaching opposite
+    conclusions — both produced `READY` by taking one of them, which is a pick
+    however stable its order. §1.2 item 4 now states the three conditions —
+    policy, version attribution, content consistency — with the missing/
+    `illustrative` distinction, the separation from §2.3's context check, and the
+    rule that agreement is corroboration while disagreement stops the request.
+    It also records why the remedy here differs from §4.5's: both refuse to
+    select, and §4.5 can reduce because lapsing a release is the conservative act
+    where no comparable conservative outcome exists for an evidence requirement.
+    The same section fixes the **refuse/decline boundary** the three gaps made
+    necessary: a determination correctly keyed onto a known subject whose content
+    fails an acceptance condition is declined and reads `not-yet-*` (§7.3), while
+    one that cannot be keyed or trusted at all is refused (§7.1). A fourth case
+    was re-checked and found already correct and is now pinned as a regression
+    test rather than changed: a `penetration-confirmed` naming an element absent
+    from the consuming model version declines, refines into no pair, and leaves
+    subject scope and every verdict identical. **The property held; the evidence
+    behind it was weaker than that sentence implied, and the D-9 round below
+    corrects it.** §7.1 gains **eight** rows, five for
+    these conditions and three owed from the D-7 round's escalation — a
+    wrong-arity `subject`, a finding-backed `outcomes[]` missing one of its three
+    names, and an `outcomes[]` naming none or several unresolved states. Unchanged
+    and not reopened: the implementation, the boundaries, the refusal
+    diagnostics, the partition, determinism, sealing, isolation, D-7's gate and
+    its static reading, §4.4's nine fields, §4.5 in full, §8's six counterfactuals
+    and its seventh commitment. Still not built: `CONDITIONAL` promotion,
+    successor records, a machine contract, a CLI, Doctor, or a second Pack.
+  - Refines the version at `e0ad49c` (2026-09-07), on 2026-09-08. **No behaviour
+    changes in this round** — no check, field, or refusal is added — and it
+    exists because two things this document and its implementation *said* were
+    wrong, in the direction that matters: they claimed a guard was doing less
+    than it is. **D-9** closes both.
+    **(a)** The D-8 round recorded that a `penetration-confirmed` naming an
+    absent element "was re-checked and found already correct and is now pinned as
+    a regression test". The property held. The evidence did not support the
+    confidence: the pinning test offered a single declined determination with
+    nothing to compete against, and competition is the only situation in which
+    the guard it was pinning is used at all. Alongside it, the implementation
+    described the admissibility check inside its refinement lookup as
+    "unreachable" through the entry point, reasoning that a subject reaches the
+    pair node only after an admissible determination produced its reading. That
+    reasoning conflates two traversals of one index: the first filters to
+    admissible determinations and drives the **reading**; the second drives
+    **refinement** and meets whatever sorts first. Measured on the running
+    evaluator, the entry point calls the second, and a declined determination
+    sorting ahead of an admissible one is exactly what it excludes. Removing the
+    guard does not produce a wrong pair — it makes the roof pair and its
+    `BLOCKED` verdict disappear entirely, which is the silent loss §2.1 exists to
+    prevent. §3.1 now states that reading and refining are two lookups that must
+    both exclude the inadmissible, and states the selection rule the
+    implementation already follows: refinement takes the first admissible
+    determination, which is safe rather than a pick because two admissible
+    determinations disagreeing about one subject have already refused the whole
+    request (§1.2 item 4). An end-to-end regression pins it under both input
+    orders.
+    **(b)** This document had said nothing about `N/A` anywhere, while the
+    implementation distinguished two absences by it. §3.1 now states the three
+    consequences: `N/A` is never `satisfied` (a rule that applied to nothing did
+    not check this element, and ADR 0002 §3.2's "at least one finding and none is
+    `FAIL`" reads it as a pass if taken literally); "no finding at all" and "a
+    finding that says `N/A`" are two absences that share one outcome name and are
+    recorded distinctly; and a reading must join on `element_key` as well as
+    `requirement_key`, because all 57 `N/A` findings here are model-level and 12
+    of `pcert-sample`'s 23 carry a bound `requirement_key`, so a key-only join
+    would read facts about `architecture` and `structural` into an `hvac`
+    subject.
+    Neither part adds a refusal, so §7.1 gains no row and the fail-closed tables
+    are untouched. Unchanged and not reopened: every behaviour, every code, the
+    three D-8 conditions, D-7's gate, §4.4, §4.5, §8's six counterfactuals and
+    its seventh commitment. No Pack, Overlay, published artifact, or contract
+    value is touched.
 - **Scope:** Checkpoint D runtime design only — the request boundary, the
   subscope construction rule ADR 0002 §3.2 explicitly left here, the
   assessment record shape, the runtime identity boundary, and the
@@ -364,6 +483,79 @@ An assessment reads, and only reads:
    from the other three in one respect only — no Pack or Overlay declares a
    method for it, because which role may make one is deliberately not fixed
    (§4.5) — and in every other respect it is read exactly like them.
+
+   **A determination is relied on only where three things about it can be
+   checked (closes D-8).** "Read by reference" says where a determination comes
+   from; it does not by itself say when one may be believed, and each of the
+   three below is a way a determination could otherwise be consumed with nobody
+   able to verify it:
+
+   1. **Policy — the method it cites was actually accepted.** Its `method_id`
+      resolves to an `overlay.accepted_evidence_methods[]` row whose
+      `decision_basis` is `project-decision`. A **missing** row and an
+      **`illustrative`** row are different states and fail differently. Missing
+      means the project never accepted that method, so the determination is not
+      admissible evidence *here* and the subject reads `not-yet-*` — a fact
+      about the handover. `illustrative` means the row states the shape of an
+      acceptance nobody decided, so consuming its output would put a decision
+      nobody made inside a record, and the request is **refused** (§7.1). That
+      refusal is the same family as §4.3's `team_mapping` gate and is
+      deliberately a **different** refusal, because the row a maintainer must
+      edit is a different row in a different table. Only rows an activity of
+      this request actually reads are checked: a determination offered for an
+      evidence requirement outside the requested activities is not consumed, and
+      the request is refused for what it relies on rather than for what it
+      carries past.
+   2. **Version attribution — it says which model versions it was made
+      against.** Both `model_key` values and both content identifiers, compared
+      value for value against the request's model-version context. Absence is
+      not agreement: a determination that names no versions cannot be shown to
+      be about these ones, and one naming other versions never silently becomes
+      a determination about these. This is a **separate** check from §2.3's
+      requirement that the context agree with the cited `validation_run_id`, and
+      the two are kept as two diagnostics because they can fail independently —
+      a perfectly consistent request can be handed evidence produced against an
+      earlier export, and nothing in the context check would notice.
+   3. **Content consistency — the offered set does not contradict itself.** One
+      `reference` names one determination, so the same reference offered twice
+      with different content is a store that cannot say which document it holds:
+      **refused**. And two *admissible* determinations about the same evidence
+      requirement and the same subject that reach different conclusions — a
+      different outcome, or a `penetration-confirmed` naming different
+      architectural elements — are not evidence for either: **refused**, naming
+      the conflicting references. Agreement is not conflict: two reviewers on
+      two bases reaching the same conclusion corroborate each other, and the
+      record cites all of them rather than selecting one.
+
+   **Where determinations disagree, nothing is selected.** §4.5 meets the
+   neighbouring problem for a `CONDITIONAL` continuation and reduces by
+   *maximum over the enumerated set* precisely so the answer cannot depend on
+   citation order, on which determination was found first, or on how many there
+   are. That reasoning carries here unchanged, and choosing between contradictory
+   determinations by reference name, by sort order, or by arrival order is
+   exactly what both refuse to do. The **remedy** differs, and the difference is
+   not an inconsistency: §4.5 has a safe value to fall back to, because the more
+   adverse reading of a voiding condition is `met` and lapsing a release is the
+   conservative act. No such value exists here — there is no "most adverse
+   alignment outcome" an assessment is entitled to substitute for evidence that
+   disagrees with itself — so the request stops and says which references
+   conflict.
+
+   **Refusing and declining are two fail-closed directions**, and which applies
+   turns on whether the defect is in the *evidence* or in the *request*. A
+   determination that is correctly keyed onto a known subject and whose
+   *content* fails an acceptance condition is **declined**: it is unattributable
+   (no determiner, no basis), its outcome is not one the requirement declares,
+   or it is a `penetration-confirmed` naming no architectural element or one
+   absent from the consuming model version. The subject then reads `not-yet-*`,
+   routes to `UNKNOWN`, refines into no pair, and moves no verdict — "no
+   admissible evidence yet" is a fact about the handover, and §7.3 is where it
+   belongs. A determination that cannot be keyed or trusted at all is
+   **refused**: its `subject` has the wrong arity for the declared grain, so
+   which subject it is about cannot be established; or it rests on illustrative
+   policy; or it is attributed to other versions; or the set contradicts itself.
+   None of those is a gap in the evidence — each is a defect in what was handed
+   in, and §7.1 catches those before any subscope is assessed.
 
 ### 1.3 Output boundary — one record, outside the published tree
 
@@ -580,6 +772,32 @@ and, by definition, cannot be heterogeneous across subjects. A future Pack
 that needs a finer alignment fact — per storey, say — declares it
 `per-subject` at that grain, and it then splits like any other.
 
+**A `whole-scope` determination is nevertheless addressed by the model pair it
+is about (closes D-7).** Contributing no subject is a statement about the
+partition, not about how the determination is keyed: a determination the
+assessment reads by reference (§1.2 item 4) has to be looked up by *something*,
+and the only honest key for a fact about two model versions is the *(producing
+`model_key`, consuming `model_key`)* pair from the model-version context. An
+alignment confirmation produced for one pair of models is therefore never read
+as a confirmation about another — the same rule §2.3 states for verdicts ("a
+verdict is only ever true of the exact versions named"), applied to the evidence
+underneath one. The reading is still one reading, still shared identically by
+every subject that reaches the node, and still incapable of splitting a
+subgroup.
+
+**Each evidence requirement's absent state is one named outcome, and it is
+identified rather than defaulted (closes D-7).** ADR 0002 §3.2 fixes a closed
+vocabulary for "a binding exists but has produced no admissible result for this
+assessment yet": `not-yet-evaluated`, `not-yet-confirmed`, `not-yet-determined`.
+An evidence requirement's `outcomes[]` must name **exactly one** of the three,
+and that one is the outcome a subject reads when no finding exists, or when no
+admissible determination does. A Pack naming none of them, or more than one,
+leaves the assessment no way to say "not yet" without choosing on the Pack
+author's behalf, so it **refuses** rather than picking — taking the first
+listed, or the last, would be exactly the silent default `AGENTS.md` rule 6
+calls the worst outcome available, and the value it would silently choose is a
+verdict.
+
 **No grain ever introduces a key that might not exist.** The previous
 revision kept `opening-status` at `per-subject` for exactly this reason — an
 opening/penetration pair whose second member is absent precisely when the
@@ -601,6 +819,31 @@ routes to `UNKNOWN` / `penetration-not-determined` (§7.3). This is the
 fail-closed direction: an inadmissible determination is no determination, and
 never a pair with a member the assessment had to invent.
 
+**Reading a subject and refining it are two lookups, and both must exclude the
+inadmissible (closes D-9).** Which determination produced a subject's *reading*
+does not settle which determination names its *counterparts*: the reading is
+taken from the admissible determinations for that subject, while refinement goes
+back to the same subject's determinations to ask which architectural elements
+were named. A declined determination sitting alongside an admissible one is
+therefore reachable at the second lookup even though the first excluded it, and
+it must be excluded again there. The cost of not doing so is not a wrong pair —
+it is a **missing** one: where a declined claim names fewer architectural
+elements than the admissible one, every counterpart only the admissible
+determination named would silently cease to exist, taking its subscope and its
+verdict with it. A `BLOCKED` roof opening that is never reported is
+indistinguishable from a roof with no opening problem, which is the class of
+silent loss §2.1's whole scope rule exists to prevent.
+
+**Among admissible determinations, refinement takes the first and this is not a
+choice.** Two admissible determinations that named different architectural
+elements for one subject would be two different answers to "which pairs exist",
+and §1.2 item 4's content-consistency condition has already refused the whole
+request before refinement runs — a `penetration-confirmed` naming different
+elements is exactly the disagreement it tests for. What remains to select
+between is determinations that agree, where there is nothing to select. The
+rule is stated because "takes the first" reads like a pick, and what makes it
+safe is a check somewhere else.
+
 **Within-subject reading rule** (from ADR 0002 §3.2, restated): for a
 `per-subject` finding-backed evidence requirement, take every finding for the
 subject under every bound `requirement_key` that applies to it; if there is
@@ -620,6 +863,41 @@ pair, the determination about *that* opening — or its `not-yet-*` outcome when
 none exists. No finding-backed evidence requirement in this Pack reads at pair
 grain, and none has to: the rule above is stated over subjects, and a pair is
 a subject.
+
+**What `N/A` means to a reading, and the two absences it must stay apart from
+(closes D-9).** The precedence above names three levels, and its middle one —
+not-covered — is where a `N/A` finding lands. Contract 1.6 normalises "this
+specification had zero applicable elements" to `N/A` precisely because
+IfcTester reports it as a pass and counting it as compliance would inflate every
+rate the project publishes; the readiness reading owes the same distinction, for
+the same reason. Three things follow, and none of them is a detail:
+
+- **`N/A` is never `satisfied`.** A rule that applied to nothing did not check
+  this element, and `satisfied` is the claim that a specific thing *was* checked
+  and was correct. ADR 0002 §3.2's own summary of the third state — "the unit has
+  at least one finding and none is `FAIL`" — reads a `N/A` as a pass if taken
+  literally, and this is the sentence that says not to: the rule is the
+  three-level precedence, `FAIL` > not-covered > `PASS`, and `N/A` is
+  not-covered. Every status is matched by name; an unrecognised one refuses
+  (§7.1), because the branch a fall-through reaches is `satisfied` and reporting
+  an unknown status as a pass is the worst outcome available.
+- **"No finding at all" and "a finding that says `N/A`" are two absences, both
+  reading `not-yet-evaluated` and each recorded distinctly.** Nobody looked and
+  the look did not apply are different facts about a handover, and the second
+  can cite the `N/A` findings it read while the first has nothing to cite. The
+  Pack's outcome vocabulary has one name for both, so the distinction lives in
+  the record's named-absence marker (§3.3) rather than in the outcome.
+- **A reading joins on `element_key` as well as `requirement_key`.** This is the
+  one with a live way to go wrong in this repository rather than a hypothetical
+  one. All 57 `N/A` findings here are model-level — `element_key` empty, because
+  a specification that matched nothing has no element to name (`domain.Finding`
+  refuses one that does) — and **12 of `pcert-sample`'s 23 carry a
+  `requirement_key` this project's Overlay or this Pack actually binds**, six in
+  `architecture` and six in `structural`. A reading that joined on
+  `requirement_key` alone would pull model-level rows from other models into an
+  `hvac` subject's reading and reduce them as though they were about it. Both
+  halves of the join are required, and the `element_key` half is the one that
+  stops a fact about a model being read as a fact about an element.
 
 An `insufficient_evidence[]` entry (R-010 under `cross-model-alignment`) is
 **never** a reading: its `PASS` is recorded as context only and produces none
@@ -884,6 +1162,43 @@ For every non-`READY` subscope, recorded in one direction only:
   §4.5, an actor who acts after this record was written is not patched into
   it: the actor is carried by whichever successor record is written next, and
   this record keeps saying what was true when it was written.
+
+**The `team_mapping` row must record a decision the project actually took
+(closes D-7).** Row 8c is an assignment, and an assignment names somebody. ADR
+0002 §3.5 requires a `decision_basis` on every row of the three Overlay policy
+tables precisely so that a value written to demonstrate the shape cannot pass
+for a decision anybody made; `pcert-sample`'s four `team_mapping` rows all read
+`illustrative`, and the repository's own commentary says why — no real staffing
+decision has ever been recorded here. So a second precondition sits alongside
+the first: an assessment resolves `default_role` through a `team_mapping` row
+**only when that row's `decision_basis` is `project-decision`**. A row reading
+`illustrative` is treated exactly as a missing row is — the request fails
+closed (§7.1), no record is written, and nothing is substituted — because a
+record founded on a demonstration row would state an assignment nobody made,
+which is the same fabrication ADR 0002 §3.5 added the field to prevent. The two
+preconditions stay two: a missing row and a demonstration row fail closed for
+different reasons and are reported as different refusals, so a project told its
+policy is illustrative is not left looking for a row that is already there.
+
+**The check is static, over the activity's *reachable* non-`READY` leaves.** It
+carries the identical semantics to §7.1's existing "no `overlay.team_mapping[]`
+row" row, which is also worded over reachable leaves, and for the same reason:
+a policy defect is a property of the *request*, so it is found before any
+subscope is assessed rather than discovered halfway through one (§7's opening
+distinction between a composition/request defect and an unresolved outcome).
+One consequence is worth stating because it looks like over-reporting and is
+not: the refusal names **every** policy row a reachable leaf could land on, not
+only the rows this run's live evidence happens to touch. For `pcert-sample`'s
+three activities that is all four rows, because the ten routes those trees can
+reach resolve to all four roles. Naming only the rows the live evidence reached
+would make the diagnostic a function of the evidence, and a project would then
+fix two rows and be refused again on the next assessment for the other two.
+
+**A refusal names the rows.** "Policy is illustrative" is not a diagnostic: the
+maintainer's next act is to edit specific lines, so the refusal states, for each
+blocking row, its `role`, its `team_or_person`, its `decision_basis`, and the
+`pack_id::activity_id`, node and `resolution_kind` of every reachable leaf that
+row would have had to found.
 
 ### 4.4 A `CONDITIONAL` promotion
 
@@ -1605,13 +1920,23 @@ promotion whose continuation is not covered, and one in §7.3 for an
 inadmissible penetration determination. The E-7 round added six to §7.2 — the
 re-derived kind, `pack_version`, the reduction over several determinations, a
 store that cannot be enumerated exhaustively, the terminal lapse, and the
-widened silence trigger. This round adds one more, for a re-derived verdict or
-terminal outcome that is not the one authorised, and brings **two** earlier
-rows into line with the text around them: the E-4 row's list of lapse causes,
-and the E-6 silence row's count of the proofs a continuation must carry.
-Neither rule changed — every cause the E-4 row named still lapses a promotion,
-and silence is still refused — the rows had simply been left behind by rounds
-that added causes and proofs above them.
+widened silence trigger. The D-6 round added one more to §7.2, for a re-derived
+verdict or terminal outcome that is not the one authorised, and brought **two**
+earlier rows into line with the text around them: the E-4 row's list of lapse
+causes, and the E-6 silence row's count of the proofs a continuation must
+carry. Neither rule changed — every cause the E-4 row named still lapses a
+promotion, and silence is still refused — the rows had simply been left behind
+by rounds that added causes and proofs above them. The D-7 round added **one**
+row to §7.1, for a `team_mapping` row whose `decision_basis` is not
+`project-decision`. This round adds **eight** more to §7.1 and changes no row
+anywhere: five for the determination admissibility conditions of §1.2 item 4 —
+an illustrative `accepted_evidence_methods` row, a determination with no version
+attribution, one attributed to other versions, one reference offered with two
+contents, and two admissible determinations that contradict each other — and
+three that were owed from the D-7 round's own escalation: a determination whose
+`subject` has the wrong arity for its declared grain, a finding-backed
+requirement whose `outcomes[]` omits one of the three names the reduction needs,
+and an `outcomes[]` naming none or several unresolved states.
 
 ### 7.1 Composition / request defects — the assessment refuses
 
@@ -1626,6 +1951,7 @@ that added causes and proofs above them.
 | A requested activity's evidence requirement has `binding_source = "overlay"` and no `overlay.evidence_bindings[]` row names the same `pack_id` + `evidence_requirement_id` (the R-005 case) | Refuse for any activity that needs it — **never** fall back to R-005 or any rule's `owner_role`; there is no default because the Pack does not know R-005 exists | "An evidence requirement declares `binding_source = "overlay"` and the project's Overlay has no `evidence_bindings[]` entry naming the same `pack_id` + `evidence_requirement_id`" |
 | A requested activity's evidence requirement has `binding_source = "assessment"` and no matching `overlay.accepted_evidence_methods[]` row | Refuse for that activity | "An evidence requirement declares `binding_source = "assessment"` and the Overlay has no matching `accepted_evidence_methods[]` entry" |
 | A requested activity has a reachable non-`READY` leaf whose `resolution_routes[].default_role` has no `overlay.team_mapping[]` row | Refuse this request only; contract 1.6 pipeline and any fully-bound activity unaffected; never read the bound rule's `owner_role`; never record the bare `default_role` string as an assignment | "A purpose assessment is requested for an activity whose reachable non-`READY` leaves name a default role with no matching `overlay.team_mapping[]` entry" |
+| A requested activity has a reachable non-`READY` leaf whose `resolution_routes[].default_role` resolves to an `overlay.team_mapping[]` row whose `decision_basis` is not `project-decision` | Refuse this request only, as a **distinct** refusal from the missing-row row above — the row exists and is a demonstration value, so reporting it as missing would send a maintainer looking for a row already there. Never founded on anyway, never substituted for, and never resolved by reading the bound rule's `owner_role`. Static over reachable leaves, so the refusal names every blocking row and the leaves each would have founded — for `pcert-sample`, all four (§4.3) | (new to this round; **closes D-7**. Follows from ADR 0002 §3.5, which requires `decision_basis` on every policy row precisely so a demonstration value cannot pass for a decision, and from §4.3's rule that row 8c is an assignment and an assignment names somebody) |
 | The request omits the assessed scope | Refuse — scope is a required input, never defaulted to "whatever has findings" (§2.1) | (new to this checkpoint; consistent with ADR 0002 §3.2's coverage-is-not-scope rule and `AGENTS.md`'s "worst outcome available" principle) |
 | No `validation_run_id` exists for the project / the model versions in the context, or the cited run did not validate those versions | Refuse — there are no validated facts the assessment may honestly cite (§2.3) | (new to this checkpoint; the assessment reads post-`check` facts and cannot run without them) |
 | The request's assessed scope names an `element_key` absent from the producing model version's element inventory | Refuse — a key with no `ifc_class` cannot be admitted or excluded, so the total accounting of §3.3 could not be produced for it, and silently dropping it is the failure mode this checkpoint's whole scope rule exists to prevent | (new to this round; follows from the class admission in §3.1 and from ADR 0002 §3.2's coverage-is-not-scope rule) |
@@ -1633,6 +1959,14 @@ that added causes and proofs above them.
 | An evidence requirement of a requested activity carries no `subject_grain`, or a `per-subject-pair` grain with no `pair_source` (or the reverse) | Composition already failed closed at Pack load; the assessment cannot key the requirement's readings and refuses | ADR 0002 §3.7's `subject_grain` / `pair_source` rows, and invariant 16 (**closes E-2**) |
 | A successor record with `kind = "authorisation"` re-derives evidence that differs from the record it cites — in membership, path, any reading, verdict, `resolution_kind`, model-version context, cited run, ruleset, or `pack_version` | Refuse to write it as an authorisation, naming which comparison failed; the correct successor is a `recheck`, which may carry its own promotion. Never written as a partial record, and never with "unchanged" asserted rather than proved (§4.5) | (new to this round; **closes E-5**) |
 | Any write is attempted against a record whose `assessment_digest` has been computed | Refuse — a sealed record is never rewritten, corrected, appended to, or deleted; every later fact is a new record citing it (§4.5) | (new to this round; **closes E-5**) |
+| A determination consumed by a requested activity cites a `method_id` whose `overlay.accepted_evidence_methods[]` row has a `decision_basis` other than `project-decision` | Refuse this request only, and **distinctly** from §4.3's `team_mapping` gate and from the missing-row case: the row exists and records the shape of an acceptance nobody decided, so the maintainer's fix is a different row in a different table. A **missing** row is not this — it declines instead, and the subject reads `not-yet-*` (§7.3) | (new to this round; **closes D-8**. ADR 0002 §3.5's `decision_basis` on `accepted_evidence_methods[]`, and §1.2 item 4 condition 1) |
+| A determination consumed by a requested activity carries no model-version attribution | Refuse — it cannot be shown to be about the versions this request names, and absence is not agreement | (new to this round; **closes D-8**; §1.2 item 4 condition 2) |
+| A determination consumed by a requested activity is attributed to model versions other than the request's, by `model_key` or by content identifier | Refuse — a determination about one version of either model never becomes a determination about another. **Distinct** from the `validation_run_id` context row above: that one asks whether the request's context agrees with the cited run, this one asks whether the evidence was produced against the versions the request names, and either can fail while the other passes | (new to this round; **closes D-8**; §2.3, §1.2 item 4 condition 2) |
+| One determination `reference` is offered more than once with different content | Refuse — a reference names one determination, so two documents under one handle mean the assessment cannot say which one it read. It does not pick, and it does not prefer the first, the last, or the longest | (new to this round; **closes D-8**; §1.2 item 4 condition 3) |
+| Two or more **admissible** determinations for the same evidence requirement and the same subject reach different conclusions — a different outcome, or a `penetration-confirmed` naming different architectural elements | Refuse, recording the conflicting references and what each concluded. Never resolved by reference name, sort order, or arrival order; and unlike §4.5's reduction there is no more-adverse value to fall back to, because no outcome of an evidence requirement is the conservative one. Two determinations that **agree** are corroboration, not conflict: the reading cites all of them and selects none | (new to this round; **closes D-8**; §1.2 item 4 condition 3, and §4.5's reduce-never-pick reasoning) |
+| A determination's `subject` carries a different number of keys than its evidence requirement's declared `subject_grain` | Refuse — which subject it is about cannot be established, so it is not evidence about anything the assessment could locate. This is why it refuses rather than declining: a decline says "no admissible evidence for *this subject* yet", which presupposes the subject is known | (new to this round; scheduled from the D-7 round's escalation; §3.1's grain table, ADR 0002 §3.7's `subject_grain` rows) |
+| A finding-backed evidence requirement of a requested activity declares `outcomes[]` omitting any of `satisfied`, `unmet`, `not-yet-evaluated` | Refuse — the `FAIL` > not-covered > `PASS` reduction has three levels and needs three names for them; mapping `PASS` onto whatever the Pack happened to list first is a silent default whose value is a verdict | (new to this round; scheduled from the D-7 round's escalation; ADR 0002 §3.2's three names for validation-backed evidence) |
+| An evidence requirement of a requested activity declares `outcomes[]` naming none, or more than one, of `not-yet-evaluated` / `not-yet-confirmed` / `not-yet-determined` | Refuse — with none there is no name for "not yet", and with several there is a choice the Pack author did not make. Never resolved by taking the first or the last listed (§3.1) | (new to this round; scheduled from the D-7 round's escalation; ADR 0002 §3.2's closed unresolved-state vocabulary) |
 | Any Pack-load structural invariant fails (dangling node, cycle, uncovered `outcome`, `CONDITIONAL` leaf, orphaned/duplicate `resolution_kind`, out-of-scope `next_node`, `renders_inapplicable` violation, unresolved `direction_id`, `pair_source` violation, …) | Composition already failed closed at Pack load; the assessment has no valid tree and refuses | the eighteen Pack-load invariant rows and the `resolution_routes[]` / `directions[]` / `decision_nodes[]` rows of ADR 0002 §3.7 |
 
 ### 7.2 `CONDITIONAL` promotion defects — the promotion refuses, the leaf stands

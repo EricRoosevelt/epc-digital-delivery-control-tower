@@ -420,23 +420,49 @@ file. There is no partial load and no reduced-capability mode. Each refusal
 carries a code naming the rule it enforces, so the mapping between the design
 and the loader is a test rather than a claim.
 
-**This is the input side, and only the input side.** What the composition
-produces is validated *configuration*. It contains no verdict, no evidence
-outcome, no reading, no assigned team, and no risk acceptance — not as a field,
-not as a cached value. In particular:
+What the composition produces is validated *configuration*. It contains no
+verdict, no evidence outcome, no reading, no assigned team, and no risk
+acceptance — not as a field, not as a cached value. A `default_role` in it is
+still not an assignment: composition checks that the Overlay's `team_mapping`
+*has* a row for it, and stops there, because an assignment is a decision made
+against particular model versions and a configuration object has none.
 
-* **Nothing evaluates a decision tree.** No evaluator exists. A Pack's tree is
-  checked as a graph and never walked against a model.
-* **Nothing records an assessment.** There is no assessment record, no
-  `CONDITIONAL` promotion, and no place for either to be written.
-* **A default role is not an assignment.** Composition checks that a Pack's
-  `default_role` resolves through the Overlay's `team_mapping` — that the
-  mapping *exists*. It does not produce the resolved assignment, because an
-  assignment is a decision made against particular model versions, and this
-  object has none.
+### Running one
 
-So: readiness still cannot be computed here, and none of the boundaries in the
-next section has moved.
+`epc_control_tower/purpose/assessment/` is the demand-driven operation that
+turns those inputs into an answer. Given a project, a Pack, some activities, an
+explicitly declared assessed scope and a model-version context, it either
+refuses or returns one sealed **assessment record**, in which every subscope
+carries the whole chain: the evidence read, the verdict, the `resolution_kind`,
+the route that kind resolves through — consequence kinds, default role, next
+action, recheck condition — and the team this project staffs that role with.
+
+A few properties are worth stating because they are what the design is for:
+
+* **A scope whose evidence disagrees is partitioned, not reduced.** There is no
+  activity-level verdict. Under a scope of the whole `hvac` model, the schedules
+  activity splits into three elements that fail R-005 and reach `BLOCKED`, and a
+  zero-finding `IfcChimney` that reaches `UNKNOWN` — two subscopes, two
+  verdicts, held apart.
+* **Scope is declared, never discovered.** It never comes from which elements
+  happen to carry a finding. An activity admits subjects from that scope by its
+  declared `subject_classes` and by nothing else, so the `IfcChimney` is in for
+  what it *is*, and the two `IfcBuildingElementProxy` setout markers are out for
+  the same kind of reason — all three have zero findings.
+* **Absence is never success.** A rule that applied to nothing reads as
+  not-covered, not as a pass. Severity does not soften a verdict: R-005A and
+  R-005B fail at `WARNING` and reach `BLOCKED`.
+* **It moves no published byte.** The record lives outside `data/processed/`,
+  `reports/`, `ids/` and the contract snapshot, is read back by nothing, and
+  the one identifier it mints is never an input to any published value.
+
+**`pcert-sample` cannot produce one, and that is the correct result.** Every
+live verdict across its three activities is non-`READY`, every non-`READY`
+subscope needs a resolving assignment, and all four of its `team_mapping` rows
+are `illustrative` — so every assignment it could make would rest on a
+demonstration row. The assessment refuses, and names the four rows and the
+routes each one would have had to found. Nothing in this repository has been
+staffed, and no record here claims otherwise.
 
 **Nothing in the pipeline reads either file.** `epc-ct run`, `check`, `group`
 and every exporter are unaffected by their presence, their contents, or their
@@ -459,38 +485,50 @@ than a policy.
 
 The shapes both files take, and why, are fixed in
 [`docs/decisions/0002-minimal-purpose-pack-project-overlay.md`](docs/decisions/0002-minimal-purpose-pack-project-overlay.md).
-What a runtime assessment *would* look like, if one were ever built, is designed
-but not implemented in
-[`docs/decisions/0003-runtime-purpose-assessment-shape.md`](docs/decisions/0003-runtime-purpose-assessment-shape.md).
+The runtime shape an assessment takes is fixed in
+[`docs/decisions/0003-runtime-purpose-assessment-shape.md`](docs/decisions/0003-runtime-purpose-assessment-shape.md),
+of which the evaluator above is the first implementation — request scope,
+subscopes, the record and the identity boundary. What that document designs and
+this implementation does not build is listed below.
 
 ## Not implemented
 
 Named here because they are discussed around this project and are easy to assume
 exist. Treat each as named-but-unbuilt, and do not infer a design from the name.
 
-The Purpose *inputs* above are built. Everything that would turn them into an
-answer is not, and that is the boundary this section is about.
+The Purpose inputs and a first evaluator over them are built. What follows the
+first record is not, and that is the boundary this section is about.
 
-* **Purpose assessment** — nothing walks a Pack's decision tree against a
-  model, and no assessment record exists. Loading and composing a Pack and an
-  Overlay establishes that the question is well-formed and that this project has
-  supplied what the question needs; it produces no verdict, and there is no code
-  that could. A second Pack, a Pack registry, and any Overlay override mechanism
-  are likewise absent.
-* **Readiness** — nothing computes whether a deliverable is ready. In
-  particular, `Finding.is_issue` and the `Issue` record are *validation*
-  concepts: `is_issue` says a check failed in a way that warrants a topic, and
-  an `Issue` groups such findings. Neither is a readiness verdict, and reading
-  them as one will produce a number the pipeline never claimed.
-* **Blockers** — no blocker concept exists. The `Requirement` fields that look
-  adjacent — `owner_role`, `severity`, `stage`, `priority`, `labels` — are
-  contract 1.6 *rule metadata* carried for validation and for reproducing the
-  frozen legacy archive. `priority` says when somebody will get to a failure,
-  not what that failure stops; `owner_role` is the role the rule author expects
-  to answer for the rule, not a final responsible-role decision. Nor does
+* **Continuing or ending a release** — there is no `CONDITIONAL` promotion and
+  no successor record of either kind. A record is sealed when its digest is
+  computed and is never rewritten, but nothing yet writes the *next* record that
+  would recheck it, carry an authorisation, or lapse a promotion. A second Pack,
+  a Pack registry, and any Overlay override mechanism are likewise absent, as is
+  any published machine contract, CLI surface, or Doctor experience for an
+  assessment. Where a record is stored is also still an open decision: the
+  evaluator returns one and writes no file.
+* **Readiness from validation metadata** — a readiness verdict exists now, but
+  only as a function of *(evidence outcome, decision tree)* and only inside an
+  assessment record. It is never derived from validation metadata, and the
+  distinction is load bearing rather than pedantic: `Finding.is_issue` and the
+  `Issue` record are *validation* concepts — `is_issue` says a check failed in a
+  way that warrants a topic, and an `Issue` groups such findings. Neither is a
+  readiness verdict, the assessment cannot see either, and reading them as one
+  will produce a number the pipeline never claimed.
+* **Blockers outside an assessment** — `BLOCKED` is a verdict a subscope
+  reaches, carrying a `resolution_kind` and the consequence *kinds* its Pack
+  route names. Nothing else in this repository has a blocker concept, and the
+  `Requirement` fields that look adjacent are not one: `owner_role`, `severity`,
+  `stage`, `priority` and `labels` are contract 1.6 *rule metadata*, carried for
+  validation and for reproducing the frozen legacy archive. `priority` says when
+  somebody will get to a failure, not what that failure stops; `owner_role` is
+  the role the rule author expects to answer for the rule, not a final
+  responsible-role decision; and severity does not soften a verdict. Nor does
   `discipline_scope` help: it says which disciplines a requirement is evaluated
   against, and carries no direction, so it cannot express an MEP-to-Architecture
-  handoff. Direction would be Pack data.
+  handoff — direction is Pack data. A consequence's *magnitude* is likewise
+  absent: routes name kinds, the project's milestone dates are cited, and no
+  duration, cost or delay is computed from either.
 * **Source fix and recheck** — there is no traceable loop from a fix made at
   source to the subsequent validation that confirms it. Today a fix and the run
   that follows it are two unrelated events, and nothing links them. What such a
