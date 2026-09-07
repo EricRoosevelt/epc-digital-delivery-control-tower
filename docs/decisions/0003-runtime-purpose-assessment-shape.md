@@ -241,6 +241,41 @@
     origin reference, the terminal lapse, the silence rule, sealing, the two
     successor kinds, §4.4's nine fields, §8's six counterfactuals and its
     seventh commitment, and the recording places of the three product decisions.
+  - Refines the version merged at `65d0b0b` (2026-09-04), on 2026-09-07 — the
+    first round in which this document is refined *after* something implements
+    it rather than before. Technical-director review of the first implementation
+    (`fe00ee9`, PR #6) returned **CONDITIONAL**: the implementation, the
+    boundaries, the refusal diagnostic, the partition, determination
+    admissibility, determinism, sealing and isolation were all accepted and are
+    not reopened, and the code is not to move. **D-7** is the one item, and it
+    is a documentation defect rather than a behavioural one. The implementation
+    added a precondition the product ruled this round — an assessment will not
+    found a resolving assignment on an `overlay.team_mapping[]` row whose
+    `decision_basis` is not `project-decision` — and §4.3 described only the
+    *missing-row* precondition, saying nothing about `decision_basis` at all.
+    So a released behaviour lived only in code, and a reviewer reading the
+    design would not have found it. That is the drift `AGENTS.md` rule 6 exists
+    to stop and that this project has now caught twice, which is why closing it
+    is worth a round of its own. §4.3 gains the precondition, its static
+    reading over an activity's *reachable* non-`READY` leaves — the identical
+    semantics §7.1's existing missing-row row already carries — the consequence
+    that a refusal therefore names every blocking row rather than only the rows
+    live evidence reached (all four, for `pcert-sample`), and the requirement
+    that a refusal name each row's `role`, `team_or_person`, `decision_basis`
+    and the leaves it would have founded. §7.1 gains **one** row for it, kept
+    deliberately distinct from the missing-row row above it because a row that
+    is absent and a row that is a demonstration value fail closed for different
+    reasons and must not be reported as the same defect. Two further decisions
+    the technical director approved in the same review are recorded in §3.1,
+    where grain and readings are defined: a `whole-scope` determination is
+    addressed by the *(producing, consuming)* `model_key` pair, so a
+    confirmation produced for one pair of models is never read as one about
+    another; and an evidence requirement's absent state must be exactly one of
+    `not-yet-evaluated` / `not-yet-confirmed` / `not-yet-determined`, refusing
+    rather than defaulting when a Pack names none or several. Nothing else
+    moves: no §7 row is changed or removed, the §7 ledger paragraph is brought
+    forward to account for this round, and no Pack, Overlay, code, published
+    artifact, or contract value is touched by this document.
 - **Scope:** Checkpoint D runtime design only — the request boundary, the
   subscope construction rule ADR 0002 §3.2 explicitly left here, the
   assessment record shape, the runtime identity boundary, and the
@@ -580,6 +615,32 @@ and, by definition, cannot be heterogeneous across subjects. A future Pack
 that needs a finer alignment fact — per storey, say — declares it
 `per-subject` at that grain, and it then splits like any other.
 
+**A `whole-scope` determination is nevertheless addressed by the model pair it
+is about (closes D-7).** Contributing no subject is a statement about the
+partition, not about how the determination is keyed: a determination the
+assessment reads by reference (§1.2 item 4) has to be looked up by *something*,
+and the only honest key for a fact about two model versions is the *(producing
+`model_key`, consuming `model_key`)* pair from the model-version context. An
+alignment confirmation produced for one pair of models is therefore never read
+as a confirmation about another — the same rule §2.3 states for verdicts ("a
+verdict is only ever true of the exact versions named"), applied to the evidence
+underneath one. The reading is still one reading, still shared identically by
+every subject that reaches the node, and still incapable of splitting a
+subgroup.
+
+**Each evidence requirement's absent state is one named outcome, and it is
+identified rather than defaulted (closes D-7).** ADR 0002 §3.2 fixes a closed
+vocabulary for "a binding exists but has produced no admissible result for this
+assessment yet": `not-yet-evaluated`, `not-yet-confirmed`, `not-yet-determined`.
+An evidence requirement's `outcomes[]` must name **exactly one** of the three,
+and that one is the outcome a subject reads when no finding exists, or when no
+admissible determination does. A Pack naming none of them, or more than one,
+leaves the assessment no way to say "not yet" without choosing on the Pack
+author's behalf, so it **refuses** rather than picking — taking the first
+listed, or the last, would be exactly the silent default `AGENTS.md` rule 6
+calls the worst outcome available, and the value it would silently choose is a
+verdict.
+
 **No grain ever introduces a key that might not exist.** The previous
 revision kept `opening-status` at `per-subject` for exactly this reason — an
 opening/penetration pair whose second member is absent precisely when the
@@ -884,6 +945,43 @@ For every non-`READY` subscope, recorded in one direction only:
   §4.5, an actor who acts after this record was written is not patched into
   it: the actor is carried by whichever successor record is written next, and
   this record keeps saying what was true when it was written.
+
+**The `team_mapping` row must record a decision the project actually took
+(closes D-7).** Row 8c is an assignment, and an assignment names somebody. ADR
+0002 §3.5 requires a `decision_basis` on every row of the three Overlay policy
+tables precisely so that a value written to demonstrate the shape cannot pass
+for a decision anybody made; `pcert-sample`'s four `team_mapping` rows all read
+`illustrative`, and the repository's own commentary says why — no real staffing
+decision has ever been recorded here. So a second precondition sits alongside
+the first: an assessment resolves `default_role` through a `team_mapping` row
+**only when that row's `decision_basis` is `project-decision`**. A row reading
+`illustrative` is treated exactly as a missing row is — the request fails
+closed (§7.1), no record is written, and nothing is substituted — because a
+record founded on a demonstration row would state an assignment nobody made,
+which is the same fabrication ADR 0002 §3.5 added the field to prevent. The two
+preconditions stay two: a missing row and a demonstration row fail closed for
+different reasons and are reported as different refusals, so a project told its
+policy is illustrative is not left looking for a row that is already there.
+
+**The check is static, over the activity's *reachable* non-`READY` leaves.** It
+carries the identical semantics to §7.1's existing "no `overlay.team_mapping[]`
+row" row, which is also worded over reachable leaves, and for the same reason:
+a policy defect is a property of the *request*, so it is found before any
+subscope is assessed rather than discovered halfway through one (§7's opening
+distinction between a composition/request defect and an unresolved outcome).
+One consequence is worth stating because it looks like over-reporting and is
+not: the refusal names **every** policy row a reachable leaf could land on, not
+only the rows this run's live evidence happens to touch. For `pcert-sample`'s
+three activities that is all four rows, because the ten routes those trees can
+reach resolve to all four roles. Naming only the rows the live evidence reached
+would make the diagnostic a function of the evidence, and a project would then
+fix two rows and be refused again on the next assessment for the other two.
+
+**A refusal names the rows.** "Policy is illustrative" is not a diagnostic: the
+maintainer's next act is to edit specific lines, so the refusal states, for each
+blocking row, its `role`, its `team_or_person`, its `decision_basis`, and the
+`pack_id::activity_id`, node and `resolution_kind` of every reachable leaf that
+row would have had to found.
 
 ### 4.4 A `CONDITIONAL` promotion
 
@@ -1605,13 +1703,15 @@ promotion whose continuation is not covered, and one in §7.3 for an
 inadmissible penetration determination. The E-7 round added six to §7.2 — the
 re-derived kind, `pack_version`, the reduction over several determinations, a
 store that cannot be enumerated exhaustively, the terminal lapse, and the
-widened silence trigger. This round adds one more, for a re-derived verdict or
-terminal outcome that is not the one authorised, and brings **two** earlier
-rows into line with the text around them: the E-4 row's list of lapse causes,
-and the E-6 silence row's count of the proofs a continuation must carry.
-Neither rule changed — every cause the E-4 row named still lapses a promotion,
-and silence is still refused — the rows had simply been left behind by rounds
-that added causes and proofs above them.
+widened silence trigger. The D-6 round added one more to §7.2, for a re-derived
+verdict or terminal outcome that is not the one authorised, and brought **two**
+earlier rows into line with the text around them: the E-4 row's list of lapse
+causes, and the E-6 silence row's count of the proofs a continuation must
+carry. Neither rule changed — every cause the E-4 row named still lapses a
+promotion, and silence is still refused — the rows had simply been left behind
+by rounds that added causes and proofs above them. This round adds **one** row
+to §7.1, for a `team_mapping` row whose `decision_basis` is not
+`project-decision` (D-7), and changes no row anywhere.
 
 ### 7.1 Composition / request defects — the assessment refuses
 
@@ -1626,6 +1726,7 @@ that added causes and proofs above them.
 | A requested activity's evidence requirement has `binding_source = "overlay"` and no `overlay.evidence_bindings[]` row names the same `pack_id` + `evidence_requirement_id` (the R-005 case) | Refuse for any activity that needs it — **never** fall back to R-005 or any rule's `owner_role`; there is no default because the Pack does not know R-005 exists | "An evidence requirement declares `binding_source = "overlay"` and the project's Overlay has no `evidence_bindings[]` entry naming the same `pack_id` + `evidence_requirement_id`" |
 | A requested activity's evidence requirement has `binding_source = "assessment"` and no matching `overlay.accepted_evidence_methods[]` row | Refuse for that activity | "An evidence requirement declares `binding_source = "assessment"` and the Overlay has no matching `accepted_evidence_methods[]` entry" |
 | A requested activity has a reachable non-`READY` leaf whose `resolution_routes[].default_role` has no `overlay.team_mapping[]` row | Refuse this request only; contract 1.6 pipeline and any fully-bound activity unaffected; never read the bound rule's `owner_role`; never record the bare `default_role` string as an assignment | "A purpose assessment is requested for an activity whose reachable non-`READY` leaves name a default role with no matching `overlay.team_mapping[]` entry" |
+| A requested activity has a reachable non-`READY` leaf whose `resolution_routes[].default_role` resolves to an `overlay.team_mapping[]` row whose `decision_basis` is not `project-decision` | Refuse this request only, as a **distinct** refusal from the missing-row row above — the row exists and is a demonstration value, so reporting it as missing would send a maintainer looking for a row already there. Never founded on anyway, never substituted for, and never resolved by reading the bound rule's `owner_role`. Static over reachable leaves, so the refusal names every blocking row and the leaves each would have founded — for `pcert-sample`, all four (§4.3) | (new to this round; **closes D-7**. Follows from ADR 0002 §3.5, which requires `decision_basis` on every policy row precisely so a demonstration value cannot pass for a decision, and from §4.3's rule that row 8c is an assignment and an assignment names somebody) |
 | The request omits the assessed scope | Refuse — scope is a required input, never defaulted to "whatever has findings" (§2.1) | (new to this checkpoint; consistent with ADR 0002 §3.2's coverage-is-not-scope rule and `AGENTS.md`'s "worst outcome available" principle) |
 | No `validation_run_id` exists for the project / the model versions in the context, or the cited run did not validate those versions | Refuse — there are no validated facts the assessment may honestly cite (§2.3) | (new to this checkpoint; the assessment reads post-`check` facts and cannot run without them) |
 | The request's assessed scope names an `element_key` absent from the producing model version's element inventory | Refuse — a key with no `ifc_class` cannot be admitted or excluded, so the total accounting of §3.3 could not be produced for it, and silently dropping it is the failure mode this checkpoint's whole scope rule exists to prevent | (new to this round; follows from the class admission in §3.1 and from ADR 0002 §3.2's coverage-is-not-scope rule) |
