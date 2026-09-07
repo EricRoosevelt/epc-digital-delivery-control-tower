@@ -43,6 +43,7 @@ from epc_control_tower.purpose import (
     AssessedScope,
     AssessmentRequest,
     Determination,
+    DeterminedAgainst,
     HandoverEvent,
     ModelVersion,
     ModelVersionContext,
@@ -61,6 +62,7 @@ from purpose_fixtures import (
 
 __all__ = [
     "ALIGNMENT_CONFIRMED",
+    "determined_against",
     "ARCHITECTURE_ROOF",
     "ARCHITECTURE_SLAB",
     "HVAC_AIR_TERMINAL_CAP",
@@ -113,23 +115,49 @@ def requirement_keys_by_ruleset() -> dict[tuple[str, str], frozenset[str]]:
 
 
 def fixture_overlay_document() -> dict:
-    """``pcert-sample``'s Overlay with its staffing recorded as decided.
+    """``pcert-sample``'s Overlay with its policy recorded as decided.
 
-    The only edit is ``decision_basis``: every ``team_mapping`` row moves from
-    ``illustrative`` to ``project-decision``. Nothing else changes — the same
-    four roles, the same four teams, the same real ``evidence_bindings`` naming
-    the same four R-005 ``requirement_key`` values.
+    The only edits are ``decision_basis``: every ``team_mapping`` row and every
+    ``accepted_evidence_methods`` row moves from ``illustrative`` to
+    ``project-decision``. Nothing else changes — the same four roles, the same
+    four teams, the same three methods, the same real ``evidence_bindings``
+    naming the same four R-005 ``requirement_key`` values.
+
+    **Both tables, and stating that explicitly is the point.** An earlier version
+    of this fixture flipped only ``team_mapping``, and the positive path went
+    green while the evaluator was consuming an alignment determination produced
+    by a method whose row still read ``illustrative``. The green light was being
+    held up by a check that did not exist. Declaring the method policy here means
+    the fixture asserts what it relies on, and the gate that would otherwise have
+    caught it is exercised by its own test rather than by this one's silence.
 
     This is a **test setting**, not a correction. ``pcert-sample`` has never
-    staffed anybody, which is why its own manifest says so and why the real
-    entry point refuses it. What this fixture supplies is the one input that
-    refusal is about, so that everything behind the gate can be exercised.
+    staffed anybody and has never accepted a method, which is why its own
+    manifest says so on all seven rows and why the real entry point refuses it.
     """
 
     document = copy.deepcopy(base_overlay_document())
-    for row in document["overlay"]["team_mapping"]:
-        row["decision_basis"] = "project-decision"
+    for table in ("team_mapping", "accepted_evidence_methods"):
+        for row in document["overlay"][table]:
+            row["decision_basis"] = "project-decision"
     return document
+
+
+def determined_against(facts) -> DeterminedAgainst:
+    """The model versions this fixture's determinations were made against.
+
+    The real content hashes of the two model versions in play, so a determination
+    is attributable to exactly the versions the request names — which is what the
+    version-attribution check compares, value for value.
+    """
+
+    models = {model.model_key: model.content_id for model in facts.models}
+    return DeterminedAgainst(
+        producing_model_key="hvac",
+        producing_content_id=models["hvac"],
+        consuming_model_key="architecture",
+        consuming_content_id=models["architecture"],
+    )
 
 
 def fixture_composed(*, overlay_document: dict | None = None, pack=None):
@@ -185,7 +213,7 @@ def fixture_request(
 
 
 def fixture_determinations(
-    *, alignment: bool = True, penetration: bool = True
+    *, facts, alignment: bool = True, penetration: bool = True
 ) -> tuple[Determination, ...]:
     """Determinations a coordination review would have produced, had one been held.
 
@@ -201,6 +229,7 @@ def fixture_determinations(
     ``PASS`` is not a confirmation is set up.
     """
 
+    against = determined_against(facts)
     determinations: list[Determination] = []
     if alignment:
         determinations.append(
@@ -215,6 +244,7 @@ def fixture_determinations(
                 # determination names its pair, so a confirmation produced for
                 # some other pair of models can never be read as this one.
                 subject=("hvac", "architecture"),
+                determined_against=against,
             )
         )
     if not penetration:
@@ -232,6 +262,7 @@ def fixture_determinations(
                 basis="fixture: reviewed, no fabric penetrated",
                 outcome="no-penetration",
                 subject=(HVAC_DUCT,),
+                determined_against=against,
             ),
             # The chimney passes through two architectural elements, both named
             # as element_key values of the consuming model version.
@@ -244,6 +275,7 @@ def fixture_determinations(
                 outcome="penetration-confirmed",
                 subject=(HVAC_CHIMNEY,),
                 penetrated_element_keys=(ARCHITECTURE_SLAB, ARCHITECTURE_ROOF),
+                determined_against=against,
             ),
             # One pair's opening is modelled and cross-referenced; the other's is
             # not modelled at all. Two readings, two verdicts, one chimney.
@@ -255,6 +287,7 @@ def fixture_determinations(
                 basis="fixture: opening carries a reference back to the chimney",
                 outcome="cross-referenced",
                 subject=(HVAC_CHIMNEY, ARCHITECTURE_SLAB),
+                determined_against=against,
             ),
             Determination(
                 reference="fixture-determination/opening/chimney-roof-not-modelled",
@@ -264,6 +297,7 @@ def fixture_determinations(
                 basis="fixture: no opening modelled in the roof",
                 outcome="not-modelled",
                 subject=(HVAC_CHIMNEY, ARCHITECTURE_ROOF),
+                determined_against=against,
             ),
         ]
     )

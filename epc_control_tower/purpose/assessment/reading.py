@@ -32,8 +32,9 @@ become a ``READY``.
 
 from __future__ import annotations
 
-from .facts import AssessmentFacts
+from ..errors import PurposeAssessmentError
 from ..model import EvidenceRequirement, ProjectOverlay
+from .facts import AssessmentFacts
 
 __all__ = [
     "NOT_COVERED_ABSENCE",
@@ -45,6 +46,10 @@ __all__ = [
     "insufficient_evidence_context",
     "unresolved_outcome",
 ]
+
+def _refuse(code: str, message: str) -> None:
+    raise PurposeAssessmentError(code, message)
+
 
 #: The three names ADR 0002 §3.2 fixes for validation-backed evidence, in
 #: precedence order: a ``FAIL`` anywhere, then not-covered, then ``PASS``.
@@ -84,9 +89,11 @@ def bound_requirement_keys(
     if requirement.binding_source == "pack":
         binding = requirement.pack_binding
         if binding is None:  # pragma: no cover - the Pack loader guarantees it
-            raise ValueError(
-                f"{requirement.evidence_requirement_id}: binding_source 'pack' with "
-                "no pack_binding"
+            _refuse(
+                "binding-source-pack-without-pack-binding",
+                f"{requirement.evidence_requirement_id}: binding_source is 'pack' and "
+                "the requirement carries no pack_binding; Pack load should have refused "
+                "this, and the assessment will not guess which rules answer the question",
             )
         return (
             frozenset(binding.requirement_keys),
@@ -102,13 +109,20 @@ def bound_requirement_keys(
                     frozenset(row.requirement_keys),
                     f"{row.ruleset_id} {row.ruleset_version} evidence_binding",
                 )
-        raise ValueError(
-            f"{pack_id}::{requirement.evidence_requirement_id}: no evidence_bindings row"
+        _refuse(
+            "evidence-binding-missing",
+            f"{pack_id}::{requirement.evidence_requirement_id} declares binding_source "
+            "'overlay' and this project's Overlay has no evidence_bindings row for it; "
+            "there is no default, because the Pack does not know which of this "
+            "project's rules answer the question",
         )
-    raise ValueError(
+    _refuse(
+        "binding-source-not-finding-backed",
         f"{requirement.evidence_requirement_id}: binding_source "
-        f"{requirement.binding_source!r} is not finding-backed"
+        f"{requirement.binding_source!r} is answered by a determination, not by "
+        "findings, so it has no bound requirement_keys to reduce",
     )
+    raise AssertionError("unreachable")
 
 
 def insufficient_evidence_context(
@@ -149,10 +163,12 @@ def unresolved_outcome(requirement: EvidenceRequirement) -> str:
 
     candidates = [name for name in requirement.outcomes if name in UNRESOLVED_OUTCOMES]
     if len(candidates) != 1:
-        raise ValueError(
+        _refuse(
+            "unresolved-outcome-not-unique",
             f"{requirement.evidence_requirement_id}: outcomes {list(requirement.outcomes)} "
-            f"name {len(candidates)} unresolved states {UNRESOLVED_OUTCOMES}; exactly "
-            "one is required and there is no default"
+            f"name {len(candidates)} of the unresolved states {list(UNRESOLVED_OUTCOMES)}; "
+            "exactly one is required. With none there is no name for 'not yet', and with "
+            "several there is a choice, and the value that would be chosen is a verdict",
         )
     return candidates[0]
 
@@ -187,9 +203,12 @@ def finding_backed_reading(
         elif finding.status == "PASS":
             passed.append(finding.finding_key)
         else:
-            raise ValueError(
+            _refuse(
+                "finding-status-unrecognised",
                 f"{finding.finding_key}: status {finding.status!r} is not one of "
-                "PASS / FAIL / N/A, and there is no default reading for it"
+                "PASS / FAIL / N/A, and there is no default reading for it; the branch a "
+                "fall-through would reach is 'satisfied', which reports an unknown "
+                "status as a pass",
             )
 
     if failed:

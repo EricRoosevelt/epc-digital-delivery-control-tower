@@ -9,8 +9,8 @@ it. A subscope entry keeps three things apart:
   it concerns without re-deriving the partition.
 * **the path** — every ``(node_id, evidence_requirement_id, grain, outcome)``
   from root to leaf, with the readings hung on each node and each reading's
-  citations: ``finding_key`` values, a determination reference, or a named
-  absence.
+  citations: ``finding_key`` values, the determination references behind it, or
+  a named absence.
 * **the leaf** — the verdict, the ``resolution_kind`` when the verdict is not
   ``READY``, the route that kind resolves through, and the resolving assignment.
 
@@ -86,9 +86,9 @@ class Subject:
 class Reading:
     """One evidence requirement's outcome for one subject, with its citations.
 
-    Exactly one of ``finding_keys`` and ``determination_reference`` is populated,
-    and ``absence`` names why neither is when the reading is an absent state.
-    The three are kept apart rather than merged into one "evidence" field
+    Exactly one of ``finding_keys`` and ``determination_references`` is
+    populated, and ``absence`` names why neither is when the reading is an absent
+    state. The three are kept apart rather than merged into one "evidence" field
     because "no finding exists", "a finding exists and says N/A", and "a
     determination was offered and declined" are three different situations a
     reader has to be able to tell apart.
@@ -98,7 +98,11 @@ class Reading:
     outcome: str
     binding: str = ""
     finding_keys: tuple[str, ...] = ()
-    determination_reference: str = ""
+    #: Every admissible determination behind this reading, not one chosen from
+    #: among them. Several references here mean several determinations reached
+    #: the same conclusion; a set that disagreed would have refused the request
+    #: rather than reaching a reading at all.
+    determination_references: tuple[str, ...] = ()
     absence: str = ""
 
     def as_document(self) -> dict[str, object]:
@@ -110,8 +114,8 @@ class Reading:
             document["binding"] = self.binding
         if self.finding_keys:
             document["finding_keys"] = list(self.finding_keys)
-        if self.determination_reference:
-            document["determination_reference"] = self.determination_reference
+        if self.determination_references:
+            document["determination_references"] = list(self.determination_references)
         if self.absence:
             document["absence"] = self.absence
         return document

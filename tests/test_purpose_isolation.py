@@ -273,7 +273,7 @@ class PublishedTreeIsUnmovedTests(unittest.TestCase):
                 ),
                 composed=fixtures.fixture_composed(),
                 facts=facts,
-                determinations=fixtures.fixture_determinations(),
+                determinations=fixtures.fixture_determinations(facts=facts),
             )
             self.assertTrue(record.assessment_digest)
             store = scratch / "assessments"
@@ -331,13 +331,13 @@ class PublishedTreeIsUnmovedTests(unittest.TestCase):
                 request=fixtures.fixture_request(activity_ids=activities, facts=facts),
                 composed=composed,
                 facts=facts,
-                determinations=fixtures.fixture_determinations(),
+                determinations=fixtures.fixture_determinations(facts=facts),
             )
             second = assess_purpose(
                 request=fixtures.fixture_request(activity_ids=activities, facts=facts),
                 composed=composed,
                 facts=facts,
-                determinations=fixtures.fixture_determinations(alignment=False),
+                determinations=fixtures.fixture_determinations(facts=facts, alignment=False),
             )
             self.assertNotEqual(first.assessment_digest, second.assessment_digest)
 

@@ -54,6 +54,7 @@ __all__ = [
     "EvidenceRequirement",
     "InsufficientEvidence",
     "OverlayPackRef",
+    "PROJECT_DECISION",
     "PackBinding",
     "PairSource",
     "ProjectOverlay",
@@ -79,6 +80,12 @@ VERDICTS = ("READY", "BLOCKED", "UNKNOWN")
 #: three policy tables; there is no default, because a policy row whose
 #: standing is unstated is exactly the row a reader takes for a decision.
 DECISION_BASES = ("project-decision", "illustrative")
+
+#: The one ``decision_basis`` on which a runtime assessment may found a claim.
+#: A row reading ``illustrative`` states the *shape* of a policy decision and not
+#: one anybody took, so relying on it would put a decision nobody made inside a
+#: record — which is the fabrication ``decision_basis`` exists to prevent.
+PROJECT_DECISION = "project-decision"
 
 
 # --------------------------------------------------------------------------

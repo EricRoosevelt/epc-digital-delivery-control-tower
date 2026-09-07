@@ -30,7 +30,12 @@ layer — a record is returned sealed, and where it is put is a later decision.
 from __future__ import annotations
 
 from ..errors import PurposeAssessmentError
-from .determinations import Admissibility, Determination, DeterminationLedger
+from .determinations import (
+    Admissibility,
+    Determination,
+    DeterminationLedger,
+    DeterminedAgainst,
+)
 from .evaluator import assess_purpose
 from .facts import (
     AssessmentFacts,
@@ -78,6 +83,7 @@ __all__ = [
     "AssessmentRequest",
     "Determination",
     "DeterminationLedger",
+    "DeterminedAgainst",
     "ElementFact",
     "FindingFact",
     "HandoverEvent",

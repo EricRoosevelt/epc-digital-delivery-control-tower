@@ -23,6 +23,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
+from ..errors import PurposeAssessmentError
+
 __all__ = [
     "AssessedScope",
     "AssessmentRequest",
@@ -82,9 +84,10 @@ class AssessedScope:
 
     def __post_init__(self) -> None:
         if not self.element_keys and not self.model_keys:
-            raise ValueError(
+            raise PurposeAssessmentError(
+                "scope-declared-empty",
                 "an assessed scope is a required input and is never defaulted to "
-                "'whatever has findings'; declare at least one element_key or model_key"
+                "'whatever has findings'; declare at least one element_key or model_key",
             )
 
     def as_document(self) -> dict[str, list[str]]:

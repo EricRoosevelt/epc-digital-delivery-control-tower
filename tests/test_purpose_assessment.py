@@ -184,7 +184,7 @@ class PartitionTests(unittest.TestCase):
             request=fx.fixture_request(activity_ids=ALL_ACTIVITIES, facts=cls.facts),
             composed=cls.composed,
             facts=cls.facts,
-            determinations=fx.fixture_determinations(),
+            determinations=fx.fixture_determinations(facts=cls.facts),
         )
 
     def test_schedules_splits_the_three_failures_from_the_unevaluated_chimney(self):
@@ -321,7 +321,9 @@ class PartitionTests(unittest.TestCase):
             ),
             composed=self.composed,
             facts=self.facts,
-            determinations=fx.fixture_determinations(alignment=False, penetration=False),
+            determinations=fx.fixture_determinations(
+                facts=self.facts, alignment=False, penetration=False
+            ),
         )
         activity = _subscopes(record, "ceiling-and-bulkhead-geometry")
         self.assertEqual(len(activity.subscopes), 2)
@@ -383,7 +385,7 @@ class DeclaredScopeTests(unittest.TestCase):
             request=fx.fixture_request(activity_ids=ALL_ACTIVITIES, facts=cls.facts),
             composed=cls.composed,
             facts=cls.facts,
-            determinations=fx.fixture_determinations(),
+            determinations=fx.fixture_determinations(facts=cls.facts),
         )
 
     def test_a_zero_finding_chimney_is_admitted_and_reads_not_yet_evaluated(self):
@@ -431,8 +433,9 @@ class DeclaredScopeTests(unittest.TestCase):
                 self.assertEqual(admitted & excluded, set())
 
     def test_a_scope_is_a_required_input(self):
-        with self.assertRaises(ValueError):
+        with self.assertRaises(PurposeAssessmentError) as caught:
             AssessedScope()
+        self.assertEqual(caught.exception.code, "scope-declared-empty")
 
     def test_a_scope_key_absent_from_the_producing_model_refuses(self):
         request = fx.fixture_request(
@@ -483,7 +486,7 @@ class DeclaredScopeTests(unittest.TestCase):
                 request=fx.fixture_request(activity_ids=ALL_ACTIVITIES, facts=self.facts),
                 composed=composed,
                 facts=self.facts,
-                determinations=fx.fixture_determinations(),
+                determinations=fx.fixture_determinations(facts=self.facts),
             )
 
         admitted = {
@@ -524,7 +527,9 @@ class InsufficientEvidenceStaysContextTests(unittest.TestCase):
             ),
             composed=cls.composed,
             facts=cls.facts,
-            determinations=fx.fixture_determinations(alignment=False, penetration=False),
+            determinations=fx.fixture_determinations(
+                facts=cls.facts, alignment=False, penetration=False
+            ),
         )
         cls.R010 = "acb11f11-bf18-5516-a6f2-21e451a6e410"
 
@@ -578,10 +583,11 @@ class InsufficientEvidenceStaysContextTests(unittest.TestCase):
         self.assertEqual(len(alignment.insufficient_evidence), 1)
         # cross-model-alignment is assessment-bound, so it has no bound keys at
         # all — and asking for them refuses rather than returning R-010's.
-        with self.assertRaises(ValueError):
+        with self.assertRaises(PurposeAssessmentError) as caught:
             reading_module.bound_requirement_keys(
                 alignment, self.composed.overlay, pack.pack_id
             )
+        self.assertEqual(caught.exception.code, "binding-source-not-finding-backed")
 
     def test_the_two_paths_return_two_different_shapes(self):
         """A citation cannot become an outcome, because it is not one."""
@@ -666,6 +672,43 @@ class NotApplicableIsNotSatisfiedTests(unittest.TestCase):
         self.assertEqual(cited, ())
         self.assertEqual(absence, reading_module.NO_FINDING_ABSENCE)
 
+
+    def test_an_outcome_vocabulary_with_no_unresolved_state_refuses(self):
+        """Zero and several are both refusals; neither takes the first listed."""
+
+        pack = load_purpose_pack(fx.PACK_PATH)
+        alignment = pack.evidence_requirement("cross-model-alignment")
+        for outcomes, label in (
+            (("confirmed", "misaligned"), "none"),
+            (
+                ("confirmed", "misaligned", "not-yet-confirmed", "not-yet-determined"),
+                "two",
+            ),
+        ):
+            with self.subTest(unresolved=label):
+                broken = dataclasses.replace(alignment, outcomes=outcomes)
+                with self.assertRaises(PurposeAssessmentError) as caught:
+                    reading_module.unresolved_outcome(broken)
+                self.assertEqual(
+                    caught.exception.code, "unresolved-outcome-not-unique"
+                )
+
+    def test_the_shipped_pack_names_exactly_one_unresolved_state_everywhere(self):
+        """The premise the refusal defends, measured on the Pack that ships."""
+
+        pack = load_purpose_pack(fx.PACK_PATH)
+        for requirement in pack.evidence_requirements:
+            with self.subTest(requirement=requirement.evidence_requirement_id):
+                named = [
+                    name
+                    for name in requirement.outcomes
+                    if name in reading_module.UNRESOLVED_OUTCOMES
+                ]
+                self.assertEqual(len(named), 1)
+                self.assertEqual(
+                    reading_module.unresolved_outcome(requirement), named[0]
+                )
+
     def test_a_reading_refuses_the_empty_subject(self):
         with self.assertRaises(ValueError):
             self.facts.findings_for("", self.bound)
@@ -723,10 +766,11 @@ class NotApplicableIsNotSatisfiedTests(unittest.TestCase):
                 ),
             ),
         )
-        with self.assertRaises(ValueError) as caught:
+        with self.assertRaises(PurposeAssessmentError) as caught:
             reading_module.finding_backed_reading(
                 element_key=fx.HVAC_DUCT, requirement_keys=self.bound, facts=facts
             )
+        self.assertEqual(caught.exception.code, "finding-status-unrecognised")
         self.assertIn("no default reading", str(caught.exception))
 
 
@@ -801,7 +845,7 @@ class ConsequenceHasNoMagnitudeTests(unittest.TestCase):
             request=fx.fixture_request(activity_ids=ALL_ACTIVITIES, facts=cls.facts),
             composed=fx.fixture_composed(),
             facts=cls.facts,
-            determinations=fx.fixture_determinations(),
+            determinations=fx.fixture_determinations(facts=cls.facts),
         )
 
     def test_a_route_carries_kinds_only(self):
@@ -868,6 +912,12 @@ class ConsequenceHasNoMagnitudeTests(unittest.TestCase):
 class DeterminationIntakeTests(unittest.TestCase):
     """Determinations are admitted or declined; the evaluator decides none.
 
+    These are the checks that **decline**: the determination is keyed onto a
+    known subject and its content fails an acceptance condition, so the subject
+    reads ``not-yet-*`` and routes to ``UNKNOWN``. The checks that **refuse** —
+    a defect in what was handed in rather than a gap in the evidence — are in
+    :class:`DeterminationVerifiabilityTests`.
+
     ``penetration-confirmed`` is the case that carries the weight: it must name
     every architectural element it claims to pass through, as a key of the
     consuming model version, because those keys become the second member of the
@@ -882,17 +932,20 @@ class DeterminationIntakeTests(unittest.TestCase):
         cls.pack = load_purpose_pack(fx.PACK_PATH)
         cls.requirement = cls.pack.evidence_requirement("penetration-determination")
 
-    def _ledger(self, determinations):
+    def _ledger(self, determinations, *, method_basis="project-decision"):
         return DeterminationLedger(
             determinations,
-            accepted_method_ids={
-                "penetration-determination": frozenset({"coordination-review-determination"}),
-                "opening-status": frozenset({"opening-cross-reference-check"}),
-                "cross-model-alignment": frozenset({"overlay-comparison"}),
+            method_policy={
+                "penetration-determination": {
+                    "coordination-review-determination": method_basis
+                },
+                "opening-status": {"opening-cross-reference-check": method_basis},
+                "cross-model-alignment": {"overlay-comparison": method_basis},
             },
             consuming_element_keys=frozenset(
                 item.element_key for item in self.facts.elements_of("architecture")
             ),
+            determined_against=fx.determined_against(self.facts),
         )
 
     def _claim(self, **overrides):
@@ -905,22 +958,23 @@ class DeterminationIntakeTests(unittest.TestCase):
             outcome="penetration-confirmed",
             subject=(fx.HVAC_CHIMNEY,),
             penetrated_element_keys=(fx.ARCHITECTURE_SLAB,),
+            determined_against=fx.determined_against(self.facts),
         )
         base.update(overrides)
         return Determination(**base)
 
     def test_a_well_formed_claim_is_admitted(self):
         ledger = self._ledger((self._claim(),))
-        self.assertTrue(
-            ledger.admissibility(self._claim(), self.requirement).admitted
-        )
+        self.assertTrue(ledger.admissibility(self._claim(), self.requirement).admitted)
 
     def test_a_claim_naming_no_architectural_element_is_inadmissible(self):
         verdict = self._ledger(()).admissibility(
             self._claim(penetrated_element_keys=()), self.requirement
         )
         self.assertFalse(verdict.admitted)
-        self.assertEqual(verdict.reason, "penetration-confirmed-names-no-architectural-element")
+        self.assertEqual(
+            verdict.reason, "penetration-confirmed-names-no-architectural-element"
+        )
 
     def test_a_claim_naming_an_absent_element_is_inadmissible(self):
         verdict = self._ledger(()).admissibility(
@@ -937,7 +991,14 @@ class DeterminationIntakeTests(unittest.TestCase):
                 )
                 self.assertFalse(verdict.admitted)
 
-    def test_a_method_the_overlay_does_not_accept_is_inadmissible(self):
+    def test_a_method_the_overlay_never_mentions_is_inadmissible(self):
+        """A missing row declines. A row that exists and is illustrative refuses.
+
+        Two different states, and this is the first: the project never mentioned
+        the method, so the determination is not evidence here and the subject
+        reads ``not-yet-*``.
+        """
+
         verdict = self._ledger(()).admissibility(
             self._claim(method_id="someone-had-a-look"), self.requirement
         )
@@ -971,6 +1032,108 @@ class DeterminationIntakeTests(unittest.TestCase):
             with self.subTest(member=member.keys):
                 self.assertEqual(len(member.keys), 1)
 
+    def test_a_claim_naming_an_absent_element_moves_nothing_at_all(self):
+        """Counterexample 4, end to end: declined evidence changes no outcome.
+
+        The claim is well-formed and correctly keyed — it just names an
+        architectural element the consuming model version does not contain. It
+        must therefore produce no pair, no subject, and no verdict change: the
+        record has to be indistinguishable from the one produced when nobody
+        determined anything, except for the recorded reason.
+        """
+
+        request = fx.fixture_request(
+            activity_ids=("builders-work-openings",), facts=self.facts
+        )
+        baseline = assess_purpose(
+            request=request, composed=self.composed, facts=self.facts, determinations=()
+        )
+        declined = assess_purpose(
+            request=request,
+            composed=self.composed,
+            facts=self.facts,
+            determinations=(
+                self._claim(
+                    reference="probe/names-an-element-architecture-does-not-have",
+                    penetrated_element_keys=("architecture::not-a-real-element",),
+                ),
+            ),
+        )
+        base_activity = _subscopes(baseline, "builders-work-openings")
+        declined_activity = _subscopes(declined, "builders-work-openings")
+
+        # Subject scope untouched: no pair created, nothing admitted or excluded.
+        self.assertEqual(
+            declined_activity.admitted_subjects, base_activity.admitted_subjects
+        )
+        self.assertEqual(
+            [k.as_document() for k in declined_activity.out_of_subject_class],
+            [k.as_document() for k in base_activity.out_of_subject_class],
+        )
+        for subscope in declined_activity.subscopes:
+            for member in subscope.members:
+                with self.subTest(member=member.keys):
+                    self.assertEqual(len(member.keys), 1, "no pair was refined")
+                    self.assertEqual(member.refined_from, "")
+
+        # Verdicts untouched.
+        self.assertEqual(
+            [(s.ordinal, tuple(m.keys for m in s.members), s.verdict, s.resolution_kind)
+             for s in declined_activity.subscopes],
+            [(s.ordinal, tuple(m.keys for m in s.members), s.verdict, s.resolution_kind)
+             for s in base_activity.subscopes],
+        )
+
+        # The only difference is that the record says why it was declined.
+        chimney = [
+            reading
+            for s in declined_activity.subscopes
+            for reading in s.path[0].readings
+            if reading.subject.keys == (fx.HVAC_CHIMNEY,)
+        ][0]
+        self.assertIn("penetration-confirmed-names-absent-element", chimney.absence)
+        self.assertIn("architecture::not-a-real-element", chimney.absence)
+        self.assertNotEqual(declined.assessment_digest, baseline.assessment_digest)
+
+
+    def test_counterparts_reads_only_admissible_determinations(self):
+        """The refinement guard, exercised directly because the walk cannot reach it.
+
+        A subject only reaches ``opening-status-node`` after its
+        ``penetration-determination`` reading came back ``penetration-confirmed``,
+        which already required an admissible determination — so the admissibility
+        check inside ``counterparts`` is unreachable through
+        :func:`assess_purpose`. It is defence in depth against a future caller,
+        and this is what stops it being defence nobody has ever run: an
+        inadmissible claim yields no counterpart, so no pair could be refined
+        from it even if something did call in here directly.
+        """
+
+        ledger = self._ledger(
+            (self._claim(penetrated_element_keys=("architecture::not-a-real-element",)),)
+        )
+        self.assertEqual(
+            ledger.counterparts(
+                source_evidence_requirement_id="penetration-determination",
+                on_outcome="penetration-confirmed",
+                element_key=fx.HVAC_CHIMNEY,
+                requirement=self.requirement,
+            ),
+            (),
+        )
+        # And the admissible one does yield its counterparts, so the guard is
+        # discriminating rather than simply always empty.
+        admissible = self._ledger((self._claim(),))
+        self.assertEqual(
+            admissible.counterparts(
+                source_evidence_requirement_id="penetration-determination",
+                on_outcome="penetration-confirmed",
+                element_key=fx.HVAC_CHIMNEY,
+                requirement=self.requirement,
+            ),
+            (fx.ARCHITECTURE_SLAB,),
+        )
+
     def test_no_determination_is_offered_for_pcert_sample_anywhere_in_the_tree(self):
         """This project has never held a coordination review, and nothing says it has."""
 
@@ -990,6 +1153,252 @@ class DeterminationIntakeTests(unittest.TestCase):
                 self.assertNotEqual(name, "Determination")
 
 
+class DeterminationVerifiabilityTests(unittest.TestCase):
+    """A determination is relied on only when policy, version and content check out.
+
+    Three counterexamples, each a way a determination could have been consumed
+    without anybody being able to verify it, and each now a refusal rather than
+    a silent ``READY``. All three are **refusals** and not declines, because
+    none is a gap in the evidence: each is a defect in what was handed in, so
+    §7.1 catches it before any subscope is assessed.
+    """
+
+    @classmethod
+    def setUpClass(cls):
+        cls.facts = fx.assessment_facts()
+        cls.composed = fx.fixture_composed()
+        cls.against = fx.determined_against(cls.facts)
+
+    CEILING = ("ceiling-and-bulkhead-geometry",)
+
+    def _assess(self, determinations, *, composed=None, activities=CEILING):
+        return assess_purpose(
+            request=fx.fixture_request(activity_ids=activities, facts=self.facts),
+            composed=composed or self.composed,
+            facts=self.facts,
+            determinations=determinations,
+        )
+
+    def _alignment(self, **overrides):
+        base = dict(
+            reference="probe/alignment",
+            evidence_requirement_id="cross-model-alignment",
+            method_id="overlay-comparison",
+            determiner="probe-coordinator",
+            basis="probe: placements overlaid",
+            outcome="confirmed",
+            subject=("hvac", "architecture"),
+            determined_against=self.against,
+        )
+        base.update(overrides)
+        return Determination(**base)
+
+    # -- 1. policy ----------------------------------------------------------
+
+    def test_an_illustrative_method_row_refuses(self):
+        """Counterexample 1: the row exists and records no decision anybody took.
+
+        Staffed for real and accepting methods only illustratively — which is
+        precisely the state this repository's own fixture was in while the
+        positive path went green. The ``team_mapping`` gate is satisfied here on
+        purpose, so the refusal that fires can only be the method one.
+        """
+
+        document = fx.fixture_overlay_document()
+        for row in document["overlay"]["accepted_evidence_methods"]:
+            row["decision_basis"] = "illustrative"
+        illustrative = fx.fixture_composed(overlay_document=document)
+        with self.assertRaises(PurposeAssessmentError) as caught:
+            self._assess((self._alignment(),), composed=illustrative)
+        self.assertEqual(
+            caught.exception.code, "accepted-method-decision-basis-illustrative"
+        )
+        message = str(caught.exception)
+        self.assertIn("overlay-comparison", message)
+        self.assertIn("'illustrative'", message)
+        self.assertIn("not the missing-row case", message)
+
+    def test_that_refusal_is_a_different_code_from_the_team_mapping_gate(self):
+        """Same family, different table, different row to edit — different refusal."""
+
+        self.assertNotEqual(
+            "accepted-method-decision-basis-illustrative",
+            "team-mapping-decision-basis-illustrative",
+        )
+
+    def test_the_shipped_overlay_still_records_all_seven_rows_as_illustrative(self):
+        """The fixture declares policy in memory; the manifest is untouched."""
+
+        text = PCERT_MANIFEST.read_text(encoding="utf-8")
+        self.assertEqual(text.count('decision_basis = "project-decision"'), 0)
+        self.assertEqual(text.count('decision_basis = "illustrative"'), 9)
+
+    def test_the_fixture_now_declares_the_method_policy_it_relies_on(self):
+        """The positive path is no longer held up by a check that does not exist."""
+
+        for method in self.composed.overlay.accepted_evidence_methods:
+            with self.subTest(method=method.method_id):
+                self.assertEqual(method.decision_basis, "project-decision")
+
+    # -- 2. version attribution ---------------------------------------------
+
+    def test_a_determination_about_another_model_version_refuses(self):
+        """Counterexample 2: right models, wrong versions of them."""
+
+        stale = dataclasses.replace(self.against, producing_content_id="0" * 64)
+        with self.assertRaises(PurposeAssessmentError) as caught:
+            self._assess((self._alignment(determined_against=stale),))
+        self.assertEqual(caught.exception.code, "determination-model-version-mismatch")
+        self.assertIn("0" * 64, str(caught.exception))
+
+    def test_a_determination_that_names_no_version_refuses(self):
+        with self.assertRaises(PurposeAssessmentError) as caught:
+            self._assess((self._alignment(determined_against=None),))
+        self.assertEqual(
+            caught.exception.code, "determination-model-version-unattributed"
+        )
+        self.assertIn("Absence is not agreement", str(caught.exception))
+
+    def test_version_attribution_is_a_separate_check_from_the_context_one(self):
+        """Two independent checks, two diagnostics; either can fail alone.
+
+        ``context-model-version-mismatch`` asks whether the request's own context
+        agrees with the validated facts. This one asks whether the *evidence* was
+        produced against the versions the request names. Here the context is
+        perfectly consistent and only the determination is stale.
+        """
+
+        stale = dataclasses.replace(self.against, consuming_content_id="1" * 64)
+        with self.assertRaises(PurposeAssessmentError) as caught:
+            self._assess((self._alignment(determined_against=stale),))
+        self.assertEqual(caught.exception.code, "determination-model-version-mismatch")
+        self.assertNotEqual(caught.exception.code, "context-model-version-mismatch")
+
+        # And the context check still fires on its own, with no determination at all.
+        request = fx.fixture_request(
+            activity_ids=("ceiling-and-bulkhead-geometry",), facts=self.facts
+        )
+        context = dataclasses.replace(
+            request.model_version_context,
+            producing=dataclasses.replace(
+                request.model_version_context.producing, content_id="2" * 64
+            ),
+        )
+        with self.assertRaises(PurposeAssessmentError) as caught:
+            assess_purpose(
+                request=dataclasses.replace(request, model_version_context=context),
+                composed=self.composed,
+                facts=self.facts,
+            )
+        self.assertEqual(caught.exception.code, "context-model-version-mismatch")
+
+    # -- 3. content consistency ---------------------------------------------
+
+    def test_one_reference_with_two_contents_refuses(self):
+        """Counterexample 3a: a store that cannot say which document it holds."""
+
+        with self.assertRaises(PurposeAssessmentError) as caught:
+            self._assess(
+                (
+                    self._alignment(outcome="confirmed"),
+                    self._alignment(outcome="misaligned"),
+                )
+            )
+        self.assertEqual(caught.exception.code, "determination-reference-not-unique")
+        self.assertIn("probe/alignment", str(caught.exception))
+        self.assertIn("will not pick", str(caught.exception))
+
+    def test_two_references_that_contradict_each_other_refuse(self):
+        """Counterexample 3b: two admissible determinations, opposite conclusions."""
+
+        with self.assertRaises(PurposeAssessmentError) as caught:
+            self._assess(
+                (
+                    self._alignment(reference="probe/a", outcome="confirmed"),
+                    self._alignment(reference="probe/b", outcome="misaligned"),
+                )
+            )
+        self.assertEqual(caught.exception.code, "determination-conflict")
+        message = str(caught.exception)
+        self.assertIn("probe/a", message)
+        self.assertIn("probe/b", message)
+        self.assertIn("confirmed", message)
+        self.assertIn("misaligned", message)
+        self.assertIn("will not choose between them", message)
+
+    def test_the_conflict_refusal_does_not_depend_on_input_order(self):
+        codes = set()
+        for pair in (
+            (self._alignment(reference="probe/a", outcome="confirmed"),
+             self._alignment(reference="probe/b", outcome="misaligned")),
+            (self._alignment(reference="probe/b", outcome="misaligned"),
+             self._alignment(reference="probe/a", outcome="confirmed")),
+        ):
+            with self.assertRaises(PurposeAssessmentError) as caught:
+                self._assess(pair)
+            codes.add(caught.exception.code)
+        self.assertEqual(codes, {"determination-conflict"})
+
+    def test_neither_conflict_silently_produces_a_verdict(self):
+        """The point of the counterexample: before this round both went READY."""
+
+        for label, offered in (
+            ("one reference, two contents",
+             (self._alignment(outcome="confirmed"), self._alignment(outcome="misaligned"))),
+            ("two references, opposite conclusions",
+             (self._alignment(reference="probe/a", outcome="confirmed"),
+              self._alignment(reference="probe/b", outcome="misaligned"))),
+        ):
+            with self.subTest(case=label):
+                with self.assertRaises(PurposeAssessmentError):
+                    self._assess(offered)
+
+    def test_two_determinations_that_agree_are_corroboration_and_are_both_cited(self):
+        """Agreement is not conflict, and the record cites both rather than one."""
+
+        record = self._assess(
+            (
+                self._alignment(reference="probe/a", determiner="reviewer-one"),
+                self._alignment(reference="probe/b", determiner="reviewer-two"),
+            )
+        )
+        activity = _subscopes(record, "ceiling-and-bulkhead-geometry")
+        step = [
+            step
+            for subscope in activity.subscopes
+            for step in subscope.path
+            if step.evidence_requirement_id == "cross-model-alignment"
+        ][0]
+        self.assertEqual(step.outcome, "confirmed")
+        self.assertEqual(
+            step.readings[0].determination_references, ("probe/a", "probe/b")
+        )
+
+    # -- keying -------------------------------------------------------------
+
+    def test_a_determination_whose_subject_has_the_wrong_arity_refuses(self):
+        """Which subject it is about cannot be established, so it is not evidence."""
+
+        with self.assertRaises(PurposeAssessmentError) as caught:
+            self._assess((self._alignment(subject=("hvac",)),))
+        self.assertEqual(caught.exception.code, "determination-grain-mismatch")
+        self.assertIn("cannot be established", str(caught.exception))
+
+    def test_a_determination_for_a_requirement_this_request_never_reads_is_ignored(self):
+        """Refused for what the request relies on, not for what it carries past.
+
+        The schedules activity reads only ``asset-identity``. An alignment
+        determination offered alongside it is not consumed, so its defects are
+        not this request's defects.
+        """
+
+        record = self._assess(
+            (self._alignment(determined_against=None),),
+            activities=("schedules-and-room-data-sheets",),
+        )
+        self.assertTrue(record.assessment_digest)
+
+
 class IdentityDeterminismAndSealingTests(unittest.TestCase):
     """One digest, over parsed structure, sealed, and cited by nothing frozen."""
 
@@ -1002,7 +1411,7 @@ class IdentityDeterminismAndSealingTests(unittest.TestCase):
             request=cls.request,
             composed=cls.composed,
             facts=cls.facts,
-            determinations=fx.fixture_determinations(),
+            determinations=fx.fixture_determinations(facts=cls.facts),
         )
 
     def test_the_same_request_produces_a_byte_identical_record(self):
@@ -1012,7 +1421,7 @@ class IdentityDeterminismAndSealingTests(unittest.TestCase):
             request=fx.fixture_request(activity_ids=ALL_ACTIVITIES, facts=self.facts),
             composed=fx.fixture_composed(),
             facts=fx.assessment_facts(),
-            determinations=fx.fixture_determinations(),
+            determinations=fx.fixture_determinations(facts=self.facts),
         )
         self.assertEqual(
             canonical_json_document(self.record.as_document()),
@@ -1021,7 +1430,7 @@ class IdentityDeterminismAndSealingTests(unittest.TestCase):
         self.assertEqual(self.record.assessment_digest, again.assessment_digest)
 
     def test_the_order_determinations_arrive_in_does_not_move_the_digest(self):
-        shuffled = tuple(reversed(fx.fixture_determinations()))
+        shuffled = tuple(reversed(fx.fixture_determinations(facts=self.facts)))
         again = assess_purpose(
             request=self.request,
             composed=self.composed,
@@ -1037,7 +1446,7 @@ class IdentityDeterminismAndSealingTests(unittest.TestCase):
             request=self.request,
             composed=self.composed,
             facts=self.facts,
-            determinations=fx.fixture_determinations(alignment=False),
+            determinations=fx.fixture_determinations(facts=self.facts, alignment=False),
         )
         self.assertNotEqual(without.assessment_digest, self.record.assessment_digest)
 
@@ -1260,6 +1669,73 @@ class RequestPreconditionsTests(unittest.TestCase):
             fx.fixture_composed(overlay_document=document)
         self.assertIn("team-mapping-role-missing", str(caught.exception))
         self.assertIn("owner_role", str(caught.exception))
+
+
+class EveryRefusalCarriesACodeTests(unittest.TestCase):
+    """``errors.py`` says a code per rule; this is what makes that a test.
+
+    Six refusals in ``reading.py`` and ``request.py`` used to be bare
+    ``ValueError``s, which meant the mapping from "what the design says must fail
+    closed" to "what the code actually refuses" was an argument in prose for
+    exactly those six. It is a lookup now.
+    """
+
+    #: Every module of the assessment package that may refuse.
+    MODULES = ("determinations.py", "evaluator.py", "facts.py", "reading.py", "request.py")
+
+    def test_no_bare_value_error_is_raised_in_reading_or_request(self):
+        for name in ("reading.py", "request.py"):
+            source = (ASSESSMENT_PACKAGE / name).read_text(encoding="utf-8")
+            with self.subTest(module=name):
+                for node in ast.walk(ast.parse(source)):
+                    if not isinstance(node, ast.Raise) or node.exc is None:
+                        continue
+                    call = node.exc
+                    raised = getattr(getattr(call, "func", None), "id", "")
+                    self.assertNotEqual(
+                        raised, "ValueError", f"{name} still raises a bare ValueError"
+                    )
+
+    def test_every_code_this_package_can_raise_is_well_formed(self):
+        """One code per *rule*, not per call site.
+
+        ``binding-ruleset-not-the-cited-run`` is raised twice — once for a Pack's
+        own ``pack_binding`` and once for an Overlay ``evidence_bindings`` row —
+        and that is one rule checked in two places, which is why this asserts the
+        shape of the codes and their number rather than that no string repeats.
+        """
+
+        codes: list[str] = []
+        for name in self.MODULES:
+            source = (ASSESSMENT_PACKAGE / name).read_text(encoding="utf-8")
+            for node in ast.walk(ast.parse(source)):
+                if not isinstance(node, ast.Call):
+                    continue
+                callee = getattr(node.func, "id", "")
+                if callee not in {"_refuse", "PurposeAssessmentError"}:
+                    continue
+                if node.args and isinstance(node.args[0], ast.Constant):
+                    codes.append(node.args[0].value)
+        self.assertGreater(len(set(codes)), 25)
+        repeated = sorted({code for code in codes if codes.count(code) > 1})
+        self.assertEqual(
+            repeated,
+            ["binding-ruleset-not-the-cited-run"],
+            "a code repeated for anything but one rule checked in two places",
+        )
+        for code in codes:
+            with self.subTest(code=code):
+                self.assertRegex(code, r"^[a-z0-9]+(-[a-z0-9]+)*$")
+
+    def test_the_two_illustrative_gates_are_two_different_codes(self):
+        """Same family, two tables, two rows to edit — never one refusal."""
+
+        source = (ASSESSMENT_PACKAGE / "evaluator.py").read_text(encoding="utf-8")
+        methods = (ASSESSMENT_PACKAGE / "determinations.py").read_text(encoding="utf-8")
+        self.assertIn("team-mapping-decision-basis-illustrative", source)
+        self.assertIn("accepted-method-decision-basis-illustrative", methods)
+        self.assertNotIn("accepted-method-decision-basis-illustrative", source)
+        self.assertNotIn("team-mapping-decision-basis-illustrative", methods)
 
 
 if __name__ == "__main__":  # pragma: no cover

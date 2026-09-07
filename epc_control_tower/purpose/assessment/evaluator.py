@@ -33,8 +33,14 @@ from __future__ import annotations
 from collections.abc import Sequence
 
 from ..errors import PurposeAssessmentError
-from ..model import Activity, ComposedPurposeInputs, EvidenceRequirement, PurposePack
-from .determinations import Determination, DeterminationLedger
+from ..model import (
+    PROJECT_DECISION,
+    Activity,
+    ComposedPurposeInputs,
+    EvidenceRequirement,
+    PurposePack,
+)
+from .determinations import Determination, DeterminationLedger, DeterminedAgainst
 from .facts import AssessmentFacts
 from .reading import (
     VALIDATION_BACKED_OUTCOMES,
@@ -59,10 +65,6 @@ from .record import (
 from .request import AssessmentRequest
 
 __all__ = ["assess_purpose"]
-
-#: The ``decision_basis`` a policy row must carry before this assessment will
-#: found an assignment on it. See :func:`_check_policy_can_found_an_assignment`.
-PROJECT_DECISION = "project-decision"
 
 #: No determination was offered for this subject at all. Distinct from the
 #: reason string a *declined* determination leaves, because "nobody determined
@@ -98,14 +100,24 @@ def assess_purpose(
     _check_bindings_match_the_cited_run(pack, composed, facts)
     _check_policy_can_found_an_assignment(pack, activities, composed)
 
+    context = request.model_version_context
     ledger = DeterminationLedger(
         determinations,
-        accepted_method_ids=_accepted_method_ids(composed, pack.pack_id),
+        method_policy=_method_policy(composed, pack.pack_id),
         consuming_element_keys=frozenset(
-            item.element_key
-            for item in facts.elements_of(request.model_version_context.consuming.model_key)
+            item.element_key for item in facts.elements_of(context.consuming.model_key)
+        ),
+        determined_against=DeterminedAgainst(
+            producing_model_key=context.producing.model_key,
+            producing_content_id=context.producing.content_id,
+            consuming_model_key=context.consuming.model_key,
+            consuming_content_id=context.consuming.content_id,
         ),
     )
+    # Every defect in what was handed in is refused here, before any subscope is
+    # assessed — §7.1's discipline, and the reason a contradiction between two
+    # determinations is a refusal rather than something met halfway down a tree.
+    ledger.validate(_consumed_requirements(pack, activities))
 
     results = tuple(
         _assess_activity(
@@ -427,15 +439,41 @@ def _check_policy_can_found_an_assignment(
         )
 
 
-def _accepted_method_ids(
+def _method_policy(
     composed: ComposedPurposeInputs, pack_id: str
-) -> dict[str, frozenset[str]]:
-    accepted: dict[str, set[str]] = {}
+) -> dict[str, dict[str, str]]:
+    """``evidence_requirement_id -> method_id -> decision_basis``.
+
+    The ``decision_basis`` is carried rather than filtered out, because the
+    ledger has to tell three states apart: a method this project accepted, a
+    method it wrote down to demonstrate the shape, and a method it never
+    mentioned. Filtering here would collapse the first two boundaries into one.
+    """
+
+    policy: dict[str, dict[str, str]] = {}
     for method in composed.overlay.accepted_evidence_methods:
         if method.pack_id != pack_id:
             continue
-        accepted.setdefault(method.evidence_requirement_id, set()).add(method.method_id)
-    return {key: frozenset(value) for key, value in accepted.items()}
+        policy.setdefault(method.evidence_requirement_id, {})[method.method_id] = (
+            method.decision_basis
+        )
+    return policy
+
+
+def _consumed_requirements(
+    pack: PurposePack, activities: Sequence[Activity]
+) -> tuple[EvidenceRequirement, ...]:
+    """The evidence requirements the requested activities will actually read.
+
+    A determination offered for a requirement outside this set is not consumed
+    by this request, so the request is not refused for carrying it past.
+    """
+
+    wanted: dict[str, EvidenceRequirement] = {}
+    for activity in activities:
+        for requirement_id in activity.evidence_requirement_ids:
+            wanted[requirement_id] = pack.evidence_requirement(requirement_id)
+    return tuple(wanted[key] for key in sorted(wanted))
 
 
 # ---------------------------------------------------------------------------
@@ -526,7 +564,7 @@ def _walk(
     grain = requirement.subject_grain
 
     if grain == "per-subject-pair":
-        subjects = _refine(requirement, subjects, ledger)
+        subjects = _refine(requirement, subjects, ledger, pack)
         if not subjects:
             # Unreachable while the admissibility rule holds: this branch is taken
             # only by subjects whose pair_source determination was admitted, and a
@@ -601,6 +639,7 @@ def _refine(
     requirement: EvidenceRequirement,
     subjects: tuple[Subject, ...],
     ledger: DeterminationLedger,
+    pack: PurposePack,
 ) -> tuple[Subject, ...]:
     """Replace each subject with one pair per counterpart its determination named.
 
@@ -624,6 +663,7 @@ def _refine(
             source_evidence_requirement_id=source.from_evidence_requirement_id,
             on_outcome=source.on_outcome,
             element_key=origin,
+            requirement=pack.evidence_requirement(source.from_evidence_requirement_id),
         ):
             refined.append(Subject(keys=(origin, counterpart), refined_from=origin))
     return tuple(sorted(refined, key=lambda item: item.sort_key))
@@ -704,18 +744,21 @@ def _determination_reading(
     never looks like a subject nobody determined anything about.
     """
 
-    determination, declined = ledger.resolve(requirement, subject.keys)
-    if determination is None:
+    admissible, declined = ledger.resolve(requirement, subject.keys)
+    if not admissible:
         return Reading(
             subject=subject,
             outcome=unresolved_outcome(requirement),
             absence=declined or NO_DETERMINATION_ABSENCE,
         )
+    # Every member agrees: the ledger refused the request otherwise. So all of
+    # them are cited and none of them is selected — two reviewers reaching the
+    # same conclusion are corroboration, and the record says so.
     return Reading(
         subject=subject,
-        outcome=determination.outcome,
-        binding=determination.method_id,
-        determination_reference=determination.reference,
+        outcome=admissible[0].outcome,
+        binding=", ".join(sorted({item.method_id for item in admissible})),
+        determination_references=tuple(sorted(item.reference for item in admissible)),
     )
 
 
