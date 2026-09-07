@@ -523,8 +523,23 @@ class DeterminationLedger:
         The source requirement is passed in from the Pack's own ``pair_source``
         rather than named by a literal here, so a Pack sourcing its pairs from
         some other requirement refines correctly without this module knowing its
-        names. Only **admissible** determinations are read, which is what makes
-        a declined penetration claim create no pair at all.
+        names.
+
+        **This is a second traversal of the index, not a re-read of what
+        :meth:`resolve` returned**, and the difference is load bearing. ``resolve``
+        filters to admissible determinations and drives the *reading*; this walks
+        the same subject's determinations in reference order and drives
+        *refinement* — which pairs exist. So the admissibility check below is not
+        redundant with the one that produced the reading: a declined claim
+        sorting ahead of an admissible one would otherwise decide the pairs, and
+        every counterpart the admissible determination named but it did not would
+        silently cease to exist — not reported wrongly, not reported at all.
+
+        The first admissible determination wins, and that is safe rather than a
+        pick, because two admissible determinations reaching different
+        conclusions about one subject have already refused the whole request
+        (:meth:`_check_no_contradiction`). What is left to choose between is
+        determinations that agree, so there is nothing to choose.
         """
 
         offered = self._by_subject.get(

@@ -1096,17 +1096,144 @@ class DeterminationIntakeTests(unittest.TestCase):
         self.assertNotEqual(declined.assessment_digest, baseline.assessment_digest)
 
 
-    def test_counterparts_reads_only_admissible_determinations(self):
-        """The refinement guard, exercised directly because the walk cannot reach it.
+    #: Sorts before the fixture's admissible ``…/chimney-slab-and-roof`` ("a" <
+    #: "s"), which is the whole point: it is the one ``counterparts`` meets first.
+    UNATTRIBUTED_SLAB_ONLY = "fixture-determination/penetration/chimney-aaa-unattributed"
 
-        A subject only reaches ``opening-status-node`` after its
-        ``penetration-determination`` reading came back ``penetration-confirmed``,
-        which already required an admissible determination — so the admissibility
-        check inside ``counterparts`` is unreachable through
-        :func:`assess_purpose`. It is defence in depth against a future caller,
-        and this is what stops it being defence nobody has ever run: an
-        inadmissible claim yields no counterpart, so no pair could be refined
-        from it even if something did call in here directly.
+    def _unattributed_slab_only(self):
+        """A declined claim that names one architectural element instead of two.
+
+        Unattributed — no ``determiner`` — so it is inadmissible, and it lists
+        only the floor slab where the admissible determination lists the slab and
+        the roof. Its reference sorts first.
+        """
+
+        return Determination(
+            reference=self.UNATTRIBUTED_SLAB_ONLY,
+            evidence_requirement_id="penetration-determination",
+            method_id="coordination-review-determination",
+            determiner="",
+            basis="fixture: an unsigned note naming only the slab",
+            outcome="penetration-confirmed",
+            subject=(fx.HVAC_CHIMNEY,),
+            penetrated_element_keys=(fx.ARCHITECTURE_SLAB,),
+            determined_against=fx.determined_against(self.facts),
+        )
+
+    def test_an_earlier_sorting_declined_claim_does_not_win_the_refinement(self):
+        """A declined determination must not decide which pairs exist.
+
+        Two determinations about the chimney's penetration, both claiming
+        ``penetration-confirmed``: the admissible one names the floor slab **and**
+        the roof, and a declined one — unattributed, and sorting first by
+        reference — names only the slab.
+
+        The reading comes from the admissible one, so the subject reaches
+        ``opening-status-node`` either way. Refinement is a **second** traversal
+        of the same index, and it is the one that decides which pairs exist. If
+        the declined claim won there, the roof pair and its ``BLOCKED`` verdict
+        would not be reported as wrong — they would not be reported at all.
+
+        Asserted under both input orders, because "sorts first" and "arrived
+        first" are different things and neither may decide it.
+        """
+
+        expected = [
+            ((fx.HVAC_DUCT,),),
+            ((fx.HVAC_AIR_TERMINAL_COVER,), (fx.HVAC_AIR_TERMINAL_CAP,)),
+            ((fx.HVAC_CHIMNEY, fx.ARCHITECTURE_SLAB),),
+            ((fx.HVAC_CHIMNEY, fx.ARCHITECTURE_ROOF),),
+        ]
+        expected_verdicts = [
+            ("READY", ""),
+            ("UNKNOWN", "penetration-not-determined"),
+            ("READY", ""),
+            ("BLOCKED", "missing-corresponding-opening"),
+        ]
+
+        digests = set()
+        for label, offered in (
+            (
+                "admissible first",
+                fx.fixture_determinations(facts=self.facts)
+                + (self._unattributed_slab_only(),),
+            ),
+            (
+                "declined first",
+                (self._unattributed_slab_only(),)
+                + fx.fixture_determinations(facts=self.facts),
+            ),
+        ):
+            with self.subTest(order=label):
+                record = assess_purpose(
+                    request=fx.fixture_request(
+                        activity_ids=("builders-work-openings",), facts=self.facts
+                    ),
+                    composed=self.composed,
+                    facts=self.facts,
+                    determinations=offered,
+                )
+                activity = _subscopes(record, "builders-work-openings")
+                digests.add(record.assessment_digest)
+
+                self.assertEqual(
+                    [tuple(tuple(m.keys) for m in s.members) for s in activity.subscopes],
+                    expected,
+                )
+                self.assertEqual(
+                    [(s.verdict, s.resolution_kind) for s in activity.subscopes],
+                    expected_verdicts,
+                )
+
+                # Both pairs survive, and each names the element it refined from.
+                pairs = [
+                    s for s in activity.subscopes
+                    if any(len(m.keys) == 2 for m in s.members)
+                ]
+                self.assertEqual(len(pairs), 2)
+                for subscope in pairs:
+                    for member in subscope.members:
+                        self.assertEqual(member.refined_from, fx.HVAC_CHIMNEY)
+
+                # The reading cites the admissible determination, never the
+                # declined one, whichever order they arrived in.
+                root = activity.subscopes[2].path[0]
+                chimney = [
+                    r for r in root.readings if r.subject.keys == (fx.HVAC_CHIMNEY,)
+                ][0]
+                self.assertEqual(chimney.outcome, "penetration-confirmed")
+                self.assertEqual(
+                    chimney.determination_references,
+                    ("fixture-determination/penetration/chimney-slab-and-roof",),
+                )
+                self.assertNotIn(
+                    self.UNATTRIBUTED_SLAB_ONLY, chimney.determination_references
+                )
+
+        self.assertEqual(len(digests), 1, "input order moved the sealed record")
+
+    def test_counterparts_reads_only_admissible_determinations(self):
+        """The refinement guard at unit grain; the end-to-end case is above.
+
+        An earlier revision of this docstring called the admissibility check
+        inside ``counterparts`` unreachable through :func:`assess_purpose`, on
+        the reasoning that a subject only reaches ``opening-status-node`` after
+        an admissible determination produced its ``penetration-confirmed``
+        reading. **That was wrong**, and it was wrong in a way worth naming,
+        because the same mistake is available to anyone reading the ledger:
+        ``resolve`` and ``counterparts`` are *two separate traversals of one
+        index*. The first filters to admissible determinations and drives the
+        reading; the second drives refinement and meets whatever sorts first.
+        That an admissible determination produced the reading says nothing about
+        which determination refinement encounters.
+
+        So this guard is not defence in depth. It is the enforcement point for a
+        property the design depends on — **an earlier-sorted declined
+        determination must not win the refinement** — and
+        ``test_an_earlier_sorting_declined_claim_does_not_win_the_refinement``
+        measures what it is worth: without it, the roof pair and its ``BLOCKED``
+        verdict do not appear at all. This test stays, at unit grain, because
+        it pins the discriminating behaviour directly.
         """
 
         ledger = self._ledger(

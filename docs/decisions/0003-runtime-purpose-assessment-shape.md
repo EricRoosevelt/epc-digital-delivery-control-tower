@@ -305,7 +305,9 @@
     was re-checked and found already correct and is now pinned as a regression
     test rather than changed: a `penetration-confirmed` naming an element absent
     from the consuming model version declines, refines into no pair, and leaves
-    subject scope and every verdict identical. §7.1 gains **eight** rows, five for
+    subject scope and every verdict identical. **The property held; the evidence
+    behind it was weaker than that sentence implied, and the D-9 round below
+    corrects it.** §7.1 gains **eight** rows, five for
     these conditions and three owed from the D-7 round's escalation — a
     wrong-arity `subject`, a finding-backed `outcomes[]` missing one of its three
     names, and an `outcomes[]` naming none or several unresolved states. Unchanged
@@ -314,6 +316,50 @@
     its static reading, §4.4's nine fields, §4.5 in full, §8's six counterfactuals
     and its seventh commitment. Still not built: `CONDITIONAL` promotion,
     successor records, a machine contract, a CLI, Doctor, or a second Pack.
+  - Refines the version at `e0ad49c` (2026-09-07), on 2026-09-08. **No behaviour
+    changes in this round** — no check, field, or refusal is added — and it
+    exists because two things this document and its implementation *said* were
+    wrong, in the direction that matters: they claimed a guard was doing less
+    than it is. **D-9** closes both.
+    **(a)** The D-8 round recorded that a `penetration-confirmed` naming an
+    absent element "was re-checked and found already correct and is now pinned as
+    a regression test". The property held. The evidence did not support the
+    confidence: the pinning test offered a single declined determination with
+    nothing to compete against, and competition is the only situation in which
+    the guard it was pinning is used at all. Alongside it, the implementation
+    described the admissibility check inside its refinement lookup as
+    "unreachable" through the entry point, reasoning that a subject reaches the
+    pair node only after an admissible determination produced its reading. That
+    reasoning conflates two traversals of one index: the first filters to
+    admissible determinations and drives the **reading**; the second drives
+    **refinement** and meets whatever sorts first. Measured on the running
+    evaluator, the entry point calls the second, and a declined determination
+    sorting ahead of an admissible one is exactly what it excludes. Removing the
+    guard does not produce a wrong pair — it makes the roof pair and its
+    `BLOCKED` verdict disappear entirely, which is the silent loss §2.1 exists to
+    prevent. §3.1 now states that reading and refining are two lookups that must
+    both exclude the inadmissible, and states the selection rule the
+    implementation already follows: refinement takes the first admissible
+    determination, which is safe rather than a pick because two admissible
+    determinations disagreeing about one subject have already refused the whole
+    request (§1.2 item 4). An end-to-end regression pins it under both input
+    orders.
+    **(b)** This document had said nothing about `N/A` anywhere, while the
+    implementation distinguished two absences by it. §3.1 now states the three
+    consequences: `N/A` is never `satisfied` (a rule that applied to nothing did
+    not check this element, and ADR 0002 §3.2's "at least one finding and none is
+    `FAIL`" reads it as a pass if taken literally); "no finding at all" and "a
+    finding that says `N/A`" are two absences that share one outcome name and are
+    recorded distinctly; and a reading must join on `element_key` as well as
+    `requirement_key`, because all 57 `N/A` findings here are model-level and 12
+    of `pcert-sample`'s 23 carry a bound `requirement_key`, so a key-only join
+    would read facts about `architecture` and `structural` into an `hvac`
+    subject.
+    Neither part adds a refusal, so §7.1 gains no row and the fail-closed tables
+    are untouched. Unchanged and not reopened: every behaviour, every code, the
+    three D-8 conditions, D-7's gate, §4.4, §4.5, §8's six counterfactuals and
+    its seventh commitment. No Pack, Overlay, published artifact, or contract
+    value is touched.
 - **Scope:** Checkpoint D runtime design only — the request boundary, the
   subscope construction rule ADR 0002 §3.2 explicitly left here, the
   assessment record shape, the runtime identity boundary, and the
@@ -773,6 +819,31 @@ routes to `UNKNOWN` / `penetration-not-determined` (§7.3). This is the
 fail-closed direction: an inadmissible determination is no determination, and
 never a pair with a member the assessment had to invent.
 
+**Reading a subject and refining it are two lookups, and both must exclude the
+inadmissible (closes D-9).** Which determination produced a subject's *reading*
+does not settle which determination names its *counterparts*: the reading is
+taken from the admissible determinations for that subject, while refinement goes
+back to the same subject's determinations to ask which architectural elements
+were named. A declined determination sitting alongside an admissible one is
+therefore reachable at the second lookup even though the first excluded it, and
+it must be excluded again there. The cost of not doing so is not a wrong pair —
+it is a **missing** one: where a declined claim names fewer architectural
+elements than the admissible one, every counterpart only the admissible
+determination named would silently cease to exist, taking its subscope and its
+verdict with it. A `BLOCKED` roof opening that is never reported is
+indistinguishable from a roof with no opening problem, which is the class of
+silent loss §2.1's whole scope rule exists to prevent.
+
+**Among admissible determinations, refinement takes the first and this is not a
+choice.** Two admissible determinations that named different architectural
+elements for one subject would be two different answers to "which pairs exist",
+and §1.2 item 4's content-consistency condition has already refused the whole
+request before refinement runs — a `penetration-confirmed` naming different
+elements is exactly the disagreement it tests for. What remains to select
+between is determinations that agree, where there is nothing to select. The
+rule is stated because "takes the first" reads like a pick, and what makes it
+safe is a check somewhere else.
+
 **Within-subject reading rule** (from ADR 0002 §3.2, restated): for a
 `per-subject` finding-backed evidence requirement, take every finding for the
 subject under every bound `requirement_key` that applies to it; if there is
@@ -792,6 +863,41 @@ pair, the determination about *that* opening — or its `not-yet-*` outcome when
 none exists. No finding-backed evidence requirement in this Pack reads at pair
 grain, and none has to: the rule above is stated over subjects, and a pair is
 a subject.
+
+**What `N/A` means to a reading, and the two absences it must stay apart from
+(closes D-9).** The precedence above names three levels, and its middle one —
+not-covered — is where a `N/A` finding lands. Contract 1.6 normalises "this
+specification had zero applicable elements" to `N/A` precisely because
+IfcTester reports it as a pass and counting it as compliance would inflate every
+rate the project publishes; the readiness reading owes the same distinction, for
+the same reason. Three things follow, and none of them is a detail:
+
+- **`N/A` is never `satisfied`.** A rule that applied to nothing did not check
+  this element, and `satisfied` is the claim that a specific thing *was* checked
+  and was correct. ADR 0002 §3.2's own summary of the third state — "the unit has
+  at least one finding and none is `FAIL`" — reads a `N/A` as a pass if taken
+  literally, and this is the sentence that says not to: the rule is the
+  three-level precedence, `FAIL` > not-covered > `PASS`, and `N/A` is
+  not-covered. Every status is matched by name; an unrecognised one refuses
+  (§7.1), because the branch a fall-through reaches is `satisfied` and reporting
+  an unknown status as a pass is the worst outcome available.
+- **"No finding at all" and "a finding that says `N/A`" are two absences, both
+  reading `not-yet-evaluated` and each recorded distinctly.** Nobody looked and
+  the look did not apply are different facts about a handover, and the second
+  can cite the `N/A` findings it read while the first has nothing to cite. The
+  Pack's outcome vocabulary has one name for both, so the distinction lives in
+  the record's named-absence marker (§3.3) rather than in the outcome.
+- **A reading joins on `element_key` as well as `requirement_key`.** This is the
+  one with a live way to go wrong in this repository rather than a hypothetical
+  one. All 57 `N/A` findings here are model-level — `element_key` empty, because
+  a specification that matched nothing has no element to name (`domain.Finding`
+  refuses one that does) — and **12 of `pcert-sample`'s 23 carry a
+  `requirement_key` this project's Overlay or this Pack actually binds**, six in
+  `architecture` and six in `structural`. A reading that joined on
+  `requirement_key` alone would pull model-level rows from other models into an
+  `hvac` subject's reading and reduce them as though they were about it. Both
+  halves of the join are required, and the `element_key` half is the one that
+  stops a fact about a model being read as a fact about an element.
 
 An `insufficient_evidence[]` entry (R-010 under `cross-model-alignment`) is
 **never** a reading: its `PASS` is recorded as context only and produces none
