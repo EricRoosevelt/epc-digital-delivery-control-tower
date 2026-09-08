@@ -533,20 +533,23 @@ def _pairing_cause(member: Subject, origin: str, activity: ActivityResult) -> st
         for subject in subscope.members
         if subject.refined_from == origin and len(subject.keys) == 2
     )
+    # Every reading this record made *about the penetrating element itself*,
+    # wherever it sits. Keyed on the reading's subject rather than on the
+    # subscope's members, because those are two different grains: at the pair
+    # node the members are pairs while the pair-source node's readings above it
+    # are still keyed on the bare element, and filtering by membership would lose
+    # the reading exactly when the element did stay paired with somebody else.
     readings: list[str] = []
     for subscope in activity.subscopes:
-        if not any(item.keys == (origin,) for item in subscope.members):
-            continue
         for step in subscope.path:
-            if any(reading.subject.keys == (origin,) for reading in step.readings):
-                for reading in step.readings:
-                    if reading.subject.keys != (origin,):
-                        continue
-                    readings.append(
-                        f"{step.evidence_requirement_id} now reads "
-                        f"{reading.outcome!r}"
-                        + (f" ({reading.absence})" if reading.absence else "")
-                    )
+            for reading in step.readings:
+                if reading.subject.keys != (origin,):
+                    continue
+                readings.append(
+                    f"{step.evidence_requirement_id} now reads "
+                    f"{reading.outcome!r}"
+                    + (f" ({reading.absence})" if reading.absence else "")
+                )
     detail = "; ".join(sorted(set(readings))) or (
         "the penetrating element reaches no reading of the pair source"
     )

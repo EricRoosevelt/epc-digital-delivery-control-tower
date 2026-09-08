@@ -653,6 +653,49 @@ class WhatBecameOfEveryMemberTests(_ChainCase):
             ["pairing-no-longer-derived"],
         )
 
+    def test_a_pair_lost_while_the_element_stays_paired_with_somebody_else(self):
+        """The same case in the shape where the element gives no hint at all.
+
+        The re-held review keeps the slab penetration and drops the roof one. The
+        chimney is still penetrating, still refines, still reaches a pair verdict
+        — so a comparison that asked "is the penetrating element still a subject?"
+        would answer yes and lose the roof pair without a word. The disposition
+        catches it, and the cause quotes both what the pair source now reads and
+        which counterparts survived.
+        """
+
+        record = recheck_purpose(
+            prior=self.prior,
+            request=self.request,
+            composed=self.composed,
+            facts=self.facts,
+            determinations=fx.fixture_narrowed_penetration_determinations(
+                facts=self.facts
+            ),
+            succeeds=((OPENINGS, self.roof_ordinal),),
+        )
+        outcome = _outcome_for(record, OPENINGS, self.roof_ordinal)
+        self.assertEqual(
+            [item.disposition for item in outcome.dispositions],
+            ["pairing-no-longer-derived"],
+        )
+        cause = outcome.dispositions[0].cause
+        self.assertIn(
+            "penetration-determination now reads 'penetration-confirmed'", cause
+        )
+        self.assertIn(f"Counterparts derived now: ['{fx.ARCHITECTURE_SLAB}']", cause)
+        self.assertEqual(outcome.condition_status, "not-comparable")
+        # And the slab pair, which nothing happened to, is still READY.
+        self.assertIn(
+            (fx.HVAC_CHIMNEY, fx.ARCHITECTURE_SLAB),
+            [
+                tuple(member.keys)
+                for subscope in _subscopes(record, OPENINGS).subscopes
+                if subscope.verdict == "READY"
+                for member in subscope.members
+            ],
+        )
+
     def test_a_key_this_requests_own_scope_no_longer_declares(self):
         """The scope shrank. Nothing about the deficiency did."""
 

@@ -98,6 +98,7 @@ __all__ = [
     "assessment_facts",
     "fixture_composed",
     "fixture_determinations",
+    "fixture_narrowed_penetration_determinations",
     "fixture_overlay_document",
     "fixture_reissued_facts",
     "fixture_reissued_request",
@@ -586,6 +587,43 @@ def fixture_superseding_determinations(*, facts) -> tuple[Determination, ...]:
             basis="fixture: re-reviewed, the chimney passes through no architectural fabric",
             outcome="no-penetration",
             subject=(HVAC_CHIMNEY,),
+            determined_against=against,
+        ),
+    )
+
+
+def fixture_narrowed_penetration_determinations(*, facts) -> tuple[Determination, ...]:
+    """A later review that keeps the slab penetration and drops the roof one.
+
+    The sharper half of the pair-disappearance case, and the reason it is a
+    fixture of its own: the chimney is **still penetrating**, still refines, and
+    still reaches a pair verdict. Only the roof counterpart is gone. A comparison
+    that asked "is the penetrating element still a subject?" would answer yes and
+    lose the roof pair without a word — which is precisely the silent loss the
+    cross-record disposition exists to catch, arriving in the one shape where the
+    element itself gives no hint that anything went missing.
+    """
+
+    against = determined_against(facts)
+    kept = tuple(
+        determination
+        for determination in fixture_determinations(facts=facts)
+        if determination.reference
+        not in {
+            "fixture-determination/penetration/chimney-slab-and-roof",
+            "fixture-determination/opening/chimney-roof-not-modelled",
+        }
+    )
+    return kept + (
+        Determination(
+            reference="fixture-determination/penetration/chimney-slab-only",
+            evidence_requirement_id="penetration-determination",
+            method_id="coordination-review-determination",
+            determiner="fixture-coordination-review",
+            basis="fixture: re-reviewed, the chimney passes through the floor slab only",
+            outcome="penetration-confirmed",
+            subject=(HVAC_CHIMNEY,),
+            penetrated_element_keys=(ARCHITECTURE_SLAB,),
             determined_against=against,
         ),
     )
