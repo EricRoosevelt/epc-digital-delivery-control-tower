@@ -8,7 +8,8 @@ Two halves, and the split is the design rather than a filing convention:
   :class:`~.model.ComposedPurposeInputs` for a project, or refuse;
 * :mod:`~.assessment` consumes that configuration, walks a Pack's decision tree
   over validated facts for one declared scope and one model-version context, and
-  returns one sealed assessment record, or refuses.
+  returns one sealed assessment record, or refuses. A later reading of the same
+  question is a **successor** record citing the sealed one, never an edit of it.
 
 **Neither is a pipeline component.** Not a ``Checker``, a ``GroupingPolicy``, or
 an ``Exporter``; absent from ``default_registry``; never invoked by ``epc-ct
@@ -36,13 +37,18 @@ from .assessment import (
     AssessmentFacts,
     AssessmentRecord,
     AssessmentRequest,
+    CitedDetermination,
     Determination,
     DeterminedAgainst,
     HandoverEvent,
     ModelVersion,
     ModelVersionContext,
+    RecheckOutcome,
+    SuccessorSection,
     assess_purpose,
     facts_from_bundle,
+    machine_checkable_outcome,
+    recheck_purpose,
 )
 from .composition import build_composition_digest, compose_purpose_inputs
 from .errors import (
@@ -96,6 +102,7 @@ __all__ = [
     "AssessmentRecord",
     "AssessmentRequest",
     "Branch",
+    "CitedDetermination",
     "ComposedPurposeInputs",
     "Convention",
     "DecisionNode",
@@ -112,6 +119,7 @@ __all__ = [
     "PackBinding",
     "PairSource",
     "ProjectOverlay",
+    "RecheckOutcome",
     "PurposeAssessmentError",
     "PurposeCompositionError",
     "PurposeError",
@@ -119,6 +127,7 @@ __all__ = [
     "PurposePackError",
     "ResolutionRoute",
     "RiskAuthorisation",
+    "SuccessorSection",
     "TeamMapping",
     "assess_purpose",
     "build_composition_digest",
@@ -128,5 +137,7 @@ __all__ = [
     "load_project_overlay",
     "load_purpose_pack",
     "load_purpose_packs",
+    "machine_checkable_outcome",
     "read_overlay_table",
+    "recheck_purpose",
 ]

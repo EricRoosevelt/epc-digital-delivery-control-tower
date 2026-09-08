@@ -9,9 +9,17 @@ pipeline with and without a Pack library and an ``[overlay]`` and diffing the
 bytes is a measurement.
 
 So each of ADR 0002 §4's four changed-input counterfactuals is executed here,
-plus the two ADR 0003 §8 adds that this checkpoint can reach. A full run takes
-about a second and a half, which is cheap enough that these stay true rather
-than merely having been true once.
+plus the two ADR 0003 §8 adds. A full run takes about a second and a half, which
+is cheap enough that these stay true rather than merely having been true once.
+
+Commitment 5 names "a successor record of either kind" in terms, so the
+``recheck`` successor is run and stored alongside the record it succeeds. It
+brings the one input that could plausibly reach a published byte and does not: a
+**second set of validated facts**, standing for a reissued and re-validated
+model. Those facts are built in memory from the shipped bundle, no pipeline stage
+can see them, and every value they mint carries the fixture marker — which is
+asserted here against the whole published tree, on the same footing as the nine
+``illustrative`` policy rows in ``pcert-sample``'s own manifest.
 
 The fourth counterfactual — giving ``iso-reference-view`` an ``[overlay]`` — is
 run against a **copy** of the manifest and never against the repository's own.
@@ -243,51 +251,80 @@ class PublishedTreeIsUnmovedTests(unittest.TestCase):
         self.assertEqual(before, after)
 
     def test_counterfactual_5_running_an_assessment_and_storing_a_record(self):
-        """The rest of commitment 5: run one, materialise it, move nothing.
+        """The rest of commitment 5: run one, succeed it, materialise both, move nothing.
 
-        The record is written to a scratch directory rather than kept in memory,
+        The records are written to a scratch directory rather than kept in memory,
         because the commitment is about *storing* one. Storage is a later
         decision, so what is exercised here is the shape the assessment offers a
         future store — the canonical document — put somewhere on disk that is not
         ``data/processed/``, ``reports/``, ``ids/``, or the contract snapshot.
+
+        ADR 0003 §8's commitment 5 names "a successor record of either kind"
+        explicitly, so the ``recheck`` successor this checkpoint builds is stored
+        alongside the record it succeeds. It is assessed against a **second** set
+        of validated facts — a reissued model version, re-validated — which is the
+        one thing that could plausibly reach a published byte and does not: those
+        facts are built in memory from the shipped bundle and no pipeline stage
+        can see them.
         """
 
         import assessment_fixtures as fixtures
         from epc_control_tower.determinism import json_bytes
-        from epc_control_tower.purpose import assess_purpose
+        from epc_control_tower.purpose import assess_purpose, recheck_purpose
 
+        activities = (
+            "schedules-and-room-data-sheets",
+            "ceiling-and-bulkhead-geometry",
+            "builders-work-openings",
+        )
         with writable_test_directory("purpose-cf5b") as scratch:
             out = scratch / "out"
             out.mkdir()
             before = _run_into(out)
 
             facts = fixtures.assessment_facts()
+            composed = fixtures.fixture_composed()
             record = assess_purpose(
                 request=fixtures.fixture_request(
-                    activity_ids=(
-                        "schedules-and-room-data-sheets",
-                        "ceiling-and-bulkhead-geometry",
-                        "builders-work-openings",
-                    ),
-                    facts=facts,
+                    activity_ids=activities, facts=facts
                 ),
-                composed=fixtures.fixture_composed(),
+                composed=composed,
                 facts=facts,
                 determinations=fixtures.fixture_determinations(facts=facts),
             )
             self.assertTrue(record.assessment_digest)
+
+            reissued = fixtures.fixture_reissued_facts()
+            successor = recheck_purpose(
+                prior=record,
+                request=fixtures.fixture_reissued_request(
+                    activity_ids=activities, facts=reissued
+                ),
+                composed=composed,
+                facts=reissued,
+                determinations=(),
+                succeeds=tuple(
+                    (activity.activity_ref, subscope.ordinal)
+                    for activity in record.activities
+                    for subscope in activity.subscopes
+                ),
+            )
+            self.assertEqual(successor.successor.kind, "recheck")
+            self.assertNotEqual(successor.assessment_digest, record.assessment_digest)
+
             store = scratch / "assessments"
             store.mkdir()
-            (store / f"{record.assessment_digest}.json").write_bytes(
-                json_bytes(record.as_document())
-            )
+            for item in (record, successor):
+                (store / f"{item.assessment_digest}.json").write_bytes(
+                    json_bytes(item.as_document())
+                )
 
             after = {
                 path.relative_to(out).as_posix(): sha256_file(path)
                 for path in sorted(out.rglob("*"))
                 if path.is_file()
             }
-            self.assertEqual(sorted(store.iterdir()).__len__(), 1)
+            self.assertEqual(len(sorted(store.iterdir())), 2)
 
         self.assertEqual(before, after)
 
@@ -354,6 +391,127 @@ class PublishedTreeIsUnmovedTests(unittest.TestCase):
             with self.subTest(digest=digest[:12]):
                 self.assertNotIn(digest, bundle_after[0])
                 self.assertNotIn(digest, str(bundle_after))
+
+    def test_counterfactual_6_a_successor_digest_moves_nothing_either(self):
+        """The same commitment, for the digest a ``recheck`` mints.
+
+        A successor's digest covers its whole comparison — which subscopes it
+        answered for, where each member went, which citations carried — so it is
+        the one value in this design most likely to be reached for as a join key
+        by something downstream. It is not one: nothing frozen takes it as input,
+        it appears in no published artifact, and it never leaves the record and
+        the successor references between records.
+        """
+
+        import assessment_fixtures as fixtures
+        from epc_control_tower.purpose import assess_purpose, recheck_purpose
+
+        activities = (
+            "schedules-and-room-data-sheets",
+            "ceiling-and-bulkhead-geometry",
+            "builders-work-openings",
+        )
+        with writable_test_directory("purpose-cf6b") as scratch:
+            out = scratch / "out"
+            out.mkdir()
+            before = _run_into(out)
+
+            facts = fixtures.assessment_facts()
+            composed = fixtures.fixture_composed()
+            prior = assess_purpose(
+                request=fixtures.fixture_request(
+                    activity_ids=activities, facts=facts
+                ),
+                composed=composed,
+                facts=facts,
+                determinations=fixtures.fixture_determinations(facts=facts),
+            )
+            reissued = fixtures.fixture_reissued_facts()
+            successor = recheck_purpose(
+                prior=prior,
+                request=fixtures.fixture_reissued_request(
+                    activity_ids=activities, facts=reissued
+                ),
+                composed=composed,
+                facts=reissued,
+                determinations=(),
+                succeeds=(
+                    (
+                        "interdisciplinary-coordination-readiness"
+                        "::builders-work-openings",
+                        1,
+                    ),
+                ),
+            )
+
+            after = {
+                path.relative_to(out).as_posix(): sha256_file(path)
+                for path in sorted(out.rglob("*"))
+                if path.is_file()
+            }
+
+        self.assertEqual(before, after)
+        self.assertNotEqual(successor.assessment_digest, prior.assessment_digest)
+
+    def test_the_second_set_of_validated_facts_reaches_no_published_value(self):
+        """The reissue fixture is machine-visibly untrue, and stays outside.
+
+        Every value :func:`fixture_reissued_facts` mints carries the fixture
+        marker: a content identifier that is not a SHA-256, a
+        ``validation_run_id`` that is not a digest, and repaired finding keys that
+        are not UUIDs. Two things follow, and both are asserted rather than
+        assumed. First, none of them can be mistaken for a claim that
+        ``pcert-sample``'s HVAC model was ever reissued or re-validated. Second,
+        the marker cannot appear anywhere in the published tree, the rule
+        documents, the IDS build product, or the contract snapshot — which is the
+        same standing this repository already gives the Overlay's nine
+        ``illustrative`` policy rows.
+        """
+
+        import assessment_fixtures as fixtures
+
+        reissued = fixtures.fixture_reissued_facts()
+        minted = {
+            fixtures.reissued_content_id("hvac"),
+            fixtures.reissued_content_id("architecture"),
+            fixtures.REISSUED_VALIDATION_RUN_ID,
+        }
+        for value in minted:
+            with self.subTest(value=value):
+                self.assertTrue(value.startswith(fixtures.FIXTURE_MARKER))
+                self.assertEqual(len(value), len(value.strip()))
+        self.assertEqual(reissued.validation_run_id, fixtures.REISSUED_VALIDATION_RUN_ID)
+
+        published = [
+            path
+            for root in ("data/processed", "reports", "ids", "docs/contracts")
+            for path in sorted((PROJECT_ROOT / root).rglob("*"))
+            if path.is_file()
+        ]
+        self.assertTrue(published)
+        for path in published:
+            with self.subTest(path=path.relative_to(PROJECT_ROOT).as_posix()):
+                self.assertNotIn(
+                    fixtures.FIXTURE_MARKER.encode("utf-8"), path.read_bytes()
+                )
+
+    def test_the_shipped_manifest_still_records_all_nine_policy_rows_as_illustrative(
+        self,
+    ):
+        """The fixture's second facts changed no project manifest, this round either."""
+
+        document = tomllib.loads(PCERT_MANIFEST.read_text(encoding="utf-8"))
+        overlay = document["overlay"]
+        bases = [
+            row["decision_basis"]
+            for table in (
+                "accepted_evidence_methods",
+                "team_mapping",
+                "risk_authorisations",
+            )
+            for row in overlay[table]
+        ]
+        self.assertEqual(bases, ["illustrative"] * 9)
 
 
 class PipelineDoesNotKnowAboutPurposeTests(unittest.TestCase):

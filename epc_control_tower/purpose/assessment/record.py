@@ -32,6 +32,15 @@ input to ``validation_run_id``, ``requirement_key``, ``finding_key``,
 ``issue_key``, ``group_ref``, ``ruleset_normalized_digest``, any legacy identity,
 or any value under ``data/processed/``, ``reports/`` or ``ids/``. The dependency
 points one way: this record cites frozen identities, and nothing frozen cites it.
+
+**Successors.** Because a sealed record is never rewritten, every later fact
+about it arrives as a *new* record citing it, and :class:`SuccessorSection` is
+what that citation looks like: the prior record's digest, the model versions
+compared value for value, and — per cited subscope — where each of its members
+went, which of its evidence citations still carry, and what could be established
+about its ``recheck_condition``. The section is present only on a successor, so
+an originating record's document, and therefore its digest, is byte-for-byte the
+one it had before successors existed.
 """
 
 from __future__ import annotations
@@ -44,15 +53,25 @@ from ...determinism import canonical_json_document
 from .request import AssessmentRequest
 
 __all__ = [
+    "CARRY_OVER_REASONS",
+    "MEMBER_DISPOSITIONS",
+    "RECHECK_CONDITION_STATES",
+    "SUCCESSOR_KINDS",
     "ActivityResult",
     "AssessmentRecord",
+    "CitedDetermination",
+    "ContextComparison",
+    "EvidenceCarryOver",
+    "MemberDisposition",
     "OutOfClassKey",
     "PathStep",
     "Reading",
+    "RecheckOutcome",
     "ResolvedRoute",
     "ResolvingAssignment",
     "Subject",
     "SubscopeResult",
+    "SuccessorSection",
     "build_assessment_digest",
     "resolved_document",
 ]
@@ -83,10 +102,43 @@ class Subject:
 
 
 @dataclass(frozen=True, slots=True)
+class CitedDetermination:
+    """One determination a reading rests on: its handle **and** its content.
+
+    The handle alone was not enough, and the gap it left is the reason this type
+    exists. A ``reference`` is a name somebody else's store assigns; nothing
+    stops the document behind it from being re-decided, so a later record that
+    saw the same string and concluded "the same determination was still relied
+    on" was comparing names and asserting identity. It would have said so with a
+    confirmation turned into a misalignment behind the handle.
+
+    ``content_digest`` is derived from what the determination *says*
+    (:meth:`.Determination.content_digest`) and is what makes the claim
+    provable. A successor compares both: same handle **and** same content is the
+    only combination that may be recorded as carried, and any other combination
+    is recorded as the situation it actually is (§4.7.2).
+
+    ``finding_key`` needs no equivalent because it already is one — it is derived
+    from the finding's own content, so checking it against the facts asks the
+    right question already.
+    """
+
+    reference: str
+    content_digest: str
+
+    @property
+    def sort_key(self) -> tuple[str, str]:
+        return (self.reference, self.content_digest)
+
+    def as_document(self) -> dict[str, str]:
+        return {"reference": self.reference, "content_digest": self.content_digest}
+
+
+@dataclass(frozen=True, slots=True)
 class Reading:
     """One evidence requirement's outcome for one subject, with its citations.
 
-    Exactly one of ``finding_keys`` and ``determination_references`` is
+    Exactly one of ``finding_keys`` and ``cited_determinations`` is
     populated, and ``absence`` names why neither is when the reading is an absent
     state. The three are kept apart rather than merged into one "evidence" field
     because "no finding exists", "a finding exists and says N/A", and "a
@@ -99,11 +151,23 @@ class Reading:
     binding: str = ""
     finding_keys: tuple[str, ...] = ()
     #: Every admissible determination behind this reading, not one chosen from
-    #: among them. Several references here mean several determinations reached
-    #: the same conclusion; a set that disagreed would have refused the request
-    #: rather than reaching a reading at all.
-    determination_references: tuple[str, ...] = ()
+    #: among them, and each with its content digest beside its reference. Several
+    #: entries here mean several determinations reached the same conclusion; a
+    #: set that disagreed would have refused the request rather than reaching a
+    #: reading at all.
+    cited_determinations: tuple[CitedDetermination, ...] = ()
     absence: str = ""
+
+    @property
+    def determination_references(self) -> tuple[str, ...]:
+        """Just the handles, for readers that want to name what was relied on.
+
+        A convenience over :attr:`cited_determinations`, never a substitute for
+        it: a comparison of *identity* must use the content digests, and this
+        property deliberately cannot supply them.
+        """
+
+        return tuple(item.reference for item in self.cited_determinations)
 
     def as_document(self) -> dict[str, object]:
         document: dict[str, object] = {
@@ -114,8 +178,10 @@ class Reading:
             document["binding"] = self.binding
         if self.finding_keys:
             document["finding_keys"] = list(self.finding_keys)
-        if self.determination_references:
-            document["determination_references"] = list(self.determination_references)
+        if self.cited_determinations:
+            document["cited_determinations"] = [
+                item.as_document() for item in self.cited_determinations
+            ]
         if self.absence:
             document["absence"] = self.absence
         return document
@@ -286,6 +352,303 @@ class ActivityResult:
         }
 
 
+# ---------------------------------------------------------------------------
+# Successor records: what a recheck says about a sealed record it succeeds
+# ---------------------------------------------------------------------------
+
+#: The two successor kinds ADR 0003 §4.5 admits. Only ``recheck`` is built by
+#: this checkpoint; ``authorisation`` is named so the vocabulary is closed and a
+#: third kind cannot be invented by passing a new string.
+SUCCESSOR_KINDS = ("recheck", "authorisation")
+
+#: What became of one member of a cited prior subscope. A member that is gone is
+#: **classified**, never folded into "resolved": the whole reason these four
+#: names exist separately is that "the fix landed" and "the thing stopped being
+#: derived" look identical from the verdict alone.
+MEMBER_DISPOSITIONS = (
+    #: The prior member is a subject of this record's partition — itself, or, for
+    #: a bare element the current evidence refined, the pairs it refined into.
+    "present",
+    #: The ``element_key`` is absent from the producing model version's element
+    #: inventory in this record's context. It was deleted, and a deletion is not
+    #: a fix.
+    "element-deleted-in-reissued-model",
+    #: Present in the inventory, but its ``ifc_class`` no longer falls in this
+    #: activity's ``subject_classes`` — an export-mapping change, say. The
+    #: activity is no longer about it; nothing about it was resolved.
+    "element-out-of-subject-class",
+    #: The penetrating element is still admitted and the pair is not: the current
+    #: ``pair_source`` determination does not name this counterpart. This is the
+    #: cross-record twin of the within-record guard in
+    #: :meth:`~.determinations.DeterminationLedger.counterparts`, and the reason
+    #: it needs its own name is that the within-record guard cannot see it.
+    "pairing-no-longer-derived",
+    #: The declared assessed scope of *this* request never offered the key. The
+    #: scope shrank; the deficiency did not.
+    "outside-declared-scope",
+)
+
+#: Whether one citation the prior subscope's path made is still cited here, and
+#: when it is not, which reason applies. Every one is a fact this record holds —
+#: never an inference about a document the record cannot see.
+CARRY_OVER_REASONS = (
+    #: Cited by this record too, **and proved to be the same document**: the
+    #: reference matches and so does the content digest. This is the only
+    #: combination that may be recorded as carried.
+    "carried",
+    #: The same handle is cited here and the document behind it is not the one
+    #: the sealed record read. The determination was re-decided, re-attributed,
+    #: or re-signed; whichever it was, the earlier one was not carried forward,
+    #: and this record must not say it was. **Not a refusal**: a review that was
+    #: genuinely re-held is new evidence, read normally, and the verdict it
+    #: produces stands. What changes is only what may be claimed about identity.
+    "determination-content-changed-under-the-same-reference",
+    #: Not cited here, and the model-version context moved. No determination
+    #: attributed to the prior context is admissible under this one — the same
+    #: rule ``determination-model-version-mismatch`` enforces inside one request,
+    #: read across the seal instead of inside it.
+    "determination-not-attributable-to-this-context",
+    #: Not cited here, and the context did not move: something superseded it.
+    "determination-not-cited-by-this-record",
+    #: A ``finding_key`` the prior path cited is absent from the facts this
+    #: record was assessed against. Content-derived already, so this branch never
+    #: had the identity problem the determination branch did.
+    "finding-absent-from-the-cited-run",
+)
+
+#: What this record was able to establish about the cited subscope's
+#: ``recheck_condition``. Deliberately **not** a two-valued met/unmet: three of
+#: this Pack's ten conditions name exactly one declared outcome and are
+#: comparable, the other seven are prose written for people, and a member set
+#: that shrank is not comparable at all.
+RECHECK_CONDITION_STATES = (
+    #: The one outcome the condition names, out of the leaf requirement's own
+    #: declared vocabulary, is what every corresponding member now reads. The
+    #: rest of the sentence is **not** checked, and this name says so rather than
+    #: claiming the condition was met.
+    "named-outcome-observed",
+    #: The named outcome is not what the members read.
+    "named-outcome-not-observed",
+    #: The condition names no declared outcome, or several. The evaluator
+    #: adjudicates nothing: a person reads it, and any judgement they make
+    #: re-enters through a determination like every other judgement here.
+    "no-machine-checkable-part",
+    #: The correspondence is incomplete — a member is gone, or the leaf node is no
+    #: longer reached — so there is no set to evaluate the condition over. Checked
+    #: **before** the condition, because a universally quantified sentence goes
+    #: literally true on a set its counterexample fell out of.
+    "not-comparable",
+    #: The cited subscope was ``READY`` and so carries no route and no condition.
+    #: Recorded distinctly from "the condition has no machine-checkable part",
+    #: because there being no sentence and there being a sentence nobody may
+    #: adjudicate are different facts about the sealed record.
+    "no-recheck-condition",
+)
+
+
+@dataclass(frozen=True, slots=True)
+class ContextComparison:
+    """The prior record's model versions beside this one's, value for value.
+
+    A comparison, never a clock read (ADR 0003 §2.3). It is recorded whether or
+    not anything moved, because "the context is unchanged" is a finding a reader
+    needs as much as "the producing model was reissued".
+    """
+
+    prior_producing: tuple[str, str]
+    producing: tuple[str, str]
+    prior_consuming: tuple[str, str]
+    consuming: tuple[str, str]
+
+    @property
+    def changed_models(self) -> tuple[str, ...]:
+        """Which named models moved, in ``model_key`` order."""
+
+        moved = []
+        if self.prior_producing != self.producing:
+            moved.append(self.producing[0])
+        if self.prior_consuming != self.consuming:
+            moved.append(self.consuming[0])
+        return tuple(sorted(moved))
+
+    @property
+    def is_current(self) -> bool:
+        return not self.changed_models
+
+    def as_document(self) -> dict[str, object]:
+        return {
+            "prior_producing": {
+                "model_key": self.prior_producing[0],
+                "content_id": self.prior_producing[1],
+            },
+            "producing": {
+                "model_key": self.producing[0],
+                "content_id": self.producing[1],
+            },
+            "prior_consuming": {
+                "model_key": self.prior_consuming[0],
+                "content_id": self.prior_consuming[1],
+            },
+            "consuming": {
+                "model_key": self.consuming[0],
+                "content_id": self.consuming[1],
+            },
+            "is_current": self.is_current,
+            "changed_models": list(self.changed_models),
+        }
+
+
+@dataclass(frozen=True, slots=True)
+class MemberDisposition:
+    """Where one member of the cited prior subscope is now, or why it is not.
+
+    ``current_ordinals`` may hold more than one entry, and that is refinement
+    rather than a partition defect: a bare element the prior record carried can
+    become several pairs here, each with its own verdict.
+
+    ``cause`` quotes what *this* record read — the current outcome of the
+    ``pair_source`` requirement, the ``ifc_class`` that excluded the key — and is
+    never an inference about a document this record cannot see.
+    """
+
+    member: Subject
+    disposition: str
+    cause: str = ""
+    current_ordinals: tuple[int, ...] = ()
+    current_verdicts: tuple[str, ...] = ()
+    current_leaf_outcomes: tuple[str, ...] = ()
+
+    def as_document(self) -> dict[str, object]:
+        document: dict[str, object] = {
+            "member": self.member.as_document(),
+            "disposition": self.disposition,
+        }
+        if self.cause:
+            document["cause"] = self.cause
+        if self.current_ordinals:
+            document["current_ordinals"] = list(self.current_ordinals)
+            document["current_verdicts"] = list(self.current_verdicts)
+            document["current_leaf_outcomes"] = list(self.current_leaf_outcomes)
+        return document
+
+
+@dataclass(frozen=True, slots=True)
+class EvidenceCarryOver:
+    """One citation the prior subscope's path made, and whether it carries here.
+
+    Separated from the dispositions because they answer different questions. A
+    disposition says what happened to a *subject*; this says what happened to the
+    *evidence* — and a subscope can retreat with every member still present,
+    purely because the determinations behind it stopped being attributable.
+    """
+
+    citation: str
+    citation_kind: str
+    reason: str
+    #: The content digest the **sealed** record recorded for this determination,
+    #: and the one **this** record cites under the same reference when it cites
+    #: one. Both are on the row so that "the document behind the handle changed"
+    #: is inspectable rather than merely asserted. Empty on a finding row, whose
+    #: citation is content-derived to begin with.
+    sealed_content_digest: str = ""
+    current_content_digest: str = ""
+
+    @property
+    def carried(self) -> bool:
+        return self.reason == "carried"
+
+    def as_document(self) -> dict[str, object]:
+        document: dict[str, object] = {
+            "citation": self.citation,
+            "citation_kind": self.citation_kind,
+            "reason": self.reason,
+            "carried": self.carried,
+        }
+        if self.sealed_content_digest:
+            document["sealed_content_digest"] = self.sealed_content_digest
+        if self.current_content_digest:
+            document["current_content_digest"] = self.current_content_digest
+        return document
+
+
+@dataclass(frozen=True, slots=True)
+class RecheckOutcome:
+    """What one sealed subscope looks like under this record's evidence.
+
+    Two statements, kept apart on purpose, because collapsing them is the whole
+    failure this shape exists to prevent:
+
+    * ``current_verdicts`` on the dispositions — **where the labour stands now.**
+    * ``condition_status`` — **whether the cited ``recheck_condition`` was shown
+      to be met.** It is not the same sentence, and this Pack carries a live case
+      where the two diverge: a chimney re-determined as penetrating nothing
+      reaches ``READY`` through ``no-penetration``, whose ``renders_inapplicable``
+      ends the path — so the openings activity is ``READY`` while no opening was
+      ever modelled and no cross-reference was ever added.
+
+    ``prior_recheck_condition`` is copied from the sealed record verbatim, so a
+    later reader is not renegotiating it.
+    """
+
+    activity_ref: str
+    subscope_ordinal: int
+    prior_verdict: str
+    prior_resolution_kind: str
+    prior_recheck_condition: str
+    prior_leaf_evidence_requirement_id: str
+    prior_members: tuple[Subject, ...]
+    dispositions: tuple[MemberDisposition, ...]
+    carry_over: tuple[EvidenceCarryOver, ...]
+    correspondence: str
+    named_outcome: str
+    condition_status: str
+    condition_basis: str
+
+    def as_document(self) -> dict[str, object]:
+        return {
+            "activity_ref": self.activity_ref,
+            "subscope_ordinal": self.subscope_ordinal,
+            "prior_verdict": self.prior_verdict,
+            "prior_resolution_kind": self.prior_resolution_kind,
+            "prior_recheck_condition": self.prior_recheck_condition,
+            "prior_leaf_evidence_requirement_id": (
+                self.prior_leaf_evidence_requirement_id
+            ),
+            "prior_members": [member.as_document() for member in self.prior_members],
+            "dispositions": [item.as_document() for item in self.dispositions],
+            "evidence_carry_over": [item.as_document() for item in self.carry_over],
+            "correspondence": self.correspondence,
+            "named_outcome": self.named_outcome,
+            "condition_status": self.condition_status,
+            "condition_basis": self.condition_basis,
+        }
+
+
+@dataclass(frozen=True, slots=True)
+class SuccessorSection:
+    """This record's successor reference, and what it found about each subscope.
+
+    One prior record per successor record: every cited subscope names the same
+    ``prior_assessment_digest``. The prior record is not amended in any way — it
+    is read for what it *recorded*, and its digest is re-computed from its own
+    content before anything is read out of it, so a successor can never be built
+    on a record whose seal is broken.
+    """
+
+    kind: str
+    prior_assessment_digest: str
+    context: ContextComparison
+    outcomes: tuple[RecheckOutcome, ...]
+
+    def as_document(self) -> dict[str, object]:
+        return {
+            "kind": self.kind,
+            "prior_assessment_digest": self.prior_assessment_digest,
+            "model_version_context_comparison": self.context.as_document(),
+            "subscopes": [outcome.as_document() for outcome in self.outcomes],
+        }
+
+
 @dataclass(frozen=True, slots=True)
 class AssessmentRecord:
     """One completed, sealed assessment.
@@ -309,6 +672,11 @@ class AssessmentRecord:
     #: computed from them; ADR 0003 §4.6 admits kinds, never quantities.
     cited_cost_parameter_names: tuple[str, ...]
     assessment_digest: str
+    #: Present when this record succeeds a sealed one (ADR 0003 §4.5, §4.7), and
+    #: absent on an originating record — where it is absent from the hashed
+    #: document too, so adding the successor shape moved no originating record's
+    #: digest by a byte.
+    successor: SuccessorSection | None = None
 
     def as_document(self) -> dict[str, object]:
         """The whole resolved record, in a total order, ready to hash or store.
@@ -328,6 +696,7 @@ class AssessmentRecord:
             activities=self.activities,
             cited_milestones=self.cited_milestones,
             cited_cost_parameter_names=self.cited_cost_parameter_names,
+            successor=self.successor,
         )
 
 
@@ -342,6 +711,7 @@ def resolved_document(
     activities: tuple[ActivityResult, ...],
     cited_milestones: Mapping[str, str],
     cited_cost_parameter_names: tuple[str, ...],
+    successor: SuccessorSection | None = None,
 ) -> dict[str, object]:
     """The canonical document for a resolved assessment, before it has a digest.
 
@@ -353,10 +723,15 @@ def resolved_document(
 
     ``assessment_digest`` is absent by construction, so the digest is never an
     input to the value that names it.
+
+    ``successor`` adds a key **only when there is one**. An originating record's
+    document is therefore the same document it was before successors existed, and
+    its digest the same value — which is what lets a successor cite a record
+    sealed by an earlier build of this package.
     """
 
     context = request.model_version_context
-    return {
+    document: dict[str, object] = {
         "request": {
             "project_id": request.project_id,
             "pack_id": request.pack_id,
@@ -392,6 +767,9 @@ def resolved_document(
         },
         "activities": [activity.as_document() for activity in activities],
     }
+    if successor is not None:
+        document["successor"] = successor.as_document()
+    return document
 
 
 def build_assessment_digest(document: Mapping[str, object]) -> str:

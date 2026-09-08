@@ -67,9 +67,11 @@ and nothing outside this package depends on its field names.
 
 from __future__ import annotations
 
+import hashlib
 from collections.abc import Sequence
 from dataclasses import dataclass
 
+from ...determinism import canonical_json_document
 from ..errors import PurposeAssessmentError
 from ..model import PROJECT_DECISION, EvidenceRequirement
 
@@ -148,33 +150,61 @@ class Determination:
     #: about this request's versions, so the request is refused.
     determined_against: DeterminedAgainst | None = None
 
-    @property
-    def content(self) -> tuple:
-        """Everything this determination *says*, for equality between references.
+    def content_document(self) -> dict[str, object]:
+        """Everything this determination *says*, as parsed, totally ordered structure.
 
-        Excludes ``reference`` itself, so that two offerings under one reference
-        can be compared for having the same content. Includes
-        ``penetrated_element_keys``, because two ``penetration-confirmed``
-        determinations naming different architectural elements disagree about
-        which pairs exist even though their outcomes match.
+        Excludes ``reference`` itself, which is the handle rather than the
+        document. Includes ``penetrated_element_keys``, because two
+        ``penetration-confirmed`` determinations naming different architectural
+        elements disagree about which pairs exist even though their outcomes
+        match; and includes ``determined_against``, because a determination
+        re-attributed to other model versions is not the same determination.
         """
 
-        return (
-            self.evidence_requirement_id,
-            self.method_id,
-            self.determiner,
-            self.basis,
-            self.outcome,
-            tuple(self.subject),
-            tuple(sorted(self.penetrated_element_keys)),
-            self.determined_against.as_tuple() if self.determined_against else (),
-        )
+        return {
+            "evidence_requirement_id": self.evidence_requirement_id,
+            "method_id": self.method_id,
+            "determiner": self.determiner,
+            "basis": self.basis,
+            "outcome": self.outcome,
+            "subject": list(self.subject),
+            "penetrated_element_keys": sorted(self.penetrated_element_keys),
+            "determined_against": (
+                list(self.determined_against.as_tuple())
+                if self.determined_against
+                else []
+            ),
+        }
+
+    @property
+    def content_digest(self) -> str:
+        """The one content identity of this determination, and the only one.
+
+        Two things need it and getting them from one definition is the point.
+        Within a request, it is how two offerings under one ``reference`` are
+        compared for being the same document. **Across records, it is the only
+        thing that can prove a citation still names what it named** — a sealed
+        record keeps the reference *and* this value, so a successor comparing
+        them can say "the same determination" and be right, instead of comparing
+        handles and saying it while a re-decided review sits behind one.
+
+        Same discipline as ``assessment_digest`` (ADR 0003 §5), and for the same
+        reasons: it hashes **parsed, sorted structure** and never raw bytes,
+        never a filename, never an mtime; it reads no clock; and it is never an
+        input to ``validation_run_id``, ``requirement_key``, ``finding_key``, or
+        any other published-contract value. It is content of a record, so it
+        does travel into that record's own ``assessment_digest``.
+        """
+
+        return hashlib.sha256(
+            canonical_json_document(self.content_document()).encode("utf-8")
+        ).hexdigest()
 
     @property
     def claim(self) -> tuple:
         """What this determination concludes, for detecting contradiction.
 
-        Narrower than :attr:`content`: two determinations by different people on
+        Narrower than :attr:`content_digest`: two determinations by different people on
         different bases that reach the same conclusion about the same subject
         corroborate each other and are not a conflict. What may not differ is
         the conclusion — the outcome, and the architectural elements a confirmed
@@ -269,7 +299,7 @@ class DeterminationLedger:
         for determination in self._offered:
             by_reference.setdefault(determination.reference, []).append(determination)
         for reference in sorted(by_reference):
-            contents = {item.content for item in by_reference[reference]}
+            contents = {item.content_digest for item in by_reference[reference]}
             if len(contents) > 1:
                 _refuse(
                     "determination-reference-not-unique",

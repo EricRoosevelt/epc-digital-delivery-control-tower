@@ -360,6 +360,95 @@
     three D-8 conditions, D-7's gate, §4.4, §4.5, §8's six counterfactuals and
     its seventh commitment. No Pack, Overlay, published artifact, or contract
     value is touched.
+  - Refines the version at `89a8305` (2026-09-08), which the technical director
+    reviewed against the merged Checkpoint D implementation and returned with
+    **two semantic gaps ruled on rather than left to the implementer**, plus
+    three properties a `recheck` successor must have. All of it is additive:
+    every earlier line stands, and the sections below gain lines rather than
+    losing or changing them. **D-10** — §2.3's third bullet said that "a
+    successor record re-confirms … that the context is still current", with a
+    subject wide enough to cover all successors, while §4.5's own description of
+    the `recheck` kind says it *records whether* the context is still current
+    and ADR 0002's worked Pack carries three `recheck_condition`s that say "on
+    the reissued model" in as many words. §2.3 is narrowed to the two records the
+    sentence was written for — an `authorisation` successor and a continued
+    `CONDITIONAL` promotion, both of which claim nothing changed — and §4.5 and
+    the new §4.7 fix the recheck rule: **a changed model-version context is a
+    recorded fact with consequences, never a bar to running.** The consequence is
+    named rather than smoothed over: after a re-issue no determination the prior
+    record read is admissible, so `builders-work-openings` retreats from
+    *(chimney, slab)* `READY` plus *(chimney, roof)* `BLOCKED` to one `UNKNOWN`
+    over every admitted subject carrying `penetration-not-determined`, and the
+    ceiling activity's alignment retreats to `not-yet-confirmed`. That is correct
+    behaviour, and what the record must add is **why** — that the underlying
+    determinations' version attribution lapsed, not merely that the verdict is
+    `UNKNOWN`. **D-11** — a sealed subscope and a freshly derived partition are
+    put beside each other **by member**, never by ordinal and never by outcome
+    path: an ordinal identifies which sealed subscope is being answered for
+    (§3.3 already denies a subscope any identity outliving its record), and the
+    path is what the comparison is *about*. §4.7.1 fixes the mapping, including
+    that it is not one-to-one — a bare element refined into pairs is present in
+    all of them. **D-12** — three properties, each closing a way a record could
+    say something false: (1) *reached `READY`* and *the recheck condition was
+    met* are separate recorded statements, because this Pack carries the live
+    divergence — a chimney re-determined as penetrating nothing reaches `READY`
+    through `no-penetration`, whose `renders_inapplicable` ends the path, so the
+    openings activity is `READY` while no opening was modelled and no
+    cross-reference was added; the machine-checkable part of a condition is the
+    **one** outcome it names out of its evidence requirement's declared
+    vocabulary, which is three of this Pack's ten, and the remaining prose is
+    never adjudicated by the evaluator; (2) a member or pair that **disappeared**
+    is classified — deleted in the reissued model, excluded by a changed
+    `ifc_class`, a pair the current determination no longer names, or a key the
+    declared scope no longer offers — and never folded into "resolved", with the
+    pair case being the cross-record twin of a guard that structurally cannot see
+    it; (3) **comparability is established before the condition is read**, because
+    both of this Pack's coverage conditions are universally quantified and go
+    literally true on a set that lost the element falsifying them. §7.1 gains
+    **six** rows for the recheck refusals and changes none. Unchanged: every rule
+    of §§1–4.6, the `CONDITIONAL` continuation and its seven checks, the two
+    successor kinds, sealing, the identity boundary, and §8's six counterfactuals
+    and seventh test obligation.
+  - Refines the version at `9a3884e` (2026-09-08), which **product review
+    returned AT RISK** on one gap: **cross-record evidence identity**. §4.7.2 had
+    a successor record whether each of the sealed path's citations still carried,
+    and the determination branch decided it by asking whether the same
+    `reference` string appeared among this record's citations. A reference is a
+    handle somebody else's store assigns; nothing about it prevents the document
+    behind it from being re-decided, re-signed, or re-attributed, so the check was
+    comparing names and reporting identity. Measured on the running evaluator,
+    two entry points reported **carried** falsely: an alignment determination
+    whose conclusion moved `confirmed` → `misaligned` under the same handle — the
+    verdict correctly became `BLOCKED` while the audit trail beside it said the
+    old determination was carried — and the same handle re-signed by a different
+    determiner on a different basis, where **no verdict moves at all**, so nothing
+    else in the record hinted that the document read was not the document sealed.
+    The finding branch was already honest, because a `finding_key` is
+    content-derived and is checked against the facts. **D-13** closes it: §4.7.6
+    fixes that every citation a sealed record makes of a determination carries a
+    **content-derived digest** beside the reference, that **carried** may be
+    recorded only when reference *and* digest both match, and that a matching
+    reference with a different digest is recorded as its own situation with both
+    digests on the row. The digest obeys §5's constraints without exception —
+    parsed sorted structure only, never raw bytes, no clock, never an input to
+    `validation_run_id` / `requirement_key` / `finding_key` or any
+    published-contract value — and, being content of the record, travels into that
+    record's own `assessment_digest`. **No store is introduced** and §1.2 item 4's
+    external model is untouched: the digest is computed from the determination the
+    assessment was handed, at the moment it is read. **This adds no refusal and
+    §7.1 gains no row**, deliberately: a review that was genuinely re-held is *new
+    evidence*, read normally, with the verdict it produces standing — only the
+    claim of identity is withdrawn. Refusal stays where §7.1 already put it (two
+    contents under one reference in one request, evidence attributed to other
+    model versions, contradictory determinations), and the re-attribution entry
+    point is pinned as a regression rather than rebuilt. The record document gains
+    the digest beside each determination reference, so every `assessment_digest`
+    computed under the new shape differs from one computed under the old; **no
+    record has ever been persisted anywhere in this repository, so nothing needs
+    migrating and no version negotiation is introduced.** Unchanged: §2.3's
+    narrowing, §§4.7.1–4.7.5, the member correspondence rule, the four
+    disappearance classifications, the condition states and their ordering,
+    sealing, determinism, and §8's six counterfactuals and its seventh commitment.
 - **Scope:** Checkpoint D runtime design only — the request boundary, the
   subscope construction rule ADR 0002 §3.2 explicitly left here, the
   assessment record shape, the runtime identity boundary, and the
@@ -404,6 +493,7 @@
 | 3 | Where the assessment step sits in the pipeline, and its input/output boundary | §1 |
 | 4 | What one assessment records, including every field a `CONDITIONAL` promotion must carry, and the total accounting of the declared scope | §4, §3.3 |
 | 4a | How a record is sealed, what a successor record is, and how a `CONDITIONAL` promotion continues, is proved to continue, or lapses across records | §4.5 |
+| 4b | What a `recheck` successor records: how a sealed subscope's members correspond to a re-derived partition, how a member that disappeared is classified, why *reached `READY`* and *the recheck condition was met* are separate statements, why comparability is established first, and how a citation's identity across records is proved rather than assumed | §4.7 |
 | 5 | Whether any runtime identity is minted, and the constraints on it | §5 |
 | 6 | How several subscopes of one activity with different verdicts are presented, under Framework invariant 1 | §6 |
 | 7 | How every missing input (evidence, binding, role, authorisation, method) fails closed, mapped row-by-row to ADR 0002 §3.7 | §7 |
@@ -692,6 +782,58 @@ artefacts the verdict is true of:
   (`AGENTS.md` rule 1) and part of `validation_run_id`; it is provenance of
   the context, not itself a model version, and the assessment reads no other
   clock.
+
+**That third bullet's subject was written too wide, and this paragraph narrows
+it to the two cases it was written for (closes D-10).** The sentence "a successor
+record (§4.5) re-confirms … that the context is still current" is correct of an
+`authorisation` successor and of a continued `CONDITIONAL` promotion, and only of
+those. Both make a claim of the form *nothing relevant has changed* — an
+authorisation record proves its evidence is unchanged rather than asserting it,
+and a continuation's check 2 lapses a promotion the moment either content
+identifier moves — so for both, a moved context is disqualifying by construction.
+A **`recheck` is the opposite kind of record**: its whole purpose is to read the
+evidence again, and the situation that most often prompts one is precisely that
+somebody reissued a model. Three of ADR 0002's worked Pack's own ten
+`recheck_condition`s say so in as many words — `missing-project-asset-identity`
+and `mep-element-not-spatially-assigned` end "on the reissued model", and
+`cross-model-misalignment` reads "re-run against the reissued model versions" —
+so a design in which a successor may never cross a re-issue would make three of
+that Pack's ten routes unreachable by any successor at all. §4.5's own
+description of the kind already says the narrower thing: a recheck "records
+whether … the model-version context is still current", which is *recording a
+fact*, not *requiring a value*.
+
+**So, for `kind = "recheck"`: a changed model-version context is a recorded fact
+with consequences, never a bar to running.** The comparison of §2.3 is still
+performed and still a value comparison with no clock in it; what changes is what
+follows from it. Nothing here relaxes the neighbouring rules, and three of them
+are worth restating because a reader could take this narrowing for more than it
+is:
+
+- **The stale-verdict rule stands.** A prior verdict is still true only of the
+  versions it named. A recheck across a re-issue does not update, extend, or
+  refresh that verdict; it produces a **new** verdict for a new
+  *(activity × scope × model-version context)* cell, and the prior record keeps
+  saying what it said.
+- **The evidence rule stands, and is what makes the retreat correct.** A
+  determination is admissible only for the model versions it names (§1.2 item 4;
+  §7.1's version-attribution rows), so **no determination the prior record read
+  survives a re-issue of either model.** In ADR 0002 §3.5's worked project that
+  is not a marginal effect: `builders-work-openings` retreats from
+  *(chimney, slab)* `READY` **plus** *(chimney, roof)* `BLOCKED` /
+  `missing-corresponding-opening` to one `UNKNOWN` subscope over every admitted
+  subject, carrying `penetration-not-determined`, because the coordination-review
+  determination that named the two counterparts is no longer attributable and the
+  pairs are therefore not derived at all; and `ceiling-and-bulkhead-geometry`
+  retreats from `confirmed` to `not-yet-confirmed`. **That is the correct
+  behaviour and is not to be repaired.** What §4.7 requires is that the record
+  say *why*: a bare `UNKNOWN` and an `UNKNOWN` whose cause is recorded as the
+  version attribution of the underlying determinations having lapsed are the
+  same verdict and completely different instructions to the team reading it.
+- **A `CONDITIONAL` continuation is untouched.** §4.5's check 2 still lapses a
+  promotion on any change of context, and nothing in this narrowing gives a
+  recheck a way to carry one across a re-issue. The two kinds of record answer
+  different questions and this paragraph moves only the one it names.
 
 ---
 
@@ -1287,6 +1429,32 @@ model-version context is still current (§2.3), by comparing content
 identifiers. Its verdict may differ from the cited record's; that is what it
 is for.
 
+**A `recheck` may cross a model re-issue, and §2.3's "still current" sentence is
+not about this kind (closes D-10).** The line in §2.3 that has a successor record
+"re-confirm … that the context is still current" was written for the two records
+that claim nothing changed — an `authorisation` successor, whose whole defining
+constraint is that its evidence is unchanged and proved so, and a continued
+`CONDITIONAL` promotion, which lapses on any context change under check 2 above.
+A `recheck` claims the opposite: it exists to read the evidence again, and a
+re-issue is the ordinary reason somebody asks for one. §2.3 now carries the
+narrowing and the reasoning; what belongs here is the consequence, because it
+lands on this section's own machinery:
+
+- **The comparison still happens and is still a value comparison.** A recheck
+  records the prior context beside its own, both content identifiers, and whether
+  either moved. No clock is read and neither context is called the later one.
+- **A moved context makes every determination the prior record read
+  inadmissible**, by §1.2 item 4 and §7.1's version-attribution rows, which are
+  unchanged. The subscopes that rested on those determinations therefore retreat
+  to their `not-yet-*` outcomes and their `UNKNOWN` leaves. **This is correct and
+  is not to be repaired.** §4.7.2 requires the record to carry the reason —
+  which citations stopped carrying and that the version attribution is why — so
+  that the retreat is legible rather than a bare `UNKNOWN`.
+- **Nothing here lets a promotion cross a re-issue.** Check 2 is untouched: a
+  continuation still lapses the moment either content identifier moves, and a
+  recheck that finds a moved context has no route to continuing one.
+
+
 **`kind = "authorisation"` — the evidence is unchanged and an authorisation
 is what is new (closes E-5).** This is the shape the real sequence needs and
 the previous revision had no way to express: an assessment produces `UNKNOWN`,
@@ -1737,6 +1905,285 @@ milestone dates, both of which the record *cites*; the assessment computes no
 new cost, duration, or temporal fact and fabricates none (Checkpoint B §3,
 repeatedly: "no magnitudes").
 
+### 4.7 What a `recheck` successor records (closes D-10, D-11, D-12, D-13)
+
+§4.5 fixes that a `recheck` re-derives membership and every reading from current
+evidence and records whether the cited subscope's `recheck_condition` is now met.
+It does not say how a sealed subscope and a freshly derived partition are put
+beside each other, and that turns out to carry several separate ways for a record
+to say something false — three about the subjects and the condition (§§4.7.1–4.7.4)
+and one about the identity of the evidence itself (§4.7.6). This section fixes
+them. Nothing here is a new kind of
+record, a new identity, or a new evidence path — a recheck is the assessment of
+§§2–4 run again, with a comparison layered on top and carried into the same
+`assessment_digest`.
+
+**A recheck answers for named sealed subscopes, and cites them by ordinal.** The
+successor reference of §4.1 generalises by one step for this kind: a `recheck`
+record may answer for **more than one** subscope of the **same** prior record,
+carrying one `(activity, subscope ordinal)` per cited subscope beside the single
+`kind` and `assessment_digest`. One prior record per successor record; the §4.1
+shape is the one-subscope case of this one. The reason for the generalisation is
+practical and small — a re-issue moves every activity at once, and forcing one
+record per subscope would multiply records that share every other field — and it
+adds nothing a reader must trust, because each cited subscope carries its whole
+answer independently.
+
+#### 4.7.1 Correspondence is by member, never by ordinal and never by path
+
+**A subscope has no identity that outlives its record (§3.3), so the comparison
+cannot be between subscopes.** An ordinal is a within-record handle: it says
+*which sealed subscope this record is answering for*, and nothing else. It is not
+matched against an ordinal in the new partition, because the new partition was
+re-derived and its ordinals are a function of outcomes that are exactly what is
+under test. Neither is the root-to-leaf outcome path a key: the path is the
+*subject* of the comparison, so matching on it would presuppose the answer.
+
+**What is compared is the sealed subscope's recorded `members`.** For every one
+of them, the record states where that member is in the partition this record
+derived, or that it is not there and under which classification. Two properties
+of the mapping matter:
+
+- **It is not one-to-one, and must not be forced to be.** A bare `element_key`
+  the prior record carried may be refined here into several pairs — one per
+  counterpart the current `pair_source` determination names — and each pair has
+  its own verdict. The member is **present** in all of them, and the record
+  carries every landing. Reporting such a subject as gone would be as wrong as
+  reporting it as resolved.
+- **A pair member is matched on both its keys.** A pair whose penetrating element
+  is still admitted but whose counterpart the current determination no longer
+  names has *not* moved verdict; it has ceased to be derived, which §4.7.2 makes
+  a classification of its own.
+
+#### 4.7.2 A member that is gone is classified, and never read as resolved
+
+For every sealed member the record states exactly one disposition. Four of the
+five are ways a subject leaves without anything being fixed, and the design keeps
+them apart because the next action differs in each case and a single "gone" would
+hide which one a team is in:
+
+| Disposition | What happened | Why it is not a resolution |
+|---|---|---|
+| **present** | the member is a subject of this record's partition — itself, or the pairs it refined into | the good news, if there is any, is the **verdict** recorded beside it, which is a separate field and a separate sentence (§4.7.3) |
+| **element deleted in the reissued model** | the `element_key` is absent from the producing model version's element inventory in this context | a deletion removes the question, not the deficiency; the element the blocker was about is not there to be correct |
+| **element out of subject class** | the key is in the inventory and in the declared scope, and its `ifc_class` no longer falls in the activity's `subject_classes` (§3.1) — an export-mapping change, say | the activity stopped being *about* it; nothing about it was evaluated, let alone fixed. It appears in this record's `out_of_subject_class[]`, which carries no verdict by construction (§3.3) |
+| **pairing no longer derived** | the penetrating element is still admitted and the pair is not: the current `pair_source` determination names other counterparts, or none | this is the live `renders_inapplicable` case below; the opening was never modelled and the cross-reference was never added |
+| **outside the declared scope** | this request's own assessed scope does not resolve to the key (§2.1) | the scope shrank; the deficiency did not. A scope is a declared input and narrowing it is a legitimate thing to do — provided it cannot pass for progress |
+
+The order above is the order the classification is applied, and each test
+presupposes the ones above it: a key absent from the inventory has no `ifc_class`
+to be excluded by, and a key outside the declared scope was never offered to
+class admission at all.
+
+**The pairing case is structurally the same failure the within-record guard
+already catches, one record further out.** §3.1's refinement rule and the
+admissibility discipline of §1.2 item 4 together stop an inadmissible claim from
+deciding which pairs exist *inside* one record — the case where a declined
+determination sorting ahead of an admissible one would silently delete every
+counterpart the admissible one named. That guard looks at one record's offered
+determinations and cannot see an earlier record at all, so a pair that existed
+there and does not exist here would otherwise be **absent rather than reported**:
+not reported wrongly, not reported at all, which is the same class of silent
+disappearance and the one this disposition closes.
+
+**Why the evidence is classified as well as the members.** A subscope can retreat
+with **every member still present**, purely because the determinations behind it
+stopped being admissible — which is exactly what a re-issue does (§2.3). So the
+record also states, for each `finding_key` and each determination reference the
+sealed path cited, whether this record cites it too, and when it does not, which
+of two things happened: the model-version context moved, so nothing attributed to
+the prior context is admissible here; or the context did not move and something
+superseded it. Both are facts the record holds. **"Cites it too" is a comparison
+of content, not of handles, and §4.7.6 fixes why it has to be** — a reference is a
+name, the document behind it can be re-decided, and a successor comparing names
+would report a reversed determination as still relied on. This is what turns "the openings
+activity is `UNKNOWN` again" into "the coordination-review determination this
+would have needed was made against a model version that no longer exists, so
+re-hold the review" — the same verdict, and a different instruction.
+
+#### 4.7.3 "Reached READY" and "the recheck condition was met" are two sentences
+
+**They must be recorded separately, and this Pack carries a live case where they
+diverge in the dangerous direction.** *(chimney, roof)* is `BLOCKED` /
+`missing-corresponding-opening`, and that route's `recheck_condition` names
+`outcome = cross-referenced`. Suppose the next coordination review determines
+that the chimney penetrates nothing. The chimney takes the `no-penetration`
+branch to `READY`, whose `renders_inapplicable = ["opening-status"]` ends the
+path before the opening question is asked. **The openings activity is `READY` for
+that chimney, and no opening was modelled and no cross-reference was added.** A
+record that reported only the verdict would report an unmodelled roof opening as
+work completed. So the record states the verdicts its members now reach *and*,
+as a distinct field, what it was able to establish about the sealed condition —
+which here is that the condition is **not comparable**, because its subject
+stopped being derived.
+
+**What may be established about a `recheck_condition`, and by what.** Field 9 of
+a promotion is prose and §4.5 already forbids the assessment from interpreting
+it; a `recheck_condition` is prose in exactly the same sense and gets exactly the
+same treatment, with one narrow, declared exception:
+
+- **The machine-checkable part is the outcome the condition names, when it names
+  exactly one.** Every evidence requirement declares a closed `outcomes[]`
+  vocabulary (ADR 0002 §3.2). A condition's text is split into whole tokens and
+  intersected with that vocabulary — a membership test over a closed set of
+  frozen strings, not comprehension of a sentence. Exactly one match is
+  comparable; **zero or several are not**, and several is the important one,
+  because choosing among them would be the assessment deciding which half of a
+  Pack author's sentence it meant and the value it chose would be a verdict.
+  In ADR 0002 §3.5's worked Pack this resolves **three of ten** conditions —
+  `missing-corresponding-opening` and `opening-not-verifiably-linked` to
+  `cross-referenced`, `cross-model-misalignment` to `confirmed`. The other seven
+  are coverage sentences or a three-outcome disjunction and stay for a person.
+- **Everything else in the sentence is not read**, and the recorded state says so
+  by its name: the comparable outcome is `named-outcome-observed`, which claims
+  that the outcome the condition names is what every corresponding member now
+  reads and claims **nothing** about the rest of the sentence. There is no state
+  meaning "the condition is met".
+- **Judgement re-enters through the existing chain and no other way.** Where a
+  condition's prose needs a person — "the alignment-confirmation method is
+  performed and reports the models aligned" — the person's conclusion arrives as
+  a **determination**, admitted or declined by §1.2 item 4 with a determiner and a
+  cited basis, and it changes the reading, which changes the leaf, which is what
+  the comparison then sees. No new shortcut, no second determination kind, and
+  **no automatic reuse of a determination attributed to earlier versions** —
+  §7.1's version-attribution rows are unchanged and still refuse one.
+
+#### 4.7.4 Comparability is established before the condition is, and this ordering is load-bearing
+
+**A universally quantified condition goes literally true on a set that lost its
+counterexample.** ADR 0002 §3.5's Pack has two of them —
+`asset-identity-not-evaluated` ("Every element in the assessed scope is covered
+by an evaluation … no element is left with no finding at all") and
+`in-model-position-not-evaluated` ("Every element in the assessed scope is
+covered by a finding") — and in `pcert-sample` the only element either is false
+of is the zero-finding `IfcChimney`. Delete that chimney in the re-issue, or let
+an export mapping move its `ifc_class` out of the activity's `subject_classes`,
+and the sentence holds of everything that remains. **The condition would report
+satisfied because the element it was about is gone.**
+
+> **Rule.** A `recheck` establishes member correspondence **first**. If any
+> sealed member's disposition is anything but *present*, the condition's state is
+> **not comparable**, with the missing members and their classifications
+> recorded, and no comparison is attempted. The same state is reached when every
+> member is present but the current path no longer reaches the sealed leaf's
+> evidence requirement, since there is then no reading of it to compare.
+
+**Not comparable is not a weaker "not met", and it is certainly not a met.** It
+says the set the sentence quantifies over is not the set in front of us, which is
+a different fact with a different next action: somebody has to decide whether the
+missing members should have been there. Recording it as either of the other two
+would be the silent default `AGENTS.md` rule 6 exists to stop, arriving through a
+sentence that is true.
+
+#### 4.7.5 What a `recheck` refuses
+
+A recheck is refused, before any comparison is recorded, when:
+
+- the prior record does not hash to the `assessment_digest` it carries — it was
+  rewritten after being sealed, and §4.5 forbids that, so nothing may be founded
+  on it;
+- the cited `(activity, ordinal)` is not in the prior record, or the request does
+  not ask about that activity, so nothing was re-derived to compare;
+- the record names no sealed subscope at all;
+- the request's `project_id`, `pack_id` or `direction_id` differs from the prior
+  record's — that is a different question, and answering it while citing the prior
+  record's ordinals would attach conclusions to a record that was never about
+  them;
+- the composed `pack_version` differs from the one the prior record recorded.
+  Across a `pack_version` move the same `resolution_kind` may resolve to a
+  different route with a different `recheck_condition`, and an evidence
+  requirement's declared `outcomes[]` — the vocabulary the §4.7.3 comparison is a
+  membership test against — may differ too, so the comparison would be between
+  two different sentences reported as one answer. This is the same reasoning as
+  §4.5's check 6 for a continued promotion, and it refuses rather than lapsing
+  because there is no promotion here to lapse.
+
+Every one of those is a refusal in §7.1's sense: total, with a code, and never a
+partially written record.
+
+#### 4.7.6 A citation carries its content, or "still relied on" cannot be said (closes D-13)
+
+**A `reference` is a handle, not a document.** §1.2 item 4 fixes that a
+determination is produced outside the assessment and cited by reference, and
+§4.7.2 has a successor record whether each of the sealed path's citations still
+carries. Between those two, one thing was missing and it is the thing the claim
+rests on: **a reference is a name somebody else's store assigns, and nothing
+about it prevents the document behind it from being re-decided, re-signed, or
+re-attributed.** A successor comparing reference strings is comparing names and
+reporting identity.
+
+**The failure it produced is worse than a wrong verdict, because the verdict was
+right.** Take ADR 0002 §3.5's worked project. The first record's ceiling subscope
+is `READY` on an alignment determination reading `confirmed`. Later the same
+handle carries a review that reports the models `misaligned`. The successor
+re-derives the reading from what it is offered, so the subscope correctly becomes
+`BLOCKED` / `cross-model-misalignment` — and beside that correct verdict the
+carry-over row says the earlier determination was **carried**, which is false.
+The second variant is sharper still: the same handle, the same conclusion,
+**re-signed by a different determiner on a different basis**. Nothing moves at
+all — the subscope is `READY` before and after — so no other field of the record
+even hints that the document read is not the document sealed. §4.5 makes
+attributability "the whole of what distinguishes a determination from an
+assertion"; a record that cannot tell whose signature it is relying on is not
+holding to that.
+
+**The rule.**
+
+> Every citation a sealed record makes of a determination carries, beside the
+> reference, a **content-derived digest** of what that determination says. A
+> later record may record a citation as **carried** only when it cites the same
+> reference **and** the same content digest. Where it cites the reference and a
+> different digest, the record states that the document behind the handle
+> changed, and both digests are on the row. Where it does not cite the reference
+> at all, §4.7.2's two absent reasons apply as before.
+
+**What the digest is over, and what it obeys.** It hashes the determination's
+*content* — its evidence requirement, method, determiner, basis, outcome,
+subject, any architectural elements a confirmed penetration named, and its
+model-version attribution — and **not** its reference, which is the handle rather
+than the document. It obeys §5's constraints without exception, and for §5's
+reasons: **parsed, sorted structure only**, never raw bytes, never a filename,
+never an mtime, never filesystem ordering, and no clock. It is **never an input
+to a frozen identity** — not `validation_run_id`, not `requirement_key`, not
+`finding_key`, not any published-contract value. It *is* content of the record
+that carries it, so it travels into that record's own `assessment_digest`, which
+is what makes a sealed citation as unrewritable as everything else in the record.
+
+**No store is introduced.** The digest is computed from the determination the
+assessment was handed, at the moment it is read, and written into the record. The
+design still holds no determination content, still resolves no reference, and
+still has nowhere to put one — §1.2 item 4's external model is untouched.
+
+**This is emphatically not a new refusal, and the restraint is the point.** A
+review that was genuinely re-held is **new evidence**. It is read like any other
+determination, the leaf it produces stands, and the verdict changes if it should
+— exactly as it does today. The only thing that changes is what may be *claimed*
+about identity. Refusal stays exactly where §7.1 already put it: two contents
+offered under one reference **within a single request**, evidence attributed to
+model versions the request does not name, and two admissible determinations that
+contradict each other. Turning a changed determination into a refusal would stop
+a recheck precisely when a team had done the work of re-holding the review, which
+is the opposite of what a recheck is for. **So §7.1 gains no row from this
+ruling**, and that absence is deliberate rather than an oversight.
+
+**The version-attribution case needs no separate name, and here is why.** A
+determination whose `determined_against` is not the request's context is refused
+before any subscope is assessed (§7.1), so every determination a record cites
+carries the request's own context. Two consequences follow and both are used
+above: under an unchanged context a content change cannot be a version change, so
+it is a change of substance; and after a re-issue the earlier determination
+cannot be offered at all, so its citation lands in
+"not attributable to this context" rather than here. The classification never has
+to guess which part of a content change moved, because the standing refusal has
+already made that unambiguous.
+
+**`finding_key` needed no equivalent, and stating why keeps the asymmetry
+honest.** A `finding_key` is *already* derived from the finding's own content
+(`identity.py`), so checking a sealed one against the facts asks the right
+question: a re-validated model produces different keys and the old ones do not
+survive it. The determination branch was the only one comparing names, and it is
+the only one this ruling changes.
+
 ---
 
 ## 5. Runtime identity: what is minted, what is forbidden
@@ -1771,7 +2218,8 @@ the record is complete, over its canonically-ordered content:
   `whole-scope`, `per-subject` and `per-subject-pair` readings, each pair
   member carrying both its keys and the admitted `element_key` it refined
   from, and each reading carrying its cited `finding_key`s / determination
-  references / named-absence markers), `verdict`, `resolution_kind`, resolved
+  references **with each one's content digest** (§4.7.6) / named-absence
+  markers), `verdict`, `resolution_kind`, resolved
   route, and assignment;
 - any `CONDITIONAL` promotion (§4.4), with all nine of its fields, whether
   first granted in this record or continued into it (§4.5) — a continued
@@ -1793,7 +2241,16 @@ the record is complete, over its canonically-ordered content:
   rather than merely stated;
 - for a successor record, its `kind` and the prior record's
   `assessment_digest`, activity, and subscope ordinal it succeeds (§4.5) —
-  already final, so no cycle.
+  already final, so no cycle;
+- for a `recheck` successor, everything §4.7 requires it to record about each
+  cited subscope: the sealed subscope's members and `recheck_condition` as
+  copied, each member's disposition and the verdicts it now reaches, each
+  citation's carry-over reason, the two contexts compared, and the condition's
+  established state. A record that says a blockage cleared and one that says it
+  did not therefore cannot share a digest, which is what makes the comparison
+  sealed rather than merely stated. On an **originating** record none of this
+  exists and no key for it is present, so an originating record's digest is the
+  value it had before successors did.
 
 It changes whenever the evidence read or a verdict reached changes — which is
 exactly when §3.3 and §4.5 need a different handle — and is identical for two
@@ -1937,6 +2394,18 @@ three that were owed from the D-7 round's own escalation: a determination whose
 `subject` has the wrong arity for its declared grain, a finding-backed
 requirement whose `outcomes[]` omits one of the three names the reduction needs,
 and an `outcomes[]` naming none or several unresolved states.
+The D-10/D-11/D-12 round adds **six** to §7.1 and changes no row
+anywhere: the five ways a `recheck` successor can fail to name a sealed subscope
+it could honestly answer for — a broken seal, an unresolved ordinal, an activity
+the request does not ask about, no cited subscope at all, and a different
+project, Pack or direction — plus a `pack_version` that moved under the sealed
+condition. **Its three substantive rulings add no row on purpose, and that is
+worth stating**: a re-issue is a *recorded fact* and not a refusal (§2.3, §4.5),
+a member that disappeared is a *classification* and not a refusal (§4.7.2), and
+a condition that cannot be compared reaches a *state* and not a refusal
+(§4.7.4). Each of the three could have been written as a refusal, and each would
+then have destroyed the record that a production owner needs in exactly the
+situation it fires.
 
 ### 7.1 Composition / request defects — the assessment refuses
 
@@ -1968,6 +2437,12 @@ and an `outcomes[]` naming none or several unresolved states.
 | A finding-backed evidence requirement of a requested activity declares `outcomes[]` omitting any of `satisfied`, `unmet`, `not-yet-evaluated` | Refuse — the `FAIL` > not-covered > `PASS` reduction has three levels and needs three names for them; mapping `PASS` onto whatever the Pack happened to list first is a silent default whose value is a verdict | (new to this round; scheduled from the D-7 round's escalation; ADR 0002 §3.2's three names for validation-backed evidence) |
 | An evidence requirement of a requested activity declares `outcomes[]` naming none, or more than one, of `not-yet-evaluated` / `not-yet-confirmed` / `not-yet-determined` | Refuse — with none there is no name for "not yet", and with several there is a choice the Pack author did not make. Never resolved by taking the first or the last listed (§3.1) | (new to this round; scheduled from the D-7 round's escalation; ADR 0002 §3.2's closed unresolved-state vocabulary) |
 | Any Pack-load structural invariant fails (dangling node, cycle, uncovered `outcome`, `CONDITIONAL` leaf, orphaned/duplicate `resolution_kind`, out-of-scope `next_node`, `renders_inapplicable` violation, unresolved `direction_id`, `pair_source` violation, …) | Composition already failed closed at Pack load; the assessment has no valid tree and refuses | the eighteen Pack-load invariant rows and the `resolution_routes[]` / `directions[]` / `decision_nodes[]` rows of ADR 0002 §3.7 |
+| A successor record with `kind = "recheck"` cites a prior record whose content does not hash to the `assessment_digest` it carries | Refuse — the record was rewritten after being sealed, which §4.5 forbids outright, and a successor founded on it would cite a digest that names content nobody can reproduce | (new to this round; **closes D-10**; §4.5's sealing rule, §4.7.5) |
+| A successor record with `kind = "recheck"` cites an `(activity, subscope ordinal)` the prior record does not carry | Refuse — an ordinal identifies one sealed subscope and nothing else, and a citation that resolves to none has nothing to answer for | (new to this round; **closes D-11**; §3.3, §4.7.5) |
+| A successor record with `kind = "recheck"` cites a subscope of an activity **this request does not ask about** | Refuse — nothing was re-derived for it, so every disposition and every carry-over row would be a statement about an empty comparison. Never resolved by silently widening the request's `activity_ids[]` | (new to this round; **closes D-11**; §4.7.1, §4.7.5) |
+| A successor record with `kind = "recheck"` names no sealed subscope at all | Refuse — a successor that answers for nothing is not a successor; it is an ordinary assessment wearing a successor reference | (new to this round; **closes D-11**; §4.7.5) |
+| A successor record with `kind = "recheck"` whose request names a different `project_id`, `pack_id`, or `direction_id` than the prior record | Refuse — a recheck re-asks the prior question of newer evidence, and a different question is a new assessment. Citing the prior record's ordinals across that change would attach conclusions to a record that was never about them | (new to this round; **closes D-11**; §4.7.5) |
+| A successor record with `kind = "recheck"` composed against a `pack_version` other than the one the prior record recorded | Refuse — the same `resolution_kind` may resolve to a route with a different `recheck_condition`, and an evidence requirement's declared `outcomes[]` may differ, so the §4.7.3 comparison would be between two different sentences reported as one answer. Refuses rather than lapsing, there being no promotion here to lapse | (new to this round; **closes D-12**; the same reasoning as §4.5's check 6; ADR 0002 §3.4b) |
 
 ### 7.2 `CONDITIONAL` promotion defects — the promotion refuses, the leaf stands
 
@@ -2112,6 +2587,21 @@ Overlay example file is added or modified. `data/processed/`, `reports/`, any
 snapshot, and contract 1.6 are untouched. Nothing is merged, tagged, or
 released. Implementation of Checkpoint D is not started.
 
+**Read the paragraph above as of each round that wrote it, which is how every
+sentence in this document is meant.** Checkpoint D's implementation has since
+been merged (`65f4636`, `89a8305`), and the D-10/D-11/D-12 round that added §4.7
+was written against it and alongside a `recheck` successor in
+`epc_control_tower/purpose/assessment/`. What the paragraph still says truly, and
+what has not moved in any round: **this document adds and modifies no code, rule,
+checker, test, `identity.py` derivation, `rules/` file, `projects/` file,
+`data/processed/` artifact, `reports/` artifact, `ids/` document, Pack or Overlay
+file, and nothing is merged, tagged, or released by it.** Still not designed and
+still not built: the `CONDITIONAL` promotion and its `authorisation` successor,
+persistent storage for a record, an activity-level verdict, a machine contract,
+a CLI, Doctor, a Registry, and a second Purpose Pack. The document's **Status**
+line is left as written, because moving it is an approval act and belongs to the
+technical director rather than to a round that adds design.
+
 ## Consequences
 
 This document commits a future Checkpoint D implementation to: a
@@ -2179,7 +2669,36 @@ neither continues nor ends a release; **records sealed at their
 digest and never rewritten**, with every later fact — an authorisation, a
 recheck, an actor, a lapse — arriving as one of exactly two kinds of successor
 record, the `authorisation` kind proving rather than asserting that the
-evidence it cites is unchanged; **no roll-up above the subscope** — a
+evidence it cites is unchanged; a **`recheck` free to cross a model re-issue**,
+because §2.3's "the context is still current" belongs to the two records that
+claim nothing changed and not to the one whose purpose is to read the evidence
+again — recording the changed context, and recording that the prior record's
+determinations stopped being admissible under it, rather than being barred from
+running or reporting the retreat that follows as a bare `UNKNOWN`; with that
+recheck **corresponding a sealed subscope to a re-derived partition by member**,
+never by ordinal and never by outcome path, and not one-to-one, since a bare
+element refined into pairs is present in all of them; every member that is gone
+**classified** — deleted in the reissued model, excluded by a changed
+`ifc_class`, a pair the current determination no longer names, or a key the
+declared scope no longer offers — and **never folded into "resolved"**; *reached
+`READY`* and *the recheck condition was met* recorded as **two statements**,
+because a chimney re-determined as penetrating nothing reaches `READY` through
+`no-penetration` whose `renders_inapplicable` ends the path, leaving the openings
+activity `READY` with no opening modelled and no cross-reference added; the
+machine-checkable part of a `recheck_condition` being the **one** outcome it
+names out of its evidence requirement's declared vocabulary and nothing else of
+the sentence, with zero or several naming nothing and every remaining judgement
+re-entering through the existing determination chain rather than a shortcut; and
+**comparability established before the condition is read**, so that a
+universally quantified coverage condition cannot report satisfied on a set that
+lost the element falsifying it; with **every determination citation sealed
+together with a content-derived digest of what that determination says**, so that
+a later record may record a citation as carried only when the reference **and**
+the content match, and a document re-decided, re-signed or re-attributed behind
+an unchanged handle is recorded as the change it is rather than as continuity —
+that digest obeying §5's constraints exactly, introducing no store, and adding no
+refusal, since a review genuinely re-held is new evidence to be read normally and
+only the claim of identity is withdrawn; **no roll-up above the subscope** — a
 heterogeneous assessed scope is presented as its partition of
 `(subscope → verdict)` pairs, each satisfying invariant 1 for its own scope,
 the decision not to define an activity-level verdict being this checkpoint's
