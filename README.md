@@ -540,13 +540,16 @@ publishes, or acts on a record. That is the boundary this section is about.
   everything about accepting a risk. A release granted over a known deficiency
   has nowhere in this repository to be recorded at all, so there is nothing to
   carry forward and nothing to lapse. `authorisation` is named in the successor
-  vocabulary so a third kind cannot be invented by passing a new string, and
-  nothing sits behind the name. A second Pack, a Pack registry, and any Overlay
-  override mechanism are likewise absent, as is any published machine contract,
-  CLI surface, or Doctor experience for an assessment. Where a record is stored
-  is also still an open decision: both entry points return one and write no file,
-  and nothing stores a determination either — those are read by reference, from
-  somebody else's store, and this repository has none.
+  vocabulary so that the missing second kind is a designed gap on the record
+  rather than one nobody thought of, and nothing sits behind the name. That
+  naming is a statement of design and not a check: the field is an unvalidated
+  string, and nothing in the code enforces the vocabulary. A second Pack, a Pack
+  registry, and any Overlay override mechanism are likewise absent, as is any
+  published machine contract, CLI surface, or Doctor experience for an
+  assessment. Where a record is stored is also still an open decision: both
+  entry points return one and write no file, and nothing stores a determination
+  either — those are read by reference, from somebody else's store, and this
+  repository has none.
 * **Readiness from validation metadata** — a readiness verdict exists now, but
   only as a function of *(evidence outcome, decision tree)* and only inside an
   assessment record. It is never derived from validation metadata, and the

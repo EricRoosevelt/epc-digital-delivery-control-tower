@@ -357,8 +357,11 @@ class ActivityResult:
 # ---------------------------------------------------------------------------
 
 #: The two successor kinds ADR 0003 §4.5 admits. Only ``recheck`` is built by
-#: this checkpoint; ``authorisation`` is named so the vocabulary is closed and a
-#: third kind cannot be invented by passing a new string.
+#: this checkpoint; ``authorisation`` is named so the second kind is a designed
+#: and recorded gap rather than one nobody thought of. Closed by design, not by
+#: enforcement: nothing reads this constant, ``SuccessorSection.kind`` is an
+#: unvalidated ``str``, and a third string passed there is carried into the
+#: record (ADR 0003 §10.1 item 9).
 SUCCESSOR_KINDS = ("recheck", "authorisation")
 
 #: What became of one member of a cited prior subscope. A member that is gone is

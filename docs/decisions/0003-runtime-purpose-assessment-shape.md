@@ -2753,8 +2753,12 @@ none of them is partly present under another name:
    a subscope, and `CONDITIONAL` remains structurally illegal as a decision-tree
    leaf.
 2. **The `authorisation` successor record.** `SUCCESSOR_KINDS` names it, so the
-   vocabulary is closed and a third kind cannot be invented by passing a new
-   string; nothing behind the name is written. Only `recheck` is built.
+   second kind is a designed and recorded gap rather than one nobody thought of.
+   Nothing behind the name is written, and only `recheck` is ever constructed.
+   The vocabulary is closed as a statement of design and not as an enforcement:
+   `SuccessorSection.kind` is an unvalidated `str`, nothing checks a value
+   against `SUCCESSOR_KINDS`, and a caller who passes a third string gets a
+   record that carries it (item 9).
 3. **Physical storage for a record.** A recheck is handed the prior record as an
    object. Where a sealed record lives between the two calls is undecided, and no
    file is written.
@@ -2775,6 +2779,16 @@ none of them is partly present under another name:
    whole request — so what was built refuses more widely than what was designed.
    That gap is open, and the closing note of §10.2 keeps it open rather than
    resolving it by quietly editing the narrower text away.
+9. **Any enforcement of the successor-kind vocabulary.** `SUCCESSOR_KINDS` is
+   read by nothing. It is referenced only by its own definition and by what
+   re-exports it — one import and two `__all__` entries. No test mentions it,
+   and `SuccessorSection.kind` is an unvalidated `str` that no
+   construction-time check ever sees. So `SuccessorSection` accepts a third kind
+   as a plain string, and `as_document` carries that string into the hashed
+   record. `SuccessorSection` is one of the exported Python objects item 6 calls
+   the only public surface, which is what makes this reachable rather than
+   theoretical. Whether the field should be checked is open, and answering it
+   would be a behavioural change rather than a documentation one.
 
 **And it has never been used.** No assessment record has been produced for any
 real project, by anyone, at any point. Nor can one be produced from what this
@@ -2882,8 +2896,9 @@ and then ends the entire request; §7.1's whole-request refusal on a
 model-version mismatch; the activity-scoped refusals of §4.3 and §7.1 against
 the whole-request refusal that was built (§10.1 item 8); the positive path being
 covered only on a fixture (item 7); determination eligibility being unfixed (item
-1); and this section's item 3. Each is a live question about this design, and
-none of them is answered by having been listed together.
+1); the successor-kind vocabulary being recorded as closed while nothing
+enforces it (§10.1 item 9); and this section's item 3. Each is a live question
+about this design, and none of them is answered by having been listed together.
 
 ## Consequences
 
