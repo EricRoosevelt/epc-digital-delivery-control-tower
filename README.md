@@ -456,13 +456,45 @@ A few properties are worth stating because they are what the design is for:
   `reports/`, `ids/` and the contract snapshot, is read back by nothing, and
   the one identifier it mints is never an input to any published value.
 
-**`pcert-sample` cannot produce one, and that is the correct result.** Every
-live verdict across its three activities is non-`READY`, every non-`READY`
-subscope needs a resolving assignment, and all four of its `team_mapping` rows
-are `illustrative` — so every assignment it could make would rest on a
-demonstration row. The assessment refuses, and names the four rows and the
-routes each one would have had to found. Nothing in this repository has been
-staffed, and no record here claims otherwise.
+A sealed record can be **succeeded, never amended**. A `recheck` re-derives the
+whole assessment from current evidence and returns a *new* sealed record saying,
+for each subscope it answers for, three things that are not the same thing: where
+that subscope's members are now, which of its evidence citations still carry, and
+what could be established about its recheck condition — usually nothing, because
+most of those conditions are sentences written for people and nothing here
+adjudicates prose. A member that has vanished is classified — deleted from the
+re-issued model, out of the activity's subject classes, a pair the current
+determination no longer names, or a key this request's scope no longer declares —
+and none of the four is read as resolved.
+
+**Two things a production owner meets first, and neither is a fault.**
+
+* **After a model re-issue, activities go back to `UNKNOWN`.** A determination is
+  admissible only for the model versions it names, so a coordination review held
+  against last week's export says nothing about this week's. The openings
+  activity retreats from a `READY` pair and a `BLOCKED` pair to a single
+  `UNKNOWN`, and the ceiling activity's alignment retreats to `not-yet-confirmed`.
+  Nothing broke: the evidence behind the old verdicts was about models that no
+  longer exist. What a recheck adds is the *reason* — that the citations stopped
+  being attributable — rather than a bare `UNKNOWN`.
+* **The sample in this repository produces no record, and that is permanent.**
+  See below; it is a standing property, not an outstanding task.
+
+**`pcert-sample` cannot produce one, that is the correct result, and it is a
+standing property rather than a gap.** Every live verdict across its three
+activities is non-`READY`, every non-`READY` subscope needs a resolving
+assignment, and all four of its `team_mapping` rows are `illustrative` — so every
+assignment it could make would rest on a demonstration row. The assessment
+refuses, and names the four rows and the routes each one would have had to found.
+Its three `accepted_evidence_methods` rows are `illustrative` too, so a
+determination produced by one of those methods is refused on the same principle
+from the other direction. This project has never appointed a team and has never
+accepted an evidence method; nothing in this repository has been staffed, and no
+record here claims otherwise. Making the sample produce a record would mean
+writing `project-decision` onto nine rows describing decisions nobody took, which
+is exactly what that field exists to prevent. Every positive path in the design is
+covered instead on an isolated test fixture, through the same entry point and with
+no test flag, no skip switch, and no relaxed check.
 
 **Nothing in the pipeline reads either file.** `epc-ct run`, `check`, `group`
 and every exporter are unaffected by their presence, their contents, or their
@@ -487,26 +519,34 @@ The shapes both files take, and why, are fixed in
 [`docs/decisions/0002-minimal-purpose-pack-project-overlay.md`](docs/decisions/0002-minimal-purpose-pack-project-overlay.md).
 The runtime shape an assessment takes is fixed in
 [`docs/decisions/0003-runtime-purpose-assessment-shape.md`](docs/decisions/0003-runtime-purpose-assessment-shape.md),
-of which the evaluator above is the first implementation — request scope,
-subscopes, the record and the identity boundary. What that document designs and
-this implementation does not build is listed below.
+of which the evaluator and the `recheck` above are the implementation so far —
+request scope, subscopes, the record, the identity boundary, and succeeding a
+sealed record. What those two documents design and this implementation does not
+build is listed below.
 
 ## Not implemented
 
 Named here because they are discussed around this project and are easy to assume
 exist. Treat each as named-but-unbuilt, and do not infer a design from the name.
 
-The Purpose inputs and a first evaluator over them are built. What follows the
-first record is not, and that is the boundary this section is about.
+The Purpose inputs, an evaluator over them, and a `recheck` that succeeds a
+sealed record are built. What a *release* needs after that — accepting a risk,
+carrying it forward, ending it — is not, and neither is anything that stores,
+publishes, or acts on a record. That is the boundary this section is about.
 
-* **Continuing or ending a release** — there is no `CONDITIONAL` promotion and
-  no successor record of either kind. A record is sealed when its digest is
-  computed and is never rewritten, but nothing yet writes the *next* record that
-  would recheck it, carry an authorisation, or lapse a promotion. A second Pack,
-  a Pack registry, and any Overlay override mechanism are likewise absent, as is
-  any published machine contract, CLI surface, or Doctor experience for an
-  assessment. Where a record is stored is also still an open decision: the
-  evaluator returns one and writes no file.
+* **Continuing or ending a release** — there is no `CONDITIONAL` promotion, and
+  no `authorisation` successor record. A sealed record can be succeeded by a
+  `recheck`, and that half is built and described above; what is missing is
+  everything about accepting a risk. A release granted over a known deficiency
+  has nowhere in this repository to be recorded at all, so there is nothing to
+  carry forward and nothing to lapse. `authorisation` is named in the successor
+  vocabulary so a third kind cannot be invented by passing a new string, and
+  nothing sits behind the name. A second Pack, a Pack registry, and any Overlay
+  override mechanism are likewise absent, as is any published machine contract,
+  CLI surface, or Doctor experience for an assessment. Where a record is stored
+  is also still an open decision: both entry points return one and write no file,
+  and nothing stores a determination either — those are read by reference, from
+  somebody else's store, and this repository has none.
 * **Readiness from validation metadata** — a readiness verdict exists now, but
   only as a function of *(evidence outcome, decision tree)* and only inside an
   assessment record. It is never derived from validation metadata, and the
@@ -529,13 +569,29 @@ first record is not, and that is the boundary this section is about.
   handoff — direction is Pack data. A consequence's *magnitude* is likewise
   absent: routes name kinds, the project's milestone dates are cited, and no
   duration, cost or delay is computed from either.
-* **Source fix and recheck** — there is no traceable loop from a fix made at
-  source to the subsequent validation that confirms it. Today a fix and the run
-  that follows it are two unrelated events, and nothing links them. What such a
-  loop should do is an open question, not a settled one: recomputing only the
-  changed objects is one possible answer, but it is not the assumed design and
-  nothing here presumes it. For the avoidance of doubt about present behaviour,
-  `epc-ct run` recomputes the full scope every time.
+* **Source fix and recheck** — a `recheck` links a sealed assessment to a later
+  validation run over the same members, and says of each one where it now stands.
+  What nothing here can do is attribute any of that to a *fix*: no part of this
+  repository observes a change made in Revit or Tekla, and the recheck is
+  explicit that a member which has vanished is classified rather than read as
+  resolved. So the loop from a fix made at source to the validation that confirms
+  it is still missing its first half. What should close it is an open question,
+  not a settled one: recomputing only the changed objects is one possible answer,
+  but it is not the assumed design and nothing here presumes it. For the
+  avoidance of doubt about present behaviour, `epc-ct run` recomputes the full
+  scope every time.
+
+Separately from any of that, seven things this design **cannot** do — and which a
+project adopting it therefore has to give to a person — are recorded together in
+[`docs/decisions/0003-runtime-purpose-assessment-shape.md`](docs/decisions/0003-runtime-purpose-assessment-shape.md)
+§10.2, with the two that follow from the Pack/Overlay data shape in
+[`docs/decisions/0002-minimal-purpose-pack-project-overlay.md`](docs/decisions/0002-minimal-purpose-pack-project-overlay.md)
+§9. The two above are on that list because a production owner runs into them
+without going looking; the other five are about who is competent to determine
+anything, what a `determiner` name does and does not prove, who owns the signal
+that a cited determination was rewritten in place, why sealing a record does not
+seal the documents it cites, and the fact that writing a record notifies nobody
+and assigns nobody.
 
 The three seams in `AGENTS.md` (`Checker`, `GroupingPolicy`, `Exporter`) are
 extension points of the pipeline as it stands. They are not a roadmap, and none
