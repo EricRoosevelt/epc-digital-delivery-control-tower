@@ -79,6 +79,7 @@ from purpose_fixtures import (
 
 __all__ = [
     "ALIGNMENT_CONFIRMED",
+    "ALIGNMENT_VARIANTS",
     "FIXTURE_MARKER",
     "asset_identity_requirement_keys",
     "determined_against",
@@ -96,6 +97,7 @@ __all__ = [
     "ROOF_OPENING_BASIS",
     "reissued_content_id",
     "assessment_facts",
+    "fixture_alignment_variants",
     "fixture_composed",
     "fixture_determinations",
     "fixture_narrowed_penetration_determinations",
@@ -590,6 +592,98 @@ def fixture_superseding_determinations(*, facts) -> tuple[Determination, ...]:
             determined_against=against,
         ),
     )
+
+
+#: The five ways a later record can meet the alignment determination the first
+#: one read. Named here rather than built inline in a test, because each is a
+#: *store behaviour* somebody has to imagine on this project's behalf — nobody
+#: has re-held a coordination review here — and the module docstring's rule is
+#: that everything this repository has not decided lives in one place.
+ALIGNMENT_VARIANTS = (
+    #: Byte for byte the determination the first record read.
+    "unchanged",
+    #: The same handle, and the review behind it now reports the models
+    #: misaligned. The verdict must move to BLOCKED and the carry-over row must
+    #: not say the old determination was carried.
+    "same-reference-new-conclusion",
+    #: The same handle and the same conclusion, re-signed by somebody else on a
+    #: different basis. The verdict does not move at all, which is exactly why a
+    #: comparison of handles would never have noticed.
+    "same-reference-new-determiner",
+    #: The same handle, re-attributed to model versions this request does not
+    #: name. Already refused by ``determination-model-version-mismatch``; kept
+    #: here so that the refusal is a regression rather than a memory.
+    "same-reference-other-versions",
+    #: A genuinely new document under a new handle, reaching the same conclusion.
+    "new-reference",
+)
+
+
+def fixture_alignment_variants(*, facts) -> dict[str, tuple[Determination, ...]]:
+    """One full determination set per entry in :data:`ALIGNMENT_VARIANTS`.
+
+    Every set is the same as :func:`fixture_determinations` except for the one
+    ``cross-model-alignment`` determination, so a recheck driven by any of them
+    differs from the first record in exactly one evidence document — which is
+    what makes what the record then says about that document a measurement
+    rather than a coincidence.
+
+    None of this has happened. ``pcert-sample`` has never had an alignment
+    confirmation, never had one reversed, and never had one re-signed.
+    """
+
+    against = determined_against(facts)
+    elsewhere = DeterminedAgainst(
+        producing_model_key="hvac",
+        producing_content_id=reissued_content_id("hvac"),
+        consuming_model_key="architecture",
+        consuming_content_id=against.consuming_content_id,
+    )
+    others = tuple(
+        determination
+        for determination in fixture_determinations(facts=facts)
+        if determination.evidence_requirement_id != "cross-model-alignment"
+    )
+
+    def alignment(**overrides) -> Determination:
+        fields = dict(
+            reference=ALIGNMENT_CONFIRMED,
+            evidence_requirement_id="cross-model-alignment",
+            method_id="overlay-comparison",
+            determiner="fixture-model-coordination",
+            basis="fixture: placements overlaid in a common viewer",
+            outcome="confirmed",
+            subject=("hvac", "architecture"),
+            determined_against=against,
+        )
+        fields.update(overrides)
+        return Determination(**fields)
+
+    return {
+        "unchanged": (alignment(),) + others,
+        "same-reference-new-conclusion": (
+            alignment(
+                outcome="misaligned",
+                basis="fixture: overlaid again, the two models do not share a datum",
+            ),
+        )
+        + others,
+        "same-reference-new-determiner": (
+            alignment(
+                determiner="fixture-information-manager",
+                basis="fixture: overlay repeated by a second reviewer, same conclusion",
+            ),
+        )
+        + others,
+        "same-reference-other-versions": (
+            alignment(determined_against=elsewhere),
+        )
+        + others,
+        "new-reference": (
+            alignment(reference="fixture-determination/alignment/confirmed-again"),
+        )
+        + others,
+    }
 
 
 def fixture_narrowed_penetration_determinations(*, facts) -> tuple[Determination, ...]:

@@ -32,6 +32,7 @@ from __future__ import annotations
 import ast
 import copy
 import dataclasses
+import json
 import unittest
 
 import assessment_fixtures as fx
@@ -43,6 +44,7 @@ from epc_control_tower.purpose import (
     machine_checkable_outcome,
     recheck_purpose,
 )
+from epc_control_tower.purpose.assessment.record import build_assessment_digest
 from helpers import PROJECT_ROOT
 
 ASSESSMENT_PACKAGE = PROJECT_ROOT / "epc_control_tower" / "purpose" / "assessment"
@@ -872,6 +874,258 @@ class AShrunkenSetIsNotASatisfiedConditionTests(_ChainCase):
         )
         outcome = _outcome_for(record, CEILING, ordinal)
         self.assertEqual(outcome.condition_status, "not-comparable")
+
+
+class EvidenceIdentityAcrossRecordsTests(_ChainCase):
+    """"Still relied on" has to be provable, or it must not be said.
+
+    A determination ``reference`` is a handle somebody else's store assigns, and
+    nothing stops the document behind it from being re-decided. A successor that
+    compared handles would report "the earlier determination was carried forward"
+    while a confirmation-turned-misalignment sat behind the name — and it would
+    do so *with the verdict correct*, since the reading is re-derived from what is
+    offered now. Only the audit trail beside the verdict would be false, which is
+    the hardest kind of wrong to notice.
+
+    So a sealed record keeps each citation's **content digest** beside its
+    reference, and a successor compares both. The four entry points below are
+    driven end to end, each differing from the first record in exactly one
+    evidence document, and each asserting the carry-over row, the current verdict,
+    that the sealed record was not rewritten, and that two constructions of the
+    successor agree byte for byte.
+
+    The cited subscope is the ceiling activity's ``READY`` one, whose leaf is
+    ``cross-model-alignment`` and whose single determination citation is the
+    alignment confirmation. It is the sharpest place for this: reversing that one
+    determination moves the verdict all the way from ``READY`` to ``BLOCKED``.
+    """
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.ceiling_ordinal = _ordinal_of(cls.prior, CEILING, "")
+        cls.variants = fx.fixture_alignment_variants(facts=cls.facts)
+        cls.sealed_document = copy.deepcopy(cls.prior.as_document())
+
+    def _recheck(self, variant):
+        return recheck_purpose(
+            prior=self.prior,
+            request=self.request,
+            composed=self.composed,
+            facts=self.facts,
+            determinations=self.variants[variant],
+            succeeds=((CEILING, self.ceiling_ordinal),),
+        )
+
+    def _row(self, record):
+        outcome = _outcome_for(record, CEILING, self.ceiling_ordinal)
+        rows = [
+            item for item in outcome.carry_over if item.citation_kind == "determination"
+        ]
+        self.assertEqual(len(rows), 1)
+        return outcome, rows[0]
+
+    def _verdicts(self, record):
+        return {
+            subscope.resolution_kind or subscope.verdict
+            for subscope in _subscopes(record, CEILING).subscopes
+        }
+
+    def _assert_prior_untouched_and_deterministic(self, variant, record):
+        self.assertEqual(self.prior.as_document(), self.sealed_document)
+        self.assertEqual(
+            self.prior.assessment_digest,
+            build_assessment_digest(self.sealed_document),
+        )
+        again = self._recheck(variant)
+        self.assertEqual(again.as_document(), record.as_document())
+        self.assertEqual(again.assessment_digest, record.assessment_digest)
+
+    def test_the_variants_are_the_four_entry_points_and_a_control(self):
+        self.assertEqual(sorted(self.variants), sorted(fx.ALIGNMENT_VARIANTS))
+
+    def test_a_determination_that_did_not_change_at_all_is_carried(self):
+        """The control. Without it, "not carried" everywhere would also pass."""
+
+        record = self._recheck("unchanged")
+        outcome, row = self._row(record)
+        self.assertEqual(row.reason, "carried")
+        self.assertTrue(row.carried)
+        self.assertEqual(row.citation, fx.ALIGNMENT_CONFIRMED)
+        self.assertEqual(row.sealed_content_digest, row.current_content_digest)
+        self.assertTrue(row.sealed_content_digest)
+        self.assertEqual(self._verdicts(record), {"READY", "in-model-position-not-evaluated"})
+        self.assertEqual(outcome.correspondence, "complete")
+        self._assert_prior_untouched_and_deterministic("unchanged", record)
+
+    def test_the_same_reference_with_a_reversed_conclusion(self):
+        """The verdict was always right; the audit trail beside it was not.
+
+        ``confirmed`` becomes ``misaligned`` behind the same handle. The reading
+        is re-derived, so the subscope correctly reaches ``BLOCKED`` /
+        ``cross-model-misalignment`` either way — which is precisely why the
+        carry-over row was the thing that could lie, and why it is what this
+        asserts.
+        """
+
+        record = self._recheck("same-reference-new-conclusion")
+        outcome, row = self._row(record)
+        self.assertEqual(
+            row.reason, "determination-content-changed-under-the-same-reference"
+        )
+        self.assertFalse(row.carried)
+        self.assertEqual(row.citation, fx.ALIGNMENT_CONFIRMED)
+        self.assertNotEqual(row.sealed_content_digest, row.current_content_digest)
+        self.assertTrue(row.current_content_digest)
+        self.assertIn("cross-model-misalignment", self._verdicts(record))
+        self.assertEqual(outcome.prior_verdict, "READY")
+        self.assertEqual(
+            [item.current_verdicts for item in outcome.dispositions],
+            [("BLOCKED",)] * 3,
+        )
+        self._assert_prior_untouched_and_deterministic(
+            "same-reference-new-conclusion", record
+        )
+
+    def test_the_same_reference_re_signed_by_somebody_else(self):
+        """The case a comparison of handles could never have caught.
+
+        Same conclusion, different determiner and basis. **No verdict moves at
+        all** — the subscope is ``READY`` before and after — so nothing else in
+        the record would have hinted that the document behind the handle is not
+        the one that was read. Attributability is the whole of what makes a
+        determination evidence rather than an assertion, so a record must not
+        claim the earlier signature carried when a different person signed.
+        """
+
+        record = self._recheck("same-reference-new-determiner")
+        outcome, row = self._row(record)
+        self.assertEqual(
+            row.reason, "determination-content-changed-under-the-same-reference"
+        )
+        self.assertNotEqual(row.sealed_content_digest, row.current_content_digest)
+        self.assertEqual(self._verdicts(record), {"READY", "in-model-position-not-evaluated"})
+        self.assertEqual(
+            [item.current_verdicts for item in outcome.dispositions], [("READY",)] * 3
+        )
+        self._assert_prior_untouched_and_deterministic(
+            "same-reference-new-determiner", record
+        )
+
+    def test_the_same_reference_re_attributed_to_other_model_versions(self):
+        """Already refused, and pinned here so it stays a rule rather than a memory.
+
+        This entry point is not a carry-over question at all: a determination
+        attributed to versions the request does not name is refused before any
+        subscope is assessed, by the rule that has always refused it. The
+        regression exists because that rule is now load-bearing for a second
+        reason — it is what guarantees an admitted determination's version
+        attribution always equals the request's context, so the carry-over
+        classification never has to guess which part of a content change moved.
+        """
+
+        with self.assertRaises(PurposeAssessmentError) as caught:
+            self._recheck("same-reference-other-versions")
+        self.assertEqual(caught.exception.code, "determination-model-version-mismatch")
+        self.assertEqual(self.prior.as_document(), self.sealed_document)
+
+    def test_a_new_determination_under_a_new_reference(self):
+        """Nothing under the old handle here, and the context did not move."""
+
+        record = self._recheck("new-reference")
+        outcome, row = self._row(record)
+        self.assertEqual(row.reason, "determination-not-cited-by-this-record")
+        self.assertEqual(row.citation, fx.ALIGNMENT_CONFIRMED)
+        self.assertTrue(row.sealed_content_digest)
+        self.assertEqual(row.current_content_digest, "")
+        self.assertTrue(record.successor.context.is_current)
+        self.assertEqual(self._verdicts(record), {"READY", "in-model-position-not-evaluated"})
+        self.assertEqual(
+            [item.current_verdicts for item in outcome.dispositions], [("READY",)] * 3
+        )
+        self._assert_prior_untouched_and_deterministic("new-reference", record)
+
+    def test_a_changed_determination_is_read_as_evidence_and_never_refused(self):
+        """The restraint, stated as a test.
+
+        A review that was genuinely re-held is new evidence. It is read normally,
+        the leaf it produces stands, and the verdict changes if it should. What
+        the record may not do is claim the earlier determination was carried.
+        Refusal stays where it already was — two contents under one reference in
+        one request, evidence attributed elsewhere, and contradictory
+        determinations — and this asserts the changed-content case is on the
+        other side of that line.
+        """
+
+        record = self._recheck("same-reference-new-conclusion")
+        blocked = [
+            subscope
+            for subscope in _subscopes(record, CEILING).subscopes
+            if subscope.verdict == "BLOCKED"
+        ]
+        self.assertEqual(len(blocked), 1)
+        self.assertEqual(blocked[0].resolution_kind, "cross-model-misalignment")
+        self.assertEqual(blocked[0].path[-1].outcome, "misaligned")
+        self.assertEqual(
+            blocked[0].path[-1].readings[0].determination_references,
+            (fx.ALIGNMENT_CONFIRMED,),
+        )
+
+    def test_the_sealed_record_kept_the_content_digest_that_makes_this_possible(self):
+        """Without it there is nothing on the sealed record to compare against."""
+
+        subscope = [
+            item
+            for item in _subscopes(self.prior, CEILING).subscopes
+            if item.ordinal == self.ceiling_ordinal
+        ][0]
+        step = subscope.path[-1]
+        self.assertEqual(step.evidence_requirement_id, "cross-model-alignment")
+        cited = step.readings[0].cited_determinations
+        self.assertEqual(len(cited), 1)
+        self.assertEqual(cited[0].reference, fx.ALIGNMENT_CONFIRMED)
+        self.assertRegex(cited[0].content_digest, r"^[0-9a-f]{64}$")
+        document = self.prior.as_document()["activities"]
+        self.assertIn("cited_determinations", json.dumps(document))
+
+    def test_the_content_digest_hashes_structure_and_never_the_reference(self):
+        """The handle is not part of what the determination says.
+
+        Two determinations differing only in ``reference`` are the same document
+        filed twice; two differing in any field of their content are not. And the
+        digest is a hash of parsed sorted structure, so it reads no clock, no
+        file, and no filesystem order — the same discipline
+        ``assessment_digest`` runs on.
+        """
+
+        base = self.variants["unchanged"][0]
+        renamed = dataclasses.replace(base, reference="fixture-determination/other")
+        self.assertEqual(base.content_digest, renamed.content_digest)
+        for field, value in (
+            ("outcome", "misaligned"),
+            ("determiner", "somebody-else"),
+            ("basis", "a different basis"),
+            ("method_id", "another-method"),
+            ("subject", ("architecture", "hvac")),
+        ):
+            with self.subTest(field=field):
+                self.assertNotEqual(
+                    base.content_digest,
+                    dataclasses.replace(base, **{field: value}).content_digest,
+                )
+        source = (ASSESSMENT_PACKAGE / "determinations.py").read_text(encoding="utf-8")
+        self.assertIn("canonical_json_document(self.content_document())", source)
+        self.assertNotIn('"reference"', source.split("content_document", 1)[1][:900])
+
+    def test_the_content_digest_is_never_an_input_to_a_frozen_identity(self):
+        """Same one-way dependency ``assessment_digest`` has (ADR 0003 §5)."""
+
+        identity = (PROJECT_ROOT / "epc_control_tower" / "identity.py").read_text(
+            encoding="utf-8"
+        )
+        for forbidden in ("content_digest", "determination", "assessment"):
+            with self.subTest(forbidden=forbidden):
+                self.assertNotIn(forbidden, identity)
 
 
 class SealingAndDeterminismTests(_ChainCase):

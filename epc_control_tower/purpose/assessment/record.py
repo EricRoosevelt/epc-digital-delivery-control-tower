@@ -59,6 +59,7 @@ __all__ = [
     "SUCCESSOR_KINDS",
     "ActivityResult",
     "AssessmentRecord",
+    "CitedDetermination",
     "ContextComparison",
     "EvidenceCarryOver",
     "MemberDisposition",
@@ -101,10 +102,43 @@ class Subject:
 
 
 @dataclass(frozen=True, slots=True)
+class CitedDetermination:
+    """One determination a reading rests on: its handle **and** its content.
+
+    The handle alone was not enough, and the gap it left is the reason this type
+    exists. A ``reference`` is a name somebody else's store assigns; nothing
+    stops the document behind it from being re-decided, so a later record that
+    saw the same string and concluded "the same determination was still relied
+    on" was comparing names and asserting identity. It would have said so with a
+    confirmation turned into a misalignment behind the handle.
+
+    ``content_digest`` is derived from what the determination *says*
+    (:meth:`.Determination.content_digest`) and is what makes the claim
+    provable. A successor compares both: same handle **and** same content is the
+    only combination that may be recorded as carried, and any other combination
+    is recorded as the situation it actually is (§4.7.2).
+
+    ``finding_key`` needs no equivalent because it already is one — it is derived
+    from the finding's own content, so checking it against the facts asks the
+    right question already.
+    """
+
+    reference: str
+    content_digest: str
+
+    @property
+    def sort_key(self) -> tuple[str, str]:
+        return (self.reference, self.content_digest)
+
+    def as_document(self) -> dict[str, str]:
+        return {"reference": self.reference, "content_digest": self.content_digest}
+
+
+@dataclass(frozen=True, slots=True)
 class Reading:
     """One evidence requirement's outcome for one subject, with its citations.
 
-    Exactly one of ``finding_keys`` and ``determination_references`` is
+    Exactly one of ``finding_keys`` and ``cited_determinations`` is
     populated, and ``absence`` names why neither is when the reading is an absent
     state. The three are kept apart rather than merged into one "evidence" field
     because "no finding exists", "a finding exists and says N/A", and "a
@@ -117,11 +151,23 @@ class Reading:
     binding: str = ""
     finding_keys: tuple[str, ...] = ()
     #: Every admissible determination behind this reading, not one chosen from
-    #: among them. Several references here mean several determinations reached
-    #: the same conclusion; a set that disagreed would have refused the request
-    #: rather than reaching a reading at all.
-    determination_references: tuple[str, ...] = ()
+    #: among them, and each with its content digest beside its reference. Several
+    #: entries here mean several determinations reached the same conclusion; a
+    #: set that disagreed would have refused the request rather than reaching a
+    #: reading at all.
+    cited_determinations: tuple[CitedDetermination, ...] = ()
     absence: str = ""
+
+    @property
+    def determination_references(self) -> tuple[str, ...]:
+        """Just the handles, for readers that want to name what was relied on.
+
+        A convenience over :attr:`cited_determinations`, never a substitute for
+        it: a comparison of *identity* must use the content digests, and this
+        property deliberately cannot supply them.
+        """
+
+        return tuple(item.reference for item in self.cited_determinations)
 
     def as_document(self) -> dict[str, object]:
         document: dict[str, object] = {
@@ -132,8 +178,10 @@ class Reading:
             document["binding"] = self.binding
         if self.finding_keys:
             document["finding_keys"] = list(self.finding_keys)
-        if self.determination_references:
-            document["determination_references"] = list(self.determination_references)
+        if self.cited_determinations:
+            document["cited_determinations"] = [
+                item.as_document() for item in self.cited_determinations
+            ]
         if self.absence:
             document["absence"] = self.absence
         return document
@@ -344,8 +392,17 @@ MEMBER_DISPOSITIONS = (
 #: when it is not, which reason applies. Every one is a fact this record holds —
 #: never an inference about a document the record cannot see.
 CARRY_OVER_REASONS = (
-    #: Cited by this record too.
+    #: Cited by this record too, **and proved to be the same document**: the
+    #: reference matches and so does the content digest. This is the only
+    #: combination that may be recorded as carried.
     "carried",
+    #: The same handle is cited here and the document behind it is not the one
+    #: the sealed record read. The determination was re-decided, re-attributed,
+    #: or re-signed; whichever it was, the earlier one was not carried forward,
+    #: and this record must not say it was. **Not a refusal**: a review that was
+    #: genuinely re-held is new evidence, read normally, and the verdict it
+    #: produces stands. What changes is only what may be claimed about identity.
+    "determination-content-changed-under-the-same-reference",
     #: Not cited here, and the model-version context moved. No determination
     #: attributed to the prior context is admissible under this one — the same
     #: rule ``determination-model-version-mismatch`` enforces inside one request,
@@ -354,7 +411,8 @@ CARRY_OVER_REASONS = (
     #: Not cited here, and the context did not move: something superseded it.
     "determination-not-cited-by-this-record",
     #: A ``finding_key`` the prior path cited is absent from the facts this
-    #: record was assessed against.
+    #: record was assessed against. Content-derived already, so this branch never
+    #: had the identity problem the determination branch did.
     "finding-absent-from-the-cited-run",
 )
 
@@ -487,18 +545,30 @@ class EvidenceCarryOver:
     citation: str
     citation_kind: str
     reason: str
+    #: The content digest the **sealed** record recorded for this determination,
+    #: and the one **this** record cites under the same reference when it cites
+    #: one. Both are on the row so that "the document behind the handle changed"
+    #: is inspectable rather than merely asserted. Empty on a finding row, whose
+    #: citation is content-derived to begin with.
+    sealed_content_digest: str = ""
+    current_content_digest: str = ""
 
     @property
     def carried(self) -> bool:
         return self.reason == "carried"
 
     def as_document(self) -> dict[str, object]:
-        return {
+        document: dict[str, object] = {
             "citation": self.citation,
             "citation_kind": self.citation_kind,
             "reason": self.reason,
             "carried": self.carried,
         }
+        if self.sealed_content_digest:
+            document["sealed_content_digest"] = self.sealed_content_digest
+        if self.current_content_digest:
+            document["current_content_digest"] = self.current_content_digest
+        return document
 
 
 @dataclass(frozen=True, slots=True)

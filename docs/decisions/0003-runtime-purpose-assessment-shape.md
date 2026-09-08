@@ -409,6 +409,46 @@
     of §§1–4.6, the `CONDITIONAL` continuation and its seven checks, the two
     successor kinds, sealing, the identity boundary, and §8's six counterfactuals
     and seventh test obligation.
+  - Refines the version at `9a3884e` (2026-09-08), which **product review
+    returned AT RISK** on one gap: **cross-record evidence identity**. §4.7.2 had
+    a successor record whether each of the sealed path's citations still carried,
+    and the determination branch decided it by asking whether the same
+    `reference` string appeared among this record's citations. A reference is a
+    handle somebody else's store assigns; nothing about it prevents the document
+    behind it from being re-decided, re-signed, or re-attributed, so the check was
+    comparing names and reporting identity. Measured on the running evaluator,
+    two entry points reported **carried** falsely: an alignment determination
+    whose conclusion moved `confirmed` → `misaligned` under the same handle — the
+    verdict correctly became `BLOCKED` while the audit trail beside it said the
+    old determination was carried — and the same handle re-signed by a different
+    determiner on a different basis, where **no verdict moves at all**, so nothing
+    else in the record hinted that the document read was not the document sealed.
+    The finding branch was already honest, because a `finding_key` is
+    content-derived and is checked against the facts. **D-13** closes it: §4.7.6
+    fixes that every citation a sealed record makes of a determination carries a
+    **content-derived digest** beside the reference, that **carried** may be
+    recorded only when reference *and* digest both match, and that a matching
+    reference with a different digest is recorded as its own situation with both
+    digests on the row. The digest obeys §5's constraints without exception —
+    parsed sorted structure only, never raw bytes, no clock, never an input to
+    `validation_run_id` / `requirement_key` / `finding_key` or any
+    published-contract value — and, being content of the record, travels into that
+    record's own `assessment_digest`. **No store is introduced** and §1.2 item 4's
+    external model is untouched: the digest is computed from the determination the
+    assessment was handed, at the moment it is read. **This adds no refusal and
+    §7.1 gains no row**, deliberately: a review that was genuinely re-held is *new
+    evidence*, read normally, with the verdict it produces standing — only the
+    claim of identity is withdrawn. Refusal stays where §7.1 already put it (two
+    contents under one reference in one request, evidence attributed to other
+    model versions, contradictory determinations), and the re-attribution entry
+    point is pinned as a regression rather than rebuilt. The record document gains
+    the digest beside each determination reference, so every `assessment_digest`
+    computed under the new shape differs from one computed under the old; **no
+    record has ever been persisted anywhere in this repository, so nothing needs
+    migrating and no version negotiation is introduced.** Unchanged: §2.3's
+    narrowing, §§4.7.1–4.7.5, the member correspondence rule, the four
+    disappearance classifications, the condition states and their ordering,
+    sealing, determinism, and §8's six counterfactuals and its seventh commitment.
 - **Scope:** Checkpoint D runtime design only — the request boundary, the
   subscope construction rule ADR 0002 §3.2 explicitly left here, the
   assessment record shape, the runtime identity boundary, and the
@@ -453,7 +493,7 @@
 | 3 | Where the assessment step sits in the pipeline, and its input/output boundary | §1 |
 | 4 | What one assessment records, including every field a `CONDITIONAL` promotion must carry, and the total accounting of the declared scope | §4, §3.3 |
 | 4a | How a record is sealed, what a successor record is, and how a `CONDITIONAL` promotion continues, is proved to continue, or lapses across records | §4.5 |
-| 4b | What a `recheck` successor records: how a sealed subscope's members correspond to a re-derived partition, how a member that disappeared is classified, why *reached `READY`* and *the recheck condition was met* are separate statements, and why comparability is established first | §4.7 |
+| 4b | What a `recheck` successor records: how a sealed subscope's members correspond to a re-derived partition, how a member that disappeared is classified, why *reached `READY`* and *the recheck condition was met* are separate statements, why comparability is established first, and how a citation's identity across records is proved rather than assumed | §4.7 |
 | 5 | Whether any runtime identity is minted, and the constraints on it | §5 |
 | 6 | How several subscopes of one activity with different verdicts are presented, under Framework invariant 1 | §6 |
 | 7 | How every missing input (evidence, binding, role, authorisation, method) fails closed, mapped row-by-row to ADR 0002 §3.7 | §7 |
@@ -1865,13 +1905,15 @@ milestone dates, both of which the record *cites*; the assessment computes no
 new cost, duration, or temporal fact and fabricates none (Checkpoint B §3,
 repeatedly: "no magnitudes").
 
-### 4.7 What a `recheck` successor records (closes D-10, D-11, D-12)
+### 4.7 What a `recheck` successor records (closes D-10, D-11, D-12, D-13)
 
 §4.5 fixes that a `recheck` re-derives membership and every reading from current
 evidence and records whether the cited subscope's `recheck_condition` is now met.
 It does not say how a sealed subscope and a freshly derived partition are put
-beside each other, and that turns out to carry three separate ways for a record
-to say something false. This section fixes them. Nothing here is a new kind of
+beside each other, and that turns out to carry several separate ways for a record
+to say something false — three about the subjects and the condition (§§4.7.1–4.7.4)
+and one about the identity of the evidence itself (§4.7.6). This section fixes
+them. Nothing here is a new kind of
 record, a new identity, or a new evidence path — a recheck is the assessment of
 §§2–4 run again, with a comparison layered on top and carried into the same
 `assessment_digest`.
@@ -1951,7 +1993,10 @@ record also states, for each `finding_key` and each determination reference the
 sealed path cited, whether this record cites it too, and when it does not, which
 of two things happened: the model-version context moved, so nothing attributed to
 the prior context is admissible here; or the context did not move and something
-superseded it. Both are facts the record holds. This is what turns "the openings
+superseded it. Both are facts the record holds. **"Cites it too" is a comparison
+of content, not of handles, and §4.7.6 fixes why it has to be** — a reference is a
+name, the document behind it can be re-decided, and a successor comparing names
+would report a reversed determination as still relied on. This is what turns "the openings
 activity is `UNKNOWN` again" into "the coordination-review determination this
 would have needed was made against a model version that no longer exists, so
 re-hold the review" — the same verdict, and a different instruction.
@@ -2056,6 +2101,89 @@ A recheck is refused, before any comparison is recorded, when:
 Every one of those is a refusal in §7.1's sense: total, with a code, and never a
 partially written record.
 
+#### 4.7.6 A citation carries its content, or "still relied on" cannot be said (closes D-13)
+
+**A `reference` is a handle, not a document.** §1.2 item 4 fixes that a
+determination is produced outside the assessment and cited by reference, and
+§4.7.2 has a successor record whether each of the sealed path's citations still
+carries. Between those two, one thing was missing and it is the thing the claim
+rests on: **a reference is a name somebody else's store assigns, and nothing
+about it prevents the document behind it from being re-decided, re-signed, or
+re-attributed.** A successor comparing reference strings is comparing names and
+reporting identity.
+
+**The failure it produced is worse than a wrong verdict, because the verdict was
+right.** Take ADR 0002 §3.5's worked project. The first record's ceiling subscope
+is `READY` on an alignment determination reading `confirmed`. Later the same
+handle carries a review that reports the models `misaligned`. The successor
+re-derives the reading from what it is offered, so the subscope correctly becomes
+`BLOCKED` / `cross-model-misalignment` — and beside that correct verdict the
+carry-over row says the earlier determination was **carried**, which is false.
+The second variant is sharper still: the same handle, the same conclusion,
+**re-signed by a different determiner on a different basis**. Nothing moves at
+all — the subscope is `READY` before and after — so no other field of the record
+even hints that the document read is not the document sealed. §4.5 makes
+attributability "the whole of what distinguishes a determination from an
+assertion"; a record that cannot tell whose signature it is relying on is not
+holding to that.
+
+**The rule.**
+
+> Every citation a sealed record makes of a determination carries, beside the
+> reference, a **content-derived digest** of what that determination says. A
+> later record may record a citation as **carried** only when it cites the same
+> reference **and** the same content digest. Where it cites the reference and a
+> different digest, the record states that the document behind the handle
+> changed, and both digests are on the row. Where it does not cite the reference
+> at all, §4.7.2's two absent reasons apply as before.
+
+**What the digest is over, and what it obeys.** It hashes the determination's
+*content* — its evidence requirement, method, determiner, basis, outcome,
+subject, any architectural elements a confirmed penetration named, and its
+model-version attribution — and **not** its reference, which is the handle rather
+than the document. It obeys §5's constraints without exception, and for §5's
+reasons: **parsed, sorted structure only**, never raw bytes, never a filename,
+never an mtime, never filesystem ordering, and no clock. It is **never an input
+to a frozen identity** — not `validation_run_id`, not `requirement_key`, not
+`finding_key`, not any published-contract value. It *is* content of the record
+that carries it, so it travels into that record's own `assessment_digest`, which
+is what makes a sealed citation as unrewritable as everything else in the record.
+
+**No store is introduced.** The digest is computed from the determination the
+assessment was handed, at the moment it is read, and written into the record. The
+design still holds no determination content, still resolves no reference, and
+still has nowhere to put one — §1.2 item 4's external model is untouched.
+
+**This is emphatically not a new refusal, and the restraint is the point.** A
+review that was genuinely re-held is **new evidence**. It is read like any other
+determination, the leaf it produces stands, and the verdict changes if it should
+— exactly as it does today. The only thing that changes is what may be *claimed*
+about identity. Refusal stays exactly where §7.1 already put it: two contents
+offered under one reference **within a single request**, evidence attributed to
+model versions the request does not name, and two admissible determinations that
+contradict each other. Turning a changed determination into a refusal would stop
+a recheck precisely when a team had done the work of re-holding the review, which
+is the opposite of what a recheck is for. **So §7.1 gains no row from this
+ruling**, and that absence is deliberate rather than an oversight.
+
+**The version-attribution case needs no separate name, and here is why.** A
+determination whose `determined_against` is not the request's context is refused
+before any subscope is assessed (§7.1), so every determination a record cites
+carries the request's own context. Two consequences follow and both are used
+above: under an unchanged context a content change cannot be a version change, so
+it is a change of substance; and after a re-issue the earlier determination
+cannot be offered at all, so its citation lands in
+"not attributable to this context" rather than here. The classification never has
+to guess which part of a content change moved, because the standing refusal has
+already made that unambiguous.
+
+**`finding_key` needed no equivalent, and stating why keeps the asymmetry
+honest.** A `finding_key` is *already* derived from the finding's own content
+(`identity.py`), so checking a sealed one against the facts asks the right
+question: a re-validated model produces different keys and the old ones do not
+survive it. The determination branch was the only one comparing names, and it is
+the only one this ruling changes.
+
 ---
 
 ## 5. Runtime identity: what is minted, what is forbidden
@@ -2090,7 +2218,8 @@ the record is complete, over its canonically-ordered content:
   `whole-scope`, `per-subject` and `per-subject-pair` readings, each pair
   member carrying both its keys and the admitted `element_key` it refined
   from, and each reading carrying its cited `finding_key`s / determination
-  references / named-absence markers), `verdict`, `resolution_kind`, resolved
+  references **with each one's content digest** (§4.7.6) / named-absence
+  markers), `verdict`, `resolution_kind`, resolved
   route, and assignment;
 - any `CONDITIONAL` promotion (§4.4), with all nine of its fields, whether
   first granted in this record or continued into it (§4.5) — a continued
@@ -2562,7 +2691,14 @@ the sentence, with zero or several naming nothing and every remaining judgement
 re-entering through the existing determination chain rather than a shortcut; and
 **comparability established before the condition is read**, so that a
 universally quantified coverage condition cannot report satisfied on a set that
-lost the element falsifying it; **no roll-up above the subscope** — a
+lost the element falsifying it; with **every determination citation sealed
+together with a content-derived digest of what that determination says**, so that
+a later record may record a citation as carried only when the reference **and**
+the content match, and a document re-decided, re-signed or re-attributed behind
+an unchanged handle is recorded as the change it is rather than as continuity —
+that digest obeying §5's constraints exactly, introducing no store, and adding no
+refusal, since a review genuinely re-held is new evidence to be read normally and
+only the claim of identity is withdrawn; **no roll-up above the subscope** — a
 heterogeneous assessed scope is presented as its partition of
 `(subscope → verdict)` pairs, each satisfying invariant 1 for its own scope,
 the decision not to define an activity-level verdict being this checkpoint's

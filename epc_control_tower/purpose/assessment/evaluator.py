@@ -52,6 +52,7 @@ from .reading import (
 from .record import (
     ActivityResult,
     AssessmentRecord,
+    CitedDetermination,
     OutOfClassKey,
     PathStep,
     Reading,
@@ -783,11 +784,28 @@ def _determination_reading(
     # Every member agrees: the ledger refused the request otherwise. So all of
     # them are cited and none of them is selected — two reviewers reaching the
     # same conclusion are corroboration, and the record says so.
+    #
+    # Each citation carries the determination's content digest beside its
+    # reference. A reference is a handle somebody else's store assigns and the
+    # document behind it can be re-decided, so a record that kept only the handle
+    # left a later record no way to tell "still the same determination" from
+    # "a different one under the same name" — and it would have claimed the first
+    # while the second was true.
     return Reading(
         subject=subject,
         outcome=admissible[0].outcome,
         binding=", ".join(sorted({item.method_id for item in admissible})),
-        determination_references=tuple(sorted(item.reference for item in admissible)),
+        cited_determinations=tuple(
+            sorted(
+                (
+                    CitedDetermination(
+                        reference=item.reference, content_digest=item.content_digest
+                    )
+                    for item in admissible
+                ),
+                key=lambda item: item.sort_key,
+            )
+        ),
     )
 
 

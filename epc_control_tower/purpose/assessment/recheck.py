@@ -568,26 +568,57 @@ def _carry_over(
 ) -> tuple[EvidenceCarryOver, ...]:
     """Which citations of the sealed path this record still makes, and why not.
 
-    The classification is over two facts this record holds — whether the citation
-    appears in its own readings, and whether the model-version context moved — and
-    it exists so that a retreat has a *reason* on the record. A subscope that fell
+    It exists so that a retreat has a *reason* on the record. A subscope that fell
     back to ``UNKNOWN`` because the determinations behind it stopped being
     attributable, and one that fell back because a review reversed itself, are
     different situations for the team reading them, and a bare ``UNKNOWN`` tells
     them apart from neither.
 
-    A ``finding_key`` is checked against the facts directly, which is the
-    honest question for validation evidence: a re-validated model produces new
-    finding keys, and the old ones do not survive it.
+    **A determination row compares content, not handles, and that is what makes
+    "carried" a claim this record can support.** ``reference`` is a name
+    somebody else's store assigns; the document behind it can be re-decided,
+    re-signed, or re-attributed without the name moving. A comparison of names
+    would have reported a confirmation-turned-misalignment as still relied on —
+    the verdict would still have gone ``BLOCKED``, correctly, while the audit
+    trail beside it said the old determination carried. So the sealed record
+    keeps each citation's ``content_digest`` (:class:`~.record.CitedDetermination`)
+    and this compares both:
+
+    * same reference **and** same digest → ``carried``, which is now provable;
+    * same reference, different digest → the document changed, recorded as its
+      own reason with both digests on the row;
+    * reference absent → not cited here, and the context comparison says which of
+      the two absent reasons applies.
+
+    **None of this refuses anything, and the restraint is deliberate.** A review
+    that was genuinely re-held is *new evidence*: it is read like any other,
+    the leaf it produces stands, and the verdict changes if it should. The only
+    thing that changes is what may be *claimed* — that the earlier determination
+    was carried forward. Refusal stays where it already was: two contents under
+    one reference within a single request, evidence attributed to other model
+    versions, and two admissible determinations that contradict each other.
+
+    A ``finding_key`` needs no digest beside it because it already is one — it is
+    derived from the finding's own content, so checking it against the facts asks
+    the right question already. That asymmetry is the point: the determination
+    branch was the one comparing names, and it is the one that changed.
     """
 
-    cited_now = {
-        reference
-        for item in activity.subscopes
-        for step in item.path
-        for reading in step.readings
-        for reference in reading.determination_references
-    }
+    # ``reference -> the content digests this record cites under it``. A set
+    # rather than one value because one reference may legitimately appear on
+    # several readings, and because a store that offered two documents under one
+    # handle would have refused the request already
+    # (``determination-reference-not-unique``) rather than reaching here — so the
+    # set has one member whenever it is non-empty, and asserting that by
+    # construction is cheaper than assuming it.
+    cited_now: dict[str, set[str]] = {}
+    for item in activity.subscopes:
+        for step in item.path:
+            for reading in step.readings:
+                for citation in reading.cited_determinations:
+                    cited_now.setdefault(citation.reference, set()).add(
+                        citation.content_digest
+                    )
     rows: list[EvidenceCarryOver] = []
     seen: set[tuple[str, str]] = set()
     for step in subscope.path:
@@ -608,21 +639,34 @@ def _carry_over(
                         ),
                     )
                 )
-            for reference in reading.determination_references:
-                if ("determination", reference) in seen:
+            for citation in reading.cited_determinations:
+                if ("determination", citation.reference) in seen:
                     continue
-                seen.add(("determination", reference))
-                if reference in cited_now:
+                seen.add(("determination", citation.reference))
+                now = sorted(cited_now.get(citation.reference, ()))
+                if not now:
+                    # The handle is not cited here at all. Which of the two
+                    # reasons applies is decided by the context comparison, and
+                    # both are facts this record holds.
+                    reason = (
+                        "determination-not-cited-by-this-record"
+                        if context.is_current
+                        else "determination-not-attributable-to-this-context"
+                    )
+                elif now == [citation.content_digest]:
                     reason = "carried"
-                elif context.is_current:
-                    reason = "determination-not-cited-by-this-record"
                 else:
-                    reason = "determination-not-attributable-to-this-context"
+                    # Same handle, different document. This is the whole reason
+                    # the digest is on the sealed record: comparing handles would
+                    # have called a re-decided review "still relied on".
+                    reason = "determination-content-changed-under-the-same-reference"
                 rows.append(
                     EvidenceCarryOver(
-                        citation=reference,
+                        citation=citation.reference,
                         citation_kind="determination",
                         reason=reason,
+                        sealed_content_digest=citation.content_digest,
+                        current_content_digest=now[0] if now else "",
                     )
                 )
     return tuple(sorted(rows, key=lambda item: (item.citation_kind, item.citation)))
