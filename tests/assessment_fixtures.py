@@ -30,6 +30,17 @@ own policy stops it, and they are:
 
 The distinction matters because the alternative — a switch that lets tests skip
 the gate — would make the gate untested exactly where it is load bearing.
+
+**A second set of validated facts, for the recheck chain.**
+:func:`fixture_reissued_facts` is the same shipped facts with the HVAC model
+version moved and the R-005 failures repaired — the state a production owner
+would be in *after* acting on a blocker. It has to exist because the chain a
+recheck serves is *initial assessment, fix, re-validation, recheck*, and a fix
+that changes no model version is not a fix. It belongs to the second half above,
+not the first: every value it mints carries :data:`FIXTURE_MARKER`, so "this is
+not a real run, and pcert-sample's HVAC model has not been reissued" is a
+property a test can assert rather than a convention a reader has to know, and
+:mod:`test_purpose_isolation` asserts exactly that against the published tree.
 """
 
 from __future__ import annotations
@@ -41,6 +52,7 @@ from pathlib import Path
 
 from epc_control_tower.purpose import (
     AssessedScope,
+    AssessmentFacts,
     AssessmentRequest,
     Determination,
     DeterminedAgainst,
@@ -52,6 +64,11 @@ from epc_control_tower.purpose import (
     load_purpose_pack,
     read_overlay_table,
 )
+from epc_control_tower.purpose.assessment.facts import (
+    ElementFact,
+    FindingFact,
+    ModelVersionFact,
+)
 from helpers import PROJECT_ROOT, shipped_pipeline_result
 from purpose_fixtures import (
     base_overlay_document,
@@ -62,6 +79,8 @@ from purpose_fixtures import (
 
 __all__ = [
     "ALIGNMENT_CONFIRMED",
+    "FIXTURE_MARKER",
+    "asset_identity_requirement_keys",
     "determined_against",
     "ARCHITECTURE_ROOF",
     "ARCHITECTURE_SLAB",
@@ -72,11 +91,18 @@ __all__ = [
     "HVAC_GEO_REFERENCE",
     "HVAC_ORIGIN",
     "PACK_ID",
+    "REISSUED_HVAC_CONTENT_ID",
+    "REISSUED_VALIDATION_RUN_ID",
+    "ROOF_OPENING_BASIS",
+    "reissued_content_id",
     "assessment_facts",
     "fixture_composed",
     "fixture_determinations",
     "fixture_overlay_document",
+    "fixture_reissued_facts",
+    "fixture_reissued_request",
     "fixture_request",
+    "fixture_superseding_determinations",
     "requirement_keys_by_ruleset",
     "scratch_pack",
 ]
@@ -97,6 +123,65 @@ ARCHITECTURE_ROOF = "architecture::2iPwJwpPDCSgMheXwk9cBT"  # IfcRoof
 #: A test-supplied alignment confirmation. Named so that no reader mistakes it
 #: for a claim that pcert-sample's models have been confirmed aligned.
 ALIGNMENT_CONFIRMED = "fixture-determination/alignment/confirmed"
+
+#: What an opening review would have written down, per outcome it could reach for
+#: the chimney's roof pair. Three of ``opening-status``'s four declared outcomes;
+#: the fourth, ``not-yet-determined``, is what you get by offering no
+#: determination at all, which needs no basis because nobody wrote one.
+ROOF_OPENING_BASIS = {
+    "not-modelled": "fixture: no opening modelled in the roof",
+    "modelled-not-cross-referenced": (
+        "fixture: an opening is now cut in the roof and carries no reference back "
+        "to the chimney"
+    ),
+    "cross-referenced": (
+        "fixture: the roof opening is modelled and carries a reference back to the "
+        "chimney"
+    ),
+}
+
+#: The prefix every value this module mints carries, so that "not a real value"
+#: is a property a machine can test rather than a convention a reader has to
+#: know. A content identifier in this repository is a SHA-256 and a
+#: ``validation_run_id`` is a derived digest; neither can begin with a word.
+FIXTURE_MARKER = "fixture"
+
+
+def reissued_content_id(model_key: str) -> str:
+    """The content identifier the second set of facts gives a reissued model.
+
+    Deliberately **not** a hash. A content identifier in this repository is a
+    SHA-256, so a plausible-looking hex string here would be a claim that
+    ``pcert-sample``'s model was reissued — and none of them ever has been. This
+    value cannot be mistaken for one, and cannot be matched by anything that
+    scans the published tree for real ones.
+    """
+
+    return f"{FIXTURE_MARKER}-content/{model_key}-reissued-not-a-real-export"
+
+
+#: The producing model version the default second set of facts is about.
+REISSUED_HVAC_CONTENT_ID = reissued_content_id("hvac")
+
+#: The run the second set of facts is attributed to. No such run exists; this
+#: repository publishes exactly one validation run and it is not this one.
+REISSUED_VALIDATION_RUN_ID = (
+    f"{FIXTURE_MARKER}-validation-run/reissued-hvac-not-a-real-run"
+)
+
+
+def asset_identity_requirement_keys() -> frozenset[str]:
+    """The ``requirement_key`` values ``pcert-sample`` binds to ``asset-identity``.
+
+    Read back from the shipped manifest rather than restated here, so the
+    repaired fixture findings below cannot drift away from the real binding and
+    quietly stop repairing anything.
+    """
+
+    for row in base_overlay_document()["overlay"]["evidence_bindings"]:
+        if row["evidence_requirement_id"] == "asset-identity":
+            return frozenset(row["requirement_keys"])
+    raise AssertionError("pcert-sample no longer binds asset-identity")
 
 
 def assessment_facts(project_id: str = "pcert-sample"):
@@ -213,7 +298,11 @@ def fixture_request(
 
 
 def fixture_determinations(
-    *, facts, alignment: bool = True, penetration: bool = True
+    *,
+    facts,
+    alignment: bool = True,
+    penetration: bool = True,
+    roof_opening: str = "not-modelled",
 ) -> tuple[Determination, ...]:
     """Determinations a coordination review would have produced, had one been held.
 
@@ -227,6 +316,14 @@ def fixture_determinations(
     ``alignment=False`` leaves ``cross-model-alignment`` undetermined while
     R-010's ``PASS`` stays exactly where it is, which is how the test that a
     ``PASS`` is not a confirmation is set up.
+
+    ``roof_opening`` is what a *later* opening review, held after the roof
+    opening was cut, would report. It is the only knob a recheck chain needs to
+    move: the blocker the first record carried is
+    ``missing-corresponding-opening``, whose ``recheck_condition`` names
+    ``cross-referenced`` by that name, so the three values here are the three
+    answers a recheck can honestly reach about it — the condition's named outcome
+    observed, a *different* deficiency, or the same one again.
     """
 
     against = determined_against(facts)
@@ -290,18 +387,208 @@ def fixture_determinations(
                 determined_against=against,
             ),
             Determination(
-                reference="fixture-determination/opening/chimney-roof-not-modelled",
+                reference=(
+                    f"fixture-determination/opening/chimney-roof-{roof_opening}"
+                ),
                 evidence_requirement_id="opening-status",
                 method_id="opening-cross-reference-check",
                 determiner="fixture-architecture-lead",
-                basis="fixture: no opening modelled in the roof",
-                outcome="not-modelled",
+                basis=ROOF_OPENING_BASIS[roof_opening],
+                outcome=roof_opening,
                 subject=(HVAC_CHIMNEY, ARCHITECTURE_ROOF),
                 determined_against=against,
             ),
         ]
     )
     return tuple(determinations)
+
+
+def fixture_reissued_facts(
+    *,
+    reissued_model_key: str = "hvac",
+    asset_identity_fixed: bool = True,
+    delete_chimney: bool = False,
+    chimney_ifc_class: str | None = None,
+):
+    """A **second** set of validated facts: one model reissued and re-validated.
+
+    This is the other half of the chain a recheck exists to serve — *initial
+    assessment, fix, re-validation, recheck* — and it cannot be told with one set
+    of facts, because a fix that changes no model version is not a fix.
+
+    Every value this function mints carries :data:`FIXTURE_MARKER`, and that is
+    not decoration. It is the same discipline the Overlay's nine ``illustrative``
+    rows and this module's determinations already run on: a fixture value must be
+    **machine-visibly untrue**, so that no reader and no test can mistake it for
+    a claim about this repository. Concretely, nothing here asserts that
+    ``pcert-sample``'s HVAC model has ever been reissued or that any coordination
+    review has ever been held. ``projects/pcert-sample/project.toml`` is not
+    touched, no file is written, and
+    ``test_purpose_isolation`` asserts that none of these values reaches
+    ``data/processed/``, ``reports/``, ``ids/``, or the contract snapshot.
+
+    ``reissued_model_key`` chooses which side of the handover moved. ``"hvac"``
+    is the producing model — the MEP author fixed their own asset identities;
+    ``"architecture"`` is the consuming one — the architect cut the opening the
+    first record was blocked on. Both are re-issues and both make every
+    determination attributed to the earlier pair inadmissible, which is the point.
+
+    ``asset_identity_fixed`` turns the three real R-005 ``FAIL`` rows into
+    ``PASS`` ones under fixture finding keys — the repair a production owner would
+    have made between the two records. ``delete_chimney`` and
+    ``chimney_ifc_class`` produce the other two ways a subject can leave a scope
+    without anything being resolved.
+    """
+
+    if reissued_model_key not in {"hvac", "architecture"}:
+        raise AssertionError(f"no such model version in this project: {reissued_model_key}")
+
+    original = assessment_facts()
+    models = tuple(
+        ModelVersionFact(
+            model_key=model.model_key,
+            content_id=(
+                reissued_content_id(model.model_key)
+                if model.model_key == reissued_model_key
+                else model.content_id
+            ),
+        )
+        for model in original.models
+    )
+
+    elements = []
+    for element in original.elements:
+        if element.element_key == HVAC_CHIMNEY:
+            if delete_chimney:
+                continue
+            if chimney_ifc_class is not None:
+                elements.append(
+                    ElementFact(
+                        element_key=element.element_key,
+                        model_key=element.model_key,
+                        ifc_class=chimney_ifc_class,
+                    )
+                )
+                continue
+        elements.append(element)
+
+    bound = asset_identity_requirement_keys()
+    findings = []
+    for finding in original.findings:
+        repaired = (
+            asset_identity_fixed
+            and finding.status == "FAIL"
+            and finding.requirement_key in bound
+        )
+        if delete_chimney and finding.element_key == HVAC_CHIMNEY:
+            continue
+        findings.append(
+            FindingFact(
+                # A re-validated model produces new finding keys. Minting fixture
+                # ones rather than reusing the sealed record's is what makes the
+                # carry-over check say something: the prior citations really are
+                # gone, exactly as they would be after a real reissue.
+                finding_key=(
+                    f"{FIXTURE_MARKER}/finding/{finding.finding_key}"
+                    if repaired
+                    else finding.finding_key
+                ),
+                element_key=finding.element_key,
+                requirement_key=finding.requirement_key,
+                status="PASS" if repaired else finding.status,
+            )
+            if repaired
+            else finding
+        )
+
+    return AssessmentFacts(
+        project_id=original.project_id,
+        validation_run_id=REISSUED_VALIDATION_RUN_ID,
+        ruleset_id=original.ruleset_id,
+        ruleset_version=original.ruleset_version,
+        elements=tuple(sorted(elements, key=lambda item: item.element_key)),
+        findings=tuple(
+            sorted(
+                findings,
+                key=lambda item: (
+                    item.element_key,
+                    item.requirement_key,
+                    item.finding_key,
+                ),
+            )
+        ),
+        milestones=original.milestones,
+        models=models,
+    )
+
+
+def fixture_reissued_request(
+    *,
+    activity_ids: tuple[str, ...],
+    facts,
+    scope: AssessedScope | None = None,
+) -> AssessmentRequest:
+    """The same question, asked of the reissued model version.
+
+    Same project, same Pack, same direction, same activities. What moved is the
+    producing model's content identifier, which is the whole point: a verdict is
+    only ever true of the exact versions named, and this is the request that
+    names the other ones.
+    """
+
+    return fixture_request(activity_ids=activity_ids, facts=facts, scope=scope)
+
+
+def fixture_superseding_determinations(*, facts) -> tuple[Determination, ...]:
+    """A later coordination review, held against the **same** model versions.
+
+    The earlier review recorded the chimney as penetrating a floor slab and the
+    roof. This one, re-held, records that it penetrates nothing. Nothing about
+    either model changed — a review can be re-held and correct itself, and each
+    record cites the review it read.
+
+    This is the live counterexample the design turns on. Under this
+    determination the chimney takes the ``no-penetration`` branch, reaches
+    ``READY``, and ``renders_inapplicable`` ends the path before ``opening-status``
+    is ever asked. So the openings activity is ``READY`` while **no opening was
+    modelled and no cross-reference was added** — and the prior record's
+    ``missing-corresponding-opening`` blocker did not clear, its subject stopped
+    being derived.
+    """
+
+    against = determined_against(facts)
+    return (
+        Determination(
+            reference=ALIGNMENT_CONFIRMED,
+            evidence_requirement_id="cross-model-alignment",
+            method_id="overlay-comparison",
+            determiner="fixture-model-coordination",
+            basis="fixture: placements overlaid in a common viewer",
+            outcome="confirmed",
+            subject=("hvac", "architecture"),
+            determined_against=against,
+        ),
+        Determination(
+            reference="fixture-determination/penetration/duct-none",
+            evidence_requirement_id="penetration-determination",
+            method_id="coordination-review-determination",
+            determiner="fixture-coordination-review",
+            basis="fixture: reviewed, no fabric penetrated",
+            outcome="no-penetration",
+            subject=(HVAC_DUCT,),
+            determined_against=against,
+        ),
+        Determination(
+            reference="fixture-determination/penetration/chimney-none-on-re-review",
+            evidence_requirement_id="penetration-determination",
+            method_id="coordination-review-determination",
+            determiner="fixture-coordination-review",
+            basis="fixture: re-reviewed, the chimney passes through no architectural fabric",
+            outcome="no-penetration",
+            subject=(HVAC_CHIMNEY,),
+            determined_against=against,
+        ),
+    )
 
 
 class scratch_pack:

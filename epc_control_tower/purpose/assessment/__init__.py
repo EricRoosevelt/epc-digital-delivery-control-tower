@@ -18,13 +18,18 @@ The modules divide along the lines the design already draws:
                         declined, never decided
 :mod:`.reading`         how one subject's evidence collapses to one outcome
 :mod:`.evaluator`       the tree walk, the partition, the routes, the refusals
+:mod:`.recheck`         succeeding a sealed record: member correspondence,
+                        evidence carry-over, and what could be established
+                        about a recheck condition
 :mod:`.record`          the carrier, the path, the leaf, and the seal
 ======================  ====================================================
 
-What this checkpoint does **not** build, and where the absence is deliberate
-rather than unfinished: no ``CONDITIONAL`` promotion, no successor record of
-either kind, no public machine contract, no CLI, no Doctor, and no storage
-layer — a record is returned sealed, and where it is put is a later decision.
+What this package does **not** build, and where the absence is deliberate rather
+than unfinished: no ``CONDITIONAL`` promotion and no ``authorisation`` successor,
+no public machine contract, no CLI, no Doctor, and no storage layer — a record is
+returned sealed, and where it is put is a later decision. The ``recheck``
+successor is built; the ``authorisation`` one is named in the closed vocabulary
+and nothing more.
 """
 
 from __future__ import annotations
@@ -36,7 +41,7 @@ from .determinations import (
     DeterminationLedger,
     DeterminedAgainst,
 )
-from .evaluator import assess_purpose
+from .evaluator import assess_purpose, derive_assessment
 from .facts import (
     AssessmentFacts,
     ElementFact,
@@ -50,16 +55,26 @@ from .reading import (
     UNRESOLVED_OUTCOMES,
     VALIDATION_BACKED_OUTCOMES,
 )
+from .recheck import machine_checkable_outcome, recheck_purpose
 from .record import (
+    CARRY_OVER_REASONS,
+    MEMBER_DISPOSITIONS,
+    RECHECK_CONDITION_STATES,
+    SUCCESSOR_KINDS,
     ActivityResult,
     AssessmentRecord,
+    ContextComparison,
+    EvidenceCarryOver,
+    MemberDisposition,
     OutOfClassKey,
     PathStep,
     Reading,
+    RecheckOutcome,
     ResolvedRoute,
     ResolvingAssignment,
     Subject,
     SubscopeResult,
+    SuccessorSection,
     build_assessment_digest,
 )
 from .request import (
@@ -71,8 +86,12 @@ from .request import (
 )
 
 __all__ = [
+    "CARRY_OVER_REASONS",
+    "MEMBER_DISPOSITIONS",
     "NOT_COVERED_ABSENCE",
     "NO_FINDING_ABSENCE",
+    "RECHECK_CONDITION_STATES",
+    "SUCCESSOR_KINDS",
     "UNRESOLVED_OUTCOMES",
     "VALIDATION_BACKED_OUTCOMES",
     "ActivityResult",
@@ -81,12 +100,15 @@ __all__ = [
     "AssessmentFacts",
     "AssessmentRecord",
     "AssessmentRequest",
+    "ContextComparison",
     "Determination",
     "DeterminationLedger",
     "DeterminedAgainst",
     "ElementFact",
+    "EvidenceCarryOver",
     "FindingFact",
     "HandoverEvent",
+    "MemberDisposition",
     "ModelVersion",
     "ModelVersionContext",
     "ModelVersionFact",
@@ -94,11 +116,16 @@ __all__ = [
     "PathStep",
     "PurposeAssessmentError",
     "Reading",
+    "RecheckOutcome",
     "ResolvedRoute",
     "ResolvingAssignment",
     "Subject",
     "SubscopeResult",
+    "SuccessorSection",
     "assess_purpose",
     "build_assessment_digest",
+    "derive_assessment",
     "facts_from_bundle",
+    "machine_checkable_outcome",
+    "recheck_purpose",
 ]

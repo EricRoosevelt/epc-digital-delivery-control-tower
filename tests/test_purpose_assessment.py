@@ -153,7 +153,16 @@ class RealEntryPointRefusesPcertSampleTests(unittest.TestCase):
                 self.assertEqual(row.decision_basis, "illustrative")
 
     def test_the_fixture_and_the_real_entry_point_are_the_same_function(self):
-        """No second entry point, and therefore no second set of rules."""
+        """No second entry point, and therefore no second set of rules.
+
+        ``derive_assessment`` is not a second one: it is everything
+        ``assess_purpose`` resolves, stopping short of the seal, and it exists
+        because a recheck has to compare a re-derivation against a sealed record
+        *before* the digest that covers both is computed. The guard that matters
+        is the one below — that the recheck module calls it rather than growing a
+        second walk, a second reading rule, or a second partition, either of
+        which could drift into a laxer reading of the same facts.
+        """
 
         source = (ASSESSMENT_PACKAGE / "evaluator.py").read_text(encoding="utf-8")
         public = [
@@ -161,8 +170,25 @@ class RealEntryPointRefusesPcertSampleTests(unittest.TestCase):
             for node in ast.parse(source).body
             if isinstance(node, ast.FunctionDef) and not node.name.startswith("_")
         ]
-        self.assertEqual(public, ["assess_purpose"])
+        self.assertEqual(public, ["assess_purpose", "derive_assessment"])
         for switch in ("skip", "force", "test_mode", "allow_illustrative", "strict"):
+            with self.subTest(switch=switch):
+                self.assertNotIn(switch, source)
+
+    def test_the_successor_path_re_derives_through_the_same_evaluator(self):
+        """A recheck owns no walk, no reading rule and no partition of its own."""
+
+        source = (ASSESSMENT_PACKAGE / "recheck.py").read_text(encoding="utf-8")
+        self.assertIn("from .evaluator import derive_assessment", source)
+        defined = {
+            node.name
+            for node in ast.parse(source).body
+            if isinstance(node, ast.FunctionDef)
+        }
+        for reimplementation in ("_walk", "_read", "_refine", "_order", "_assess_activity"):
+            with self.subTest(name=reimplementation):
+                self.assertNotIn(reimplementation, defined)
+        for switch in ("skip", "force", "test_mode", "allow_illustrative"):
             with self.subTest(switch=switch):
                 self.assertNotIn(switch, source)
 

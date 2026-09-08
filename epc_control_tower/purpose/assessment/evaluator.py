@@ -64,7 +64,7 @@ from .record import (
 )
 from .request import AssessmentRequest
 
-__all__ = ["assess_purpose"]
+__all__ = ["assess_purpose", "derive_assessment"]
 
 #: No determination was offered for this subject at all. Distinct from the
 #: reason string a *declined* determination leaves, because "nobody determined
@@ -91,6 +91,45 @@ def assess_purpose(
     normal and is not an error — it produces ``not-yet-*`` readings and
     ``UNKNOWN`` leaves, which is a fact about this assessment rather than a
     defect in it.
+    """
+
+    _pack, fields = derive_assessment(
+        request=request,
+        composed=composed,
+        facts=facts,
+        determinations=determinations,
+    )
+    # Sealing. The digest is computed over the resolved content *before* the
+    # record exists, so the record is constructed exactly once, already sealed —
+    # rather than built, hashed, and rebuilt, which would make "sealed when the
+    # digest is computed" something a reader has to take on trust. The document
+    # carries no digest field, so nothing here is an input to the value that
+    # names it, and a record edited afterwards no longer hashes to what it says.
+    return AssessmentRecord(
+        **fields,
+        assessment_digest=build_assessment_digest(resolved_document(**fields)),
+    )
+
+
+def derive_assessment(
+    *,
+    request: AssessmentRequest,
+    composed: ComposedPurposeInputs,
+    facts: AssessmentFacts,
+    determinations: Sequence[Determination] = (),
+) -> tuple[PurposePack, dict]:
+    """Everything :func:`assess_purpose` resolves, stopping short of the seal.
+
+    Split out for exactly one caller — :func:`~.recheck.recheck_purpose`, which
+    needs the resolved activities *before* the digest exists so it can compare
+    them against a sealed record and carry the comparison into the same digest.
+    Sealing twice, or sealing a record and then adding to it, would be the one
+    thing ADR 0003 §4.5 forbids outright.
+
+    A recheck is therefore not a second evaluator. It is this one, run again on
+    current evidence, with the comparison layered on top: every refusal, every
+    reading rule, every partition rule below is the same code on both paths, so
+    a recheck cannot drift into a laxer reading of the same facts.
     """
 
     pack = _resolve_pack(request, composed)
@@ -132,13 +171,7 @@ def assess_purpose(
         for activity in activities
     )
 
-    # Sealing. The digest is computed over the resolved content *before* the
-    # record exists, so the record is constructed exactly once, already sealed —
-    # rather than built, hashed, and rebuilt, which would make "sealed when the
-    # digest is computed" something a reader has to take on trust. The document
-    # carries no digest field, so nothing here is an input to the value that
-    # names it, and a record edited afterwards no longer hashes to what it says.
-    fields = dict(
+    return pack, dict(
         request=request,
         pack_schema_version=pack.pack_schema_version,
         composition_digest=composed.composition_digest,
@@ -148,10 +181,6 @@ def assess_purpose(
         activities=results,
         cited_milestones=facts.milestones,
         cited_cost_parameter_names=tuple(sorted(composed.overlay.cost_parameters)),
-    )
-    return AssessmentRecord(
-        **fields,
-        assessment_digest=build_assessment_digest(resolved_document(**fields)),
     )
 
 
