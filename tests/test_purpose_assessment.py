@@ -1833,11 +1833,32 @@ class EveryRefusalCarriesACodeTests(unittest.TestCase):
     exactly those six. It is a lookup now.
     """
 
-    #: Every module of the assessment package that may refuse.
-    MODULES = ("determinations.py", "evaluator.py", "facts.py", "reading.py", "request.py")
+    #: Every module of the assessment package that may refuse. Read back from
+    #: the directory rather than listed, so a module added later cannot slip past
+    #: this guard by nobody remembering to name it here.
+    MODULES = tuple(
+        sorted(
+            path.name
+            for path in ASSESSMENT_PACKAGE.glob("*.py")
+            if path.name not in {"__init__.py", "record.py"}
+        )
+    )
+
+    def test_the_module_list_is_the_package(self):
+        self.assertEqual(
+            self.MODULES,
+            (
+                "determinations.py",
+                "evaluator.py",
+                "facts.py",
+                "reading.py",
+                "recheck.py",
+                "request.py",
+            ),
+        )
 
     def test_no_bare_value_error_is_raised_in_reading_or_request(self):
-        for name in ("reading.py", "request.py"):
+        for name in ("reading.py", "request.py", "recheck.py"):
             source = (ASSESSMENT_PACKAGE / name).read_text(encoding="utf-8")
             with self.subTest(module=name):
                 for node in ast.walk(ast.parse(source)):

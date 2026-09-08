@@ -462,6 +462,18 @@ def _dispose(
             ),
         )
 
+    if len(member.keys) < 2:
+        # Unreachable while the partition is a partition: a bare subject that is
+        # admitted lands in exactly one subscope, or in the pairs it refined into,
+        # and ``_landings`` finds both. Refusing rather than inventing a fifth
+        # disposition keeps that a checked fact; classifying it as one of the four
+        # would be reporting a cause nobody established.
+        _refuse(
+            "recheck-member-unaccounted",
+            f"{origin} is admitted by {activity.activity_ref} and appears in none of "
+            "its subscopes, so this record cannot say what became of it; the "
+            "partition should account for every admitted subject",
+        )
     return MemberDisposition(
         member=member,
         disposition="pairing-no-longer-derived",
