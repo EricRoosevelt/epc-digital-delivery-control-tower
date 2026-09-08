@@ -2799,7 +2799,7 @@ the correct answer and not a defect (ADR 0002 §9). Every positive path in this
 design is exercised on an isolated test fixture that declares the policy a real
 project would have decided. The refusal is the shipped behaviour.
 
-### 10.2 Seven boundaries this design leaves to people
+### 10.2 Eight boundaries this design leaves to people
 
 These are not deferred work items. Each is something the design **cannot** do,
 and therefore something a person has to. They accumulated roughly one per round,
@@ -2883,6 +2883,79 @@ describe a job somebody has to hold.
    sample produce a record would mean writing
    `decision_basis = "project-decision"` onto rows describing decisions nobody
    took — the exact fabrication ADR 0002 §3.5 added the field to prevent.
+
+8. **Nobody is designated to declare the assessed scope, and an element nobody
+   declared is absent from every part of the record.** §2.1 makes the assessed
+   scope a required, explicit request input and refuses to infer it from which
+   elements carry findings; that refusal is correct and is not reopened here —
+   reading scope off coverage is the Checkpoint B case-4 trap, and an
+   `IfcChimney` no rule reaches has to surface as unevaluated rather than
+   quietly leave the scope. What has never been written down is the governance
+   duty the design choice creates, which the design itself cannot discharge.
+
+   **The ledger is total, and its universal quantifier runs only over declared
+   keys.** §3.3's accounting says that for every requested activity, every key
+   **the declared scope resolves to** appears exactly once as either an admitted
+   subject or an `out_of_subject_class[]` entry, and never in both. That
+   sentence is true as written, and §10.1's "accounted for in full" is true with
+   it. A key that was never declared is in neither list, because it was never a
+   key the accounting ranged over. It reaches no reading, no verdict, no route
+   and no assignment; nothing marks the place where it would have been; and no
+   field of the record is even shaped to hold the absence. Nor is there a
+   cross-record fallback on a first assessment: §4.7.2's *outside the declared
+   scope* disposition — the one that keeps a narrowed scope from passing for
+   progress — is a `recheck` classification for a member some **prior** record
+   held, and a first assessment has no prior record to be compared against.
+   Declared narrowly, a scope on a first assessment is simply narrow, at zero
+   signal.
+
+   **A narrow declaration does not only answer less — it reads cleaner, and that
+   is the sharp edge.** Measured on this repository's own fixture with the Pack,
+   the facts, the determinations and all three activities held constant, moving
+   only the declared scope from the whole `hvac` model version to the three
+   elements R-005 fails: `schedules-and-room-data-sheets` goes from `UNKNOWN`
+   over the zero-finding `IfcChimney` **and** `BLOCKED` over the three, to
+   `BLOCKED` over the three alone; `ceiling-and-bulkhead-geometry` loses its
+   `UNKNOWN` the same way; `out_of_subject_class[]` goes from the two setout
+   markers to empty — **truthfully**, since nothing out of class was declared;
+   and the chimney's key occurs nowhere in the record, whose document — dumped
+   to JSON for this measurement alone, §10.1 item 6 standing — falls from 14,307
+   characters to 8,008. Every sentence in the narrower record is true. A
+   production owner reading that activity — three `BLOCKED`, no `UNKNOWN`,
+   nothing reported out of class — is looking at what a complete answer looks
+   like, to a question narrower than the one they believe they asked. This is
+   Checkpoint B case 4 one storey up: the reason an element is absent has moved
+   from *no rule reached it*, which §2.1 deliberately made visible, to *nobody
+   wrote it into the scope*, which nothing here can make visible, because the
+   design's entire knowledge of the scope is the declaration.
+
+   **It gates the other seven.** Items 1 and 2's determinations, item 3's
+   rewritten document, item 4's unsealed evidence, item 5's records nobody reads
+   and item 7's standing refusal all presuppose that the assessment was asked
+   about the right objects. A verdict founded on a competent determination, made
+   by a properly appointed determiner, over a scope that omitted the element
+   that mattered, is wrong in a way that none of the seven detects and no amount
+   of rigour inside them recovers. Item 6 is its exact inverse, and the pair is
+   worth reading together: there, a person meets a correct `UNKNOWN` and reports
+   it as a fault; here, a person meets no `UNKNOWN` where one belonged and
+   reports nothing.
+
+   **The decision, in the terms item 3 uses.** This document names no role, for
+   the reason it names none there: the Framework has no project, no organisation
+   chart and no staff, so a role named here would be a role invented here. **A
+   project adopting this design must designate who declares the assessed scope
+   for each assessment, and that person answers for a scope declared too
+   narrowly** — in the same act by which it appoints items 1 and 3. That is a
+   decision, not a blank. It is deliberately not a system behaviour: nothing
+   here has, or should be given, a concept of a scope being "too narrow". A
+   scope is the caller's statement of which labour the verdict is about, and no
+   evidence reachable inside an assessment separates *these three elements are
+   the handover* from *these three elements are what somebody remembered*. A
+   check that guessed would be asserting a judgement this design cannot make,
+   and naming a shortfall it cannot see. Unlike the seven above, this boundary
+   was not recorded anywhere before being written here: each of those existed in
+   the round that found it, and this one existed only as a consequence nobody
+   had put on paper.
 
 **Nothing in this section closes an open point, and it is not a tidy-up of
 them.** The points accumulated across seven rounds all remain open, and each

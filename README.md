@@ -480,6 +480,29 @@ and none of the four is read as resolved.
 * **The sample in this repository produces no record, and that is permanent.**
   See below; it is a standing property, not an outstanding task.
 
+**And one thing a production owner never meets, which is exactly why it is
+written here.** Both notices above are things you run into. This one you cannot
+run into, because what it is about is not in the record at all: **nobody in this
+design is designated to declare the assessed scope, and an element nobody
+declared is absent from every part of the answer.** Scope being declared rather
+than discovered is the right decision and the reason the `IfcChimney` surfaces —
+but it is declared by a person, and the accounting that says nothing disappears
+is an accounting *of the declared keys*. A key that was never declared is not an
+admitted subject, is not listed as out of class, and leaves no trace of the
+place where it would have been. There is no check for this and there should not
+be: nothing here has a concept of a scope being "too narrow", and no evidence
+inside an assessment could tell the handover apart from what somebody
+remembered.
+
+The uncomfortable part is that a narrow scope reads *better*. Declare the whole
+`hvac` model and the schedules activity answers `BLOCKED` over three elements
+and `UNKNOWN` over a chimney no rule reached; declare just those three elements
+and the same activity answers `BLOCKED` over three, with nothing `UNKNOWN` and
+nothing reported out of class — every word of it true, and it looks like the
+complete answer. A project adopting this design has to name who declares the
+scope, and that person answers for declaring it narrowly. See
+[`0003`](docs/decisions/0003-runtime-purpose-assessment-shape.md) §10.2 item 8.
+
 **`pcert-sample` cannot produce one, that is the correct result, and it is a
 standing property rather than a gap.** Every live verdict across its three
 activities is non-`READY`, every non-`READY` subscope needs a resolving
@@ -584,13 +607,15 @@ publishes, or acts on a record. That is the boundary this section is about.
   avoidance of doubt about present behaviour, `epc-ct run` recomputes the full
   scope every time.
 
-Separately from any of that, seven things this design **cannot** do — and which a
-project adopting it therefore has to give to a person — are recorded together in
-[`docs/decisions/0003-runtime-purpose-assessment-shape.md`](docs/decisions/0003-runtime-purpose-assessment-shape.md)
+Separately from any of that, eight things this design **cannot** do — and which
+a project adopting it therefore has to give to a person — are recorded together
+in [`docs/decisions/0003-runtime-purpose-assessment-shape.md`](docs/decisions/0003-runtime-purpose-assessment-shape.md)
 §10.2, with the two that follow from the Pack/Overlay data shape in
 [`docs/decisions/0002-minimal-purpose-pack-project-overlay.md`](docs/decisions/0002-minimal-purpose-pack-project-overlay.md)
-§9. The two above are on that list because a production owner runs into them
-without going looking; the other five are about who is competent to determine
+§9. Two of them are the notices above, on that list because a production owner
+runs into them without going looking, and one is the notice beside them that
+nobody runs into — who declares the assessed scope, and what becomes of an
+element nobody declared. The other five are about who is competent to determine
 anything, what a `determiner` name does and does not prove, who owns the signal
 that a cited determination was rewritten in place, why sealing a record does not
 seal the documents it cites, and the fact that writing a record notifies nobody
