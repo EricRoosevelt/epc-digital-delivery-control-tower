@@ -1,17 +1,40 @@
 # 0003 — Runtime purpose assessment: request scope, subscopes, record shape, and identity boundary
 
-- **Status:** Proposed. This is a runtime-design decision for review, not an
-  implementation. No code, rule, checker, test, schema, configuration file,
-  CLI, loader, evaluator, or generated artifact is added or changed by this
-  document. It fixes the *shape* of a runtime purpose assessment — what a
-  request is bounded by, how underlying observations become
-  outcome-homogeneous subscopes, what one assessment records, how a
-  `CONDITIONAL` promotion is recorded, and whether a runtime fact ever mints
-  an identity — so that a future implementation can walk the Purpose Pack and
-  Project Overlay shape fixed in
-  [`0002-minimal-purpose-pack-project-overlay.md`](0002-minimal-purpose-pack-project-overlay.md)
-  without redesigning that format, and so that running an assessment is
-  structurally incapable of moving a published byte.
+- **Status:** **Accepted; a named subset implemented; nothing ever produced from
+  it.** Three statements, and the third is not a caveat on the first two — it is
+  the reason they can both be read without overclaiming. §10 carries the evidence
+  for each.
+  - **Accepted.** The decision itself stands as written. It fixes the *shape* of
+    a runtime purpose assessment — what a request is bounded by, how underlying
+    observations become outcome-homogeneous subscopes, what one assessment
+    records, how a `CONDITIONAL` promotion is recorded, and whether a runtime
+    fact ever mints an identity — so that an implementation can walk the Purpose
+    Pack and Project Overlay shape fixed in
+    [`0002-minimal-purpose-pack-project-overlay.md`](0002-minimal-purpose-pack-project-overlay.md)
+    without redesigning that format, and so that running an assessment is
+    structurally incapable of moving a published byte.
+  - **Implemented, in part.** `epc_control_tower/purpose/assessment/` (merged at
+    `89a8305` and `5a77f12`) builds the request boundary and its refusals,
+    subject admission and the subscope partition, evidence reading, the decision
+    walk, the resolving assignment, determination admissibility and content
+    digests, the sealed record and its `assessment_digest`, and the `recheck`
+    successor. Still unbuilt, each named separately in §10.1: `CONDITIONAL`
+    promotion, the `authorisation` successor, storage for a record, storage for a
+    determination, a CLI, a public machine contract, and a second Purpose Pack.
+    §10.1 item 8 also records one place where what was built refuses more widely
+    than what was designed; the absence of an activity-level verdict is not on
+    either list, being a decision of §6 rather than a gap.
+  - **Never used, and not usable on anything shipped here.** No assessment
+    record has been produced for any real project, by anyone. Nor can one be
+    produced from this repository's own sample: `pcert-sample`'s nine Overlay
+    policy rows all read `decision_basis = "illustrative"`, so §4.3's assignment
+    gate and §1.2 item 4's policy gate refuse it — the correct answer, and a
+    standing property rather than a task (§10.1, §10.2 item 7). Every positive
+    path is covered on an isolated test fixture.
+  - **This document still adds and changes no code**, rule, checker, test,
+    schema, configuration file, CLI, loader, evaluator, `rules/` file,
+    `projects/` file, Pack, Overlay, or generated artifact; §9 states that in
+    full, and how to read it round by round.
 - **Date:** 2026-09-03.
 - **Revision history:**
   - Refines the version at `954fee6` (2026-09-03), which **BIM domain review
@@ -449,6 +472,59 @@
     narrowing, §§4.7.1–4.7.5, the member correspondence rule, the four
     disappearance classifications, the condition states and their ordering,
     sealing, determinism, and §8's six counterfactuals and its seventh commitment.
+  - Refines the version merged at `5a77f12` (2026-09-08), on 2026-09-08. **No
+    design changes in this round**: no check, field, refusal code, outcome name,
+    disposition, carry-over reason or marker is added, and no existing rule
+    moves. What changes is what this document *says about itself*, which had
+    fallen behind three merged implementations. **(1)** The **Status** line said
+    "Proposed … not an implementation. No code, rule, checker, test, schema,
+    configuration file, CLI, loader, evaluator, or generated artifact is added or
+    changed", while an evaluator, a loader and a `recheck` successor had all been
+    merged against it. The Status now separates three statements that had been
+    collapsed into one — the decision is accepted, a named subset is built, and
+    nothing has ever been produced from it for any real project — with the third
+    carried beside the second rather than left to be discovered. **(2)** §4.7.6's
+    version-attribution paragraph reached the right conclusion on a reason that
+    is false for the commoner case. It said that "after a re-issue the earlier
+    determination cannot be offered at all", which holds only for a determination
+    submitted unchanged; a determination *re-attributed* to the new versions is
+    admissible, is cited, and — `determined_against` being inside the content the
+    digest is over — lands in
+    `determination-content-changed-under-the-same-reference` rather than in "not
+    attributable to this context". The conclusion is unchanged and no name is
+    added: both fates already have a row. The paragraph now also states the
+    domain fact the corrected text would otherwise imply away — that a review
+    genuinely re-held and a version field edited on an unchecked document produce
+    the **same** row, that `basis` is the only field that would differ and is
+    never adjudicated here, and that the row therefore means "the document behind
+    this handle changed" and never "the review was carried out again". The
+    Consequences paragraph was checked against the same reading and needed no
+    change: "re-decided, re-signed or re-attributed" already covers both fates.
+    **(3)** §10 is new and consolidates two accounts that had no single home —
+    what the implementation can and cannot tell a production owner (§10.1), and
+    eight boundaries this design cannot cross and a person therefore must
+    (§10.2), which had been scattered across the open points of seven rounds.
+    Its closing note is explicit that listing them closes none of them. §9's
+    final sentence, which said the Status line was left as written, is updated
+    to point at where it went. §10 reached that shape over two further review
+    passes inside this round, and both belong to what merges here rather than to
+    later work. One found that §10.1 item 2, the matching README sentence and
+    the comment beside `SUCCESSOR_KINDS` all claimed a closed successor
+    vocabulary that nothing enforces — the constant is read by nothing and
+    `SuccessorSection.kind` is an unvalidated `str` — so all three now call that
+    closure a statement of design, and the gap is recorded as **§10.1 item 9**
+    and in §10.2's closing note, with whether the field should be checked left
+    to a separate checkpoint as the behavioural question it is. The other, a BIM
+    domain review returning **AT RISK**, added **§10.2 item 8**: nobody is
+    designated to declare the assessed scope, and a key nobody declared is in
+    neither an activity's admitted subjects nor its `out_of_subject_class[]`, so
+    §3.3's accounting is total exactly over the declared keys. Neither pass
+    added a refusal, warning, field, disposition, outcome name or marker,
+    reopened §2.1's argument, or renumbered a boundary. Unchanged and not
+    reopened: every rule of §§1–8, the refusal tables, the seven continuation
+    checks, the two successor kinds, sealing, determinism, the identity
+    boundary, §8's six counterfactuals and its seventh commitment, and every
+    revision-history entry above.
 - **Scope:** Checkpoint D runtime design only — the request boundary, the
   subscope construction rule ADR 0002 §3.2 explicitly left here, the
   assessment record shape, the runtime identity boundary, and the
@@ -2169,13 +2245,36 @@ ruling**, and that absence is deliberate rather than an oversight.
 **The version-attribution case needs no separate name, and here is why.** A
 determination whose `determined_against` is not the request's context is refused
 before any subscope is assessed (§7.1), so every determination a record cites
-carries the request's own context. Two consequences follow and both are used
-above: under an unchanged context a content change cannot be a version change, so
-it is a change of substance; and after a re-issue the earlier determination
-cannot be offered at all, so its citation lands in
-"not attributable to this context" rather than here. The classification never has
-to guess which part of a content change moved, because the standing refusal has
-already made that unambiguous.
+carries the request's own context. Under an unchanged context that settles it at
+once: `determined_against` cannot have moved, so a content change is a change of
+substance and nothing else.
+
+**A model re-issue has two outcomes, and the earlier text named only one of
+them.** Offer the sealed determination *unchanged* and it is still attributed to
+the superseded versions: §7.1 refuses it, the successor cites that handle
+nowhere, and §4.7.2's two absent reasons apply — here, "not attributable to this
+context". But the ordinary thing a team does after an export is to re-attribute
+the same document to the new versions, and a re-attributed determination is
+**admissible**: its `determined_against` matches the request's context, so it is
+read, it is cited, and it is compared. `determined_against` is part of what the
+digest is over — it has to be, since a determination re-attributed to other
+versions is not the same determination — so the digest moves, and the row is
+`determination-content-changed-under-the-same-reference`. That is the more common
+of the two fates, and between them they leave nothing unlanded: neither outcome
+needs a name that does not already exist, which is the whole of the claim above.
+
+**What that row means, and what it must never be read as saying.** A team that
+re-ran the overlay comparison against the new export, and a team that opened the
+old determination and edited its version field without re-checking anything,
+produce **the same row**. Nothing in this design separates them, and a name that
+claimed to would be asserting a capability that is not here. The only field in
+which the two differ is `basis`, and §1.2 item 4 fixes that a determination's
+basis is cited and never adjudicated by the assessment. So the row is worded as
+exactly what it is — *the document behind this handle is not the document that was
+sealed* — and never as *the review was carried out again*. Reading the `basis` on
+the current determination and judging whether anybody actually looked again is a
+person's work, not this design's, and §10.2 records it among the boundaries
+this design leaves to people.
 
 **`finding_key` needed no equivalent, and stating why keeps the asymmetry
 honest.** A `finding_key` is *already* derived from the finding's own content
@@ -2598,9 +2697,296 @@ checker, test, `identity.py` derivation, `rules/` file, `projects/` file,
 file, and nothing is merged, tagged, or released by it.** Still not designed and
 still not built: the `CONDITIONAL` promotion and its `authorisation` successor,
 persistent storage for a record, an activity-level verdict, a machine contract,
-a CLI, Doctor, a Registry, and a second Purpose Pack. The document's **Status**
-line is left as written, because moving it is an approval act and belongs to the
-technical director rather than to a round that adds design.
+a CLI, Doctor, a Registry, and a second Purpose Pack. The document's **Status** line has since been
+moved, by the round that added §10 and under the technical director's direction;
+what it now says, and the evidence for each half of it, are in §10.
+
+## 10. What is built, what it can answer, and what it leaves to people
+
+§9 says what this *document* does not touch. This section says what the
+implementation behind it does and does not do, and what remains a person's job
+however far that implementation goes. It exists because neither question was
+answerable from one place: the first is spread over three merged pull requests,
+and the second over the open points of seven rounds.
+
+### 10.1 What this can and cannot tell a production owner today
+
+**Built**, in `epc_control_tower/purpose/` and
+`epc_control_tower/purpose/assessment/`: Pack and Overlay loading and
+fail-closed composition; the request boundary of §2 and the refusals of §7.1;
+subject admission by `subject_classes` and the incremental subscope partition of
+§3; evidence reading, including the `N/A` and named-absence distinctions; the
+decision-tree walk to a leaf; the resolving assignment of §4.3 with its
+`decision_basis` gate; determination admissibility under §1.2 item 4, including
+each determination's content digest; the sealed record and its
+`assessment_digest` (§5); and the `recheck` successor of §4.7 with member
+correspondence, evidence carry-over and the recheck-condition states.
+
+**What it can tell you.** For one named model-version context and one explicitly
+declared scope, and for each activity requested:
+
+- which elements — and which *(penetrating, penetrated)* pairs — are `BLOCKED`,
+  and on which verified fact: a named `requirement_key`'s `FAIL`, or a cited
+  determination's outcome;
+- which are `UNKNOWN`, and which piece of evidence is missing to make them
+  anything else — named, never reported as a general shortfall;
+- which keys the activity is not about at all, with the `ifc_class` that put each
+  one out (§3.3), so a declared scope is accounted for in full rather than
+  quietly shrunk;
+- which role the Pack says answers a failure of that kind, and which team this
+  project's Overlay staffs that role with;
+- what the Pack says the durable source fix is, and what evidence would end the
+  blockage;
+- and, on a later run over re-issued models, where each member of an earlier
+  blockage now stands — present at which verdict, or gone under one of four
+  named classifications, none of which is "resolved".
+
+**What it cannot tell you**, and will not by being run more often:
+
+- **whether two models are actually aligned.** R-010 witnesses that two models
+  share a setout marker and nothing more; §7.3 records that its `PASS` is
+  context, never alignment evidence. Alignment is a determination somebody makes.
+- **what any delay costs.** No duration, no cost, no man-hours, no programme
+  impact. §4.6 fixes that a consequence's *magnitude* is cited from the project's
+  own milestone dates and never computed, and the facts projection an assessment
+  reads carries no field a duration could be computed from.
+- **who is actually doing the work.** `assigned_team_or_person` is the team the
+  Overlay staffs a role with. It is a recorded value, not an act of assigning
+  anybody (§10.2 item 5).
+- **that anybody has been told.** Nothing notifies, files, or escalates.
+- **that a risk has been accepted.** There is no `CONDITIONAL` promotion and no
+  `authorisation` successor, so a release granted over a known deficiency has
+  nowhere to be recorded at all.
+- **where your records are.** Nothing stores a determination and nothing stores
+  an assessment record; both are handed in and handed back.
+
+**Not implemented, named one by one** — each of these is absent as a whole, and
+none of them is partly present under another name:
+
+1. **`CONDITIONAL` promotion.** §4.4's nine fields, §4.5's seven continuation
+   checks and the whole of §7.2 are designed and unbuilt. No code path promotes
+   a subscope, and `CONDITIONAL` remains structurally illegal as a decision-tree
+   leaf.
+2. **The `authorisation` successor record.** `SUCCESSOR_KINDS` names it, so the
+   second kind is a designed and recorded gap rather than one nobody thought of.
+   Nothing behind the name is written, and only `recheck` is ever constructed.
+   The vocabulary is closed as a statement of design and not as an enforcement:
+   `SuccessorSection.kind` is an unvalidated `str`, nothing checks a value
+   against `SUCCESSOR_KINDS`, and a caller who passes a third string gets a
+   record that carries it (item 9).
+3. **Physical storage for a record.** A recheck is handed the prior record as an
+   object. Where a sealed record lives between the two calls is undecided, and no
+   file is written.
+4. **Storage for a determination.** §1.2 item 4's external model is unchanged:
+   determinations are read by reference, their store is somebody else's, and this
+   repository has none.
+5. **A CLI.** No `epc-ct` subcommand reaches any of this, and
+   `epc-ct run / check / components / snapshot` are unaffected by its presence.
+6. **A public machine contract.** The Python objects are the only surface. No
+   serialisation, schema, or versioned interface is published, and nothing here
+   is a promise to anything outside this repository.
+7. **A second Purpose Pack.** One Pack exists. Every claim about portability
+   rests on a design argument rather than on a second worked example.
+8. **An activity-level verdict, and an activity-scoped refusal.** §6 fixes that
+   there is no roll-up above the subscope, deliberately. Separately, and not
+   deliberately, §4.3 and two rows of §7.1 describe a defect as failing closed
+   "for that activity", while the implementation's single refusal path ends the
+   whole request — so what was built refuses more widely than what was designed.
+   That gap is open, and the closing note of §10.2 keeps it open rather than
+   resolving it by quietly editing the narrower text away.
+9. **Any enforcement of the successor-kind vocabulary.** `SUCCESSOR_KINDS` is
+   read by nothing. It is referenced only by its own definition and by what
+   re-exports it — one import and two `__all__` entries. No test mentions it,
+   and `SuccessorSection.kind` is an unvalidated `str` that no
+   construction-time check ever sees. So `SuccessorSection` accepts a third kind
+   as a plain string, and `as_document` carries that string into the hashed
+   record. `SuccessorSection` is one of the exported Python objects item 6 calls
+   the only public surface, which is what makes this reachable rather than
+   theoretical. Whether the field should be checked is open, and answering it
+   would be a behavioural change rather than a documentation one.
+
+**And it has never been used.** No assessment record has been produced for any
+real project, by anyone, at any point. Nor can one be produced from what this
+repository ships: `pcert-sample` is the only project carrying an `[overlay]`
+table, all nine of its policy rows read `decision_basis = "illustrative"`, and
+§4.3's gate refuses a request that would found an assignment on one — which is
+the correct answer and not a defect (ADR 0002 §9). Every positive path in this
+design is exercised on an isolated test fixture that declares the policy a real
+project would have decided. The refusal is the shipped behaviour.
+
+### 10.2 Eight boundaries this design leaves to people
+
+These are not deferred work items. Each is something the design **cannot** do,
+and therefore something a person has to. They accumulated roughly one per round,
+each recorded wherever the round that found it happened to be writing, and the
+effect of never collecting them was that no reader saw that together they
+describe a job somebody has to hold.
+
+1. **Nobody is entitled, yet, to make a voiding-condition or coordination-review
+   determination.** §4.5 states that this document does not fix which role may
+   make a voiding-condition determination, and no Overlay table carries the
+   column that would fix it for any determination (ADR 0002 §9). The direction
+   the gap falls is safe: with no determination a promotion cannot continue, and
+   a subject with no admissible determination reads `not-yet-*` and routes to
+   `UNKNOWN`. Safe is not the same as owned. **No one is designated competent and
+   no one is designated responsible.** A project adopting this design has to
+   appoint that role itself, outside both the Pack and the Overlay, before either
+   kind of determination means anything. In practice that is the information
+   manager or the BIM coordinator; this document names neither, because a
+   framework has no project in which to name anybody.
+
+2. **`determiner` is a name, not a credential.** §1.2 item 4 requires a
+   determination to carry a `determiner` and a `basis`, on the ground that an
+   unattributable assertion is not evidence. What is actually checked is that the
+   field is present and non-empty. Nothing verifies that the person exists, is
+   employed, holds the role the determination implies, or was at the review being
+   reported. This is the same class of thing §4.5 already names as uncheckable
+   about a promotion's field 4, and it is named here for the same reason:
+   requiring a field is not verifying it.
+
+3. **`determination-content-changed-under-the-same-reference` has no assigned
+   owner, and this design cannot assign one.** It is the only signal available
+   anywhere here that a determination document was rewritten in place rather than
+   superseded by a new one (§4.7.6), and it can appear beside a verdict that did
+   not move at all. Somebody has to read it and decide which of three things it
+   was: a re-attribution after an export, a genuine re-review, or an edit nobody
+   should have made. **This document does not name that somebody, and the
+   technical director has ruled that it declines to rather than leaving the
+   question open** — the Framework has no project, no organisation chart and no
+   staff, so any role named here would be a role invented here. A project
+   adopting this design assigns it, in the same act by which it appoints item 1's
+   role. That is a decision, not a blank.
+
+4. **What is sealed is the record, not the documents it cites.** A record cannot
+   be rewritten once its `assessment_digest` is computed (§4.5). A determination
+   can: it lives at a reference in somebody else's store, carries no version, and
+   is under no immutability guarantee this design can reach (§1.2 item 4). So a
+   sealed record may perfectly well cite a document that has since been
+   rewritten. The sealed content digest is the only thing that will ever reveal
+   it — and only at the next recheck, when something compares. Neither half of
+   that asymmetry implies the other, which is why it is stated rather than left
+   to be inferred: sealing a record is not sealing its evidence.
+
+5. **Writing a record makes nothing happen.** There is no notification, no
+   ticket, no dispatch, no queue. `assigned_team_or_person` (§4.3) is a value in
+   a record — the team this project's Overlay staffs a Pack role with — and not
+   an act of assigning anybody; `actual_actor` being absent is the legible state
+   "assigned, not yet started", which is a statement the record makes and not a
+   state anything watches. A project adopting this design needs a person whose
+   job is to read records and act on them. Without one, the records are an
+   archive.
+
+6. **After a model re-issue, retreating to `UNKNOWN` is correct behaviour, and
+   somebody will report it as a fault.** No determination the prior record read
+   is admissible under the new versions (§4.7, and item 4's rule read across the
+   seal), so a coordination-review determination made about last week's export
+   says nothing about this week's. `builders-work-openings` goes from
+   *(chimney, slab)* `READY` and *(chimney, roof)* `BLOCKED` back to one `UNKNOWN`
+   over every admitted subject, carrying `penetration-not-determined`, and the
+   ceiling activity's alignment goes back to `not-yet-confirmed`. Nothing broke:
+   the evidence for the old verdicts was about models that no longer exist. The
+   first production owner to meet it will raise it as a defect, so it has to be
+   written where a person actually reads — `README.md` carries it — and not only
+   in §4.7's technical wording.
+
+7. **The sample shipped here produces no record, permanently.** Every positive
+   path in this design is covered on an isolated fixture (§10.1), and the reason
+   is not that a fixture was quicker: `pcert-sample` has never appointed a team
+   and has never accepted an evidence method, so §4.3's assignment gate and
+   §1.2 item 4's policy gate both refuse it, correctly (ADR 0002 §9). This is a
+   standing property of the repository, not an outstanding task. Making the
+   sample produce a record would mean writing
+   `decision_basis = "project-decision"` onto rows describing decisions nobody
+   took — the exact fabrication ADR 0002 §3.5 added the field to prevent.
+
+8. **Nobody is designated to declare the assessed scope, and an element nobody
+   declared is absent from every part of the record.** §2.1 makes the assessed
+   scope a required, explicit request input and refuses to infer it from which
+   elements carry findings; that refusal is correct and is not reopened here —
+   reading scope off coverage is the Checkpoint B case-4 trap, and an
+   `IfcChimney` no rule reaches has to surface as unevaluated rather than
+   quietly leave the scope. What has never been written down is the governance
+   duty the design choice creates, which the design itself cannot discharge.
+
+   **The ledger is total, and its universal quantifier runs only over declared
+   keys.** §3.3's accounting says that for every requested activity, every key
+   **the declared scope resolves to** appears exactly once as either an admitted
+   subject or an `out_of_subject_class[]` entry, and never in both. That
+   sentence is true as written, and §10.1's "accounted for in full" is true with
+   it. A key that was never declared is in neither list, because it was never a
+   key the accounting ranged over. It reaches no reading, no verdict, no route
+   and no assignment; nothing marks the place where it would have been; and no
+   field of the record is even shaped to hold the absence. Nor is there a
+   cross-record fallback on a first assessment: §4.7.2's *outside the declared
+   scope* disposition — the one that keeps a narrowed scope from passing for
+   progress — is a `recheck` classification for a member some **prior** record
+   held, and a first assessment has no prior record to be compared against.
+   Declared narrowly, a scope on a first assessment is simply narrow, at zero
+   signal.
+
+   **A narrow declaration does not only answer less — it reads cleaner, and that
+   is the sharp edge.** Measured on this repository's own fixture with the Pack,
+   the facts, the determinations and all three activities held constant, moving
+   only the declared scope from the whole `hvac` model version to the three
+   elements R-005 fails: `schedules-and-room-data-sheets` goes from `UNKNOWN`
+   over the zero-finding `IfcChimney` **and** `BLOCKED` over the three, to
+   `BLOCKED` over the three alone; `ceiling-and-bulkhead-geometry` loses its
+   `UNKNOWN` the same way; `out_of_subject_class[]` goes from the two setout
+   markers to empty — **truthfully**, since nothing out of class was declared;
+   and the chimney's key occurs nowhere in the record, whose document — dumped
+   to JSON for this measurement alone, §10.1 item 6 standing — falls from 14,307
+   characters to 8,008. Every sentence in the narrower record is true. A
+   production owner reading that activity — three `BLOCKED`, no `UNKNOWN`,
+   nothing reported out of class — is looking at what a complete answer looks
+   like, to a question narrower than the one they believe they asked. This is
+   Checkpoint B case 4 one storey up: the reason an element is absent has moved
+   from *no rule reached it*, which §2.1 deliberately made visible, to *nobody
+   wrote it into the scope*, which nothing here can make visible, because the
+   design's entire knowledge of the scope is the declaration.
+
+   **It gates the other seven.** Items 1 and 2's determinations, item 3's
+   rewritten document, item 4's unsealed evidence, item 5's records nobody reads
+   and item 7's standing refusal all presuppose that the assessment was asked
+   about the right objects. A verdict founded on a competent determination, made
+   by a properly appointed determiner, over a scope that omitted the element
+   that mattered, is wrong in a way that none of the seven detects and no amount
+   of rigour inside them recovers. Item 6 is its exact inverse, and the pair is
+   worth reading together: there, a person meets a correct `UNKNOWN` and reports
+   it as a fault; here, a person meets no `UNKNOWN` where one belonged and
+   reports nothing.
+
+   **The decision, in the terms item 3 uses.** This document names no role, for
+   the reason it names none there: the Framework has no project, no organisation
+   chart and no staff, so a role named here would be a role invented here. **A
+   project adopting this design must designate who declares the assessed scope
+   for each assessment, and that person answers for a scope declared too
+   narrowly** — in the same act by which it appoints items 1 and 3. That is a
+   decision, not a blank. It is deliberately not a system behaviour: nothing
+   here has, or should be given, a concept of a scope being "too narrow". A
+   scope is the caller's statement of which labour the verdict is about, and no
+   evidence reachable inside an assessment separates *these three elements are
+   the handover* from *these three elements are what somebody remembered*. A
+   check that guessed would be asserting a judgement this design cannot make,
+   and naming a shortfall it cannot see. Unlike the seven above, this boundary
+   was not recorded anywhere before being written here: each of those existed in
+   the round that found it, and this one existed only as a consequence nobody
+   had put on paper.
+
+**Nothing in this section closes an open point, and it is not a tidy-up of
+them.** The points accumulated across seven rounds all remain open, and each
+remains separately stated where it was made: §1.2 item 4's
+`illustrative`-versus-missing asymmetry, under which a project that wrote a
+demonstration row is refused outright where a project that wrote nothing is only
+declined; §4.3's `decision_basis` gate reading statically over every reachable
+leaf rather than the leaves live evidence touched; the contradiction refusal of
+§1.2 item 4 condition 3, which is detected per *(evidence requirement, subject)*
+and then ends the entire request; §7.1's whole-request refusal on a
+model-version mismatch; the activity-scoped refusals of §4.3 and §7.1 against
+the whole-request refusal that was built (§10.1 item 8); the positive path being
+covered only on a fixture (item 7); determination eligibility being unfixed (item
+1); the successor-kind vocabulary being recorded as closed while nothing
+enforces it (§10.1 item 9); and this section's item 3. Each is a live question
+about this design, and none of them is answered by having been listed together.
 
 ## Consequences
 
