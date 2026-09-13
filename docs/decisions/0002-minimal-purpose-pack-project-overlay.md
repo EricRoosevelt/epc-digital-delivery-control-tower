@@ -212,6 +212,10 @@
     anything, and that the worked Overlay's nine policy rows are `illustrative`
     permanently rather than pending. Nothing is duplicated between the two
     documents: each fact is written in one of them and cited from the other.
+    Later in the same round §10.2 grew an eighth boundary, so §9's two opening
+    sentences, which counted seven, now read eight; that is a cross-reference
+    count and nothing else, and the two boundaries §9 supplies the field-level
+    facts for are still its items 1 and 7.
     Deliberately unchanged: the `# EXAMPLE` comments in the §3.2 and §3.5 code
     fences, which record what was true when the illustrations were drawn and
     which the files that now exist match; and every revision-history entry above,
@@ -2368,8 +2372,8 @@ true when the illustration was drawn, and the files that now exist match them.
 ## 9. Two of those boundaries are this document's own
 
 [`0003-runtime-purpose-assessment-shape.md`](0003-runtime-purpose-assessment-shape.md)
-§10.2 consolidates seven things the design cannot do and a person therefore must.
-Two of the seven are consequences of *this* document's data shape rather than of
+§10.2 consolidates eight things the design cannot do and a person therefore must.
+Two of the eight are consequences of *this* document's data shape rather than of
 runtime behaviour, so the field-level facts behind them are recorded here once,
 and §10.2 states the governance consequence without restating them.
 

@@ -502,14 +502,29 @@
     change: "re-decided, re-signed or re-attributed" already covers both fates.
     **(3)** §10 is new and consolidates two accounts that had no single home —
     what the implementation can and cannot tell a production owner (§10.1), and
-    seven boundaries this design cannot cross and a person therefore must
-    (§10.2), which had been scattered across the open points of seven rounds. Its
-    closing note is explicit that listing them closes none of them. §9's final
-    sentence, which said the Status line was left as written, is updated to point
-    at where it went. Unchanged and not reopened: every rule of §§1–8, the
-    refusal tables, the seven continuation checks, the two successor kinds,
-    sealing, determinism, the identity boundary, §8's six counterfactuals and its
-    seventh commitment, and every revision-history entry above.
+    eight boundaries this design cannot cross and a person therefore must
+    (§10.2), which had been scattered across the open points of seven rounds.
+    Its closing note is explicit that listing them closes none of them. §9's
+    final sentence, which said the Status line was left as written, is updated
+    to point at where it went. §10 reached that shape over two further review
+    passes inside this round, and both belong to what merges here rather than to
+    later work. One found that §10.1 item 2, the matching README sentence and
+    the comment beside `SUCCESSOR_KINDS` all claimed a closed successor
+    vocabulary that nothing enforces — the constant is read by nothing and
+    `SuccessorSection.kind` is an unvalidated `str` — so all three now call that
+    closure a statement of design, and the gap is recorded as **§10.1 item 9**
+    and in §10.2's closing note, with whether the field should be checked left
+    to a separate checkpoint as the behavioural question it is. The other, a BIM
+    domain review returning **AT RISK**, added **§10.2 item 8**: nobody is
+    designated to declare the assessed scope, and a key nobody declared is in
+    neither an activity's admitted subjects nor its `out_of_subject_class[]`, so
+    §3.3's accounting is total exactly over the declared keys. Neither pass
+    added a refusal, warning, field, disposition, outcome name or marker,
+    reopened §2.1's argument, or renumbered a boundary. Unchanged and not
+    reopened: every rule of §§1–8, the refusal tables, the seven continuation
+    checks, the two successor kinds, sealing, determinism, the identity
+    boundary, §8's six counterfactuals and its seventh commitment, and every
+    revision-history entry above.
 - **Scope:** Checkpoint D runtime design only — the request boundary, the
   subscope construction rule ADR 0002 §3.2 explicitly left here, the
   assessment record shape, the runtime identity boundary, and the
