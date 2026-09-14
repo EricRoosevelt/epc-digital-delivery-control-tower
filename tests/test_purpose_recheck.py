@@ -1142,6 +1142,28 @@ def _shape(record, activity_ref):
     ]
 
 
+def _identified_members(record, activity_ref, facts):
+    """Each subscope's members as ``(element_key, ifc_class)``, in partition order.
+
+    :func:`_shape` counts members, which is the right instrument for the claim
+    it serves — whether an activity *partitioned* differently. It is the wrong
+    one for a sentence about **who** the members are: "two" is equally true of
+    any two elements in the model, so a description naming the wrong pair can
+    stand indefinitely while the count keeps agreeing. This names them, and
+    names what each one is, because the class is the half of "two air
+    terminals" that a bare element key cannot carry.
+    """
+
+    return [
+        tuple(
+            (key, facts.element(key).ifc_class)
+            for member in subscope.members
+            for key in member.keys
+        )
+        for subscope in _subscopes(record, activity_ref).subscopes
+    ]
+
+
 def _readings(record):
     for activity in record.activities:
         for subscope in activity.subscopes:
@@ -1245,10 +1267,21 @@ class AReviewReHeldUnderANewReferenceTests(_ChainCase):
         ``UNKNOWN`` subscope over all four members, because no penetration is
         determined for any of them. Offered the re-held review, the same request
         over the same facts partitions into four subscopes reaching three
-        verdicts — the duct ``READY`` at the first node, the two setout markers
+        verdicts — the duct ``READY`` at the first node, the two air terminals
         still undetermined, the slab pair ``READY``, and the roof pair
         ``BLOCKED``. The difference between those two shapes is the whole of
         what "the new evidence participated" means.
+
+        Air terminals, and named below rather than counted, because which two
+        they are *is* the production instruction. ``chimney cover`` and ``house
+        fireplace cap`` are ``IfcAirTerminal``, admitted by this activity's
+        ``subject_classes``, and an undetermined one asks for a coordination
+        review to be held on that element. The model's setout markers are a
+        different thing entirely — ``IfcBuildingElementProxy``, never admitted,
+        landing in ``out_of_subject_class`` — and one of those turning up inside
+        the partition would mean the Pack's scope was wrong instead. The two
+        readings call for opposite actions, a count of two cannot tell them
+        apart, so the identities are asserted and not merely described.
         """
 
         self.assertEqual(
@@ -1263,6 +1296,25 @@ class AReviewReHeldUnderANewReferenceTests(_ChainCase):
                 ("READY", "", 1),
                 ("BLOCKED", ROOF_PAIR_BLOCKER, 1),
             ],
+        )
+        self.assertEqual(
+            _identified_members(self.record, OPENINGS, self.reissued_facts),
+            [
+                ((fx.HVAC_DUCT, "IfcDuctSegment"),),
+                (
+                    (fx.HVAC_AIR_TERMINAL_COVER, "IfcAirTerminal"),
+                    (fx.HVAC_AIR_TERMINAL_CAP, "IfcAirTerminal"),
+                ),
+                ((fx.HVAC_CHIMNEY, "IfcChimney"), (fx.ARCHITECTURE_SLAB, "IfcSlab")),
+                ((fx.HVAC_CHIMNEY, "IfcChimney"), (fx.ARCHITECTURE_ROOF, "IfcRoof")),
+            ],
+        )
+        # "at the first node": the duct answers ``no-penetration`` at the
+        # decision root and never reaches ``opening-status``, which is the whole
+        # of why one member reaches ``READY`` in a single step.
+        self.assertEqual(
+            [step.node_id for step in _subscopes(self.record, OPENINGS).subscopes[0].path],
+            ["penetration-determination-node"],
         )
 
     def test_the_verdict_that_moved_cites_the_document_that_moved_it(self):
@@ -1332,6 +1384,27 @@ class AReviewReHeldUnderANewReferenceTests(_ChainCase):
                 for determination in self.re_held
             },
         )
+        # "differing by suffix alone", asserted rather than left to the fixture's
+        # construction. It is what makes "cited nowhere" a result instead of a
+        # coincidence of unrelated strings: the uncited sealed handles are as
+        # close to these as two sets of references can be without being equal.
+        cited_references = {reference for reference, _ in _cited(self.record)}
+        self.assertEqual(
+            {
+                reference.removesuffix(fx.RE_HELD_SUFFIX)
+                for reference in cited_references
+            },
+            {
+                determination.reference
+                for determination in fx.fixture_determinations(facts=self.facts)
+            },
+        )
+        for reference in cited_references:
+            with self.subTest(reference=reference):
+                self.assertTrue(reference.endswith(fx.RE_HELD_SUFFIX))
+                # And every one of them says it is fixture, which is the class
+                # docstring's "every value they mint says so".
+                self.assertTrue(reference.startswith(fx.FIXTURE_MARKER))
 
     def test_those_digests_are_inside_the_seal_and_not_beside_it(self):
         """A citation nobody can rewrite later is the point of recording it.
@@ -1362,9 +1435,18 @@ class AReviewReHeldUnderANewReferenceTests(_ChainCase):
         # Six entries over five determinations: the chimney's penetration
         # determination is cited once on each of the two pairs it refined into,
         # which is what a citation recorded per reading rather than per document
-        # looks like.
+        # looks like. Which handle repeats is asserted too — "six over five"
+        # stays true whichever of the five it is, so the arithmetic alone would
+        # let that sentence name the wrong document forever.
         self.assertEqual(len(altered), 6)
         self.assertEqual(len(set(altered)), 5)
+        self.assertEqual(
+            {reference for reference in altered if altered.count(reference) == 2},
+            {
+                "fixture-determination/penetration/chimney-slab-and-roof"
+                + fx.RE_HELD_SUFFIX
+            },
+        )
         self.assertNotEqual(
             build_assessment_digest(tampered), self.record.assessment_digest
         )
@@ -1437,12 +1519,27 @@ class AReviewReHeldUnderANewReferenceTests(_ChainCase):
             )
         )
         self.assertEqual(_shape(corroborated, CEILING), _shape(self.record, CEILING))
-        determiners = {
+        reference_tails = {
             reference.rsplit("/", 1)[-1]
             for reference, _ in _cited(corroborated)
             if reference.startswith(fx.ALIGNMENT_CONFIRMED)
         }
-        self.assertIn("re-held-by-a-second-reviewer", determiners)
+        self.assertIn("re-held-by-a-second-reviewer", reference_tails)
+        # "both are admitted and both are cited": the second signature is
+        # recorded beside the first rather than displacing it. Asserted as whole
+        # references, because the tail above is a fragment of a handle and two
+        # different handles can end the same way.
+        self.assertEqual(
+            {
+                reference
+                for reference, _ in _cited(corroborated)
+                if reference.startswith(fx.ALIGNMENT_CONFIRMED)
+            },
+            {
+                fx.ALIGNMENT_CONFIRMED + fx.RE_HELD_SUFFIX,
+                fx.ALIGNMENT_CONFIRMED + "/re-held-by-a-second-reviewer",
+            },
+        )
 
     # -- the control: the first of the three outcomes ------------------------
 
