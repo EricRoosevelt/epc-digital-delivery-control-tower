@@ -487,19 +487,32 @@
     version-attribution paragraph reached the right conclusion on a reason that
     is false for the commoner case. It said that "after a re-issue the earlier
     determination cannot be offered at all", which holds only for a determination
-    submitted unchanged; a determination *re-attributed* to the new versions is
-    admissible, is cited, and — `determined_against` being inside the content the
-    digest is over — lands in
-    `determination-content-changed-under-the-same-reference` rather than in "not
-    attributable to this context". The conclusion is unchanged and no name is
-    added: both fates already have a row. The paragraph now also states the
-    domain fact the corrected text would otherwise imply away — that a review
+    submitted unchanged. The paragraph now separates **three** outcomes of a
+    re-issue, each measured on the running evaluator rather than reasoned about.
+    Submitting the sealed determination unchanged refuses the **whole request**
+    (`determination-model-version-mismatch`) and produces no record and therefore
+    no row at all — so the earlier text, which had §7.1 refusing that handle *and*
+    an absent reason landing on it, described a combination that cannot occur;
+    the absent reasons apply only where the handle is not submitted.
+    Re-attributing the same document to the new versions is admissible, is cited,
+    and — `determined_against` being inside the content the digest is over —
+    lands in `determination-content-changed-under-the-same-reference`. Re-holding
+    the review and issuing it under a **new** reference is a third outcome the
+    earlier text folded into the second: the sealed handle is cited nowhere and
+    lands in "not attributable to this context", while the new determination is
+    read and cited as the new evidence it is. The conclusion is unchanged and no
+    name is added: all three already end on a refusal or a row, and the second
+    and third are deliberately not told apart by name. The paragraph also states
+    the domain fact the corrected text would otherwise imply away — that a review
     genuinely re-held and a version field edited on an unchecked document produce
-    the **same** row, that `basis` is the only field that would differ and is
-    never adjudicated here, and that the row therefore means "the document behind
-    this handle changed" and never "the review was carried out again". The
-    Consequences paragraph was checked against the same reading and needed no
-    change: "re-decided, re-signed or re-attributed" already covers both fates.
+    the **same** row *when the re-review reuses the reference*, that `basis` is
+    the only field that would differ and is never adjudicated here, and that the
+    row therefore means "the document behind this handle changed" and never "the
+    review was carried out again". §10.2 item 3's list of what a reader of that
+    row must decide between is limited to the same-reference case for the same
+    reason. The Consequences paragraph was checked against the same reading and
+    needed no change: "re-decided, re-signed or re-attributed **behind an
+    unchanged handle**" is already confined to the outcome that produces the row.
     **(3)** §10 is new and consolidates two accounts that had no single home —
     what the implementation can and cannot tell a production owner (§10.1), and
     eight boundaries this design cannot cross and a person therefore must
@@ -2249,26 +2262,55 @@ carries the request's own context. Under an unchanged context that settles it at
 once: `determined_against` cannot have moved, so a content change is a change of
 substance and nothing else.
 
-**A model re-issue has two outcomes, and the earlier text named only one of
-them.** Offer the sealed determination *unchanged* and it is still attributed to
-the superseded versions: §7.1 refuses it, the successor cites that handle
-nowhere, and §4.7.2's two absent reasons apply — here, "not attributable to this
-context". But the ordinary thing a team does after an export is to re-attribute
-the same document to the new versions, and a re-attributed determination is
-**admissible**: its `determined_against` matches the request's context, so it is
-read, it is cited, and it is compared. `determined_against` is part of what the
-digest is over — it has to be, since a determination re-attributed to other
-versions is not the same determination — so the digest moves, and the row is
-`determination-content-changed-under-the-same-reference`. That is the more common
-of the two fates, and between them they leave nothing unlanded: neither outcome
-needs a name that does not already exist, which is the whole of the claim above.
+**A model re-issue has three outcomes, and each of them already has somewhere
+to land.** They are the three things a team can do with a sealed determination
+once the export has moved, and the record answers each of them differently.
+
+*Submit the sealed determination unchanged.* It is still attributed to the
+superseded versions, so §7.1 refuses it — and what is refused is the **whole
+request**, before any subscope is assessed. No record is produced at all, so
+there is no carry-over row of any kind. Being refused and landing on a row are
+alternatives, never both, and the earlier text's mistake was to describe them as
+one thing. The absent reasons come in only where the handle is **not** submitted
+— because the team chose not to offer it, or because the third outcome below
+replaced it. Then the assessment runs, the successor cites that handle nowhere,
+and §4.7.2's two absent reasons apply; after a re-issue that is "not attributable
+to this context".
+
+*Re-attribute the same document to the new versions.* This is the ordinary thing
+a team does after an export, and a re-attributed determination is **admissible**:
+its `determined_against` matches the request's context, so it is read, it is
+cited, and it is compared. `determined_against` is part of what the digest is
+over — it has to be, since a determination re-attributed to other versions is not
+the same determination — so the digest moves, and the row is
+`determination-content-changed-under-the-same-reference`.
+
+*Re-hold the review and issue it under a new reference.* This is the outcome in
+which the work was actually done, and it is not the previous one. The store
+assigns the new determination its own handle, so the sealed handle is cited
+nowhere and lands among §4.7.2's absent reasons exactly as an unsubmitted one
+does — which of the two applies is decided by whether the context moved, never by
+whether a review was held. The new determination, meanwhile, is read, cited and
+compared like any other evidence, and the verdict it produces stands.
+
+Between them the three leave nothing unlanded: each ends on a refusal or a row
+that exists today, and none of them needs a name that does not. That is the whole
+of the claim above, and it is why the second and the third are deliberately
+**not** given names of their own — a vocabulary that separated them would be
+claiming to know which one happened.
 
 **What that row means, and what it must never be read as saying.** A team that
 re-ran the overlay comparison against the new export, and a team that opened the
 old determination and edited its version field without re-checking anything,
-produce **the same row**. Nothing in this design separates them, and a name that
-claimed to would be asserting a capability that is not here. The only field in
-which the two differ is `basis`, and §1.2 item 4 fixes that a determination's
+produce **the same row** — *provided the re-held review was issued under the same
+reference*. That condition is load-bearing and has to be written down, because
+the third outcome above is a counterexample to the sentence without it: a review
+re-held and issued under a **new** reference produces no such row at all. So a
+team whose store mints a fresh handle has made the difference visible in passing;
+nothing in this design causes that to happen, and nothing here may assume it did.
+Under one unchanged reference the two remain unseparated, and a name that claimed
+to separate them would be asserting a capability that is not here. The only field
+in which the two differ is `basis`, and §1.2 item 4 fixes that a determination's
 basis is cited and never adjudicated by the assessment. So the row is worded as
 exactly what it is — *the document behind this handle is not the document that was
 sealed* — and never as *the review was carried out again*. Reading the `basis` on
@@ -2849,13 +2891,14 @@ describe a job somebody has to hold.
    anywhere here that a determination document was rewritten in place rather than
    superseded by a new one (§4.7.6), and it can appear beside a verdict that did
    not move at all. Somebody has to read it and decide which of three things it
-   was: a re-attribution after an export, a genuine re-review, or an edit nobody
-   should have made. **This document does not name that somebody, and the
-   technical director has ruled that it declines to rather than leaving the
-   question open** — the Framework has no project, no organisation chart and no
-   staff, so any role named here would be a role invented here. A project
-   adopting this design assigns it, in the same act by which it appoints item 1's
-   role. That is a decision, not a blank.
+   was: a re-attribution after an export, a genuine re-review issued under the
+   same reference, or an edit nobody should have made. (A re-review issued under
+   a *new* reference produces no such row at all — §4.7.6.) **This document does
+   not name that somebody, and the technical director has ruled that it declines
+   to rather than leaving the question open** — the Framework has no project, no
+   organisation chart and no staff, so any role named here would be a role
+   invented here. A project adopting this design assigns it, in the same act by
+   which it appoints item 1's role. That is a decision, not a blank.
 
 4. **What is sealed is the record, not the documents it cites.** A record cannot
    be rewritten once its `assessment_digest` is computed (§4.5). A determination
