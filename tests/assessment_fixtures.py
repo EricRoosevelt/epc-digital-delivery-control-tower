@@ -46,6 +46,7 @@ property a test can assert rather than a convention a reader has to know, and
 from __future__ import annotations
 
 import copy
+import dataclasses
 import shutil
 import uuid
 from pathlib import Path
@@ -80,7 +81,9 @@ from purpose_fixtures import (
 __all__ = [
     "ALIGNMENT_CONFIRMED",
     "ALIGNMENT_VARIANTS",
+    "CORROBORATING_ALIGNMENT_REVIEWER",
     "FIXTURE_MARKER",
+    "RE_HELD_SUFFIX",
     "asset_identity_requirement_keys",
     "determined_against",
     "ARCHITECTURE_ROOF",
@@ -102,6 +105,7 @@ __all__ = [
     "fixture_determinations",
     "fixture_narrowed_penetration_determinations",
     "fixture_overlay_document",
+    "fixture_re_held_determinations",
     "fixture_reissued_facts",
     "fixture_reissued_request",
     "fixture_request",
@@ -540,6 +544,84 @@ def fixture_reissued_request(
     """
 
     return fixture_request(activity_ids=activity_ids, facts=facts, scope=scope)
+
+
+#: What a re-held review's handles are built from. The store assigns a new
+#: handle to a new document, and this suffix is how the fixture spells one
+#: without inventing a store: it is appended to the sealed reference, so a
+#: reader can see at a glance which sealed determination each new one replaces
+#: while the two strings remain unequal — which is the whole of what makes the
+#: sealed handle uncited.
+RE_HELD_SUFFIX = "/re-held-after-reissue"
+
+#: The second signature on the re-held alignment review. Corroboration, not a
+#: second opinion: same requirement, same subject, same outcome, so
+#: :meth:`DeterminationLedger.validate` reads the pair as two reviewers agreeing
+#: rather than as a conflict. It is here because without it the order-independence
+#: assertion is vacuous — every other subject in this fixture carries exactly one
+#: determination, and a record with one citation per subject cannot record a
+#: citation order, so shuffling the input would agree even if nothing sorted it.
+CORROBORATING_ALIGNMENT_REVIEWER = "fixture-information-manager"
+
+
+def fixture_re_held_determinations(
+    *,
+    facts,
+    reissued_facts,
+    corroborated: bool = False,
+) -> tuple[Determination, ...]:
+    """The review re-held after a re-issue and filed under **new** handles.
+
+    ADR 0003 §4.7.6 names three things a team can do with a sealed determination
+    once the export has moved, and this is the third: *re-hold the review and
+    issue it under a new reference.* It is the outcome in which the work was
+    actually done. The store assigns each new document its own handle, so every
+    sealed handle is cited nowhere and lands among §4.7.2's absent reasons — and
+    because the context moved, the reason is
+    ``determination-not-attributable-to-this-context`` rather than the
+    superseded-under-an-unchanged-context one.
+
+    Every determination :func:`fixture_determinations` produces is re-held here,
+    unchanged in substance and changed in exactly two places: a new ``reference``,
+    and ``determined_against`` naming ``reissued_facts``' model versions. Keeping
+    the substance identical is deliberate — it means the verdicts this set
+    reaches are the verdicts the sealed record reached, so anything the successor
+    says about *identity* is being measured against a case where nothing else
+    moved.
+
+    ``corroborated`` adds a second signature to the alignment review. See
+    :data:`CORROBORATING_ALIGNMENT_REVIEWER` for why an assertion about input
+    order needs one.
+
+    None of this has happened. ``pcert-sample`` has never had a coordination
+    review held, let alone re-held, and no model of it has ever been reissued.
+    """
+
+    against = determined_against(reissued_facts)
+    re_held = tuple(
+        dataclasses.replace(
+            determination,
+            reference=determination.reference + RE_HELD_SUFFIX,
+            determined_against=against,
+        )
+        for determination in fixture_determinations(facts=facts)
+    )
+    if not corroborated:
+        return re_held
+
+    alignment = next(
+        determination
+        for determination in re_held
+        if determination.evidence_requirement_id == "cross-model-alignment"
+    )
+    return re_held + (
+        dataclasses.replace(
+            alignment,
+            reference=ALIGNMENT_CONFIRMED + "/re-held-by-a-second-reviewer",
+            determiner=CORROBORATING_ALIGNMENT_REVIEWER,
+            basis="fixture: overlay repeated by a second reviewer, same conclusion",
+        ),
+    )
 
 
 def fixture_superseding_determinations(*, facts) -> tuple[Determination, ...]:
