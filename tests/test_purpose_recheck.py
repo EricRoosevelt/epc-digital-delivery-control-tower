@@ -1128,6 +1128,342 @@ class EvidenceIdentityAcrossRecordsTests(_ChainCase):
                 self.assertNotIn(forbidden, identity)
 
 
+def _shape(record, activity_ref):
+    """Each subscope of the activity as ``(verdict, resolution_kind, members)``.
+
+    In partition order, and counting members rather than listing them, because
+    what these tests measure is whether an activity *partitioned differently* —
+    one undivided retreat against four subscopes reaching three verdicts.
+    """
+
+    return [
+        (subscope.verdict, subscope.resolution_kind, len(subscope.members))
+        for subscope in _subscopes(record, activity_ref).subscopes
+    ]
+
+
+def _readings(record):
+    for activity in record.activities:
+        for subscope in activity.subscopes:
+            for step in subscope.path:
+                yield from step.readings
+
+
+def _cited(record):
+    """Every ``(reference, content_digest)`` pair this record's readings cite."""
+
+    return {
+        (citation.reference, citation.content_digest)
+        for reading in _readings(record)
+        for citation in reading.cited_determinations
+    }
+
+
+class AReviewReHeldUnderANewReferenceTests(_ChainCase):
+    """The third thing a team can do after a re-issue, driven end to end.
+
+    ADR 0003 §4.7.6 names three outcomes for a sealed determination once the
+    export has moved, and both ends of this class are among them:
+
+    * **Submit it unchanged.** Still attributed to the superseded versions, so
+      §7.1 refuses the **whole request** before any subscope is assessed. No
+      record exists, so no carry-over row of any kind does either. That is the
+      control at the bottom of this class, and it is here rather than in a file
+      of its own because "not carried" is only legible next to "refused".
+    * **Re-hold the review and issue it under a new reference.** The work was
+      actually done. The store assigns new handles, so every sealed handle is
+      cited nowhere and lands among §4.7.2's absent reasons — and the new
+      documents are read, cited and compared like any other evidence, with the
+      verdicts they produce standing.
+
+    Two existing classes each cover one axis of this and neither covers the
+    crossing. :class:`EvidenceIdentityAcrossRecordsTests` drives a new reference
+    under a context that did **not** move, where the absent reason is
+    ``determination-not-cited-by-this-record``.
+    :class:`AcrossAModelReissueTests` crosses a re-issue while offering
+    ``determinations=()``, so nothing is re-held and the activity can only
+    retreat. Here the context moves **and** the review is re-held, which is the
+    only combination in which the retreat is answered by new evidence — and the
+    only one in which "not carried" has to be said beside a verdict that moved
+    for a reason.
+
+    None of this has happened to ``pcert-sample``. The re-issue, the review and
+    the re-holding are all fixture, and every value they mint says so.
+    """
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.ceiling_ordinal = _ordinal_of(cls.prior, CEILING, "")
+        cls.reissued_facts = fx.fixture_reissued_facts()
+        cls.reissued_request = fx.fixture_reissued_request(
+            activity_ids=ALL_ACTIVITIES, facts=cls.reissued_facts
+        )
+        cls.succeeds = (
+            (OPENINGS, cls.roof_ordinal),
+            (CEILING, cls.ceiling_ordinal),
+            (SCHEDULES, cls.asset_ordinal),
+        )
+        cls.re_held = fx.fixture_re_held_determinations(
+            facts=cls.facts, reissued_facts=cls.reissued_facts
+        )
+        # Snapshot the sealed record **itself**, before anything succeeds it, and
+        # keep the object. Re-deriving a second prior here and comparing digests
+        # would measure that the evaluator is reproducible, which is a different
+        # claim and one already under test; what this class has to show is that
+        # this object is the same object afterwards.
+        cls.sealed_document = copy.deepcopy(cls.prior.as_document())
+        cls.sealed_digest = cls.prior.assessment_digest
+        cls.record = cls._succeed(cls.re_held)
+        cls.without_evidence = cls._succeed(())
+
+    @classmethod
+    def _succeed(cls, determinations):
+        return recheck_purpose(
+            prior=cls.prior,
+            request=cls.reissued_request,
+            composed=cls.composed,
+            facts=cls.reissued_facts,
+            determinations=determinations,
+            succeeds=cls.succeeds,
+        )
+
+    def _determination_rows(self):
+        return [
+            row
+            for outcome in self.record.successor.outcomes
+            for row in outcome.carry_over
+            if row.citation_kind == "determination"
+        ]
+
+    # -- 1. the new evidence is adjudicated, not merely tolerated -------------
+
+    def test_the_re_held_review_is_what_moves_the_adjudication(self):
+        """Not "no error was raised" — the partition itself is different.
+
+        Offered nothing, the openings activity retreats whole: one undivided
+        ``UNKNOWN`` subscope over all four members, because no penetration is
+        determined for any of them. Offered the re-held review, the same request
+        over the same facts partitions into four subscopes reaching three
+        verdicts — the duct ``READY`` at the first node, the two setout markers
+        still undetermined, the slab pair ``READY``, and the roof pair
+        ``BLOCKED``. The difference between those two shapes is the whole of
+        what "the new evidence participated" means.
+        """
+
+        self.assertEqual(
+            _shape(self.without_evidence, OPENINGS),
+            [("UNKNOWN", "penetration-not-determined", 4)],
+        )
+        self.assertEqual(
+            _shape(self.record, OPENINGS),
+            [
+                ("READY", "", 1),
+                ("UNKNOWN", "penetration-not-determined", 2),
+                ("READY", "", 1),
+                ("BLOCKED", ROOF_PAIR_BLOCKER, 1),
+            ],
+        )
+
+    def test_the_verdict_that_moved_cites_the_document_that_moved_it(self):
+        """A shape could move for many reasons; this names the one that moved it."""
+
+        blocked = [
+            subscope
+            for subscope in _subscopes(self.record, OPENINGS).subscopes
+            if subscope.verdict == "BLOCKED"
+        ]
+        self.assertEqual(len(blocked), 1)
+        self.assertEqual(blocked[0].resolution_kind, ROOF_PAIR_BLOCKER)
+        step = blocked[0].path[-1]
+        self.assertEqual(step.evidence_requirement_id, "opening-status")
+        self.assertEqual(step.outcome, "not-modelled")
+        self.assertEqual(
+            step.readings[0].determination_references,
+            (
+                "fixture-determination/opening/chimney-roof-not-modelled"
+                + fx.RE_HELD_SUFFIX,
+            ),
+        )
+
+    # -- 2. the sealed handles are not carried, and land where they should ----
+
+    def test_no_sealed_handle_is_carried_and_each_lands_on_the_context_row(self):
+        """The context moved, so this is the *attributability* absent reason.
+
+        Its sibling under an unchanged context is
+        ``determination-not-cited-by-this-record``, and which of the two applies
+        is decided by whether the context moved — never by whether a review was
+        held. Both are said here: the reason on every row, and the context
+        comparison the reason is read off.
+        """
+
+        rows = self._determination_rows()
+        self.assertEqual(len(rows), 3)
+        self.assertFalse(self.record.successor.context.is_current)
+        for row in rows:
+            with self.subTest(citation=row.citation):
+                self.assertFalse(row.carried)
+                self.assertEqual(
+                    row.reason, "determination-not-attributable-to-this-context"
+                )
+                # The sealed digest is on the row and no current one is, which is
+                # what says the handle was cited nowhere rather than cited with
+                # different content behind it.
+                self.assertRegex(row.sealed_content_digest, r"^[0-9a-f]{64}$")
+                self.assertEqual(row.current_content_digest, "")
+        self.assertIn(fx.ALIGNMENT_CONFIRMED, {row.citation for row in rows})
+
+    # -- 3. the new references and their digests are sealed in ---------------
+
+    def test_every_re_held_handle_and_its_digest_enters_the_record(self):
+        """Exact equality, so it says two things at once.
+
+        Every re-held determination is cited with its own content digest, **and**
+        nothing else is — which is the other half of "not carried": the sealed
+        handles, differing from these by suffix alone, really are cited nowhere.
+        """
+
+        self.assertEqual(len(self.re_held), 5)
+        self.assertEqual(
+            _cited(self.record),
+            {
+                (determination.reference, determination.content_digest)
+                for determination in self.re_held
+            },
+        )
+
+    def test_those_digests_are_inside_the_seal_and_not_beside_it(self):
+        """A citation nobody can rewrite later is the point of recording it.
+
+        The digest travels into this record's own ``assessment_digest``, exactly
+        as ADR 0003 §4.7.6 requires — so altering one in the document produces a
+        document that no longer hashes to the seal it carries.
+        """
+
+        document = self.record.as_document()
+        self.assertEqual(build_assessment_digest(document), self.record.assessment_digest)
+        tampered = json.loads(json.dumps(document))
+        altered = []
+        for activity in tampered["activities"]:
+            for subscope in activity["subscopes"]:
+                for step in subscope["path"]:
+                    for reading in step.get("readings", ()):
+                        for citation in reading.get("cited_determinations", ()):
+                            # The digest is *in* the document, not merely on the
+                            # object that produced it. Without this the tamper
+                            # below would be adding a key rather than changing
+                            # one, and would still change the hash.
+                            self.assertEqual(
+                                sorted(citation), ["content_digest", "reference"]
+                            )
+                            altered.append(citation["reference"])
+                            citation["content_digest"] = "0" * 64
+        # Six entries over five determinations: the chimney's penetration
+        # determination is cited once on each of the two pairs it refined into,
+        # which is what a citation recorded per reading rather than per document
+        # looks like.
+        self.assertEqual(len(altered), 6)
+        self.assertEqual(len(set(altered)), 5)
+        self.assertNotEqual(
+            build_assessment_digest(tampered), self.record.assessment_digest
+        )
+
+    # -- 4. the sealed record is not touched ---------------------------------
+
+    def test_the_prior_record_object_is_not_touched_by_being_succeeded(self):
+        """The same object, before and after — not a second one that agrees.
+
+        Rebuilding a prior record and finding the digests equal would prove the
+        evaluator reproducible and nothing at all about whether
+        ``recheck_purpose`` wrote to what it was handed. So both comparisons here
+        are against a snapshot of *this very object*, deep-copied in
+        ``setUpClass`` before any successor was built.
+
+        The sharp case this has to catch is not a successor that corrupts the
+        prior — the next seal check would refuse that, loudly. It is one that
+        rewrites the record and re-hashes it, leaving something internally
+        consistent that every later call accepts. Against a snapshot taken
+        beforehand that is visible; against anything reconstructed afterwards it
+        is not.
+        """
+
+        self.assertEqual(self.prior.as_document(), self.sealed_document)
+        self.assertEqual(self.prior.assessment_digest, self.sealed_digest)
+
+    # -- 5. the result does not depend on how the evidence arrived -----------
+
+    def test_the_order_the_re_held_evidence_arrives_in_changes_nothing(self):
+        """Shuffling the input, with a subject that can actually record an order.
+
+        The guard is the test. Every subject in the default re-held set carries
+        exactly one determination, and a record holding one citation per subject
+        has nowhere to put an order — so shuffling it agrees byte for byte even
+        with every canonicalising sort removed, and the assertion would be true
+        of an implementation that had none. Corroborating the alignment review
+        gives one reading two citations, which is the smallest thing that makes
+        the comparison a measurement.
+        """
+
+        corroborated = fx.fixture_re_held_determinations(
+            facts=self.facts,
+            reissued_facts=self.reissued_facts,
+            corroborated=True,
+        )
+        forward = self._succeed(corroborated)
+        reverse = self._succeed(tuple(reversed(corroborated)))
+        self.assertEqual(
+            max(len(reading.cited_determinations) for reading in _readings(forward)),
+            2,
+        )
+        self.assertEqual(forward.as_document(), reverse.as_document())
+        self.assertEqual(forward.assessment_digest, reverse.assessment_digest)
+
+    def test_corroboration_is_read_as_agreement_and_not_as_conflict(self):
+        """Why the order fixture is allowed to exist at all.
+
+        Two determinations about one subject are a refusal when they disagree
+        and corroboration when they do not. This one reaches the same outcome
+        under a second signature, so both are admitted and both are cited — and
+        the ceiling activity stays exactly where the single-signature run left
+        it.
+        """
+
+        corroborated = self._succeed(
+            fx.fixture_re_held_determinations(
+                facts=self.facts,
+                reissued_facts=self.reissued_facts,
+                corroborated=True,
+            )
+        )
+        self.assertEqual(_shape(corroborated, CEILING), _shape(self.record, CEILING))
+        determiners = {
+            reference.rsplit("/", 1)[-1]
+            for reference, _ in _cited(corroborated)
+            if reference.startswith(fx.ALIGNMENT_CONFIRMED)
+        }
+        self.assertIn("re-held-by-a-second-reviewer", determiners)
+
+    # -- the control: the first of the three outcomes ------------------------
+
+    def test_the_sealed_determinations_resubmitted_unchanged_refuse_the_request(self):
+        """Outcome one, and the reason the rest of this class reads as a result.
+
+        Handing the sealed determinations over untouched is the thing a team
+        does when it has not re-held anything: they are still attributed to the
+        superseded versions, so the **whole request** is refused before any
+        subscope is assessed. Being refused and landing on a carry-over row are
+        alternatives and never both — there is no record here to carry anything
+        over *in*. Without this beside the re-held case, a reader cannot see that
+        what re-holding buys is an assessment at all.
+        """
+
+        with self.assertRaises(PurposeAssessmentError) as caught:
+            self._succeed(fx.fixture_determinations(facts=self.facts))
+        self.assertEqual(caught.exception.code, "determination-model-version-mismatch")
+        self.assertEqual(self.prior.as_document(), self.sealed_document)
+
+
 class SealingAndDeterminismTests(_ChainCase):
     """The prior record is untouched, and two rechecks are the same record."""
 
