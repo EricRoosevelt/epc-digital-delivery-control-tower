@@ -1,11 +1,34 @@
 # 0002 — Minimal Purpose Pack + Project Overlay: representation and ownership
 
-- **Status:** Proposed. This is a data-design decision for review, not an
-  implementation. No code, rule, checker, test, schema, configuration file,
-  CLI, loader, or generated artifact is added or changed by this document.
-  This round corrects Checkpoint C's own fixed inputs — how a Purpose Pack
-  and a Project Overlay are shaped — and asserts nothing about a runtime
-  having been built.
+- **Status:** **Accepted; a named subset implemented; nothing ever produced from
+  it.** Three statements, and the third is what keeps the first two honest. §9
+  carries the evidence, and
+  [`0003-runtime-purpose-assessment-shape.md`](0003-runtime-purpose-assessment-shape.md)
+  §10 carries the consolidated account for both documents.
+  - **Accepted.** The data design stands as written: how a Purpose Pack and a
+    Project Overlay are shaped, what each layer owns, how they compose, and what
+    fails closed.
+  - **Implemented, in part.** The shapes this document fixed are no longer
+    illustrations. `purpose-packs/interdisciplinary-coordination-readiness/pack.toml`
+    and `pcert-sample`'s `[overlay]` table both exist as real files, and
+    `epc_control_tower/purpose/` loads, validates and composes them fail-closed —
+    the eighteen structural invariants, the three compatibilities, the binding
+    triple, and `decision_basis` on all three policy tables (merged at
+    `65f4636`). Still unbuilt, and each named separately in
+    [`0003`](0003-runtime-purpose-assessment-shape.md) §10.1: the `CONDITIONAL`
+    promotion §3.8 designs, a second Pack, the override mechanism §3.6 defers, a
+    Registry, and any storage, CLI, or published machine contract.
+  - **Never used, and not usable on anything shipped here.** No assessment has
+    ever been run against these files for any real project, and none can be:
+    `pcert-sample` is the only project with an `[overlay]` table, and all nine of
+    its `accepted_evidence_methods[]`, `team_mapping[]` and `risk_authorisations[]`
+    rows read `decision_basis = "illustrative"`, which is precisely what §3.5
+    added the field to make visible. The assessment refuses, correctly, and §9
+    records why that is a standing property rather than an outstanding task.
+  - **This document still adds and changes no code**, rule, checker, test,
+    schema, configuration file, CLI, loader, or generated artifact; §8 states
+    that in full. What has since been built was built by later checkpoints, not
+    by this text.
 - **Date:** 2026-09-03 (revised; first written 2026-08-28).
 - **Revision history:**
   - Supersedes the version at `bc4a142` (2026-08-26), which technical-director
@@ -168,6 +191,36 @@
     checkpoint ships, while the two passages in this history and in §3.2 that
     *describe* the singular as the defect it was are deliberately left standing,
     since correcting them would erase the record of the correction.
+  - Refines the version merged at `5a77f12` (2026-09-08), on 2026-09-08. **No
+    design changes in this round**: no field, invariant, refusal row, route,
+    tree, leaf or verdict moves, and no Pack, Overlay, rule, project or generated
+    file is touched. Two things this document *said about itself* had fallen
+    behind the checkpoints that implemented it. **(1)** The **Status** line said
+    "Proposed … not an implementation. No code, rule, checker, test, schema,
+    configuration file, CLI, loader, or generated artifact is added or changed",
+    while a real Pack, a real Overlay, and a loader and composer for both had
+    been merged at `65f4636`. It now separates the three statements that had been
+    collapsed into one — accepted, partly implemented, never used — with the
+    third carried beside the second. **(2)** §8's out-of-scope paragraph gains
+    the same "read it as of the round that wrote it" note that
+    [`0003`](0003-runtime-purpose-assessment-shape.md) §9 already carries, naming
+    the two sentences later checkpoints overtook and stating what the paragraph
+    still says truly. §9 is new: it records the two field-level facts of *this*
+    document's data shape that
+    [`0003`](0003-runtime-purpose-assessment-shape.md) §10.2 draws its items 1
+    and 7 from — that no Overlay table has a column for who may determine
+    anything, and that the worked Overlay's nine policy rows are `illustrative`
+    permanently rather than pending. Nothing is duplicated between the two
+    documents: each fact is written in one of them and cited from the other.
+    Later in the same round §10.2 grew an eighth boundary, so §9's two opening
+    sentences, which counted seven, now read eight; that is a cross-reference
+    count and nothing else, and the two boundaries §9 supplies the field-level
+    facts for are still its items 1 and 7.
+    Deliberately unchanged: the `# EXAMPLE` comments in the §3.2 and §3.5 code
+    fences, which record what was true when the illustrations were drawn and
+    which the files that now exist match; and every revision-history entry above,
+    including the passages that describe historical defects in the words they
+    were found in.
 - **Scope:** Checkpoint C only — the representation, ownership and identity
   boundary of a Purpose Pack and a Project Overlay. It does not design or
   execute runtime assessment (Checkpoint D), does not touch contract 1.6, and
@@ -2292,6 +2345,67 @@ agent, knowledge graph, automatic IFC patching, or cross-run ledger is
 designed. **No project override capability is implemented or assumed —
 §3.6 defers the entire mechanism, not merely narrows it.** Nothing is
 merged, tagged, or released. Checkpoint D is not started.
+
+**Read that paragraph as of the round that wrote it, which is how every sentence
+in this document is meant** — the same reading
+[`0003-runtime-purpose-assessment-shape.md`](0003-runtime-purpose-assessment-shape.md)
+§9 applies to its own out-of-scope list. Checkpoint C's implementation has since
+been merged (`65f4636`), and Checkpoint D's after it (`89a8305`, `5a77f12`). What
+the paragraph still says truly, and what no round has moved: **this document adds
+and modifies no code, rule, checker, test, CHANGELOG, `rules/` file,
+`data/processed/` artifact, `reports/` artifact or `ids/` document; it implements
+no override capability; `data/processed/`, `reports/`, any snapshot and contract
+1.6 are untouched by it; and nothing is merged, tagged or released by it.**
+`README.md` is the one name dropped from that list, and dropping it is the honest
+move rather than a widening of scope: the **Governs** bullet above has always
+said this document governs the README's "Not implemented" section, and when a
+merged checkpoint makes that section untrue the round that corrects the Status
+here corrects the README in the same commit. Two further sentences have been
+overtaken by later checkpoints and are corrected here rather than left to
+mislead: an evaluator that walks a decision tree and resolves an
+evidence binding **has** since been implemented, and the Pack and Overlay files
+§3 illustrates **do** now exist as real, loaded artifacts. The two `# EXAMPLE`
+comments inside the §3.2 and §3.5 code fences are kept exactly as written, for
+the same reason the singular-penetration passages are kept: they record what was
+true when the illustration was drawn, and the files that now exist match them.
+
+## 9. Two of those boundaries are this document's own
+
+[`0003-runtime-purpose-assessment-shape.md`](0003-runtime-purpose-assessment-shape.md)
+§10.2 consolidates eight things the design cannot do and a person therefore must.
+Two of the eight are consequences of *this* document's data shape rather than of
+runtime behaviour, so the field-level facts behind them are recorded here once,
+and §10.2 states the governance consequence without restating them.
+
+**No Overlay table has a column for who may determine anything.** §3.1's matrix
+gives `overlay.accepted_evidence_methods[]` exactly five fields — `pack_id`,
+`evidence_requirement_id`, `method_id`, `description`, `decision_basis` — and a
+role is not among them. `overlay.team_mapping[]` staffs a *resolving* role and
+`overlay.risk_authorisations[]` lists who may *authorise* a promotion; neither
+says who may make a determination, and §3.5's own commentary keeps those two
+tables independent on purpose. So a project can declare that it accepts
+`coordination-review-determination` as a method without any file here recording
+who is competent to perform one. That is not an omission to be closed by adding a
+sixth field: which role may determine is governance, it is the adopting project's
+to settle, and inventing a column for it in a framework with no project to fill
+it in would be the same error §3.6 avoided for overrides. The consequence — that
+nobody is designated competent and nobody is designated responsible — is
+[`0003`](0003-runtime-purpose-assessment-shape.md) §10.2 item 1.
+
+**The worked Overlay's nine policy rows are `illustrative`, permanently.**
+`pcert-sample` carries three `accepted_evidence_methods[]` rows, four
+`team_mapping[]` rows and two `risk_authorisations[]` rows, and every one of
+them reads `decision_basis = "illustrative"`. That is the field working, not
+failing: §3.5 required it on all three policy tables precisely so a value written
+to demonstrate a shape could never pass for a decision anybody took, and this
+repository has never taken one — it has no team, no accepted method, and no
+risk-authorisation policy. The direct consequence is that a runtime assessment
+refuses `pcert-sample` outright, which
+[`0003`](0003-runtime-purpose-assessment-shape.md) §10.2 item 7 records as a
+standing property of the repository rather than a gap. Rewriting these nine rows
+to `project-decision` in order to make the sample produce something would state
+nine decisions nobody made, and is the exact outcome this field exists to
+prevent.
 
 ## Consequences
 
