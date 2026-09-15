@@ -11,6 +11,11 @@ findings and future management KPIs.
 It uses public buildingSMART sample models and clearly identifies
 project-specific assumptions. It is not presented as a production deployment.
 
+The [current product delivery plan](docs/product/2026-09-16-dual-track-delivery-plan.md)
+starts a parallel BIM Doctor design track for Revit-using BIM managers.
+Its Singapore checklist is research in progress, not implemented compliance
+coverage; the existing showcase and published contracts remain unchanged.
+
 ![EPC Delivery Control Tower overview](docs/evidence/stage_3b/overview-final.png)
 
 ## Two layers, and which numbers belong to which
