@@ -2433,6 +2433,35 @@ to `project-decision` in order to make the sample produce something would state
 nine decisions nobody made, and is the exact outcome this field exists to
 prevent.
 
+**The counterfactual is run as a fixture, in memory, and the file is never
+touched.** That the nine rows cannot be rewritten here does not mean the
+`project-decision` case goes untested: the tests build it by parsing this
+manifest and deep copying it, rewriting `decision_basis` and nothing else — the
+same four roles, the same four teams, the same three methods, the same real
+`evidence_bindings`. It is done in two layers, and the three policy tables are
+deliberately not all moved at once:
+
+| Layer | `team_mapping` (4) | `accepted_evidence_methods` (3) | `risk_authorisations` (2) |
+|---|---|---|---|
+| This manifest, as shipped | `illustrative` | `illustrative` | `illustrative` |
+| `fixture_overlay_document()` — the assessment fixture | `project-decision` | `project-decision` | `illustrative` |
+| `authorising_overlay_document()` — the authorisation fixture | `project-decision` | `project-decision` | `project-decision` |
+
+A `CONDITIONAL` promotion's positive path needs the third layer, where all nine
+rows read `project-decision`; ordinary assessment needs only the second, and
+keeping `risk_authorisations` `illustrative` there is what stops the
+authorisation round from moving the `composition_digest` every other test sees.
+
+Neither layer is written back. `projects/pcert-sample/project.toml` is read and
+never rewritten, so after any test run it still carries nine `illustrative`
+rows and no `project-decision` row — a fact the suite asserts against the file's
+own text rather than trusting. So the two statements sit together without
+tension: *the fixture can reach the positive path*, and *this project is still
+refused*, by the `team_mapping` gate, first and alone, with no mention of
+`risk_authorisations` in the refusal. A round that reached the positive path by
+editing this file instead would look identical in every other assertion, which
+is why that one is pinned separately.
+
 ## Consequences
 
 This document commits a future implementation to: two file locations

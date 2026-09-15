@@ -31,6 +31,33 @@ this module builds one.
 
 **And the ordinary assessment is untouched.** :class:`OrdinaryAssessmentIsUnmovedTests`
 pins that as bytes rather than asserting it as an intention.
+
+**Where the positive path runs.** On an isolated fixture built from real
+``pcert-sample`` data and nowhere else — not on any project this repository
+ships. The fixture is the shipped manifest parsed and deep copied, with
+``decision_basis`` rewritten on successive policy tables and nothing else
+changed, so three layers exist and the Overlay's three policy tables are in
+three distinguishable states:
+
+1. ``projects/pcert-sample/project.toml`` — ``team_mapping`` (4),
+   ``accepted_evidence_methods`` (3), ``risk_authorisations`` (2), all nine rows
+   ``illustrative``.
+2. :func:`assessment_fixtures.fixture_overlay_document` — the first two tables
+   ``project-decision``, ``risk_authorisations`` still ``illustrative``. This is
+   what every other assessment test composes against.
+3. :func:`authorising_overlay_document` — all three ``project-decision``. Only
+   here are all nine rows decided, and only here is :data:`AUTHORISED`
+   reachable.
+
+No layer is written back to disk, so two statements hold together rather than
+in tension, and both are asserted below:
+:meth:`ThreeDistinctAnswersTests.test_the_positive_path_is_reachable_only_on_declared_policy`
+proves the fixture reaches the positive path, and
+:meth:`OrdinaryAssessmentIsUnmovedTests.test_the_shipped_project_is_still_refused_by_the_team_mapping_gate_alone`
+proves ``pcert-sample`` is still refused — by the ``team_mapping`` gate, first
+and alone, with ``risk_authorisations`` nowhere in the refusal. A round that had
+reached the positive path by editing the manifest would satisfy the first and
+fail the second.
 """
 
 from __future__ import annotations
@@ -94,6 +121,24 @@ SAME_ROLE_NAME_KIND = "in-model-position-not-evaluated"
 def authorising_overlay_document() -> dict:
     """The fixture Overlay with its **risk-authorisation** rows recorded as decided.
 
+    The third and innermost layer of an isolated fixture built entirely from
+    real ``pcert-sample`` data. Each layer parses or deep copies the one beneath
+    it and rewrites ``decision_basis`` on one more policy table, leaving the
+    three tables in three distinguishable states:
+
+    1. ``projects/pcert-sample/project.toml``, the real shipped manifest —
+       ``team_mapping`` (4), ``accepted_evidence_methods`` (3) and
+       ``risk_authorisations`` (2) all ``illustrative``.
+    2. :func:`assessment_fixtures.fixture_overlay_document` — ``team_mapping``
+       and ``accepted_evidence_methods`` ``project-decision``;
+       ``risk_authorisations`` still ``illustrative``.
+    3. This function — all three ``project-decision``.
+
+    Nine rows in total — four, three and two — and only on this layer do all
+    nine read ``project-decision``. That is what the positive path of
+    :func:`~epc_control_tower.purpose.assessment.authorisation.resolve_risk_authorisation`
+    runs on, and the only place in the repository where it is reachable.
+
     A third edit on top of :func:`assessment_fixtures.fixture_overlay_document`'s
     two, and kept here rather than folded into that function on purpose: every
     other test in this repository composes against an Overlay whose
@@ -103,7 +148,12 @@ def authorising_overlay_document() -> dict:
 
     Like every other fixture policy value, it is written in memory and never
     back to ``projects/pcert-sample/project.toml``: this repository has recorded
-    no risk-authorisation policy, and this round does not give it one.
+    no risk-authorisation policy, and this round does not give it one. Two
+    things therefore hold at the same time, and
+    :class:`OrdinaryAssessmentIsUnmovedTests` pins the second so neither can
+    quietly absorb the other — *this fixture reaches the positive path*, and
+    *the shipped project is still refused*, by the ``team_mapping`` gate, first
+    and alone.
     """
 
     document = copy.deepcopy(fx.fixture_overlay_document())
@@ -184,16 +234,28 @@ class OverlayFactsTheseTestsRestOnTests(unittest.TestCase):
 
 
 class ThreeDistinctAnswersTests(unittest.TestCase):
-    """Counterexamples 1 to 5: the three answers, and the citations refused."""
+    """Counterexamples 1 to 5: the three answers, and the citations refused.
+
+    Both of the fixture's upper layers are composed here, which is what lets the
+    `illustrative` answer be told from the decided one by changing a single
+    table. `decided` is layer 3 — all nine policy rows `project-decision`;
+    `illustrative` is layer 2 — the same seven rows decided and the two
+    `risk_authorisations` rows left as the shipped manifest writes them. Neither
+    is the shipped project, which carries all nine as `illustrative` and is
+    refused before this module is reached at all.
+    """
 
     @classmethod
     def setUpClass(cls):
         cls.pack = load_purpose_pack(fx.PACK_PATH)
+        #: Layer 3: all three policy tables `project-decision`. The only
+        #: composition in the repository on which `AUTHORISED` is reachable.
         cls.decided = fx.fixture_composed(
             overlay_document=authorising_overlay_document()
         )
-        #: The fixture Overlay as every other test composes it: staffed and
-        #: accepting methods for real, and authorising risk only illustratively.
+        #: Layer 2, the fixture Overlay as every other test composes it: staffed
+        #: and accepting methods for real, and authorising risk only
+        #: illustratively.
         cls.illustrative = fx.fixture_composed()
 
     def _resolve(self, resolution_kind, role, *, composed=None, cited_kind=None):
@@ -579,6 +641,21 @@ class OrdinaryAssessmentIsUnmovedTests(unittest.TestCase):
     The digests below were computed on `669307e`, this branch's base, before any
     file in this round was written. They are here rather than in a comment
     because "unchanged" asserted is not "unchanged" proved.
+
+    Ordinary assessment composes against
+    :func:`assessment_fixtures.fixture_overlay_document`, the second of the
+    module docstring's three layers — `team_mapping` and
+    `accepted_evidence_methods` decided, `risk_authorisations` still
+    `illustrative`. Keeping the third layer's edit out of that function is what
+    holds `BASE_COMPOSITION_DIGEST` still: the composed configuration digests
+    every policy row it carries, so moving the two `risk_authorisations` rows to
+    `project-decision` there would move this digest for a reason unrelated to
+    anything these tests are about.
+
+    `test_the_shipped_project_is_still_refused_by_the_team_mapping_gate_alone`
+    is the other half of the pair, and the one that stops the fixture from being
+    read as a claim about the project: the fixture reaches the positive path,
+    and `pcert-sample` — whose own nine rows are untouched on disk — does not.
     """
 
     #: `assess_purpose` over the fixture, all three activities, as of `669307e`.

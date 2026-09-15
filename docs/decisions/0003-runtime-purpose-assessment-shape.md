@@ -28,9 +28,11 @@
     record has been produced for any real project, by anyone. Nor can one be
     produced from this repository's own sample: `pcert-sample`'s nine Overlay
     policy rows all read `decision_basis = "illustrative"`, so §4.3's assignment
-    gate and §1.2 item 4's policy gate refuse it — the correct answer, and a
-    standing property rather than a task (§10.1, §10.2 item 7). Every positive
-    path is covered on an isolated test fixture.
+    gate refuses it before any subscope is assessed — one error, one code, and
+    the correct answer. The method and authorisation gates would answer *refuse*
+    on the same policy but are not reached today, for the two different reasons
+    §10.2 item 7 sets out. A standing property rather than a task (§10.1, §10.2
+    item 7). Every positive path is covered on an isolated test fixture.
   - **This document still adds and changes no code**, rule, checker, test,
     schema, configuration file, CLI, loader, evaluator, `rules/` file,
     `projects/` file, Pack, Overlay, or generated artifact; §9 states that in
@@ -2687,7 +2689,43 @@ subcommand reaches it, and §10.1's closing statement stands unchanged: no
 assessment record has been produced for any real project, and `pcert-sample`'s
 nine policy rows — the two risk-authorisation rows included — still read
 `decision_basis = "illustrative"`, so the positive path is exercised on an
-isolated fixture and nowhere else.
+isolated fixture built from `pcert-sample`'s data and nowhere else.
+
+**What that fixture is, stated precisely, because "a fixture" is not precise
+enough to audit.** It is the shipped manifest's own Overlay, parsed and deep
+copied in memory, with `decision_basis` rewritten on two successive layers and
+nothing else changed — the same four roles, the same four teams, the same three
+methods, the same real `evidence_bindings`. Three layers, and each of the three
+policy tables — `team_mapping` (4 rows), `accepted_evidence_methods` (3) and
+`risk_authorisations` (2), nine rows in all — is in a different state at a
+different one:
+
+1. **The shipped project**, `projects/pcert-sample/project.toml`: all nine rows
+   `illustrative`.
+2. **The assessment fixture**, `fixture_overlay_document()` in
+   `tests/assessment_fixtures.py`: `team_mapping` and
+   `accepted_evidence_methods` `project-decision`, `risk_authorisations` still
+   `illustrative`. This is what every other assessment test composes against.
+3. **The authorisation fixture**, `authorising_overlay_document()` in
+   `tests/test_purpose_authorisation.py`: all three tables `project-decision`.
+
+The `AUTHORISED` answer is reachable only on the third layer, where all nine
+rows read `project-decision`. The third layer exists separately from the second
+rather than being folded into it because every other test in the repository
+composes against the second, and moving `risk_authorisations` there would move
+the `composition_digest` those tests see for a reason that has nothing to do
+with them.
+
+**No layer is written back to disk.** Both edits are `copy.deepcopy` over a
+parsed document; the shipped manifest is read and never rewritten, so a run of
+this suite leaves `projects/pcert-sample/project.toml` byte-identical with all
+nine rows `illustrative`. Two facts therefore hold at once, and neither weakens
+the other: *the fixture reaches the positive path*, and *the shipped project is
+still refused* — refused by §4.3's `team_mapping` gate, first and alone, with
+`team-mapping-decision-basis-illustrative` and no mention of
+`risk_authorisations` in the refusal at all. The second is pinned as its own
+test, because a round that made the positive path reachable by quietly relaxing
+the shipped project would pass every other assertion here.
 
 **It does not close the open point about §4.3's gate reading statically** over
 every reachable leaf rather than the leaves live evidence touched (§10.2's
@@ -3021,13 +3059,41 @@ describe a job somebody has to hold.
 
 7. **The sample shipped here produces no record, permanently.** Every positive
    path in this design is covered on an isolated fixture (§10.1), and the reason
-   is not that a fixture was quicker: `pcert-sample` has never appointed a team
-   and has never accepted an evidence method, so §4.3's assignment gate and
-   §1.2 item 4's policy gate both refuse it, correctly (ADR 0002 §9). This is a
-   standing property of the repository, not an outstanding task. Making the
-   sample produce a record would mean writing
+   is not that a fixture was quicker: `pcert-sample` has never appointed a team,
+   has never accepted an evidence method, and has never decided a
+   risk-authorisation policy (ADR 0002 §9).
+
+   **One gate refuses it, and that one refusal is the whole of it.** §4.3's
+   assignment gate is static — it reads over the reachable non-`READY` leaves
+   before any subscope is assessed — so a request against the shipped project
+   raises exactly one error carrying exactly one code,
+   `team-mapping-decision-basis-illustrative`, and that message names neither of
+   the other two policy tables. The other two gates would answer *refuse* on
+   this same policy, and neither is reached today: §1.2 item 4's method gate is
+   consulted only when a determination is consumed, which a request refused at
+   §4.3 never gets far enough to do, and §7.2's authorisation gate has no
+   consumer anywhere in the walk at all. Saying the three refuse it in parallel
+   would erase the distinction §7.2 exists to draw: a static gate and a
+   consumption-triggered gate do not fire at the same moment, and the third does
+   not fire at all yet. Correct on all three counts, and a standing property of
+   the repository rather than an outstanding task.
+
+   Making the sample produce a record would mean writing
    `decision_basis = "project-decision"` onto rows describing decisions nobody
    took — the exact fabrication ADR 0002 §3.5 added the field to prevent.
+
+   **The fixture is that fabrication performed in memory, deliberately and
+   visibly, where it cannot be mistaken for the project.** It is
+   `pcert-sample`'s own manifest parsed and deep copied, with `decision_basis`
+   rewritten and nothing else, in two layers that leave the three policy tables
+   in three different states — the three-item list in §7.2 gives each layer,
+   each table and each state. The positive path runs on the innermost layer,
+   where all nine rows read `project-decision`; the file on disk is never
+   written, so the shipped project keeps all nine rows `illustrative` and keeps
+   being refused by the single gate named above. Which of the three gates a
+   given layer clears is therefore a property of that layer and not of the
+   repository, and no sentence about the fixture reaching a verdict is a
+   sentence about `pcert-sample` reaching one.
 
 8. **Nobody is designated to declare the assessed scope, and an element nobody
    declared is absent from every part of the record.** §2.1 makes the assessed

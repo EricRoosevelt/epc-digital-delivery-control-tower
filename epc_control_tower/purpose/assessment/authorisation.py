@@ -69,6 +69,37 @@ refuses the assessment request, and the subscope's own ``BLOCKED`` or ``UNKNOWN`
 verdict stands unchanged beneath it (§7.2's opening: *the promotion refuses, the
 leaf stands*). The request-scoped refusals of §7.1 are untouched by this module.
 
+**:data:`AUTHORISED` is reachable on a test fixture only, and no project this
+repository ships can reach it.** The fixture is not hand-written: it is
+``projects/pcert-sample/project.toml``'s own Overlay, parsed and deep copied in
+memory, with ``decision_basis`` rewritten and nothing else changed. Two layers
+of that rewrite exist, and they leave the three policy tables in three states:
+
+* ``projects/pcert-sample/project.toml`` as shipped — all nine rows
+  ``illustrative``: four ``team_mapping``, three ``accepted_evidence_methods``,
+  two ``risk_authorisations``.
+* ``fixture_overlay_document()`` — ``team_mapping`` and
+  ``accepted_evidence_methods`` read ``project-decision``;
+  ``risk_authorisations`` is still ``illustrative``.
+* ``authorising_overlay_document()`` — all three tables read
+  ``project-decision``.
+
+This module's positive path runs on the third layer only, where all nine rows
+read ``project-decision``. On the second — what every other assessment test
+composes against — an ``AUTHORISED`` answer is unreachable, because the
+``illustrative`` refusal above fires first. The third is kept separate from the
+second rather than folded into it: every other test composes against the
+second, and moving ``risk_authorisations`` there would move the
+``composition_digest`` they see for an unrelated reason.
+
+**Neither layer is written to disk**, which is what keeps two things true at
+once: the fixture reaches the positive path, and ``pcert-sample`` is still
+refused outright — by §4.3's ``team_mapping`` gate, before this module is ever
+consulted and without ``risk_authorisations`` appearing in the refusal.
+Nothing here is evidence that this repository has a risk-authorisation policy;
+it has none, and a reader who finds ``project-decision`` in a test is looking at
+a fixture's setting rather than at a decision anybody took.
+
 Deterministic like everything else here: a lookup and two membership tests over
 frozen strings, no clock, no unordered iteration, and nothing written anywhere.
 """
