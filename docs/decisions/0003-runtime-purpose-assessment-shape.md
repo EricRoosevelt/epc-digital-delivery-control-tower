@@ -28,9 +28,11 @@
     record has been produced for any real project, by anyone. Nor can one be
     produced from this repository's own sample: `pcert-sample`'s nine Overlay
     policy rows all read `decision_basis = "illustrative"`, so §4.3's assignment
-    gate and §1.2 item 4's policy gate refuse it — the correct answer, and a
-    standing property rather than a task (§10.1, §10.2 item 7). Every positive
-    path is covered on an isolated test fixture.
+    gate refuses it before any subscope is assessed — one error, one code, and
+    the correct answer. The method and authorisation gates would answer *refuse*
+    on the same policy but are not reached today, for the two different reasons
+    §10.2 item 7 sets out. A standing property rather than a task (§10.1, §10.2
+    item 7). Every positive path is covered on an isolated test fixture.
   - **This document still adds and changes no code**, rule, checker, test,
     schema, configuration file, CLI, loader, evaluator, `rules/` file,
     `projects/` file, Pack, Overlay, or generated artifact; §9 states that in
@@ -2548,6 +2550,19 @@ a condition that cannot be compared reaches a *state* and not a refusal
 then have destroyed the record that a production owner needs in exactly the
 situation it fires.
 
+This round adds **three** rows to §7.2 and changes no row anywhere, in either
+subsection: an `overlay.risk_authorisations[]` row whose `decision_basis` is not
+`project-decision`, an authorisation citation granted under a different
+`pack_id::resolution_kind` than the one being promoted, and a promotion offered
+for an address the composed configuration cannot produce. It adds **no** row for
+the two answers §7.2's first two rows already carry — *no row for this kind* and
+*a role not listed for this kind* — because those rules were fixed when those
+rows were written and this round only names the answers they produce and builds
+them. Its §7.1 rows are untouched, and deliberately: nothing added here is a
+request-side defect, so no ordinary assessment gains a refusal, and
+`pcert-sample`'s single refusal continues to come from §4.3's `team_mapping`
+gate alone.
+
 ### 7.1 Composition / request defects — the assessment refuses
 
 | Missing / wrong input | Assessment behaviour | ADR 0002 §3.7 row |
@@ -2608,6 +2623,116 @@ situation it fires.
 | A continuation is attempted for a promotion whose lapse any sealed record in its chain has already recorded | **No continuation is possible.** The lapse is terminal for that promotion; releasing the work again requires a **new** promotion with all nine §4.4 fields, its own authoriser, and a role listed for the *current* `resolution_kind` (§4.5, check 7) | (**closes E-7b**; §1 invariant 6) |
 | A successor record whose subscope's **promotion chain is non-empty** — some sealed record in it granted, continued, or lapsed a promotion — records none of the three legal outcomes | **Refuse the record.** This is the widened trigger: the record that lapses a promotion neither grants nor continues one, so keying the obligation to "the cited record carried a promotion" let every record after a lapse fall silent about it (§4.5) | (**closes E-7b**; extends, and does not replace, the row below) |
 | A successor record cites a record that carried a promotion over members of this subscope, and records **none** of: a continuation with every check of §4.5's table proved, a lapse with its reason, or that the promotion is no longer applicable | **Refuse the record.** Silence neither continues a promotion nor ends one, and a record that leaves a release's status unstated is not a legal record (§4.5) | (**closes E-6**, trigger since widened by E-7b to the promotion chain; §1 invariant 6 — an acceptance that nobody restated and nobody ended is indistinguishable from one nobody gave) |
+| A `CONDITIONAL` promotion is attempted against a matching `overlay.risk_authorisations[]` row whose `decision_basis` is not `project-decision` | Refuse the promotion only, as a **third distinct** refusal beside §4.3's `team_mapping` gate and §1.2 item 4's `accepted_evidence_methods` gate (`risk-authorisation-decision-basis-illustrative`); the subscope's `BLOCKED`/`UNKNOWN` verdict stands. The row exists and records the shape of an authorisation nobody decided, so reporting it as missing would send a maintainer looking for a line already in the manifest, and the line to edit is a third line in a third table. Never founded on anyway, never substituted for, and never resolved by reading `resolution_routes[].default_role`. Checked **before** the role check of the row above it: an unlisted role under a demonstration row has two things wrong with it, and reporting the narrower one would leave a maintainer correcting a role list on a policy nobody took | (new to this round; ADR 0002 §3.5's `decision_basis` on `risk_authorisations[]`, which exists precisely so a demonstration value cannot pass for a decision, and §1 invariant 6's requirement that a `CONDITIONAL` originate in a named authorisation event) |
+| The promotion cites an authorisation granted under a different `pack_id::resolution_kind` than the one being promoted | Refuse the promotion only (`risk-authorisation-kind-borrowed`); the leaf stands. An authorisation is granted against one named deficiency, and carrying it to another is not a weaker promotion but a different release nobody authorised. Compared on **both** halves of the address and never on the role alone, because one role may legitimately be listed for several kinds — `pcert-sample` lists `information-manager` for both of its rows, so a check that compared only the role would read a borrowed citation as a promotion | (new to this round; §4.4 field 5's "that exact `pack_id::resolution_kind`"; ADR 0002 §3.5's per-`pack_id::resolution_kind` table) |
+| A promotion is offered for a `pack_id::resolution_kind` the composed configuration cannot produce — the project binds no such Pack, or the bound Pack declares no such `resolution_routes[]` row | Refuse the promotion only (`risk-authorisation-resolution-kind-unresolved`). Answering *no authorisation path* would report a real absence of policy for a deficiency that does not exist, which is a different statement and a false one | (new to this round; ADR 0002 §3.7's dangling-`resolution_kind` row, which composition already refuses for an Overlay row, applied to the promotion's own address) |
+
+**Three answers, not one refusal with three causes.** Resolving this table's
+first two rows against a project's Overlay yields exactly three states, and they
+are kept apart because each sends a person somewhere else:
+
+- **`authorised`** — a decided row exists for this exact
+  `pack_id::resolution_kind` and lists the role the citation named. The only
+  state a promotion may rest on.
+- **`no-authorisation-path`** — no row addresses that address at all (row 1).
+  Not a defect and not a gap: this project has no way of releasing that
+  deficiency, and giving it one is a policy decision nobody has taken. Never
+  resolved by `resolution_routes[].default_role`, by a role `team_mapping[]`
+  staffs to *resolve* the work, or by a role listed for some other
+  `resolution_kind`.
+- **`role-not-authorised`** — a decided row exists and does not list the cited
+  role (row 2). ADR 0002 §3.8's words for it are exact: that is not a
+  `CONDITIONAL`, it is an unauthorised release. The policy is real and this
+  citation falls outside it.
+
+The second and third look alike and are not. One says there is no policy to
+read; the other says there is one and it was read. Collapsing them would report
+a project that decided who may release a risk as a project that never decided
+anything, which is the same class of loss ADR 0002 §3.5 added `decision_basis`
+to prevent and that §4.3 keeps separate for `team_mapping[]`.
+
+**The gate fires on consumption rather than on the request, and that
+asymmetry is deliberate.** §4.3's `team_mapping[]` gate is *static*, over an activity's reachable
+non-`READY` leaves, and §7.1 carries it as a request-side row. That is right for
+staffing, because staffing is a question every non-`READY` record must answer:
+the assignment sentence is written whichever leaf is reached, so founding it on a
+demonstration row would assert a staffing decision nobody took. Authorisation is
+not that shape. A `CONDITIONAL` must originate in a named authorisation event
+(§1 invariant 6), and *the event not having happened* is the ordinary state —
+Checkpoint B §3's live conclusion is that no activity in that handover is
+`CONDITIONAL`. So this policy is read when a promotion would consume it, and a
+`resolution_kind` with no row is an answer rather than a request defect. That is
+why these rows are in §7.2 and not in §7.1, and it is why none of them can refuse
+an assessment that contains no promotion.
+
+Reversing the two inverts the direction the fail-closed rule protects, and the
+consequence is measurable rather than stylistic. Give `risk_authorisations[]` a
+`team_mapping[]`-shaped static gate and `pcert-sample` stops producing even one
+`BLOCKED` row: eight of the ten `resolution_kind` values its three activities can
+reach carry no row at all and the other two read `illustrative`, so every request
+would be refused before any subscope was assessed — and the system would decline
+to report *the equipment schedule is blocked for a missing asset identity* on the
+grounds that nobody there is authorised to release it. The gate would be
+suppressing the refusals rather than the releases. The two gates therefore stay
+two, and neither is to be unified with the other; a later round proposing to
+"make them consistent" is proposing that inversion whether or not it says so.
+
+**What this adds, and what it does not.** What is built is the authorisation
+decision itself — given a project, an exact `pack_id::resolution_kind` and the
+role a citation names, which of the three answers holds — together with the two
+citations it refuses outright. **No promotion record is built**: §4.4's nine
+fields, §4.5's seven continuation checks, the `authorisation` successor of
+§10.1 item 2, and every other row of this table remain designed and unbuilt, no
+code path promotes a subscope, and `CONDITIONAL` remains structurally illegal as
+a decision-tree leaf. Nothing is stored, nothing is published, no `epc-ct`
+subcommand reaches it, and §10.1's closing statement stands unchanged: no
+assessment record has been produced for any real project, and `pcert-sample`'s
+nine policy rows — the two risk-authorisation rows included — still read
+`decision_basis = "illustrative"`, so the positive path is exercised on an
+isolated fixture built from `pcert-sample`'s data and nowhere else.
+
+**What that fixture is, stated precisely, because "a fixture" is not precise
+enough to audit.** It is the shipped manifest's own Overlay, parsed and deep
+copied in memory, with `decision_basis` rewritten on two successive layers and
+nothing else changed — the same four roles, the same four teams, the same three
+methods, the same real `evidence_bindings`. Three layers, and each of the three
+policy tables — `team_mapping` (4 rows), `accepted_evidence_methods` (3) and
+`risk_authorisations` (2), nine rows in all — is in a different state at a
+different one:
+
+1. **The shipped project**, `projects/pcert-sample/project.toml`: all nine rows
+   `illustrative`.
+2. **The assessment fixture**, `fixture_overlay_document()` in
+   `tests/assessment_fixtures.py`: `team_mapping` and
+   `accepted_evidence_methods` `project-decision`, `risk_authorisations` still
+   `illustrative`. This is what every other assessment test composes against.
+3. **The authorisation fixture**, `authorising_overlay_document()` in
+   `tests/test_purpose_authorisation.py`: all three tables `project-decision`.
+
+The `AUTHORISED` answer is reachable only on the third layer, where all nine
+rows read `project-decision`. The third layer exists separately from the second
+rather than being folded into it because every other test in the repository
+composes against the second, and moving `risk_authorisations` there would move
+the `composition_digest` those tests see for a reason that has nothing to do
+with them.
+
+**No layer is written back to disk.** Both edits are `copy.deepcopy` over a
+parsed document; the shipped manifest is read and never rewritten, so a run of
+this suite leaves `projects/pcert-sample/project.toml` byte-identical with all
+nine rows `illustrative`. Two facts therefore hold at once, and neither weakens
+the other: *the fixture reaches the positive path*, and *the shipped project is
+still refused* — refused by §4.3's `team_mapping` gate, first and alone, with
+`team-mapping-decision-basis-illustrative` and no mention of
+`risk_authorisations` in the refusal at all. The second is pinned as its own
+test, because a round that made the positive path reachable by quietly relaxing
+the shipped project would pass every other assertion here.
+
+**It does not close the open point about §4.3's gate reading statically** over
+every reachable leaf rather than the leaves live evidence touched (§10.2's
+closing note, second item). That question is about `team_mapping[]` and this
+round touched neither its rule, its wording, nor its timing; establishing that
+consumption-time resolution is right *here* is not an argument that static
+resolution is wrong *there*, and the point remains open exactly as stated.
 
 ### 7.3 Unresolved outcomes — not failures, routed as `UNKNOWN`
 
@@ -2934,13 +3059,41 @@ describe a job somebody has to hold.
 
 7. **The sample shipped here produces no record, permanently.** Every positive
    path in this design is covered on an isolated fixture (§10.1), and the reason
-   is not that a fixture was quicker: `pcert-sample` has never appointed a team
-   and has never accepted an evidence method, so §4.3's assignment gate and
-   §1.2 item 4's policy gate both refuse it, correctly (ADR 0002 §9). This is a
-   standing property of the repository, not an outstanding task. Making the
-   sample produce a record would mean writing
+   is not that a fixture was quicker: `pcert-sample` has never appointed a team,
+   has never accepted an evidence method, and has never decided a
+   risk-authorisation policy (ADR 0002 §9).
+
+   **One gate refuses it, and that one refusal is the whole of it.** §4.3's
+   assignment gate is static — it reads over the reachable non-`READY` leaves
+   before any subscope is assessed — so a request against the shipped project
+   raises exactly one error carrying exactly one code,
+   `team-mapping-decision-basis-illustrative`, and that message names neither of
+   the other two policy tables. The other two gates would answer *refuse* on
+   this same policy, and neither is reached today: §1.2 item 4's method gate is
+   consulted only when a determination is consumed, which a request refused at
+   §4.3 never gets far enough to do, and §7.2's authorisation gate has no
+   consumer anywhere in the walk at all. Saying the three refuse it in parallel
+   would erase the distinction §7.2 exists to draw: a static gate and a
+   consumption-triggered gate do not fire at the same moment, and the third does
+   not fire at all yet. Correct on all three counts, and a standing property of
+   the repository rather than an outstanding task.
+
+   Making the sample produce a record would mean writing
    `decision_basis = "project-decision"` onto rows describing decisions nobody
    took — the exact fabrication ADR 0002 §3.5 added the field to prevent.
+
+   **The fixture is that fabrication performed in memory, deliberately and
+   visibly, where it cannot be mistaken for the project.** It is
+   `pcert-sample`'s own manifest parsed and deep copied, with `decision_basis`
+   rewritten and nothing else, in two layers that leave the three policy tables
+   in three different states — the three-item list in §7.2 gives each layer,
+   each table and each state. The positive path runs on the innermost layer,
+   where all nine rows read `project-decision`; the file on disk is never
+   written, so the shipped project keeps all nine rows `illustrative` and keeps
+   being refused by the single gate named above. Which of the three gates a
+   given layer clears is therefore a property of that layer and not of the
+   repository, and no sentence about the fixture reaching a verdict is a
+   sentence about `pcert-sample` reaching one.
 
 8. **Nobody is designated to declare the assessed scope, and an element nobody
    declared is absent from every part of the record.** §2.1 makes the assessed

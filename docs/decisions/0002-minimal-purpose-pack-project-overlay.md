@@ -1613,6 +1613,8 @@ silently declines to evaluate is the worst outcome available":
 | An `overlay.risk_authorisations[].resolution_kind` does not match a `resolution_routes[].resolution_kind` in the named `pack_id` | Fail closed at composition time as a dangling reference (**closes R5 item 3**). |
 | An `overlay.risk_authorisations[].may_authorise_roles` is empty, or contains a wildcard, `"all"`, or any similarly unbounded value | Fail closed at composition time — there is no such thing as blanket authorisation in this design (**closes R5 item 3**). |
 | **A `CONDITIONAL` promotion is attempted for a `resolution_kind` with no matching `overlay.risk_authorisations[]` entry** | **Fail closed for that promotion only; the leaf's verdict stays `BLOCKED`/`UNKNOWN`.** `CONDITIONAL` is simply unavailable for that `resolution_kind` in this project — never resolved by falling back to a default role, to `resolution_routes[].default_role`, or to any other role not explicitly listed as an authoriser for that exact `resolution_kind` (§3.5; **closes R5 item 3**). |
+| **A `CONDITIONAL` promotion is attempted against a matching row of `overlay.risk_authorisations[]`, whose `decision_basis` is not `project-decision`** | **Fail closed for that promotion only, and as a *distinct* refusal from the missing-row row above; the leaf's verdict stays `BLOCKED`/`UNKNOWN`.** The row exists and records the shape of an authorisation policy nobody decided, so reporting it as missing would send a maintainer looking for a line already in the manifest, and the line to edit is a third line in a third table — neither `team_mapping[]` nor `accepted_evidence_methods[]`. Never founded on anyway, never substituted for, and never resolved by reading `resolution_routes[].default_role` (§3.5, §3.8; the same reason §3.5 put `decision_basis` on this table in the first place). |
+| **The promotion cites an authorisation granted under a different `pack_id::resolution_kind` than the one being promoted** | **Fail closed for that promotion only.** An authorisation is granted against one named deficiency; carrying it to another is not a weaker promotion but a different release nobody authorised. Compared on **both** halves of the address and never on the role alone, because one role may legitimately be listed for several kinds — `pcert-sample` lists `information-manager` for both of its rows, so a check that compared only the role would read a borrowed citation as a promotion (§3.5, §3.8). |
 | A decision node's branch names `verdict = "CONDITIONAL"` | Fail closed at Pack load time. `CONDITIONAL` is not a legal leaf value anywhere in a decision tree (§3.8). |
 | `activities[].decision_root_node` does not name an existing `decision_nodes[].node_id` | Fail closed at Pack load time (**closes R2 gap 5**). |
 | A branch's `next_node` does not name an existing `decision_nodes[].node_id` | Fail closed at Pack load time (**closes R2 gap 5**). |
@@ -1644,6 +1646,30 @@ No situation above resolves by picking a default, by taking the first match
 in an unordered collection, or by reading anything time-dependent — composing
 Pack and Overlay is required to be as deterministic as everything else this
 repository publishes (`AGENTS.md` rule 1).
+
+**Two of the rows above fire at composition and two fire when a promotion is
+made, and that asymmetry is deliberate.** `overlay.team_mapping[]` is checked
+statically, over an activity's reachable non-`READY` leaves, because staffing is
+a question every non-`READY` record has to answer: the assignment sentence is
+written whichever leaf is reached, so founding it on a demonstration row asserts
+a staffing decision nobody took (§3.5). `overlay.risk_authorisations[]` is not
+that shape. A `CONDITIONAL` must originate in a named authorisation event
+(§3.8), and *the event not having happened* is the ordinary state — a project
+with no authorisation policy at all is complete and correct, and simply cannot
+promote. So its rows are read at the moment a promotion would rest on one, and a
+`resolution_kind` with no row is an answer rather than a defect.
+
+Reversing the two would invert the direction the fail-closed rule protects, and
+the consequence is measurable rather than stylistic. Give
+`risk_authorisations[]` a `team_mapping[]`-shaped static gate and `pcert-sample`
+stops producing even one `BLOCKED` row: eight of the ten `resolution_kind`
+values its three activities can reach carry no row at all and the other two read
+`illustrative`, so every request would be refused before any subscope was
+assessed — and the system would decline to report *the equipment schedule is
+blocked for a missing asset identity* on the grounds that nobody there is
+authorised to release it. A gate meant to stop an unauthorised release would be
+suppressing the refusals instead. The two gates therefore stay two, and neither
+is to be unified with the other.
 
 ### 3.8 Verdict / blocker decision logic: a closed decision tree (closes gap 3, closes R2 gap 1, gap 2, gap 5, closes R3 gap 1, gap 3)
 
@@ -2406,6 +2432,35 @@ standing property of the repository rather than a gap. Rewriting these nine rows
 to `project-decision` in order to make the sample produce something would state
 nine decisions nobody made, and is the exact outcome this field exists to
 prevent.
+
+**The counterfactual is run as a fixture, in memory, and the file is never
+touched.** That the nine rows cannot be rewritten here does not mean the
+`project-decision` case goes untested: the tests build it by parsing this
+manifest and deep copying it, rewriting `decision_basis` and nothing else — the
+same four roles, the same four teams, the same three methods, the same real
+`evidence_bindings`. It is done in two layers, and the three policy tables are
+deliberately not all moved at once:
+
+| Layer | `team_mapping` (4) | `accepted_evidence_methods` (3) | `risk_authorisations` (2) |
+|---|---|---|---|
+| This manifest, as shipped | `illustrative` | `illustrative` | `illustrative` |
+| `fixture_overlay_document()` — the assessment fixture | `project-decision` | `project-decision` | `illustrative` |
+| `authorising_overlay_document()` — the authorisation fixture | `project-decision` | `project-decision` | `project-decision` |
+
+A `CONDITIONAL` promotion's positive path needs the third layer, where all nine
+rows read `project-decision`; ordinary assessment needs only the second, and
+keeping `risk_authorisations` `illustrative` there is what stops the
+authorisation round from moving the `composition_digest` every other test sees.
+
+Neither layer is written back. `projects/pcert-sample/project.toml` is read and
+never rewritten, so after any test run it still carries nine `illustrative`
+rows and no `project-decision` row — a fact the suite asserts against the file's
+own text rather than trusting. So the two statements sit together without
+tension: *the fixture can reach the positive path*, and *this project is still
+refused*, by the `team_mapping` gate, first and alone, with no mention of
+`risk_authorisations` in the refusal. A round that reached the positive path by
+editing this file instead would look identical in every other assertion, which
+is why that one is pinned separately.
 
 ## Consequences
 

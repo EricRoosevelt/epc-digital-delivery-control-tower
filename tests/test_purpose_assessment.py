@@ -1848,6 +1848,7 @@ class EveryRefusalCarriesACodeTests(unittest.TestCase):
         self.assertEqual(
             self.MODULES,
             (
+                "authorisation.py",
                 "determinations.py",
                 "evaluator.py",
                 "facts.py",

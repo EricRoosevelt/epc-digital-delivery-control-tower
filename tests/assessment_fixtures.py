@@ -207,25 +207,46 @@ def requirement_keys_by_ruleset() -> dict[tuple[str, str], frozenset[str]]:
 
 
 def fixture_overlay_document() -> dict:
-    """``pcert-sample``'s Overlay with its policy recorded as decided.
+    """``pcert-sample``'s Overlay with **two of its three** policy tables decided.
 
-    The only edits are ``decision_basis``: every ``team_mapping`` row and every
-    ``accepted_evidence_methods`` row moves from ``illustrative`` to
-    ``project-decision``. Nothing else changes — the same four roles, the same
-    four teams, the same three methods, the same real ``evidence_bindings``
-    naming the same four R-005 ``requirement_key`` values.
+    An isolated fixture built from real ``pcert-sample`` data: the shipped
+    manifest is parsed and deep copied, and the only edits are ``decision_basis``
+    — every ``team_mapping`` row and every ``accepted_evidence_methods`` row
+    moves from ``illustrative`` to ``project-decision``. Nothing else changes:
+    the same four roles, the same four teams, the same three methods, the same
+    real ``evidence_bindings`` naming the same four R-005 ``requirement_key``
+    values. Nothing is written back to disk.
 
-    **Both tables, and stating that explicitly is the point.** An earlier version
-    of this fixture flipped only ``team_mapping``, and the positive path went
-    green while the evaluator was consuming an alignment determination produced
-    by a method whose row still read ``illustrative``. The green light was being
-    held up by a check that did not exist. Declaring the method policy here means
-    the fixture asserts what it relies on, and the gate that would otherwise have
-    caught it is exercised by its own test rather than by this one's silence.
+    The Overlay has **three** policy tables, and this fixture leaves them in two
+    different states. Saying which is which is the whole value of this docstring:
+
+    * ``team_mapping`` — 4 rows, ``project-decision`` here.
+    * ``accepted_evidence_methods`` — 3 rows, ``project-decision`` here.
+    * ``risk_authorisations`` — 2 rows, **still** ``illustrative`` here.
+
+    So this document staffs the project and accepts its methods, and gives it no
+    risk-authorisation policy at all. That is deliberate and load-bearing: every
+    test that composes against this fixture sees a ``composition_digest`` that
+    depends on those two rows staying ``illustrative``. A ``CONDITIONAL``
+    promotion's positive path needs them decided, and gets that from a third
+    layer built on top of this one —
+    :func:`test_purpose_authorisation.authorising_overlay_document` — rather
+    than from a change here.
+
+    **Both of the two, and stating that explicitly is the point.** An earlier
+    version of this fixture flipped only ``team_mapping``, and the positive path
+    went green while the evaluator was consuming an alignment determination
+    produced by a method whose row still read ``illustrative``. The green light
+    was being held up by a check that did not exist. Declaring the method policy
+    here means the fixture asserts what it relies on, and the gate that would
+    otherwise have caught it is exercised by its own test rather than by this
+    one's silence.
 
     This is a **test setting**, not a correction. ``pcert-sample`` has never
     staffed anybody and has never accepted a method, which is why its own
-    manifest says so on all seven rows and why the real entry point refuses it.
+    manifest says so on the seven rows this function edits — and on the two it
+    does not, for nine ``illustrative`` rows in total — and why the real entry
+    point refuses it.
     """
 
     document = copy.deepcopy(base_overlay_document())
