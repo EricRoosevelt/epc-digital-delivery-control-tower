@@ -16,6 +16,8 @@ The modules divide along the lines the design already draws:
                         those; the projection is what makes §3.4 structural
 :mod:`.determinations`  determinations arrive by reference and are admitted or
                         declined, never decided
+:mod:`.authorisation`   whether this project's policy authorises one promotion,
+                        asked when a promotion would consume it and never before
 :mod:`.reading`         how one subject's evidence collapses to one outcome
 :mod:`.evaluator`       the tree walk, the partition, the routes, the refusals
 :mod:`.recheck`         succeeding a sealed record: member correspondence,
@@ -30,11 +32,29 @@ no public machine contract, no CLI, no Doctor, and no storage layer — a record
 returned sealed, and where it is put is a later decision. The ``recheck``
 successor is built; the ``authorisation`` one is named in the closed vocabulary
 and nothing more.
+
+:mod:`.authorisation` is not an exception to that. It answers the single policy
+question ADR 0003 §4.4 field 5 says a promotion must be able to prove — whether
+this project's Overlay authorises the cited role for that exact
+``pack_id::resolution_kind`` — and builds no promotion around it: none of §4.4's
+nine fields, none of §4.5's continuation checks, no successor, no store. Nothing
+in the walk imports it, because until a promotion exists there is nothing to
+consume it, and §7.2's opening is what makes that the right shape: every refusal
+it raises is promotion-scoped, so the leaf stands and the request is unaffected.
 """
 
 from __future__ import annotations
 
 from ..errors import PurposeAssessmentError
+from .authorisation import (
+    AUTHORISED,
+    NO_AUTHORISATION_PATH,
+    RISK_AUTHORISATION_ANSWERS,
+    ROLE_NOT_AUTHORISED,
+    AuthorisationCitation,
+    RiskAuthorisationDecision,
+    resolve_risk_authorisation,
+)
 from .determinations import (
     Admissibility,
     Determination,
@@ -87,11 +107,15 @@ from .request import (
 )
 
 __all__ = [
+    "AUTHORISED",
     "CARRY_OVER_REASONS",
     "MEMBER_DISPOSITIONS",
     "NOT_COVERED_ABSENCE",
+    "NO_AUTHORISATION_PATH",
     "NO_FINDING_ABSENCE",
     "RECHECK_CONDITION_STATES",
+    "RISK_AUTHORISATION_ANSWERS",
+    "ROLE_NOT_AUTHORISED",
     "SUCCESSOR_KINDS",
     "UNRESOLVED_OUTCOMES",
     "VALIDATION_BACKED_OUTCOMES",
@@ -101,6 +125,7 @@ __all__ = [
     "AssessmentFacts",
     "AssessmentRecord",
     "AssessmentRequest",
+    "AuthorisationCitation",
     "CitedDetermination",
     "ContextComparison",
     "Determination",
@@ -120,6 +145,7 @@ __all__ = [
     "Reading",
     "RecheckOutcome",
     "ResolvedRoute",
+    "RiskAuthorisationDecision",
     "ResolvingAssignment",
     "Subject",
     "SubscopeResult",
@@ -130,4 +156,5 @@ __all__ = [
     "facts_from_bundle",
     "machine_checkable_outcome",
     "recheck_purpose",
+    "resolve_risk_authorisation",
 ]
