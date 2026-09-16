@@ -153,10 +153,34 @@ def _remote(host):
     host = host.decode() if isinstance(host, bytes) else str(host)
     return host not in LOOPBACK and not host.startswith("127.")
 
-def _path(value):
+#: For each event that modifies the filesystem, which arguments name what it
+#: modifies, and which argument (if any) is the directory descriptor a relative
+#: name is resolved against. A copy's *source* is read, never modified, and is
+#: not listed. The descriptor matters on POSIX, where ``shutil.rmtree`` removes
+#: entries by bare name relative to an open directory: resolving those names
+#: against the working directory would place them in the checkout.
+MODIFIED = {
+    "os.remove": ((0, 1),),
+    "os.rmdir": ((0, 1),),
+    "os.mkdir": ((0, 2),),
+    "os.chmod": ((0, 2),),
+    "os.rename": ((0, 2), (1, 3)),
+    "os.truncate": ((0, None),),
+    "shutil.copyfile": ((1, None),),
+    "shutil.rmtree": ((0, 1),),
+}
+
+def _path(value, dir_fd=None):
     if isinstance(value, int):
         return ""
-    return os.path.normcase(os.path.abspath(os.fsdecode(os.fspath(value))))
+    path = os.fsdecode(os.fspath(value))
+    if isinstance(dir_fd, int) and not os.path.isabs(path):
+        try:
+            path = os.path.join(os.readlink(f"/proc/self/fd/{dir_fd}"), path)
+        except OSError:
+            # Unresolvable: count it as inside, so the test fails closed.
+            return root + os.sep + f"<unresolved dir_fd {dir_fd}>" + os.sep + path
+    return os.path.normcase(os.path.abspath(path))
 
 def _inside(path):
     return path == root or path.startswith(root + os.sep)
@@ -172,11 +196,14 @@ def hook(event, args):
             report["inventory_opens"].append(path)
         if writing and _inside(path):
             report["writes_in_checkout"].append(path)
-    elif event in {"os.rename", "os.remove", "os.rmdir", "os.mkdir", "os.truncate",
-                   "shutil.copyfile", "shutil.rmtree", "os.chmod"}:
-        for value in args:
-            if isinstance(value, (str, bytes, os.PathLike)) and _inside(_path(value)):
-                report["writes_in_checkout"].append(f"{event}: {_path(value)}")
+    elif event in MODIFIED:
+        for index, fd_index in MODIFIED[event]:
+            value = args[index]
+            dir_fd = args[fd_index] if fd_index is not None else None
+            if isinstance(value, (str, bytes, os.PathLike)):
+                path = _path(value, dir_fd)
+                if _inside(path):
+                    report["writes_in_checkout"].append(f"{event}: {path}")
     elif event in {"socket.connect", "socket.sendto"}:
         address = args[1]
         host = address[0] if isinstance(address, tuple) else address
@@ -481,7 +508,8 @@ class DeterminismAndIsolationTests(_AdapterCase):
                 data.decode("utf-8")
 
     def test_nothing_is_written_inside_the_checkout(self):
-        self.assertEqual(self.audit["writes_in_checkout"], [])
+        written = self.audit["writes_in_checkout"]
+        self.assertEqual(written, [], "\n".join(written))
 
     def test_the_adapter_is_unreachable_from_the_package_and_its_cli(self):
         package = PROJECT_ROOT / "epc_control_tower"
