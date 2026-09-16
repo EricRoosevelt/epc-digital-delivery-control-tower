@@ -135,13 +135,14 @@ subscope 的共用路径可在详情复用，不能把多个成员压成一个�
 | `partition_is_empty` | “本活动无准入成员，因此无裁决”，同时显示排除范围 |
 | 框架命名的证据缺口 | 显示原 `outcome` / `absence`、受影响成员与该记录的 UNKNOWN、行动和出口 |
 | 本 Pack 的 `absence = no-finding` | “本绑定下尚未评估：无 finding”；显示记录的 `not-yet-evaluated`、UNKNOWN 与补评估路线 |
-| `absence = not-applicable-finding` | “已有 finding，但检查不适用，未覆盖此主体”；保留 N/A 引用，不写成从未检查或 PASS |
+| `absence = not-applicable-finding`（仅防御性显示） | “已有 finding，但检查不适用，未覆盖此主体”；保留 N/A 引用，不写成从未检查或 PASS。当前流水线的元素成员不会出现此值（`domain.py` 不允许构造元素级 N/A，已发布 N/A 全为模型级），因此不作为演示或验收状态，也不造元素级 N/A 来展示它 |
 | 空 absence 且 finding_keys 非空，outcome 为 `unmet` / `satisfied` | “本绑定已有评估读数”；分别展示不满足/满足及引用，不由此推导活动最终裁决 |
 | 活动未请求 | “本次未请求”，来自选择上下文，不叫 UNKNOWN、不虚构活动结果 |
 | 名称关联缺失 | 保留完整 key 并显示“名称不可用”；不能丢行或借冻结清单补名 |
 | 读取失败 / 尚无记录 | 明确错误或未运行状态，不显示空成功表格 |
 
-本 Pack 的成员层按记录可区分以上三种状态；不从 canonical finding 行数反推。
+本 Pack 的成员层按记录区分 `no-finding` 与已有评估读数两种实际出现的状态，
+N/A 一行只防御未知值；不从 canonical finding 行数反推。
 烟囱在设备表和吊顶活动的 `no-finding` / `not-yet-evaluated` 与相应
 `*-not-evaluated` 路线足以呈现“仍需评估的零 finding 成员”，该 D1 场景
 **不受 F1 阻塞**。“本绑定下尚未评估”不扩大成“从未被任何规则评估”。
@@ -270,7 +271,7 @@ canonical `elements.csv` 本地计数 **44**（不含表头）。禁止连接
 | 场景 | 路径 / 预期边界 | 本轮状态 |
 | --- | --- | --- |
 | 从范围内结果找到证据与源修正 | S1 → S2 roof 成员 → S3，能复述版本、证据、影响、角色、next_action 和旧条件 | 设计待评审；精确 Revit 跳转受 F5 阻塞，通用指引可设计 |
-| 找到零 finding 且仍需评估的成员 | S2 在设备表/吊顶活动定位烟囱 → S3：`no-finding`、`not-yet-evaluated`、UNKNOWN、`*-not-evaluated` 行动；与 N/A 和已有评估读数区分。geo-reference 另在排除表 | 现有成员记录支持，撤销 F1 阻塞；设计待复审，UI 尚未实现 |
+| 找到零 finding 且仍需评估的成员 | S2 在设备表/吊顶活动定位烟囱 → S3：`no-finding`、`not-yet-evaluated`、UNKNOWN、`*-not-evaluated` 行动；与已有评估读数区分。geo-reference 另在排除表 | 现有成员记录支持，撤销 F1 阻塞；设计待复审，UI 尚未实现 |
 | 构件层区分未评估与已评估未命名 | canonical 库存不能凭 0 行 finding 回答；不混入成员验收 | F1 数据缺口真实存在，但非 D1 原始验收，范围待 PM 决定 |
 | 真实拒绝与空分区区别 | SX 的无记录拒绝，对照 S2 有记录但无准入成员/无裁决 | 设计待评审；实际可点击执行受 F7 阻塞 |
 | 拒绝说明的适用边界与消息显示 | 已核基线且异常匹配时显示限制表；其他项目/政策变更/来源未知/其他异常均不显示。原始文本可完整展示，UI 不切前缀 | 条件设计待复审；结构化分栏纯消息待 F8，基线识别依据待 F4 |
