@@ -29,11 +29,13 @@ from __future__ import annotations
 
 import ast
 import dataclasses
+import functools
 import inspect
 import json
 import os
 import subprocess
 import sys
+import types
 import unittest
 
 import assessment_fixtures as fx
@@ -240,24 +242,43 @@ def _run(arguments) -> bytes:
     return completed.stdout
 
 
+@functools.cache
+def _observed() -> types.SimpleNamespace:
+    """Everything the test classes read, produced once per test session.
+
+    Cached at module level rather than built in ``setUpClass``, which runs once per
+    subclass: each subprocess below is a full validation run, and repeating them
+    for every class multiplied the module's runtime and its exposure to the W3C
+    schema fetch the validation path attempts.
+    """
+
+    names = sorted(SCENARIOS)
+    cli = {name: _run(["-m", "internal.doctor_adapter", name]) for name in names}
+    *audited, report = _run(["-c", _AUDITED_DRIVER, str(PROJECT_ROOT), *names]).split(b"\0")
+    return types.SimpleNamespace(
+        direct=_Direct.build(),
+        cli=cli,
+        audited=dict(zip(names, audited, strict=True)),
+        audit=json.loads(report),
+        in_process={name: envelope_bytes(scenario_envelope(name)) for name in names},
+        envelopes={name: json.loads(data) for name, data in cli.items()},
+        index=_run(["-m", "internal.doctor_adapter", "--index"]),
+    )
+
+
 class _AdapterCase(unittest.TestCase):
     """Two independent processes, plus the in-process envelopes, built once."""
 
     @classmethod
     def setUpClass(cls):
-        cls.direct = _Direct.build()
-        cls.cli = {
-            name: _run(["-m", "internal.doctor_adapter", name]) for name in sorted(SCENARIOS)
-        }
-        names = sorted(SCENARIOS)
-        *audited, report = _run(
-            ["-c", _AUDITED_DRIVER, str(PROJECT_ROOT), *names]
-        ).split(b"\0")
-        cls.audited = dict(zip(names, audited, strict=True))
-        cls.audit = json.loads(report)
-        cls.in_process = {name: envelope_bytes(scenario_envelope(name)) for name in names}
-        cls.envelopes = {name: json.loads(data) for name, data in cls.cli.items()}
-        cls.index = _run(["-m", "internal.doctor_adapter", "--index"])
+        observed = _observed()
+        cls.direct = observed.direct
+        cls.cli = observed.cli
+        cls.audited = observed.audited
+        cls.audit = observed.audit
+        cls.in_process = observed.in_process
+        cls.envelopes = observed.envelopes
+        cls.index = observed.index
 
 
 class ExactlyFourScenariosTests(_AdapterCase):
