@@ -161,6 +161,13 @@ def _remote(host):
 #: not listed. The descriptor matters on POSIX, where ``shutil.rmtree`` removes
 #: entries by bare name relative to an open directory: resolving those names
 #: against the working directory would place them in the checkout.
+#:
+#: Copying needs **both** copy events, because the two platforms raise different
+#: ones for the same call: ``shutil.copy2`` and ``shutil.copytree`` go through
+#: ``_winapi.CopyFile2`` on Windows, which raises no ``shutil.copyfile`` event at
+#: all, so a hook holding only the portable name watches nothing on Windows.
+#: ``_winapi.CopyFile2(existing_file_name, new_file_name, flags)`` names its
+#: destination second, like ``shutil.copyfile``.
 MODIFIED = {
     "os.remove": ((0, 1),),
     "os.rmdir": ((0, 1),),
@@ -169,6 +176,7 @@ MODIFIED = {
     "os.rename": ((0, 2), (1, 3)),
     "os.truncate": ((0, None),),
     "shutil.copyfile": ((1, None),),
+    "_winapi.CopyFile2": ((1, None),),
     "shutil.rmtree": ((0, 1),),
 }
 
