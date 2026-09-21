@@ -36,12 +36,15 @@ validation run the facts come from is directed at a scratch directory outside it
 and removed afterwards.
 
 **Network.** The adapter adds no network egress of its own: it opens no socket,
-runs no server, and imports no network module. The validation it calls is another
-matter, and is not this adapter's to change — IfcTester's ``ids.xsd`` imports two
-W3C schemas by URL, so loading it attempts to fetch them, exactly as ``epc-ct
-check`` and ``epc-ct run`` do. ``xmlschema`` falls back to its bundled copies when
-that fails, and the adapter's tests pin that blocking every remote connection
-changes no byte of any envelope.
+runs no server, and imports no network module. Neither does the validation it
+calls, since ``epc_control_tower.ids_schema`` made IfcTester resolve the three
+W3C schemas ``ids.xsd`` imports by URL from the copies ``xmlschema`` installs.
+It used to: loading the schema attempted those three fetches, exactly as
+``epc-ct check`` and ``epc-ct run`` did, and ``xmlschema`` reached the right
+copies only afterwards, by falling back when the fetch failed. The adapter's
+tests still pin that blocking every remote connection changes no byte of any
+envelope; ``tests/test_validation_path_egress.py`` now pins the stronger claim
+that nothing is attempted.
 """
 
 from __future__ import annotations

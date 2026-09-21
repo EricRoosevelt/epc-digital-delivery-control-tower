@@ -15,14 +15,17 @@ for writing and whether it opened the frozen inventory — so "writes nothing in
 checkout" and "never reads the frozen inventory" are measurements rather than
 readings of the source.
 
-**What is claimed about the network is deliberately narrow.** The adapter adds no
-egress of its own. The validation it has to call does attempt some: IfcTester's
-``ids.xsd`` imports W3C schemas by URL, and ``epc-ct check`` makes the same
-attempts. So the claim pinned here is the counterfactual (``AGENTS.md`` rule 6):
-with every remote connection refused, every envelope is byte for byte what it is
-with the network available. Asserting that no socket is ever touched would assert
-something false of the production validation path, which is a separate
-checkpoint's to change.
+**What is claimed about the network here is deliberately narrow**, and narrower
+than what is true since ``epc_control_tower.ids_schema``. The claim pinned below
+is the counterfactual (``AGENTS.md`` rule 6): with every remote connection
+refused, every envelope is byte for byte what it is with the network available.
+When this was written the validation the adapter calls did attempt three fetches
+— IfcTester's ``ids.xsd`` imports three W3C schemas by URL — so asserting that
+no socket is ever touched would have asserted something false of the production
+path. It no longer would: ``tests/test_validation_path_egress.py`` owns that
+stronger claim, and the counterfactual below is kept because the same hook is
+also what measures the two boundaries that are this module's own — that nothing
+is written inside the checkout, and that the frozen inventory is never read.
 """
 
 from __future__ import annotations
