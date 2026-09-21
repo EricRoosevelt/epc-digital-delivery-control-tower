@@ -198,13 +198,23 @@ class NoEgressFromTheValidationPathTests(unittest.TestCase):
         self.assertNoAttempt(observed)
         self.assertTrue(json.loads(observed["detail"]), "the run wrote nothing")
 
-    def test_writing_a_rule_document_attempts_nothing_and_writes_the_same_bytes(self):
+    def test_writing_a_rule_document_attempts_nothing_and_writes_the_same_document(self):
         observed = _measure("generate")
         self.assertNoAttempt(observed)
+        # Compared with line endings normalised, because the generator emits
+        # the platform's. That is why `ids/*.ids` is pinned `-text` in
+        # `.gitattributes` rather than left to the writer: the published
+        # v1.0.0 run_id is a SHA-256 over a CRLF working copy, so the bytes
+        # live in the blob. Asserting raw equality here would assert something
+        # true only on Windows, and about the shim's line endings rather than
+        # about the schema this file is measuring.
+        published = (
+            PROJECT_ROOT / "ids" / "epc_delivery_requirements_v0.1.ids"
+        ).read_bytes()
         self.assertEqual(
-            bytes.fromhex(observed["detail"]),
-            (PROJECT_ROOT / "ids" / "epc_delivery_requirements_v0.1.ids").read_bytes(),
-            "the published rule document is a SHA-256 over these bytes",
+            bytes.fromhex(observed["detail"]).replace(b"\r\n", b"\n"),
+            published.replace(b"\r\n", b"\n"),
+            "serialising through the local schema moved the rule document",
         )
 
     def test_the_tests_that_reach_ifctester_attempt_nothing(self):
