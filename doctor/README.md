@@ -23,13 +23,16 @@ python doctor/serve.py        # then open http://127.0.0.1:8765/
   mode offers come from the adapter's `scenario_index()`, which runs nothing;
   the envelope's own `mode` is still checked against the chosen one before
   anything is rendered.
-- **Provenance beside each citation.** One fixture record mixes the two kinds:
-  its finding keys are a real validation run's output over the real IFC models,
-  while its determinations — and the policy `decision_basis` behind an
-  assignment — are the fixture's. A banner would understate one or overstate
-  the other, so every citation carries its own label, with the full sentences
-  in a legend on the same page rather than behind a hover. A real refusal has
-  no evidence rows and gets no labels.
+- **Provenance decided per citation.** Whether a label is true is a property of
+  the one citation it sits beside, so the criterion is too: a fixture value is
+  machine-visibly untrue and carries the fixture marker (`fixture/finding/…`,
+  `fixture-determination/…`), and everything else does not. The envelope's mode
+  is never consulted. One record can mix the two on a page — the model-reissue
+  scenario cites six fixture-minted finding keys beside three real ones — and a
+  per-envelope rule would call those six real validation output. Full sentences
+  are in a legend on the same page, never hover-only. A policy `decision_basis`
+  is not a citation and carries no marker, so the row says the source is not in
+  the envelope rather than guessing whose decision it was.
 - **An omitted key is words.** A key the envelope does not carry reads
   "记录未携带" — never `null`, `""`, `0`, `false` or a dash. A key carried as an
   empty string is a different fact: an empty `storey` is "无楼层归属", because

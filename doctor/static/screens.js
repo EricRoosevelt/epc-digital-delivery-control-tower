@@ -9,9 +9,11 @@
 // * a key the envelope does not carry is shown as "记录未携带" — never as an
 //   empty cell, a dash, a zero or a blank, and never confused with a key that
 //   is carried and empty, which is a value and says something of its own;
-// * a citation carries its provenance beside it, because one fixture record
-//   mixes real validation output with simulated determinations and a banner at
-//   the top of the page cannot say which line is which.
+// * every citation carries its provenance beside it, decided from that one
+//   citation's own fixture marker. One record can mix real validation output
+//   with fixture-minted values, so a per-page or per-envelope rule would label
+//   some of them wrongly — and labelling a simulation "real" is the one thing
+//   this product must never do.
 
 import { clearResults, go, href } from "./app.js";
 import {
@@ -30,17 +32,19 @@ import {
 import {
   BASELINE_LIMITATIONS,
   BASELINE_REFUSAL_CODE,
+  CITATION_PROVENANCE,
   CONDITION_STATES,
   DEMO_NOTICE,
   DISPOSITIONS,
   EMPTY_STRING,
-  EVIDENCE_PROVENANCE,
   MODE_LABELS,
   NOT_CARRIED,
+  POLICY_SOURCE_NOTE,
   PROVENANCE_NOTICE,
   RUN_LABELS,
   absence,
   carryOver,
+  citationProvenance,
   conditionState,
   disposition,
 } from "./vocabulary.js";
@@ -65,21 +69,42 @@ function field(object, key, render) {
   return render(value);
 }
 
-/** The provenance of one citation kind, or null where this preview cannot say.
+/** The provenance of **one** citation, read off that citation's own marker.
  *
- * Only the fixture experience is labelled, and the labels are the three facts
- * the technical director measured on these records: the finding keys are a real
- * validation run's output, the determinations are the fixture's, and the policy
- * decision_basis is the fixture's too. A real record — which this slice cannot
- * produce, because the real run is refused — gets no label rather than a guess.
+ * Whether the label is true is a property of the single citation it sits beside,
+ * so the criterion is too: a fixture-minted value is machine-visibly untrue and
+ * carries the fixture marker, and everything else does not. The envelope's mode
+ * is deliberately not consulted. One record can mix the two — the model-reissue
+ * scenario cites six fixture-minted finding keys beside three real ones — and a
+ * per-envelope rule would label those six as real validation output.
+ *
+ * **When the test that pins this goes red**, the answer is to make the label
+ * follow the individual citation, never to drop the mixed scenario from the
+ * demonstration. A red light there says "one simulated citation on this page is
+ * labelled real", not "this scenario should not exist".
  */
-function provenance(state, kind) {
-  if (state.envelope.mode !== "fixture") return null;
-  return provenanceTag(EVIDENCE_PROVENANCE[kind]);
+function provenance(kind, citation) {
+  const entry = citationProvenance(kind, citation);
+  return entry === null ? null : provenanceTag(entry);
 }
 
-function provenanceLegend(state) {
-  if (state.envelope.mode !== "fixture") return null;
+/** One tag per provenance actually found among these citations, with its count.
+ *
+ * A summary line still decides citation by citation: a reading whose keys are
+ * mixed shows both tags with the number each one covers, rather than one label
+ * standing for the group.
+ */
+function provenanceCounts(kind, citations) {
+  const counts = new Map();
+  for (const citation of citations) {
+    const entry = citationProvenance(kind, citation);
+    if (entry === null) continue;
+    counts.set(entry, (counts.get(entry) ?? 0) + 1);
+  }
+  return [...counts].map(([entry, count]) => [provenanceTag(entry), ` ×${count} `]);
+}
+
+function provenanceLegend() {
   return h(
     "div",
     { class: "legend" },
@@ -87,7 +112,7 @@ function provenanceLegend(state) {
     h(
       "ul",
       { class: "plain" },
-      Object.values(EVIDENCE_PROVENANCE).map((entry) =>
+      Object.values(CITATION_PROVENANCE).map((entry) =>
         h("li", {}, provenanceTag(entry), " ", entry.long),
       ),
     ),
@@ -210,7 +235,7 @@ function codeWithGloss(value, lookup) {
   );
 }
 
-function readingEvidence(state, reading) {
+function readingEvidence(reading) {
   const items = [h("div", {}, "读数 outcome：", field(reading, "outcome", code))];
   items.push(h("div", {}, "绑定：", field(reading, "binding", code)));
   if (carries(reading, "finding_keys")) {
@@ -218,12 +243,13 @@ function readingEvidence(state, reading) {
       h(
         "div",
         {},
-        `finding 引用（${reading.finding_keys.length}）`,
-        " ",
-        provenance(state, "finding"),
-        "：",
+        `finding 引用（${reading.finding_keys.length}）：`,
         field(reading, "finding_keys", (keys) =>
-          h("ul", { class: "plain" }, keys.map((key) => h("li", {}, copyable(key)))),
+          h(
+            "ul",
+            { class: "plain" },
+            keys.map((key) => h("li", {}, copyable(key), " ", provenance("finding", key))),
+          ),
         ),
       ),
     );
@@ -233,10 +259,7 @@ function readingEvidence(state, reading) {
       h(
         "div",
         {},
-        `判定引用（${reading.cited_determinations.length}）`,
-        " ",
-        provenance(state, "determination"),
-        "：",
+        `判定引用（${reading.cited_determinations.length}）：`,
         field(reading, "cited_determinations", (cited) =>
           h(
             "ul",
@@ -246,6 +269,8 @@ function readingEvidence(state, reading) {
                 "li",
                 {},
                 field(item, "reference", copyable),
+                " ",
+                provenance("determination", carries(item, "reference") ? item.reference : null),
                 h("div", { class: "sub" }, "内容摘要 ", field(item, "content_digest", code)),
               ),
             ),
@@ -514,13 +539,18 @@ function activity(state, activityIndex) {
                 carries(reading, "finding_keys")
                   ? [
                       ` · finding 引用 ${reading.finding_keys.length} `,
-                      provenance(state, "finding"),
+                      provenanceCounts("finding", reading.finding_keys),
                     ]
                   : null,
                 carries(reading, "cited_determinations")
                   ? [
                       ` · 判定引用 ${reading.cited_determinations.length} `,
-                      provenance(state, "determination"),
+                      provenanceCounts(
+                        "determination",
+                        reading.cited_determinations.map((item) =>
+                          carries(item, "reference") ? item.reference : null,
+                        ),
+                      ),
                     ]
                   : null,
               ),
@@ -597,7 +627,7 @@ function activity(state, activityIndex) {
         h("label", { for: "member-filter" }, "筛选成员"),
         search,
         count,
-        provenanceLegend(state),
+        provenanceLegend(),
         tableWrap(
           table(null, ["成员", "Framework 裁决", "子范围", "证据 / 缺口（终点节点）", "详情"], rows, { class: "members" }),
         ),
@@ -694,7 +724,7 @@ function member(state, activityIndex, ordinal, memberIndex) {
       ["resolution_kind", field(subscope, "resolution_kind", code)],
       ["模型版本", `${context.producing.model_key}@${short(context.producing.content_id)} → ${context.consuming.model_key}@${short(context.consuming.content_id)}`],
     ]),
-    provenanceLegend(state),
+    provenanceLegend(),
   );
 
   // Why: the full path, with this member's readings at each node.
@@ -731,7 +761,7 @@ function member(state, activityIndex, ordinal, memberIndex) {
           "div",
           { class: "reading" },
           mine.length ? null : h("div", {}, "读数主体：", memberKeys(reading.subject)),
-          readingEvidence(state, reading),
+          readingEvidence(reading),
         ),
       ),
     );
@@ -812,9 +842,12 @@ function member(state, activityIndex, ordinal, memberIndex) {
                     { class: "sub" },
                     "decision_basis：",
                     field(value, "decision_basis", code),
-                    " ",
-                    provenance(state, "policy"),
                   ),
+                  // A policy row is not a citation and carries no marker, so the
+                  // envelope says nothing about whose decision it was. Stating
+                  // that is true of every row; calling it the fixture's would be
+                  // the per-envelope inference this page does not make.
+                  h("div", { class: "sub" }, POLICY_SOURCE_NOTE),
                 ]),
               ),
             ),
@@ -935,6 +968,14 @@ function recheck(state) {
         // verdict: "the fix landed" and "the pair stopped being derived" are
         // indistinguishable from a verdict, which is why the disposition
         // vocabulary separates them in the first place.
+        //
+        // This wording is written for **this Pack's** `pair_source`: the pair
+        // comes from a penetration determination, and the openings activity is
+        // what an unbuilt opening blocks. A Pack deriving pairs from something
+        // else would need its own sentence. Generalising it now was considered
+        // and declined by BIM and the technical director — this repository has
+        // one Pack, and a sentence abstracted away from the only case it has
+        // ever been read against is not more general, only vaguer.
         item.disposition === "pairing-no-longer-derived"
           ? h(
               "strong",
@@ -968,10 +1009,10 @@ function recheck(state) {
             { class: "sub" },
             field(item, "citation_kind", code),
             " ",
-            // The kind is the record's own; the provenance beside it is this
-            // preview's label for the fixture experience.
-            carries(item, "citation_kind") && EVIDENCE_PROVENANCE[item.citation_kind]
-              ? provenance(state, item.citation_kind)
+            // The kind is the record's own; the tag beside it is read off this
+            // one citation's own marker, like every other tag on these screens.
+            carries(item, "citation_kind") && carries(item, "citation")
+              ? provenance(item.citation_kind, item.citation)
               : null,
           ),
         ),

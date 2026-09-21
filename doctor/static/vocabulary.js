@@ -22,34 +22,67 @@ export const RUN_LABELS = {
 export const NOT_CARRIED = "记录未携带";
 export const EMPTY_STRING = "（记录中为空字符串）";
 
-// Evidence provenance, beside each citation rather than once per page. In one
-// fixture record the two kinds are mixed: the finding keys are the output of a
-// real validation run over the real IFC models, while every determination is
-// supplied by the fixture and no coordination review took place. Reading the
-// page as wholly simulated understates the findings; reading it as wholly real
-// overstates the determinations.
-export const EVIDENCE_PROVENANCE = {
-  finding: {
-    key: "finding",
+// The fixture discipline's machine-visible marker. A fixture value has to be
+// untrue in a way a reader and a test can see, so every value the fixtures mint
+// carries it: `fixture/finding/…` for a re-validated finding key,
+// `fixture-determination/…` for a determination reference. `test_purpose_isolation`
+// holds that discipline against the published tree.
+export const FIXTURE_MARKER = "fixture";
+
+// Evidence provenance, decided **per citation** and never per envelope.
+//
+// Whether a label is true is a property of the one citation it sits beside, so
+// the criterion has to be too. A fixture record can mix the two on one page:
+// the four scenarios here cite nine finding keys that are all a real validation
+// run's output, while the model-reissue scenario on the D1 walkthrough script
+// cites nine of which six are fixture-minted repairs. An envelope-level rule
+// would label those six "real validation output" — calling a simulation real,
+// which is the one sentence this product cannot get wrong.
+export const CITATION_PROVENANCE = {
+  "finding-real": {
+    key: "real",
     short: "真实验证输出",
-    long: "finding 来自真实验证运行：真实 IFC 模型按真实规则评估的产物。",
+    long: "未带夹具标记的 finding 引用：来自真实验证运行，真实 IFC 模型按真实规则评估的产物。",
   },
-  determination: {
-    key: "determination",
-    short: "夹具判定（模拟）",
-    long: "判定引用由夹具提供，没有任何协调评审真的发生过。",
-  },
-  policy: {
-    key: "policy",
-    short: "夹具政策（模拟）",
+  "finding-fixture": {
+    key: "fixture",
+    short: "夹具铸造（模拟）",
     long:
-      "政策 decision_basis 由夹具在内存中声明为 project-decision；" +
-      "随附项目磁盘上的对应政策行仍是 illustrative。",
+      `带夹具标记（以 ${FIXTURE_MARKER} 开头）的 finding 引用：由夹具铸造，` +
+      "不是任何真实验证运行的输出。",
+  },
+  "determination-fixture": {
+    key: "fixture",
+    short: "夹具判定（模拟）",
+    long: `带夹具标记的判定引用：由夹具提供，没有任何协调评审真的发生过。`,
+  },
+  "determination-unmarked": {
+    key: "unmarked",
+    short: "来源未标注的判定",
+    long:
+      "未带夹具标记的判定引用：判定不是验证运行的输出，本界面也没有可核依据说明它来自哪里，" +
+      "因此不作真实或模拟的断言。",
   },
 };
 
+/** The provenance of one citation, read off the citation itself. */
+export function citationProvenance(kind, citation) {
+  const marked = typeof citation === "string" && citation.startsWith(FIXTURE_MARKER);
+  if (kind === "finding") return CITATION_PROVENANCE[marked ? "finding-fixture" : "finding-real"];
+  if (kind === "determination") {
+    return CITATION_PROVENANCE[marked ? "determination-fixture" : "determination-unmarked"];
+  }
+  return null;
+}
+
 export const PROVENANCE_NOTICE =
-  "本页每条证据旁标注来源：finding 是真实验证运行的输出，判定引用与政策 decision_basis 由夹具提供。";
+  "本页每条引用旁的来源标注按该条引用自身判定（是否带夹具标记），不按整页或整份记录推断：";
+
+// The policy row is not a citation and carries no marker, so nothing in the
+// envelope says whose decision it was. The row states what the record carries
+// and says the source is not in it — true of every row, which is what the
+// per-row rule requires.
+export const POLICY_SOURCE_NOTE = "政策来源未随信封返回：此值是记录携带的政策声明，不能据此判断它是项目决定还是夹具声明。";
 
 export const DEMO_NOTICE =
   "夹具演示：政策与判定为模拟。不能用于正式项目决定，不提供真实评估记录导出。";

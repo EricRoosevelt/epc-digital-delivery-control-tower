@@ -76,6 +76,9 @@ class AdapterSource:
         ]
 
     def envelope(self, mode: str, run_id: str) -> dict[str, object]:
+        # Asked again rather than reused from ``runs``: that call answers "what
+        # may this experience offer", this one answers "is this run one of them".
+        # Folding them together would let a listing certify itself.
         declared = {item["name"]: item["mode"] for item in self._adapter.scenario_index()}
         if declared.get(run_id) != mode:
             raise KeyError(f"{run_id!r} is not a {mode!r} scenario")

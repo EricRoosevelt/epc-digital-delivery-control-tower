@@ -8,6 +8,7 @@ static tree carries no result of its own. Rendering is reviewed in a browser.
 
 from __future__ import annotations
 
+import csv
 import importlib.util
 import json
 import re
@@ -252,32 +253,96 @@ class StaticTreeTests(unittest.TestCase):
             with self.subTest(fallback=fallback):
                 self.assertNotIn(fallback, rendered)
 
-    def test_every_citation_carries_its_own_provenance_label(self):
-        """Per citation, not per page, and keyed only on the envelope's mode.
+class CitationProvenanceTests(unittest.TestCase):
+    """A provenance label is true of one citation, so it is decided per citation.
 
-        One fixture record mixes the two: its finding keys are a real validation
-        run's output and its determinations are the fixture's. A page-level
-        banner would understate the findings or overstate the determinations,
-        so the label sits beside each citation, with the full sentence in a
-        legend on the same page rather than behind a hover.
-        """
+    The four scenarios happen to cite nine finding keys that are all a real
+    validation run's output, which is exactly why a per-envelope rule looked
+    right. It is not: the model-reissue scenario on the D1 walkthrough script
+    cites nine of which six are fixture-minted repairs, and a rule that read the
+    envelope would label those six "real validation output".
 
-        screens = (STATIC / "screens.js").read_text(encoding="utf-8")
+    **When this test goes red, make the label follow the individual citation.**
+    Removing the mixed scenario from the demonstration would answer a different
+    question: a red light here says one simulated citation on a page is labelled
+    real, not that the scenario should not exist.
+    """
+
+    @classmethod
+    def setUpClass(cls):
+        import assessment_fixtures as fx
+
+        from internal.doctor_adapter import scenario_envelope
+
+        cls.fx = fx
+        cls.envelopes = {
+            name: scenario_envelope(name)
+            for name in ("member-evidence", "pair-verdicts", "recheck-comparison")
+        }
+        with (PROJECT_ROOT / "data" / "processed" / "canonical" / "findings.csv").open(
+            encoding="utf-8-sig", newline=""
+        ) as stream:
+            cls.published = {row["finding_key"] for row in csv.DictReader(stream)}
+
+    @staticmethod
+    def _readings(envelope):
+        for activity in envelope["record"]["activities"]:
+            for subscope in activity["subscopes"]:
+                for step in subscope["path"]:
+                    yield from step["readings"]
+
+    def test_every_cited_finding_key_is_published_or_carries_the_marker(self):
+        """The two are exclusive, so the marker alone decides the label."""
+
+        seen = 0
+        for name, envelope in self.envelopes.items():
+            for reading in self._readings(envelope):
+                for key in reading.get("finding_keys", ()):
+                    seen += 1
+                    with self.subTest(scenario=name, finding_key=key):
+                        marked = key.startswith(self.fx.FIXTURE_MARKER)
+                        self.assertEqual(marked, key not in self.published)
+        # Nine per record, and the first two scenarios are one record.
+        self.assertEqual(seen, 27)
+
+    def test_every_cited_determination_reference_carries_the_marker(self):
+        seen = 0
+        for name, envelope in self.envelopes.items():
+            for reading in self._readings(envelope):
+                for cited in reading.get("cited_determinations", ()):
+                    seen += 1
+                    with self.subTest(scenario=name, reference=cited["reference"]):
+                        self.assertTrue(cited["reference"].startswith(self.fx.FIXTURE_MARKER))
+        self.assertEqual(seen, 15)
+
+    def test_a_reissued_record_mixes_the_two_on_one_page(self):
+        """The counterexample the per-envelope rule would have got wrong."""
+
+        facts = self.fx.fixture_reissued_facts()
+        minted = [
+            fact.finding_key
+            for fact in facts.findings
+            if fact.finding_key.startswith(self.fx.FIXTURE_MARKER)
+        ]
+        self.assertTrue(minted)
+        for key in minted:
+            with self.subTest(finding_key=key):
+                self.assertNotIn(key, self.published)
+
+    def test_the_screens_decide_the_label_from_the_citation_alone(self):
         vocabulary = (STATIC / "vocabulary.js").read_text(encoding="utf-8")
-        for kind in ("finding", "determination", "policy"):
-            with self.subTest(kind=kind):
-                self.assertIn(f"  {kind}: {{", vocabulary)
-                self.assertIn(f'provenance(state, "{kind}")', screens)
-        # The tag is emitted beside citations in the workbench, the evidence
-        # path, the roles table and the carry-over table.
-        self.assertGreaterEqual(screens.count("provenance(state,"), 5)
-        provenance = screens[screens.index("function provenance(") :]
-        provenance = provenance[: provenance.index("function provenanceLegend(")]
-        self.assertIn('state.envelope.mode !== "fixture"', provenance)
-        for forbidden in ("record", "refusal", "project_id", "code"):
+        screens = (STATIC / "screens.js").read_text(encoding="utf-8")
+        self.assertIn(f'FIXTURE_MARKER = "{self.fx.FIXTURE_MARKER}"', vocabulary)
+        self.assertIn("citation.startsWith(FIXTURE_MARKER)", vocabulary)
+        decider = screens[screens.index("function provenance(") :]
+        decider = decider[: decider.index("function provenanceCounts(")]
+        for forbidden in ("mode", "envelope", "state"):
             with self.subTest(read=forbidden):
-                self.assertNotIn(forbidden, provenance)
-        self.assertNotIn("title:", (STATIC / "dom.js").read_text(encoding="utf-8"))
+                self.assertNotIn(forbidden, decider)
+        # A summary line counts per citation rather than labelling the group.
+        counts = screens[screens.index("function provenanceCounts(") :]
+        counts = counts[: counts.index("function provenanceLegend(")]
+        self.assertIn("citationProvenance(kind, citation)", counts)
 
 
 if __name__ == "__main__":
