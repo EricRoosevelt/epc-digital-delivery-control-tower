@@ -178,18 +178,51 @@ class StaticTreeTests(unittest.TestCase):
                 self.assertNotRegex(text, r"\b(hvac|architecture)::")
                 self.assertNotIn("innerHTML", text)
 
-    def test_the_limitations_table_is_keyed_on_mode_and_code_only(self):
+    def test_no_known_limitations_table_is_shown_without_a_basis_in_the_envelope(self):
+        """The approved condition has two halves, and one of them cannot be met.
+
+        Showing the baseline policy's known limitations requires trusted evidence
+        that the request used that baseline **and** a matching refusal code. A
+        refusal envelope carries `mode`, `outcome`, `refusal` and `elements`, and
+        none of them says which policy the request was composed against, so the
+        table is not shown at all in this slice. `mode === "real"` says which
+        entry ran, not which project or policy, and an earlier revision treated
+        it as enough.
+
+        The scope sentence is a separate promise and survives on every refusal:
+        clearing this refusal's reason does not mean the next run is assessable.
+        """
+
         source = (STATIC / "screens.js").read_text(encoding="utf-8")
+        vocabulary = (STATIC / "vocabulary.js").read_text(encoding="utf-8")
         refusal = source[source.index("function refusal(") :]
-        self.assertIn(
-            'envelope.mode === "real" && envelope.refusal.code === BASELINE_REFUSAL_CODE',
-            refusal,
-        )
-        self.assertNotIn("project_id", refusal)
+        for gone in ("BASELINE_LIMITATIONS", "BASELINE_REFUSAL_CODE", "政策环节"):
+            with self.subTest(removed=gone):
+                self.assertNotIn(gone, source)
+                self.assertNotIn(gone, vocabulary)
+        # Rendered unconditionally: the refusal screen branches on nothing.
+        self.assertIn("REFUSAL_SCOPE_NOTE", refusal)
+        self.assertNotIn("if (", refusal)
         self.assertIn("所提交的请求上下文尚未随拒绝返回", refusal)
+        # No basis is reconstructed from anything the envelope happens to carry.
+        # Comments may name those inputs; the code must not read them.
+        rendered = "\n".join(
+            line for line in refusal.splitlines() if not line.lstrip().startswith("//")
+        )
+        for sniffed in ("project_id", "elements", "canonical"):
+            with self.subTest(sniffed=sniffed):
+                self.assertNotIn(sniffed, rendered)
         self.assertIsNone(
             re.search(r"refusal\.text\.(split|slice|replace|match|substring)", source)
         )
+
+    def test_the_refused_run_still_reaches_the_browser_with_its_scope_note(self):
+        """End to end, on the real refusal: no table, and the sentence present."""
+
+        with _Server(serve.adapter_source) as base:
+            served = json.loads(_get(f"{base}/api/envelope?mode=real&run=real-refusal")[2])
+        self.assertEqual(sorted(served), ["elements", "mode", "outcome", "refusal"])
+        self.assertEqual(sorted(served["refusal"]), ["code", "text"])
 
     def test_no_screen_joins_a_recheck_disposition_to_the_current_partition(self):
         """Where the Framework records no correspondence, the page constructs none.
@@ -291,29 +324,53 @@ class CitationProvenanceTests(unittest.TestCase):
                 for step in subscope["path"]:
                     yield from step["readings"]
 
+    @staticmethod
+    def _citations(envelope):
+        """Every citation a screen tags, in both places the screens read them.
+
+        The evidence path is one; a successor's ``evidence_carry_over`` is the
+        other, and its rows are tagged the same way — by the citation's own
+        marker — so the assertions have to reach them too.
+        """
+
+        for reading in CitationProvenanceTests._readings(envelope):
+            for key in reading.get("finding_keys", ()):
+                yield "path", "finding", key
+            for cited in reading.get("cited_determinations", ()):
+                yield "path", "determination", cited["reference"]
+        successor = envelope["record"].get("successor")
+        if successor is None:
+            return
+        for outcome in successor["subscopes"]:
+            for row in outcome["evidence_carry_over"]:
+                yield "carry-over", row["citation_kind"], row["citation"]
+
     def test_every_cited_finding_key_is_published_or_carries_the_marker(self):
         """The two are exclusive, so the marker alone decides the label."""
 
         seen = 0
         for name, envelope in self.envelopes.items():
-            for reading in self._readings(envelope):
-                for key in reading.get("finding_keys", ()):
-                    seen += 1
-                    with self.subTest(scenario=name, finding_key=key):
-                        marked = key.startswith(self.fx.FIXTURE_MARKER)
-                        self.assertEqual(marked, key not in self.published)
-        # Nine per record, and the first two scenarios are one record.
+            for place, kind, citation in self._citations(envelope):
+                if kind != "finding":
+                    continue
+                seen += 1
+                with self.subTest(scenario=name, place=place, finding_key=citation):
+                    marked = citation.startswith(self.fx.FIXTURE_MARKER)
+                    self.assertEqual(marked, citation not in self.published)
+        # Nine per record, and the first two scenarios are one record. The
+        # recheck's carry-over rows are determinations, so none is added here.
         self.assertEqual(seen, 27)
 
     def test_every_cited_determination_reference_carries_the_marker(self):
-        seen = 0
+        seen = {"path": 0, "carry-over": 0}
         for name, envelope in self.envelopes.items():
-            for reading in self._readings(envelope):
-                for cited in reading.get("cited_determinations", ()):
-                    seen += 1
-                    with self.subTest(scenario=name, reference=cited["reference"]):
-                        self.assertTrue(cited["reference"].startswith(self.fx.FIXTURE_MARKER))
-        self.assertEqual(seen, 15)
+            for place, kind, citation in self._citations(envelope):
+                if kind != "determination":
+                    continue
+                seen[place] += 1
+                with self.subTest(scenario=name, place=place, reference=citation):
+                    self.assertTrue(citation.startswith(self.fx.FIXTURE_MARKER))
+        self.assertEqual(seen, {"path": 15, "carry-over": 2})
 
     def test_a_reissued_record_mixes_the_two_on_one_page(self):
         """The counterexample the per-envelope rule would have got wrong."""

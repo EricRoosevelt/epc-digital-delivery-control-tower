@@ -30,8 +30,6 @@ import {
   verdict,
 } from "./dom.js";
 import {
-  BASELINE_LIMITATIONS,
-  BASELINE_REFUSAL_CODE,
   CITATION_PROVENANCE,
   CONDITION_STATES,
   DEMO_NOTICE,
@@ -41,6 +39,7 @@ import {
   NOT_CARRIED,
   POLICY_SOURCE_NOTE,
   PROVENANCE_NOTICE,
+  REFUSAL_SCOPE_NOTE,
   RUN_LABELS,
   absence,
   carryOver,
@@ -1102,28 +1101,28 @@ function refusal(state) {
       h("pre", { class: "refusal-text" }, envelope.refusal.text),
     ),
     note("没有成员裁决、零问题统计或完成百分比；拒绝不是 UNKNOWN，也不是空的成功运行。"),
+    // Shown for every refusal, whatever its code. It is the sentence that stops
+    // "one gate is cleared" being read as "the next run will succeed", so it
+    // cannot live inside a condition that may not hold.
+    h("p", { class: "callout" }, REFUSAL_SCOPE_NOTE),
+    note("本次只返回此拒绝原因，未提供其他环节的诊断。"),
   );
-  // Shown only for a real run refused with the baseline code. The condition is
-  // the envelope's own mode and code; the project name is never consulted.
-  if (envelope.mode === "real" && envelope.refusal.code === BASELINE_REFUSAL_CODE) {
-    content.append(
-      h(
-        "section",
-        { class: "block limitations" },
-        h("h2", {}, "当前版本的已知限制（说明，不是本次执行日志）"),
-        tableWrap(
-          table(
-            null,
-            ["政策环节", "此次真实运行与当前能力"],
-            BASELINE_LIMITATIONS.map(([stage, text]) => h("tr", {}, h("th", { scope: "row" }, stage), h("td", {}, text))),
-          ),
-        ),
-        h("p", { class: "callout" }, "处理当前拒绝原因不保证随后可评估；其余限制尚未由本次运行验证。"),
-      ),
-    );
-  } else {
-    content.append(note("本次只返回此拒绝原因，未提供其他环节的诊断。"));
-  }
+  // The known-limitations table is **not** rendered here, and its absence is the
+  // correct result rather than a gap in this screen.
+  //
+  // The approved condition is two things: trusted evidence that the request used
+  // the shipped baseline policy, *and* a matching refusal code. A refusal
+  // envelope carries `mode`, `outcome`, `refusal` and `elements` — no provenance
+  // for the policy the request was composed against — so the first half cannot
+  // be established. `mode === "real"` says which entry ran, not which project or
+  // which policy, and an earlier revision of this screen wrongly treated it as
+  // enough. Nothing here sniffs the project name out of `refusal.text` or
+  // compares `elements` against the canonical inventory to reconstruct a basis:
+  // no evidence is no evidence, and a table of policy limitations shown beside
+  // an unrelated project's refusal would be a false statement about it.
+  //
+  // Recorded as F9 in the D1 design's data-gap table. When an envelope carries
+  // that basis, this is where it is read.
   content.append(
     h(
       "p",

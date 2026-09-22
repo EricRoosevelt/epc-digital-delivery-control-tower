@@ -132,19 +132,6 @@ export const disposition = (value) => glossed(DISPOSITIONS, value);
 export const conditionState = (value) => glossed(CONDITION_STATES, value);
 export const carryOver = (value) => glossed(CARRY_OVER, value);
 
-// The one refusal whose known-limitations table this slice may show, and only
-// for a real run: the condition is the envelope's mode and the refusal code,
-// never the project name.
-export const BASELINE_REFUSAL_CODE = "team-mapping-decision-basis-illustrative";
-
-export const BASELINE_LIMITATIONS = [
-  ["团队映射", "本次实际拒绝，以上方拒绝文本为准"],
-  [
-    "证据方法",
-    "同一示例政策同样拒绝；须先越过前闸门且确实消费判定才会触发，不能标成已检查或通过",
-  ],
-  [
-    "风险授权",
-    "同一政策在政策解析层同样拒绝；今天无运行时消费者，E2 尚未实现，不是可通过的下一步",
-  ],
-];
+// Shown on every refusal, whatever the code: clearing the reason this run was
+// refused is not a promise that the next one is assessable.
+export const REFUSAL_SCOPE_NOTE = "处理当前拒绝原因不保证随后可评估；其余限制尚未由本次运行验证。";
