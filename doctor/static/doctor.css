@@ -1,0 +1,234 @@
+/* Neutral on purpose: a verdict is a word with a border style, never a colour
+   alone, and nothing on these screens is green-ticked. */
+
+:root {
+  --bg: #fbfaf8;
+  --surface: #ffffff;
+  --ink: #1d1d1b;
+  --muted: #5a5853;
+  --line: #d9d6cf;
+  --accent: #2f4a6d;
+  --demo-bg: #fff4d6;
+  --demo-ink: #4a3500;
+  --problem-bg: #fbe9e7;
+  --problem-ink: #6b1d12;
+  --callout-bg: #eef2f7;
+  --focus: #1f5fbf;
+  color-scheme: light dark;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #171717;
+    --surface: #202020;
+    --ink: #ecebe8;
+    --muted: #b1ada5;
+    --line: #3b3a37;
+    --accent: #9bb6da;
+    --demo-bg: #3a2f10;
+    --demo-ink: #f6e3ae;
+    --problem-bg: #3d1d18;
+    --problem-ink: #f5c6bd;
+    --callout-bg: #1f2833;
+    --focus: #8ab4f8;
+  }
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font: 16px/1.55 system-ui, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+}
+
+a { color: var(--accent); }
+:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+
+.skip { position: absolute; left: -9999px; }
+.skip:focus { left: 16px; top: 8px; background: var(--surface); padding: 4px 8px; }
+
+.context {
+  background: var(--surface);
+  border-bottom: 1px solid var(--line);
+}
+@media (min-width: 900px) and (min-height: 640px) {
+  .context { position: sticky; top: 0; z-index: 2; }
+}
+.context:empty { display: none; }
+.context-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 16px;
+  align-items: center;
+  padding: 8px 16px;
+  font-size: 14px;
+}
+.context-bar > span { overflow-wrap: anywhere; }
+.context-bar button { margin-left: auto; }
+.mode { font-weight: 700; padding: 2px 8px; border: 2px solid var(--ink); }
+.mode-fixture { border-style: dashed; }
+.demo-notice {
+  margin: 0;
+  padding: 8px 16px;
+  background: var(--demo-bg);
+  color: var(--demo-ink);
+  font-weight: 600;
+}
+
+main { max-width: 1200px; margin: 0 auto; padding: 16px; min-width: 0; }
+main:focus, h1[tabindex="-1"]:focus { outline: none; }
+h1 { font-size: 1.6rem; line-height: 1.25; margin: 8px 0 12px; overflow-wrap: anywhere; }
+h2 { font-size: 1.2rem; margin: 0 0 8px; }
+h3 { font-size: 1.02rem; margin: 12px 0 6px; }
+
+.block {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  padding: 12px 16px;
+  margin: 12px 0;
+}
+
+.note { color: var(--muted); }
+.sub { color: var(--muted); font-size: 0.9rem; }
+.callout { background: var(--callout-bg); padding: 8px 12px; border-left: 4px solid var(--accent); }
+.problem { background: var(--problem-bg); color: var(--problem-ink); padding: 8px 12px; }
+.caveat { font-weight: 600; }
+div.caveat, strong.caveat { display: block; margin-top: 4px; }
+.status { min-height: 1.5em; }
+.prose { white-space: pre-wrap; overflow-wrap: anywhere; }
+
+button {
+  font: inherit;
+  padding: 6px 12px;
+  border: 1px solid var(--ink);
+  background: var(--surface);
+  color: var(--ink);
+  cursor: pointer;
+}
+button.quiet { border-color: var(--line); }
+button.copy { font-size: 12px; padding: 0 6px; margin-left: 4px; }
+
+code.ident, code {
+  font-family: ui-monospace, "Cascadia Mono", Consolas, monospace;
+  font-size: 0.88em;
+  overflow-wrap: anywhere;
+}
+.copyable { display: inline; }
+.gloss { color: var(--muted); }
+.gloss.unknown { color: var(--problem-ink); font-weight: 600; }
+
+dl.facts { display: grid; grid-template-columns: minmax(8rem, max-content) 1fr; gap: 4px 16px; margin: 8px 0; }
+dl.facts dt { color: var(--muted); }
+dl.facts dd { margin: 0; overflow-wrap: anywhere; }
+@media (max-width: 640px) {
+  dl.facts { grid-template-columns: 1fr; }
+  dl.facts dd { margin-bottom: 6px; }
+}
+
+ul.plain { list-style: none; padding: 0; margin: 4px 0; }
+ul.plain li { margin: 2px 0; }
+
+blockquote {
+  margin: 4px 0;
+  padding: 6px 10px;
+  border-left: 3px solid var(--line);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.table-wrap { overflow-x: auto; max-width: 100%; }
+table { border-collapse: collapse; width: 100%; margin: 8px 0; }
+th, td { border: 1px solid var(--line); padding: 6px 8px; text-align: left; vertical-align: top; }
+thead th { background: var(--bg); }
+tr[hidden] { display: none; }
+
+.verdict {
+  display: inline-block;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  padding: 0 6px;
+  border: 2px solid var(--ink);
+}
+.verdict-ready { border-style: solid; }
+.verdict-blocked { border-style: double; border-width: 4px; }
+.verdict-unknown { border-style: dotted; }
+.member-name { font-weight: 600; }
+.keys { font-size: 0.85rem; }
+
+.entry-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; }
+.entry-card { background: var(--surface); border: 1px solid var(--line); padding: 16px; }
+.run-list { list-style: none; padding: 0; }
+.run-list li { margin: 8px 0; }
+
+.workbench { display: grid; grid-template-columns: 220px minmax(0, 1fr); gap: 16px; }
+.workbench > * { min-width: 0; }
+.activity-nav ul { list-style: none; padding: 0; margin: 0; }
+.activity-nav li a { display: block; padding: 6px 8px; border-left: 3px solid transparent; overflow-wrap: anywhere; }
+.activity-nav a[aria-current="page"] { border-left-color: var(--ink); font-weight: 700; }
+@media (max-width: 800px) {
+  .workbench { grid-template-columns: 1fr; }
+}
+input[type="search"] { font: inherit; padding: 6px 8px; width: min(100%, 360px); margin: 0 0 4px 8px; }
+
+.path { padding-left: 0; list-style: none; }
+.path-step { border-left: 3px solid var(--line); padding: 4px 12px; margin: 8px 0; }
+.reading { margin: 6px 0 6px 8px; }
+.locations { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 12px; }
+.location { border: 1px solid var(--line); padding: 8px 12px; }
+.context-citations { border-style: dashed; }
+
+.recheck-outcome { margin: 16px 0; }
+/* Three separate questions, stacked in reading order at every width: side by
+   side they read as one row of a comparison, which is the conflation S4 exists
+   to prevent, and the carry-over table needs the width. */
+.recheck-grid { display: grid; grid-template-columns: 1fr; gap: 12px; }
+.recheck-grid .block { margin: 0; }
+.disposition { border-top: 1px solid var(--line); padding-top: 8px; margin-top: 8px; }
+.condition { border-width: 2px; }
+.glossary { margin: 8px 0; }
+
+.refusal-text {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  background: var(--bg);
+  border: 1px solid var(--line);
+  padding: 12px;
+  font-size: 0.9rem;
+}
+.actions { margin-top: 16px; }
+a.run {
+  display: inline-block;
+  padding: 6px 12px;
+  border: 1px solid var(--ink);
+  background: var(--surface);
+  color: var(--ink);
+  text-decoration: none;
+}
+
+/* A key the record does not carry. Words, never a blank or a dash. */
+.not-carried {
+  color: var(--muted);
+  font-style: italic;
+}
+
+/* Provenance sits beside its own citation. The short label is on the line; the
+   full sentence is in the legend on the same page, never hover-only. */
+.provenance {
+  display: inline-block;
+  font-size: 0.8rem;
+  font-weight: 600;
+  padding: 0 6px;
+  border: 1px solid var(--ink);
+}
+.provenance-finding { border-style: solid; }
+.provenance-determination { border-style: dashed; }
+.provenance-policy { border-style: dotted; }
+.legend {
+  border: 1px dashed var(--line);
+  padding: 8px 12px;
+  margin: 8px 0;
+}
+.legend p { margin: 0 0 6px; }
+.legend li { margin: 4px 0; }
