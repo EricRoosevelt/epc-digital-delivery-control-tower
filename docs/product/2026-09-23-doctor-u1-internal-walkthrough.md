@@ -232,3 +232,37 @@ checkout.
 - Whether "Task 9" should be extended once F2 (model/version and Pack
   selection) is commissioned, since that task currently only confirms an
   absence.
+
+## Round 1 results
+
+One session, self-assigned session code only (no name), run against
+`a438f5d5195af2186266b7d8bcf1904f0f153d10` with a colleague who already knows
+the Framework. That scope matters: this round shows an internal,
+Framework-fluent person can operate the preview and draw the distinctions this
+script asks about. It does not show how the target user — a Revit-using BIM
+subcontractor manager who does not read JSON or use a CLI — would read the same
+screens. Nothing here extrapolates to that population.
+
+Tasks 1 through 9 each matched what this script expected, in the tester's own
+account of what the screen said. No new defect surfaced beyond the one already
+recorded above, and the tester raised no misunderstanding this script's
+questions did not already cover.
+
+The script's own two named focus points came out differently from each other:
+
+- **Whether a PASS is read as proving more than it does** (e.g. reading "a wall
+  declares `IsExternal`" as "the interior/exterior walls have already been
+  reconciled") was **not tested** this round, not confirmed clean. No task
+  poses that question directly, and the evidence path on this build does not
+  surface a check's own PASS/FAIL predicate or finding detail to begin with
+  (`doctor/static/screens.js:772` shows only a citation and summary
+  identifier). Task 6 tests a related but distinct claim — that a *background*
+  citation is not proof of alignment — and does not substitute for this open
+  item. Left open pending a carrier once ADR 0004's P8 exists; not to be closed
+  by adding UI in the meantime.
+- **Whether Task 8's real refusal is read as "everything failed" or as a
+  pass** was tested and matched: the tester's own account distinguished the
+  refusal from both readings.
+
+The filled record (full per-task transcript) is kept outside this repository,
+identified only by session code; it is not reproduced here.
