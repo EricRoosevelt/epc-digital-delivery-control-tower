@@ -97,6 +97,8 @@ def _report_run(result) -> None:
         print(f"  {artifact.sha256[:12]}  {artifact.byte_count:>8}  {artifact.path}")
     if result.legacy_manifest_path is not None:
         print(f"  legacy manifest: {result.legacy_manifest_path}")
+    if result.coverage_record_path is not None:
+        print(f"coverage record  {result.coverage_record_path}  (internal, not published)")
 
 
 def _command_check(arguments: argparse.Namespace) -> int:
@@ -122,13 +124,23 @@ def _command_check(arguments: argparse.Namespace) -> int:
 
 
 def _command_run(arguments: argparse.Namespace) -> int:
-    """Run every stage and write the enabled exporters' artifacts."""
+    """Run every stage and write the enabled exporters' artifacts.
 
+    Also keeps the run's coverage record, outside the repository. Where is
+    settled before any model is opened, so a refused location costs nothing.
+    """
+
+    from .coverage import resolve_coverage_root
     from .pipeline import execute
 
     root = _repository_root(arguments.repository_root)
     config = load_run_config(root, arguments.config)
-    result = execute(config, exporter_ids=_selected_exporters(arguments, config))
+    coverage_root = resolve_coverage_root(config.repository_root)
+    result = execute(
+        config,
+        exporter_ids=_selected_exporters(arguments, config),
+        coverage_root=coverage_root,
+    )
     _report_run(result)
     return 0
 
