@@ -43,6 +43,9 @@ from types import MappingProxyType
 import ifcopenshell
 from ifctester import ids, reporter
 
+# Imported for its effect: IfcTester's schema loader must resolve the W3C
+# imports in ``ids.xsd`` from disk before anything below parses a document.
+from .. import ids_schema as _ids_schema  # noqa: F401
 from ..determinism import (
     atomic_write_bytes,
     canonical_json_document,

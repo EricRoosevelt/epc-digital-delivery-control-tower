@@ -36,6 +36,8 @@ from pathlib import Path
 
 from ifctester import ids
 
+# Imported for its effect: see ``epc_control_tower.ids_schema``.
+from . import ids_schema as _ids_schema  # noqa: F401
 from .domain import Requirement, RuleSet, Severity
 from .identity import build_requirement_key, build_ruleset_normalized_digest
 

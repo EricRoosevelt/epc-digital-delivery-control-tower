@@ -30,12 +30,24 @@ added, which ``!= 7`` did not.
 from __future__ import annotations
 
 import argparse
+import sys
 import xml.etree.ElementTree as ET
 from pathlib import Path
 
 from ifctester import ids
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
+
+# Run as `python src/generate_ids.py`, this shim's own directory is on the path
+# and the package beside it is not, so it has to say where the repository is
+# before importing from it. The import is for its effect: writing a rule
+# document serialises it through IfcTester's schema, which must resolve from
+# disk. See `epc_control_tower.ids_schema`.
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
+
+from epc_control_tower import ids_schema as _ids_schema  # noqa: E402, F401
+
 OUTPUT_PATH = PROJECT_ROOT / "ids" / "epc_delivery_requirements_v0.1.ids"
 
 IDS_NAMESPACE = {"ids": "http://standards.buildingsmart.org/IDS"}
