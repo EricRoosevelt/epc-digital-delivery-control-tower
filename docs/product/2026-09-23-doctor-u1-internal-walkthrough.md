@@ -3,9 +3,15 @@
 Date: 2026-09-23. Owner: Product/UI Engineer.
 Scope: an internal usability walkthrough of the clickable Doctor preview merged
 in PR #13 (`feat/doctor-d1-ui`), commit `a438f5d5195af2186266b7d8bcf1904f0f153d10`.
-Original requirement: [dual-track commission](2026-09-16-dual-track-delivery-plan.md),
-D1 section. Adopted constraints: [D1 product adjudication](2026-09-16-d1-product-adjudication.md).
+Original requirement: [dual-track commission](https://github.com/EricRoosevelt/epc-digital-delivery-control-tower/blob/bdd67b5719d1dd4f48af3af992ed0cb150035104/docs/product/2026-09-16-dual-track-delivery-plan.md),
+D1 section. Adopted constraints: [D1 product adjudication](https://github.com/EricRoosevelt/epc-digital-delivery-control-tower/blob/52ba8782d99f9332f0c15a1ca540ab7c84e6b92e/docs/product/2026-09-16-d1-product-adjudication.md).
 Screen flow design: [doctor-d1-screen-flow.md](2026-09-16-doctor-d1-screen-flow.md).
+
+Both linked commission/adjudication documents live on `docs/dual-track-product-kickoff`
+as of this writing and are not yet on `main`; the links above are pinned to the
+exact commit that added each file so they keep resolving after that branch
+merges or is deleted, rather than a relative path that would 404 once this
+file is on `main` without them.
 
 ## What this is and is not
 
@@ -201,14 +207,18 @@ checkout.
 
 ## Defects observed, not fixed
 
-- **Narrow-viewport table wrapping.** `doctor/static/doctor.css` applies
-  `overflow-wrap: anywhere` broadly (documented in the CSS as a deliberate
-  choice to keep tables inside the viewport rather than overflowing
-  horizontally). At laptop-narrow and tablet widths this breaks identifier
-  text mid-word — e.g. `IfcBuildingElementProxy` splits across lines as
-  `IfcBuildingElementP` / `roxy`, and `out_of_subject_class` splits as
-  `out_of_subject_c` / `lass` — and it shrinks the repeated "查看证据与回源"
-  detail link into a three-line wrapped tap target in the same conditions.
+- **Narrow-viewport identifier wrapping.** `code.ident, code { overflow-wrap:
+  anywhere; }` (`doctor/static/doctor.css:113-117`) applies to every value the
+  shared `code()` helper renders — including `code(item.ifc_class)` and
+  `code("out_of_subject_class")` at `doctor/static/screens.js:654-655`. At
+  laptop-narrow and tablet widths this breaks those identifiers mid-word:
+  `IfcBuildingElementProxy` splits across lines as `IfcBuildingElementP` /
+  `roxy`, and `out_of_subject_class` splits as `out_of_subject_c` / `lass`.
+  Separately, the repeated "查看证据与回源" detail link also wraps to three
+  lines at the same widths, shrinking its tap target — but that is ordinary
+  CJK line-breaking (Chinese text may wrap between any two characters by
+  default), not caused by this or any other `overflow-wrap` rule; it is a
+  related but distinct tap-target-size concern, not the same defect.
   Not a correctness defect: no data is wrong. It is a readability and
   tap-target-size concern for a manager reading exact enum values or tapping
   through evidence links on a tablet. Left for product/UI judgement on the next
