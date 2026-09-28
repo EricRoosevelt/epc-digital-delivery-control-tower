@@ -117,9 +117,22 @@ stating, because both have been guessed wrong already:
 
   Reusing any of them as one would silently redefine every published number that
   currently depends on them — exactly the class of change rule 6 exists to stop.
-- **`discipline_scope` expresses validation applicability only.** It says which
-  disciplines a requirement is evaluated against — which models the rule applies
-  to at all. It does not express a *directional handoff*: "MEP hands this to
+- **`discipline_scope` expresses validation applicability only.** It is meant to
+  say which disciplines a requirement is evaluated against — which models the
+  rule applies to at all.
+  - *Today:* nothing that evaluates a requirement reads it. It reaches the rule
+    set digest, issue labels and the legacy projection, and nothing else; a rule
+    is evaluated against every model whose elements match its applicability
+    facet. `pcert-sample`'s structural walls are evaluated by R-001 and R-002,
+    both scoped to Architecture, and the eight PASS findings that produces are
+    published.
+  - *Target:* enforcement is deliberately not switched on. A model declares one
+    discipline string, so a merged model cannot say it is more than one, and
+    enforcing that single value silently drops whole rule families (measured in
+    ADR 0004 §4.3). It waits for an explicit multi-discipline declaration and a
+    coverage record that names every requirement not evaluated, and why.
+
+  It does not express a *directional handoff*: "MEP hands this to
   Architecture" is a statement about who gives what to whom, and no field in
   this package carries it today. Direction is Pack data when Packs exist. Do not
   read a scope tuple as an arrow, and do not overload it into one; a set of
@@ -183,6 +196,21 @@ you are pinning a published identity, because it is derived as
 `<project_id>.<model_id>` and is what every join and every `element_key` is
 built from.
 
+That is true of the package, not of the published identities:
+
+- *Today:* every project under `projects/` joins one shared run, and
+  `validation_run_id` digests every model in it, so adding a project re-keys
+  every other project. Measured in ADR 0004 §3: the other projects' findings
+  stay content-identical, but 0 of 121 finding keys and 0 of 21 issue keys
+  survive and all 21 BCF markups change — and a run that stays under the BCF
+  cap still exits 0. In this repository the diff gate catches it; in a local
+  run nothing does. A project
+  that is not part of the published contract runs in its own workspace
+  (`epc-ct --repository-root <workspace> run`), which changes no published byte.
+- *Target:* adding a project to the shared published run stays a contract
+  change until project-scoped identity exists; that migration is deferred
+  (ADR 0004 §5.3).
+
 Two exporters are named `Legacy…`, and the reason is now the same for both:
 they reproduce **frozen identity derivations**. `LegacyPbipAdapter` always did.
 `LegacyBcfExporter` used to also know the R-005 rule family and the HVAC model,
@@ -206,10 +234,22 @@ legitimate and stays; the second is what Phase 4 removed.
 
 ```bash
 epc-ct run          # every stage, then every enabled exporter
-epc-ct check        # validate without writing anything
+epc-ct check        # validate and report; see below for what it writes today
 epc-ct components   # what is registered
 epc-ct snapshot     # does the published contract still match its record?
 ```
+
+`check` does not yet keep the promise its help text makes:
+
+- *Today:* it writes files. It rewrites every checker report under
+  `reports/ids/` and recompiles `ids/<ruleset>_v<version>.ids` — thirteen tracked
+  files on the shipped fixture, none of them listed in `artifact_manifest.json`.
+  `--reports-dir` moves the reports elsewhere but the compiled rule document is
+  still rewritten, and a new project's reports are added to the tree. Do not run
+  it on a model whose name should not reach this repository; use a workspace.
+- *Target:* by default `check` changes no persistent file of the user's and no
+  repository artifact; asking for reports explicitly is the visible exception,
+  and `run`'s published bytes are verified separately (ADR 0004, P5).
 
 Without installing the package, `python -m epc_control_tower.cli …` does the
 same. The scripts under `src/` are shims kept for the published entry points
