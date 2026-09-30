@@ -105,31 +105,58 @@ EDITS: dict[str, list[tuple[str, str, str, int]]] = {
 
 
 def _apply(rules: Path, name: str) -> None:
+    """Apply one edit, whatever line endings the checkout gave the rule files.
+
+    ``*.toml`` has no explicit ``eol`` in ``.gitattributes``, so a Windows
+    checkout with ``core.autocrlf`` holds the rules with CRLF, and an edit whose
+    text spans a line break would then match nothing. So the edit is matched and
+    applied to the file read with LF endings, and the file is written back with
+    the endings it had. A file with both endings is refused rather than guessed
+    at.
+    """
+
     for filename, old, new, count in EDITS[name]:
         path = rules / filename
-        text = path.read_bytes().decode("utf-8")
+        raw = path.read_bytes()
+        crlf = raw.count(b"\r\n")
+        if crlf and crlf != raw.count(b"\n"):
+            raise AssertionError(f"{name}: {filename} mixes CRLF and LF line endings")
+        text = raw.decode("utf-8").replace("\r\n", "\n")
         found = text.count(old)
         if found != count:
             raise AssertionError(
                 f"{name}: expected {count} occurrence(s) in {filename}, found {found}"
             )
-        path.write_bytes(text.replace(old, new).encode("utf-8"))
+        text = text.replace(old, new)
+        if crlf:
+            text = text.replace("\n", "\r\n")
+        path.write_bytes(text.encode("utf-8"))
 
 
-def _scratch_rules(prefix: str) -> Path:
+def _scratch_rules(prefix: str, line_ending: str | None = None) -> Path:
     # Nested to mirror the repository: a rule directory compiles its IDS
     # document to ``<dir>/../../ids``, which must land in the scratch copy.
     root = PROJECT_ROOT / "tests" / f".{prefix}-{uuid.uuid4().hex}"
     rules = root / "rules" / "epc-delivery"
     shutil.copytree(RULES, rules)
+    if line_ending is not None:
+        # Rewrite every rule file with one line ending, as a checkout of the
+        # other kind would hold it.
+        for path in sorted(rules.glob("*.toml")):
+            text = path.read_bytes().decode("utf-8").replace("\r\n", "\n")
+            path.write_bytes(text.replace("\n", line_ending).encode("utf-8"))
     return rules
 
 
 @contextmanager
-def edited_rules(*names: str):
-    """A scratch copy of the rule library with ``names`` applied, in order."""
+def edited_rules(*names: str, line_ending: str | None = None):
+    """A scratch copy of the rule library with ``names`` applied, in order.
 
-    rules = _scratch_rules("edited-rules")
+    ``line_ending`` rewrites the copy to ``"\\n"`` or ``"\\r\\n"`` first; by
+    default the copy keeps whatever this checkout has.
+    """
+
+    rules = _scratch_rules("edited-rules", line_ending)
     try:
         for name in names:
             _apply(rules, name)

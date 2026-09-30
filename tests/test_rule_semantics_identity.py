@@ -180,6 +180,31 @@ class WhatAnEditMovesTests(unittest.TestCase):
         cls.shipped = load_ruleset(RULES)
         cls.by_key = {r.requirement_key: r for r in cls.shipped.requirements}
 
+    def test_every_edit_applies_the_same_on_lf_and_crlf_checkouts(self):
+        # `*.toml` has no explicit `eol` in `.gitattributes`, so a Windows
+        # checkout with `core.autocrlf` holds the rules with CRLF. Every edit
+        # must hit exactly its expected count on both (the helper asserts the
+        # count), and the rules it produces must parse to the same rule set.
+        from rule_edits import EDITS
+
+        for edit in EDITS:
+            with self.subTest(edit=edit):
+                parsed = {}
+                for label_, ending in (("lf", "\n"), ("crlf", "\r\n")):
+                    with edited_rules(edit, line_ending=ending) as rules:
+                        raw = b"".join(p.read_bytes() for p in sorted(rules.glob("*.toml")))
+                        if ending == "\r\n":
+                            self.assertEqual(raw.count(b"\r\n"), raw.count(b"\n"))
+                        else:
+                            self.assertNotIn(b"\r\n", raw)
+                        after = load_ruleset(rules)
+                        parsed[label_] = (
+                            after.normalized_digest,
+                            tuple(r.semantics_digest for r in after.requirements),
+                            rule_definitions_digest(rules),
+                        )
+                self.assertEqual(parsed["lf"], parsed["crlf"])
+
     def test_each_edit_moves_exactly_what_was_measured(self):
         for edit, (moved, normalized_moves) in self.EXPECTED.items():
             with self.subTest(edit=edit), edited_rules(edit) as rules:
