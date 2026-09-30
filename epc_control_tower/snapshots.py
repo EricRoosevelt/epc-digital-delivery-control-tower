@@ -32,7 +32,10 @@ from pathlib import Path
 
 from .determinism import atomic_write_bytes, json_bytes
 from .domain import FindingStatus, RunBundle
-from .identity import KNOWN_NORMALIZED_DIGEST_DERIVATIONS
+from .identity import (
+    KNOWN_NORMALIZED_DIGEST_DERIVATIONS,
+    NORMALIZED_DIGEST_DERIVATION,
+)
 
 __all__ = [
     "CHANGELOG_NAME",
@@ -98,6 +101,9 @@ def build_snapshot(
             "id": bundle.ruleset.ruleset_id,
             "version": bundle.ruleset.version,
             "normalized_digest": bundle.ruleset.normalized_digest,
+            # Which derivation produced the digest above. A digest is only ever
+            # compared with another of the same derivation (ADR 0005 §5.5).
+            DERIVATION_FIELD: NORMALIZED_DIGEST_DERIVATION,
             "requirements": len(bundle.ruleset.requirements),
         },
         "counts": {

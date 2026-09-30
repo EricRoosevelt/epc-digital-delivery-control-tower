@@ -440,12 +440,26 @@ class Requirement:
     #: own way, so this is the rule author's, not a vocabulary this package
     #: defines.
     labels: tuple[str, ...] = ()
+    #: A SHA-256 of the predicate this requirement evaluates, as its rule
+    #: declares it: the rule id, the checker, the IFC versions, every
+    #: applicability facet and every parameter of this requirement's own facet,
+    #: less the fields its checker declares it does not evaluate
+    #: (:data:`~.rule_definitions.NON_EVALUATED_FIELDS`). Computed where the rule
+    #: is compiled, because the facets live in the rule definition and not here.
+    #:
+    #: It is a comparable fingerprint, not the rule, and it does not prove the
+    #: check is right. **Empty means "no fingerprint was recorded"** — a
+    #: requirement read back from an ``.ids`` document, which today is only the
+    #: frozen legacy rule set — never "no semantics" and never "unchanged"; a
+    #: consumer must treat empty as not comparable (ADR 0005 §5.7, P-4).
+    semantics_digest: str = ""
 
     def __post_init__(self) -> None:
         _require_text(self.requirement_key, "requirement_key")
         _require_text(self.rule_id, "rule_id")
         _require_text(self.requirement_id, "requirement_id")
         _require_text(self.checker, "checker")
+        _require_sha256(self.semantics_digest, "semantics_digest", allow_empty=True)
         if self.severity is Severity.INFO:
             raise ValueError(
                 f"{self.rule_id}: severity is the severity of a FAILURE, so INFO "

@@ -17,6 +17,114 @@ of what moved exists before the expectation that says it did.
 
 ## Unreleased
 
+### Data contract 1.7 — the rule set's digest covers what each rule checks
+
+> Written from a measured run before the snapshot was refreshed (Hard rule #2).
+> The design and the PM's rulings are in
+> [`docs/decisions/0005-rule-semantic-identity-and-evidence-carry-over.md`](docs/decisions/0005-rule-semantic-identity-and-evidence-carry-over.md)
+> (§5.1, §5.5, §5.7, §8). The rule set stays **2.2**; the contract moves to
+> **1.7**.
+
+#### Why this version exists
+
+The normalized digest covered each requirement's metadata and labels and **no
+facet parameter**. Editing what a rule checks — its applicability, `dataType`,
+`cardinality`, a completeness `name_pattern` — moved no `validation_run_id` and
+no `finding_key`, so the same key could stand for two different facts (ADR 0005
+§1–§2). Contract 1.4 said "Identity was never at risk. The digest was doing its
+job the whole time." That was measured for *adding* a rule and is true for it;
+it was not true for editing one. The 1.4 entry below is history and is left as
+written.
+
+#### What moved — measured file by file from one `epc-ct run`
+
+**Canonical (8 files):**
+
+- `data/processed/canonical/requirements.csv` — one new column,
+  `semantics_digest`, last; 14 rows, every one a 64-hex value.
+- `data/processed/canonical/run.json` — the same column in `requirements`; the
+  normalized digest `c3be0db4…` → `3369fee3370afb54af2c834a63123ce557d349870aadb2087c8de7e00fc91a14`;
+  `validation_run_id` `epc-delivery-v2.2-71d28a7c8bddb4e7` →
+  `epc-delivery-v2.2-2697235be003292d`; `contract_version` 1.6 → 1.7; every key
+  below.
+- `data/processed/canonical/findings.csv` — **0/121** `finding_key` values
+  survive. Every other column of every row is identical: no status, `expected`,
+  `actual` or `reason` changed.
+- `data/processed/canonical/issues.csv`, `issue_findings.csv`,
+  `issue_events.csv` — **0/21** `issue_key` values survive, and the keys that
+  cite them move with them.
+- `reports/bcf/issues.bcf` — 21 topics, 21 topic folders kept; all 21
+  `markup.bcf` members change bytes (they carry finding keys).
+- `reports/artifact_manifest.json` — `artifact_bundle_id`
+  `bundle-a1fd9360e12c71fa` → `bundle-51f0dfee7933d72f`, the digests above.
+
+**Legacy — 0 files, 0 bytes.** `ids_findings.csv`, the five `bcf_*.csv`,
+`reports/bcf/ids_failures.bcf` and `reports/bcf/run_manifest.json` are
+byte-identical; the legacy `run_id` is still `ids-v0.1-8706ef58303bfd11`; the
+frozen v0.1 rule set's normalized digest is still
+`ecd1477878548dea29b4187761ecc42ef87df1a28fb1df1c4bb5ce1ec8df256b`. That is by
+construction, not luck: a requirement read from an `.ids` document has an empty
+`semantics_digest`, and an empty one is left out of the digest.
+
+**Not moved:** `ids/`, `reports/ids/`, every other CSV, the Pack and the
+Overlay. The Pack and Overlay pin `(epc-delivery, 2.2)` and still compose.
+
+**Added:** `docs/contracts/contract-1.7.json`, whose `ruleset` block records
+`normalized_digest_derivation: 2`; and
+`docs/contracts/ruleset-digest-derivations.json` (added one commit earlier).
+
+#### What `semantics_digest` covers
+
+The rule's id, checker and IFC versions, every applicability facet, and every
+parameter of the requirement's own facet — less what its checker declares it
+does not evaluate. The IDS checker declares `instructions`: it is prose handed
+to IfcTester, and an edit to it moves no finding. The completeness checker
+declares nothing: it publishes `instructions` as `expected`. Titles and
+metadata stay out of the semantics digest and stay in the normalized digest
+exactly where they were, so **a title edit still re-keys every finding**; the PM
+ruled against a second, "remove all text" migration (P-3). Measured on scratch
+copies of the rules, never on `rules/`:
+
+| Edit | Semantics digests moved | Normalized digest |
+|---|---|---|
+| R-002 `dataType`; R-001 `cardinality`; R-006 applicability | 1 each | moves |
+| R-005A `cardinality` or `dataType` | 2 (both R-005A requirements) | moves |
+| R-010 `name_pattern`, `instructions` or applicability | 1 | moves |
+| R-005A `instructions` or `description`; reformatting | 0 | unchanged |
+| R-005A `title` | 0 | moves (via `specification_label`) |
+
+Full column definition in [`docs/data_contract.md`](docs/data_contract.md#canonical-rule-set-digests-contract-17).
+
+#### The rule set keeps version 2.2 — and the guard that makes that safe
+
+Raising the version would have refused Pack/Overlay composition (both pin 2.2)
+and changed nothing the digest does not already change. So the digest's
+**derivation** is recorded instead (P-2(b)), and the rule set version guard
+changes accordingly:
+
+- a snapshot's derivation is established before any digest is compared: a
+  recorded `normalized_digest_derivation` must be 1 or 2, and a snapshot without
+  one is read as derivation 1 **only** while it is one of the eight files
+  (contracts 0.1–1.6) named, with their SHA-256, in
+  `docs/contracts/ruleset-digest-derivations.json`;
+- across derivations nothing passes by difference. The one pair accepted is a
+  ledger entry naming `epc-delivery` v2.2 derivation 1 `c3be0db4…` (baseline
+  `contract-1.6.json`, written at `11e4163`) and derivation 2 `3369fee3…`, with
+  two pieces of evidence that the rules did not change: the git tree of
+  `rules/epc-delivery`, `de7a6b0e7c29aca72b896a4e1bd2746afb94ee88` at
+  `11e4163`, `4e05c03`, `c9cf3b2`, `9eda5e9` and the migration commit; and the
+  declared-definitions digest `a0953845…`, which every later refresh through
+  this entry recomputes.
+
+One consequence worth knowing: an edit that moves the declared definitions and
+not the semantics — an IDS `instructions` edit — now blocks a later refresh at
+v2.2, because the entry's evidence no longer holds. Raise the version for it.
+
+#### Unchanged
+
+`finding_key`'s derivation formula; the requirement key; ADR 0003's per-member
+correspondence; the Pack and Overlay schemas; every legacy byte.
+
 ### Data contract 1.6 — project-scoped programme, persisted run-free group reference and topic identity, and a snapshot BCF that admits it
 
 > The account of what would move was written here first, before the code (Hard

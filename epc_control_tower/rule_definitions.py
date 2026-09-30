@@ -29,6 +29,7 @@ label is derived from the same facet the document is compiled from.
 
 from __future__ import annotations
 
+import hashlib
 import tomllib
 from collections.abc import Sequence
 from dataclasses import dataclass, field
@@ -38,17 +39,21 @@ from ifctester import ids
 
 # Imported for its effect: see ``epc_control_tower.ids_schema``.
 from . import ids_schema as _ids_schema  # noqa: F401
+from .determinism import canonical_json_document
 from .domain import Requirement, RuleSet, Severity
 from .identity import build_requirement_key, build_ruleset_normalized_digest
 
 __all__ = [
     "COMPLETENESS_KINDS",
     "FACET_KINDS",
+    "NON_EVALUATED_FIELDS",
     "REQUIREMENT_KINDS",
+    "SEMANTICS_DERIVATION",
     "RuleDefinition",
     "RuleSetDefinition",
     "compile_document",
     "load_rule_definitions",
+    "semantics_digest",
 ]
 
 #: Every facet kind IDS 1.0 defines. A rule declaring anything else is rejected
@@ -76,6 +81,29 @@ REQUIREMENT_KINDS = {
     "ids": FACET_KINDS,
     "completeness": COMPLETENESS_KINDS,
 }
+
+#: Which declared facet fields each checker does **not** evaluate, and so which
+#: stay out of a requirement's ``semantics_digest`` (ADR 0005 §5.6, P-3). Keyed
+#: by checker because it is a fact about the checker, not about the field's name:
+#:
+#: * ``ids`` hands ``instructions`` to IfcTester as prose. It reaches the
+#:   compiled IDS document and the ``reports/ids/`` report and nothing a finding
+#:   says, so it is presentation.
+#: * ``completeness`` publishes its requirement's ``instructions`` as each
+#:   finding's ``expected`` text, so there it is part of what the check says and
+#:   stays in.
+#:
+#: A checker not listed here excludes nothing: every field it is given counts,
+#: until someone shows it does not.
+NON_EVALUATED_FIELDS: dict[str, frozenset[str]] = {
+    "ids": frozenset({"instructions"}),
+    "completeness": frozenset(),
+}
+
+#: Hashed into every ``semantics_digest``. Only digests of one derivation are
+#: comparable; this is the second, because the first — the normalized digest's
+#: derivation 1 — had no semantics in it at all.
+SEMANTICS_DERIVATION = 2
 
 RULESET_FILENAME = "ruleset.toml"
 
@@ -404,6 +432,7 @@ def compile_document(definition: RuleSetDefinition):
                     citation=rule.citation,
                     priority=rule.priority,
                     labels=rule.labels,
+                    semantics_digest=semantics_digest(rule, facet),
                 )
             )
             expectations[key] = (
@@ -465,9 +494,48 @@ def _foreign_requirements(rule: RuleDefinition) -> list[Requirement]:
                 citation=rule.citation,
                 priority=rule.priority,
                 labels=rule.labels,
+                semantics_digest=semantics_digest(rule, facet),
             )
         )
     return built
+
+
+def semantics_digest(rule: RuleDefinition, own: FacetDefinition) -> str:
+    """The SHA-256 of the predicate one requirement evaluates, as declared.
+
+    Covers the rule's id, checker and IFC versions, **every** applicability facet
+    (sorted, so their order in the file does not matter), and every parameter of
+    this requirement's own facet, less the fields its checker declares it does
+    not evaluate (:data:`NON_EVALUATED_FIELDS`). A title, a description and the
+    rule's metadata are not here: the metadata is already in the normalized
+    digest beside this one, and a title reaches it through
+    ``specification_label``.
+
+    It covers the predicate the rule *declares*, not whatever the checker
+    happens to read. The completeness checker does not read R-010's
+    applicability today; counting it anyway keeps this digest from depending on
+    one implementation's internals, and the gap itself is an open point (ADR
+    0005 §5.6, U8).
+    """
+
+    dropped = NON_EVALUATED_FIELDS.get(rule.checker, frozenset())
+
+    def facet(item: FacetDefinition) -> dict[str, object]:
+        values = {k: v for k, v in item.values.items() if k not in dropped}
+        return {"facet": item.kind, **values}
+
+    applicability = sorted(
+        (facet(item) for item in rule.applicability), key=canonical_json_document
+    )
+    document = {
+        "derivation": SEMANTICS_DERIVATION,
+        "rule_id": rule.rule_id,
+        "checker": rule.checker,
+        "ifc_version": sorted(rule.ifc_version),
+        "applicability": applicability,
+        "requirement": facet(own),
+    }
+    return hashlib.sha256(canonical_json_document(document).encode("utf-8")).hexdigest()
 
 
 def declared_rule_ids(definition: RuleSetDefinition) -> Sequence[str]:
