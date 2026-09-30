@@ -59,7 +59,10 @@ __all__ = [
     "SUCCESSOR_KINDS",
     "ActivityResult",
     "AssessmentRecord",
+    "CITED_FINDING_BASIS_VERSION",
     "CitedDetermination",
+    "CitedFinding",
+    "KNOWN_CITED_FINDING_BASIS_VERSIONS",
     "ContextComparison",
     "EvidenceCarryOver",
     "MemberDisposition",
@@ -118,9 +121,13 @@ class CitedDetermination:
     only combination that may be recorded as carried, and any other combination
     is recorded as the situation it actually is (§4.7.2).
 
-    ``finding_key`` needs no equivalent because it already is one — it is derived
-    from the finding's own content, so checking it against the facts asks the
-    right question already.
+    A cited finding needed the same treatment, for the same reason, and has it
+    in :class:`CitedFinding`. A ``finding_key`` is **not** derived from the
+    finding's content: it is derived from the validation run, the model, the
+    requirement and the element, and until contract 1.7 the run identity could
+    not see what a rule checked, so one key could stand for two facts (ADR 0005
+    §1-§2). An earlier version of this docstring said the key "already is" a
+    content digest; that was wrong.
     """
 
     reference: str
@@ -132,6 +139,70 @@ class CitedDetermination:
 
     def as_document(self) -> dict[str, str]:
         return {"reference": self.reference, "content_digest": self.content_digest}
+
+
+#: The shape of a :class:`CitedFinding`'s basis. Written into every sealed one,
+#: so a later shape can never be compared as if it were this one: a recheck that
+#: meets a version it does not know reports the comparison as not provable.
+CITED_FINDING_BASIS_VERSION = 1
+
+#: Every basis version this package can compare, closed.
+KNOWN_CITED_FINDING_BASIS_VERSIONS = frozenset({CITED_FINDING_BASIS_VERSION})
+
+
+@dataclass(frozen=True, slots=True)
+class CitedFinding:
+    """One cited finding, and the basis a later record compares it on.
+
+    Written from **the run the record cites**, at the moment the record is
+    sealed, and hashed with it (ADR 0005 §5.2.2). A recheck compares the basis
+    only with what the record itself holds: it never reads a rule file or a
+    current ``Requirement`` to reconstruct what a sealed record would have said,
+    because that would be writing history from today's rules.
+
+    * ``element_key`` and ``requirement_key`` are the coordinates a counterpart
+      is found by — not the key, which any change to the run moves;
+    * ``model_key`` and ``model_content_id`` are the model version the finding is
+      about;
+    * ``semantics_digest`` is the predicate that produced it, and the only field
+      that sees a ``dataType`` change whose finding bytes did not move;
+    * ``content_digest`` is what the finding said;
+    * ``checker_id``, ``checker_version`` and ``checker_config_sha256`` are the
+      checker fingerprint;
+    * ``basis_version`` is this shape's own version.
+
+    An empty value means "not recorded" and is never compared as equal to
+    another empty value.
+    """
+
+    finding_key: str
+    element_key: str
+    requirement_key: str
+    model_key: str
+    model_content_id: str
+    semantics_digest: str
+    content_digest: str
+    checker_id: str
+    checker_version: str
+    checker_config_sha256: str
+    basis_version: int = CITED_FINDING_BASIS_VERSION
+
+    def as_document(self) -> dict[str, object]:
+        return {
+            "basis_version": self.basis_version,
+            "finding_key": self.finding_key,
+            "element_key": self.element_key,
+            "requirement_key": self.requirement_key,
+            "model_key": self.model_key,
+            "model_content_id": self.model_content_id,
+            "semantics_digest": self.semantics_digest,
+            "content_digest": self.content_digest,
+            "checker": {
+                "id": self.checker_id,
+                "version": self.checker_version,
+                "config_sha256": self.checker_config_sha256,
+            },
+        }
 
 
 @dataclass(frozen=True, slots=True)
@@ -150,6 +221,13 @@ class Reading:
     outcome: str
     binding: str = ""
     finding_keys: tuple[str, ...] = ()
+    #: The comparison basis of each cited finding, one per ``finding_keys``
+    #: entry and in the same order. ``finding_keys`` is kept beside it rather
+    #: than replaced, because readers name findings by it. A record sealed
+    #: before contract 1.7 has ``finding_keys`` and no ``cited_findings``, and
+    #: that absence — not a version number or a date — is how a recheck knows it
+    #: has nothing to compare (ADR 0005 §5.2.4).
+    cited_findings: tuple[CitedFinding, ...] = ()
     #: Every admissible determination behind this reading, not one chosen from
     #: among them, and each with its content digest beside its reference. Several
     #: entries here mean several determinations reached the same conclusion; a
@@ -157,6 +235,16 @@ class Reading:
     #: reading at all.
     cited_determinations: tuple[CitedDetermination, ...] = ()
     absence: str = ""
+
+    def __post_init__(self) -> None:
+        if self.cited_findings and tuple(
+            item.finding_key for item in self.cited_findings
+        ) != tuple(self.finding_keys):
+            raise ValueError(
+                "cited_findings must describe finding_keys one for one and in the "
+                f"same order; got {[i.finding_key for i in self.cited_findings]} for "
+                f"{list(self.finding_keys)}"
+            )
 
     @property
     def determination_references(self) -> tuple[str, ...]:
@@ -178,6 +266,10 @@ class Reading:
             document["binding"] = self.binding
         if self.finding_keys:
             document["finding_keys"] = list(self.finding_keys)
+        if self.cited_findings:
+            document["cited_findings"] = [
+                item.as_document() for item in self.cited_findings
+            ]
         if self.cited_determinations:
             document["cited_determinations"] = [
                 item.as_document() for item in self.cited_determinations

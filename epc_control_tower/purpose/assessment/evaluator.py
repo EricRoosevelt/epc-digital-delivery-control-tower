@@ -53,6 +53,7 @@ from .record import (
     ActivityResult,
     AssessmentRecord,
     CitedDetermination,
+    CitedFinding,
     OutOfClassKey,
     PathStep,
     Reading,
@@ -737,10 +738,46 @@ def _read(
                 outcome=outcome,
                 binding=label,
                 finding_keys=finding_keys,
+                cited_findings=_cited_findings(finding_keys, facts),
                 absence=absence,
             )
         )
     return tuple(readings)
+
+
+def _cited_findings(
+    finding_keys: tuple[str, ...], facts: AssessmentFacts
+) -> tuple[CitedFinding, ...]:
+    """The comparison basis of each cited finding, from the run being cited.
+
+    Sealed now, because now is the only time it can be known: a later record
+    compares against what this one wrote down, and nothing may reconstruct it
+    afterwards from rules as they are by then (ADR 0005 §5.2.2, §5.2.4).
+    """
+
+    by_key = {fact.finding_key: fact for fact in facts.findings}
+    cited: list[CitedFinding] = []
+    for key in finding_keys:
+        fact = by_key[key]
+        model = facts.model(fact.model_key) if fact.model_key else None
+        checker = fact.checker
+        cited.append(
+            CitedFinding(
+                finding_key=key,
+                element_key=fact.element_key,
+                requirement_key=fact.requirement_key,
+                model_key=fact.model_key,
+                model_content_id=model.content_id if model is not None else "",
+                semantics_digest=fact.semantics_digest,
+                content_digest=fact.content_digest,
+                checker_id=checker.component_id if checker is not None else "",
+                checker_version=checker.version if checker is not None else "",
+                checker_config_sha256=(
+                    checker.config_sha256 if checker is not None else ""
+                ),
+            )
+        )
+    return tuple(cited)
 
 
 def _check_validation_backed_vocabulary(requirement: EvidenceRequirement) -> None:

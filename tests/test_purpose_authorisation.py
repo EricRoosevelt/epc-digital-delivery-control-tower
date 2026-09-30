@@ -659,13 +659,15 @@ class OrdinaryAssessmentIsUnmovedTests(unittest.TestCase):
     """
 
     #: `assess_purpose` over the fixture, all three activities. It was
-    #: `aef0bd06…` as of `669307e`, and it moved **once, deliberately**, with
-    #: contract 1.7: the record cites the `validation_run_id` and every
-    #: `finding_key`, and ADR 0005's derivation 2 of the normalized digest
-    #: re-keys all of them. Nothing this class is about moved — the composition
-    #: digest and every verdict below are unchanged.
+    #: `aef0bd06…` as of `669307e`, and it moved twice, deliberately, in the
+    #: ADR 0005 checkpoint: to `cc440ec2…` with contract 1.7, because the record
+    #: cites the `validation_run_id` and every `finding_key` and derivation 2 of
+    #: the normalized digest re-keys all of them; then to this value, because
+    #: every cited finding now carries its sealed comparison basis. Nothing this
+    #: class is about moved — the composition digest and every verdict below
+    #: are unchanged.
     BASE_ASSESSMENT_DIGEST = (
-        "cc440ec2ca4f6eb3caf596c33a2c6bfa3e3340b2058b7e8cd05d1909ce030688"
+        "6c524a06485f4f309a54ce76ce9ba39a628ba8f49d777d33c5e841fe348282e0"
     )
     #: `fixture_composed()`'s composition digest, as of `669307e`.
     BASE_COMPOSITION_DIGEST = (
