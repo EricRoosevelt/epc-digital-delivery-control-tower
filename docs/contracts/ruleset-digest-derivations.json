@@ -1,0 +1,38 @@
+{
+  "derivation_1_snapshots": [
+    {
+      "name": "contract-0.1.json",
+      "sha256": "8def700e9e516cd37f7ecd5a9693b1a7d935e9f5e7c96f716eecbbd8fcd17d3d"
+    },
+    {
+      "name": "contract-1.0.json",
+      "sha256": "61e58a7c2d62ecd5d88a9661fb319ace1953fda4d297090f3c7aef0f385a4bb3"
+    },
+    {
+      "name": "contract-1.1.json",
+      "sha256": "ed7142aaff4424ed831b9f65c8383806a8ec08f25031c8563b9344dfdc79887b"
+    },
+    {
+      "name": "contract-1.2.json",
+      "sha256": "9b2885a29a4c723db87cea09e2cae00f858a79188984fea9f62af0b140cb0769"
+    },
+    {
+      "name": "contract-1.3.json",
+      "sha256": "bd20e63ec4bf1269c82281d16f2b0b47433cb9254f80308ba482b67ec5fd221d"
+    },
+    {
+      "name": "contract-1.4.json",
+      "sha256": "e05ad1f1d0c7ef4e896142cd0389e64e41293fdd51b1fe12e50280d5fcd0c948"
+    },
+    {
+      "name": "contract-1.5.json",
+      "sha256": "fb28357dd2c427f9c0dd8401903f8c2f77365a59dcb6f921522f54fee77757f5"
+    },
+    {
+      "name": "contract-1.6.json",
+      "sha256": "1712b8c4e6c6dc42cafefea672320b9594d3aa02171fab5ea87483955c013977"
+    }
+  ],
+  "migrations": [],
+  "note": "Read by epc_control_tower.snapshots.ruleset_version_conflicts. derivation_1_snapshots is the closed list of snapshots recorded before a snapshot wrote down the derivation of its rule set's normalized digest: each is read as derivation 1 only while its bytes still hash to the value here. migrations lists the only cross-derivation pairs the guard accepts, each with its named baseline and the evidence that the rules did not change. See ADR 0005 section 5.5."
+}

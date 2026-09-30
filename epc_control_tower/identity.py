@@ -42,6 +42,7 @@ from .domain import ComponentFingerprint, Requirement
 
 __all__ = [
     "IDENTITY_NAMESPACE",
+    "KNOWN_NORMALIZED_DIGEST_DERIVATIONS",
     "ComponentFingerprint",
     "build_artifact_bundle_id",
     "build_execution_id",
@@ -64,6 +65,18 @@ __all__ = [
 #: Project-private UUIDv5 namespace. Changing this value would re-key every
 #: published artifact, so it is fixed for the lifetime of the project.
 IDENTITY_NAMESPACE = uuid.UUID("7611c2a0-c29a-50fa-b00d-5058d25a41d3")
+
+#: Every derivation of :func:`build_ruleset_normalized_digest` this package can
+#: name, closed. Two digests are only comparable under the same derivation, so a
+#: snapshot guard that met a number outside this set would be comparing values
+#: whose meaning it does not know — and refuses instead (ADR 0005 §5.5.3).
+#:
+#: 1. Requirement metadata and labels only. Blind to every facet parameter: a
+#:    rule's applicability, ``dataType``, ``cardinality`` or ``name_pattern``
+#:    could change without moving it (ADR 0005 §1).
+#: 2. Derivation 1 plus each requirement's ``semantics_digest`` — the predicate
+#:    it actually evaluates — wherever that digest is non-empty (ADR 0005 §5.1).
+KNOWN_NORMALIZED_DIGEST_DERIVATIONS = frozenset({1, 2})
 
 _SLUG = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]*$")
 
