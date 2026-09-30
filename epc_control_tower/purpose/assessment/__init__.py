@@ -77,7 +77,10 @@ from .reading import (
 )
 from .recheck import machine_checkable_outcome, recheck_purpose
 from .record import (
+    CARRY_OVER_REASON_STATES,
     CARRY_OVER_REASONS,
+    CARRY_OVER_STATES,
+    CHANGED_ASPECTS,
     MEMBER_DISPOSITIONS,
     RECHECK_CONDITION_STATES,
     SUCCESSOR_KINDS,
@@ -109,7 +112,10 @@ from .request import (
 
 __all__ = [
     "AUTHORISED",
+    "CARRY_OVER_REASON_STATES",
     "CARRY_OVER_REASONS",
+    "CARRY_OVER_STATES",
+    "CHANGED_ASPECTS",
     "MEMBER_DISPOSITIONS",
     "NOT_COVERED_ABSENCE",
     "NO_AUTHORISATION_PATH",

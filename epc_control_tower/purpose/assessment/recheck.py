@@ -8,9 +8,10 @@ that are not the same thing:
 
 1. **Where its members are now** — present and at which verdict, or gone and
    under which of four named classifications.
-2. **Which of its evidence citations still carry** — and when one does not,
-   whether that is because the model-version context moved or because something
-   superseded it.
+2. **What became of each of its evidence citations** — equivalent (perhaps under
+   a new key), changed (even with the same outcome), without a counterpart, or
+   not provable — and why, compared on the basis the sealed record wrote down
+   and never on one reconstructed from today's rules (ADR 0005 §5.2).
 3. **What could be established about its ``recheck_condition``** — and, far more
    often than not, that nothing could be, because the sentence is prose written
    for people and this module does not adjudicate prose.
@@ -64,8 +65,10 @@ from .determinations import Determination
 from .evaluator import derive_assessment
 from .facts import AssessmentFacts
 from .record import (
+    KNOWN_CITED_FINDING_BASIS_VERSIONS,
     ActivityResult,
     AssessmentRecord,
+    CitedFinding,
     ContextComparison,
     EvidenceCarryOver,
     MemberDisposition,
@@ -358,7 +361,7 @@ def _recheck_one(
         )
         for member in subscope.members
     )
-    carry_over = _carry_over(subscope, activity, context, facts)
+    carry_over = _carry_over(subscope, activity, context, facts, dispositions)
     condition = (
         subscope.route.recheck_condition if subscope.route is not None else ""
     )
@@ -565,44 +568,65 @@ def _carry_over(
     activity: ActivityResult,
     context: ContextComparison,
     facts: AssessmentFacts,
+    dispositions: tuple[MemberDisposition, ...],
 ) -> tuple[EvidenceCarryOver, ...]:
-    """Which citations of the sealed path this record still makes, and why not.
+    """What became of each citation of the sealed path, in one of four states.
 
-    It exists so that a retreat has a *reason* on the record. A subscope that fell
-    back to ``UNKNOWN`` because the determinations behind it stopped being
-    attributable, and one that fell back because a review reversed itself, are
-    different situations for the team reading them, and a bare ``UNKNOWN`` tells
-    them apart from neither.
+    It exists so that a retreat — or an advance — has a *reason* on the record. A
+    subscope that fell back to ``UNKNOWN`` because the determinations behind it
+    stopped being attributable, and one that fell back because a review reversed
+    itself, are different situations for the team reading them; so are a blocker
+    that cleared because a model was fixed and one that cleared because a rule
+    was relaxed. A bare verdict tells none of them apart.
 
-    **A determination row compares content, not handles, and that is what makes
-    "carried" a claim this record can support.** ``reference`` is a name
-    somebody else's store assigns; the document behind it can be re-decided,
-    re-signed, or re-attributed without the name moving. A comparison of names
-    would have reported a confirmation-turned-misalignment as still relied on —
-    the verdict would still have gone ``BLOCKED``, correctly, while the audit
-    trail beside it said the old determination carried. So the sealed record
-    keeps each citation's ``content_digest`` (:class:`~.record.CitedDetermination`)
-    and this compares both:
+    **Both branches compare content, not handles.** A handle is a name, and a
+    name can stay while what it names changes:
 
-    * same reference **and** same digest → ``carried``, which is now provable;
-    * same reference, different digest → the document changed, recorded as its
-      own reason with both digests on the row;
-    * reference absent → not cited here, and the context comparison says which of
-      the two absent reasons applies.
+    * a determination ``reference`` is assigned by somebody else's store, and
+      the document behind it can be re-decided without the name moving — so the
+      sealed record keeps each citation's content digest
+      (:class:`~.record.CitedDetermination`);
+    * a ``finding_key`` is derived from the run, the model, the requirement and
+      the element, **not** from what the finding says, and before contract 1.7
+      the run identity could not see what a rule checked — so the sealed record
+      keeps each cited finding's comparison basis
+      (:class:`~.record.CitedFinding`), and a finding is matched by its
+      coordinates rather than its key, which any change to the run moves.
 
-    **None of this refuses anything, and the restraint is deliberate.** A review
-    that was genuinely re-held is *new evidence*: it is read like any other,
-    the leaf it produces stands, and the verdict changes if it should. The only
-    thing that changes is what may be *claimed* — that the earlier determination
-    was carried forward. Refusal stays where it already was: two contents under
+    Findings are decided by :func:`_compare_finding`, in a fixed order. A
+    determination row is ``equivalent`` for the same reference with the same
+    content, ``changed`` for the same reference with other content, and
+    ``no-counterpart`` when not cited here, with the context comparison saying
+    which of the two absent reasons applies.
+
+    **None of this refuses anything, and the restraint is deliberate.** New
+    evidence is read like any other, the leaf it produces stands, and the verdict
+    changes if it should. What this governs is only what may be *claimed* about
+    the earlier evidence. Refusal stays where it already was: two contents under
     one reference within a single request, evidence attributed to other model
     versions, and two admissible determinations that contradict each other.
-
-    A ``finding_key`` needs no digest beside it because it already is one — it is
-    derived from the finding's own content, so checking it against the facts asks
-    the right question already. That asymmetry is the point: the determination
-    branch was the one comparing names, and it is the one that changed.
     """
+
+    present = {
+        _origin(item.member) for item in dispositions if item.disposition == "present"
+    }
+    gone: dict[str, set[str]] = {}
+    for item in dispositions:
+        if item.disposition != "present":
+            gone.setdefault(_origin(item.member), set()).add(item.disposition)
+
+    # ``(subject element, evidence requirement) -> {finding_key: basis}`` for
+    # every finding this record cites. Keyed on the node as well as the subject,
+    # because a counterpart is evidence for the same requirement of the same
+    # subject, not any finding that happens to share coordinates elsewhere.
+    current: dict[tuple[str, str], dict[str, CitedFinding]] = {}
+    for item in activity.subscopes:
+        for step in item.path:
+            for reading in step.readings:
+                for cited in reading.cited_findings:
+                    current.setdefault(
+                        (reading.subject.keys[0], step.evidence_requirement_id), {}
+                    )[cited.finding_key] = cited
 
     # ``reference -> the content digests this record cites under it``. A set
     # rather than one value because one reference may legitimately appear on
@@ -623,20 +647,22 @@ def _carry_over(
     seen: set[tuple[str, str]] = set()
     for step in subscope.path:
         for reading in step.readings:
+            basis = {cited.finding_key: cited for cited in reading.cited_findings}
             for finding_key in reading.finding_keys:
                 if ("finding", finding_key) in seen:
                     continue
                 seen.add(("finding", finding_key))
-                present = any(
-                    fact.finding_key == finding_key for fact in facts.findings
-                )
                 rows.append(
-                    EvidenceCarryOver(
-                        citation=finding_key,
-                        citation_kind="finding",
-                        reason=(
-                            "carried" if present else "finding-absent-from-the-cited-run"
+                    _compare_finding(
+                        finding_key=finding_key,
+                        sealed=basis.get(finding_key),
+                        subject=reading.subject.keys[0],
+                        candidates=current.get(
+                            (reading.subject.keys[0], step.evidence_requirement_id), {}
                         ),
+                        present=present,
+                        gone=gone,
+                        facts=facts,
                     )
                 )
             for citation in reading.cited_determinations:
@@ -648,28 +674,175 @@ def _carry_over(
                     # The handle is not cited here at all. Which of the two
                     # reasons applies is decided by the context comparison, and
                     # both are facts this record holds.
+                    state = "no-counterpart"
                     reason = (
                         "determination-not-cited-by-this-record"
                         if context.is_current
                         else "determination-not-attributable-to-this-context"
                     )
                 elif now == [citation.content_digest]:
-                    reason = "carried"
+                    state, reason = (
+                        "equivalent",
+                        "determination-same-reference-same-content",
+                    )
                 else:
                     # Same handle, different document. This is the whole reason
                     # the digest is on the sealed record: comparing handles would
                     # have called a re-decided review "still relied on".
+                    state = "changed"
                     reason = "determination-content-changed-under-the-same-reference"
                 rows.append(
                     EvidenceCarryOver(
                         citation=citation.reference,
                         citation_kind="determination",
+                        state=state,
                         reason=reason,
                         sealed_content_digest=citation.content_digest,
                         current_content_digest=now[0] if now else "",
                     )
                 )
     return tuple(sorted(rows, key=lambda item: (item.citation_kind, item.citation)))
+
+
+def _origin(member: Subject) -> str:
+    """The admitted element a member is about: itself, or what a pair refined."""
+
+    return member.refined_from or member.keys[0]
+
+
+def _compare_finding(
+    *,
+    finding_key: str,
+    sealed: CitedFinding | None,
+    subject: str,
+    candidates: dict[str, CitedFinding],
+    present: set[str],
+    gone: dict[str, set[str]],
+    facts: AssessmentFacts,
+) -> EvidenceCarryOver:
+    """One sealed finding citation against this record, in a fixed order.
+
+    **First establish whether a comparison can be made, then make it** — the
+    same order ADR 0003 §4.7.4 uses for a condition (correspondence before the
+    condition). Each step presupposes the ones above it, and "cannot compare" can
+    only stop at steps 1, 2, 3, 4 (several) and 5, so it can never come out as
+    ``no-counterpart``: an inability to compare is never recorded as evidence
+    that disappeared (ADR 0005 §5.2.1).
+
+    1. The sealed citation has a basis. A record sealed before contract 1.7 has
+       none, and none is reconstructed: the rules are not read, and the same key
+       appearing now proves nothing, since that key was derived without the
+       rule's semantics.
+    2. The basis is a version this package can compare.
+    3. Its subject is still a present member. A member that left is reported
+       with where it went, not as evidence that went missing.
+    4. Exactly one finding this record cites at the sealed coordinates —
+       ``(element_key, requirement_key)`` — on the same subject and node. None is
+       ``no-counterpart``; several is ``not-provable`` with all of them named,
+       and none of them chosen.
+    5. Both sides have a complete basis. An empty value is "not recorded", and
+       two unrecorded values are not equal.
+    6. Compare four aspects. Any difference is ``changed`` — even when the
+       outcome did not move, which is exactly the case a predicate change with
+       identical finding bytes produces. A new key alone is not a difference.
+    """
+
+    def row(state: str, reason: str, **extra) -> EvidenceCarryOver:
+        return EvidenceCarryOver(
+            citation=finding_key,
+            citation_kind="finding",
+            state=state,
+            reason=reason,
+            **extra,
+        )
+
+    if sealed is None:
+        return row("not-provable", "sealed-citation-has-no-comparison-basis")
+    if sealed.basis_version not in KNOWN_CITED_FINDING_BASIS_VERSIONS:
+        return row(
+            "not-provable",
+            "comparison-basis-version-unknown",
+            cause=f"basis_version {sealed.basis_version!r}",
+        )
+    if subject not in present:
+        return row(
+            "not-provable",
+            "subject-not-present",
+            cause=",".join(sorted(gone.get(subject, ()))) or "not-a-sealed-member",
+        )
+
+    matches = sorted(
+        (
+            cited
+            for cited in candidates.values()
+            if cited.element_key == sealed.element_key
+            and cited.requirement_key == sealed.requirement_key
+        ),
+        key=lambda cited: cited.finding_key,
+    )
+    if not matches:
+        in_run = any(
+            fact.element_key == sealed.element_key
+            and fact.requirement_key == sealed.requirement_key
+            for fact in facts.findings
+        )
+        return row(
+            "no-counterpart",
+            "counterpart-not-cited-under-the-current-binding"
+            if in_run
+            else "no-counterpart-in-the-cited-run",
+        )
+    if len(matches) > 1:
+        return row(
+            "not-provable",
+            "counterpart-not-unique",
+            cause=",".join(cited.finding_key for cited in matches),
+        )
+
+    (now,) = matches
+    if not sealed.semantics_digest or not now.semantics_digest:
+        return row(
+            "not-provable",
+            "requirement-semantics-basis-unavailable",
+            current_citation=now.finding_key,
+        )
+    for side in (sealed, now):
+        if not (
+            side.model_key
+            and side.model_content_id
+            and side.content_digest
+            and side.checker_id
+            and side.checker_version
+        ) or side.basis_version not in KNOWN_CITED_FINDING_BASIS_VERSIONS:
+            return row(
+                "not-provable",
+                "comparison-basis-incomplete",
+                current_citation=now.finding_key,
+            )
+
+    aspects = []
+    if (sealed.checker_id, sealed.checker_version, sealed.checker_config_sha256) != (
+        now.checker_id,
+        now.checker_version,
+        now.checker_config_sha256,
+    ):
+        aspects.append("checker")
+    if sealed.content_digest != now.content_digest:
+        aspects.append("finding-content")
+    if (sealed.model_key, sealed.model_content_id) != (
+        now.model_key,
+        now.model_content_id,
+    ):
+        aspects.append("model-version")
+    if sealed.semantics_digest != now.semantics_digest:
+        aspects.append("requirement-semantics")
+    return row(
+        "changed" if aspects else "equivalent",
+        "finding-changed" if aspects else "finding-equivalent",
+        current_citation=now.finding_key,
+        key_changed="yes" if now.finding_key != finding_key else "no",
+        changed_aspects=tuple(aspects),
+    )
 
 
 def _condition_status(

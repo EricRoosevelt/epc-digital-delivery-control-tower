@@ -37,10 +37,11 @@ points one way: this record cites frozen identities, and nothing frozen cites it
 about it arrives as a *new* record citing it, and :class:`SuccessorSection` is
 what that citation looks like: the prior record's digest, the model versions
 compared value for value, and — per cited subscope — where each of its members
-went, which of its evidence citations still carry, and what could be established
-about its ``recheck_condition``. The section is present only on a successor, so
-an originating record's document, and therefore its digest, is byte-for-byte the
-one it had before successors existed.
+went, what became of each of its evidence citations (equivalent, changed, no
+counterpart, or not provable), and what could be established about its
+``recheck_condition``. The section is present only on a successor, so an
+originating record's document, and therefore its digest, is byte-for-byte what
+the same content would have hashed to before successors existed.
 """
 
 from __future__ import annotations
@@ -54,6 +55,9 @@ from .request import AssessmentRequest
 
 __all__ = [
     "CARRY_OVER_REASONS",
+    "CARRY_OVER_REASON_STATES",
+    "CARRY_OVER_STATES",
+    "CHANGED_ASPECTS",
     "MEMBER_DISPOSITIONS",
     "RECHECK_CONDITION_STATES",
     "SUCCESSOR_KINDS",
@@ -483,33 +487,93 @@ MEMBER_DISPOSITIONS = (
     "outside-declared-scope",
 )
 
-#: Whether one citation the prior subscope's path made is still cited here, and
-#: when it is not, which reason applies. Every one is a fact this record holds —
-#: never an inference about a document the record cannot see.
-CARRY_OVER_REASONS = (
-    #: Cited by this record too, **and proved to be the same document**: the
-    #: reference matches and so does the content digest. This is the only
-    #: combination that may be recorded as carried.
-    "carried",
+#: What this record can say about one citation the sealed path made — exactly
+#: one of four, for a finding and for a determination alike (ADR 0005 §5.2.1).
+#: There is no boolean beside them: "cannot be shown" and "has no counterpart"
+#: are different facts, and a two-valued field would put both on the same
+#: ``false``.
+CARRY_OVER_STATES = (
+    #: This record cites a counterpart, and every compared aspect is equal. The
+    #: reference may have a new key. It means the evidence need not be gathered
+    #: again *because the key changed* — never that the handover needs no review.
+    "equivalent",
+    #: A unique, comparable counterpart that differs in at least one aspect —
+    #: even when its outcome is the same.
+    "changed",
+    #: Comparable, and this record cites no counterpart.
+    "no-counterpart",
+    #: The comparison itself cannot be made. Never folded into
+    #: ``no-counterpart``: "cannot compare" is not "the evidence is gone".
+    "not-provable",
+)
+
+#: What differed, on a ``changed`` finding row. Closed and sorted.
+CHANGED_ASPECTS = (
+    #: The checker's id, version or configuration digest.
+    "checker",
+    #: The finding's status, ``expected``, ``actual`` or ``reason``.
+    "finding-content",
+    #: The model version the finding is about. Always ``changed`` across a
+    #: re-issue, even when the finding reads the same (ADR 0005 §5.4; for BIM
+    #: review as D-1).
+    "model-version",
+    #: The predicate the requirement evaluates.
+    "requirement-semantics",
+)
+
+#: ``reason -> state``: every reason names the state it belongs to, and nothing
+#: else may be written. Every one is a fact this record holds, never an
+#: inference about a document the record cannot see.
+CARRY_OVER_REASON_STATES: Mapping[str, str] = {
+    # -- findings: in the order they are decided (ADR 0005 §5.2.1) ----------
+    #: 1. The sealed reading has ``finding_keys`` and no ``cited_findings``: a
+    #:    record sealed before contract 1.7. Nothing is reconstructed for it,
+    #:    and the same key being present now proves nothing, because a key from
+    #:    before 1.7 was derived without the rule's semantics.
+    "sealed-citation-has-no-comparison-basis": "not-provable",
+    #: 2. The sealed basis has a ``basis_version`` this package cannot compare.
+    "comparison-basis-version-unknown": "not-provable",
+    #: 3. The sealed reading's subject is no longer a present member; ``cause``
+    #:    names where the member went.
+    "subject-not-present": "not-provable",
+    #: 4a. More than one current finding at the sealed coordinates; ``cause``
+    #:     lists them all, and none is chosen.
+    "counterpart-not-unique": "not-provable",
+    #: 4b. The cited run has no finding at the sealed coordinates.
+    "no-counterpart-in-the-cited-run": "no-counterpart",
+    #: 4c. It has one, and this record's reading does not cite it.
+    "counterpart-not-cited-under-the-current-binding": "no-counterpart",
+    #: 5a. Either side has no ``semantics_digest`` — a rule set read from an
+    #:     ``.ids`` document, for one.
+    "requirement-semantics-basis-unavailable": "not-provable",
+    #: 5b. Either side lacks another part of the basis: the model version, the
+    #:     content digest or the checker fingerprint.
+    "comparison-basis-incomplete": "not-provable",
+    #: 6. Compared: every aspect equal, or at least one not.
+    "finding-equivalent": "equivalent",
+    "finding-changed": "changed",
+    # -- determinations -----------------------------------------------------
+    #: Same reference **and** same content digest. The only combination that
+    #: shows the same document is relied on. (Before contract 1.7 this reason
+    #: was called ``carried``.)
+    "determination-same-reference-same-content": "equivalent",
     #: The same handle is cited here and the document behind it is not the one
-    #: the sealed record read. The determination was re-decided, re-attributed,
-    #: or re-signed; whichever it was, the earlier one was not carried forward,
-    #: and this record must not say it was. **Not a refusal**: a review that was
-    #: genuinely re-held is new evidence, read normally, and the verdict it
-    #: produces stands. What changes is only what may be claimed about identity.
-    "determination-content-changed-under-the-same-reference",
+    #: the sealed record read: re-decided, re-attributed or re-signed. **Not a
+    #: refusal**: a review that was genuinely re-held is new evidence, read
+    #: normally, and the verdict it produces stands. What changes is only what
+    #: may be claimed about identity.
+    "determination-content-changed-under-the-same-reference": "changed",
     #: Not cited here, and the model-version context moved. No determination
     #: attributed to the prior context is admissible under this one — the same
     #: rule ``determination-model-version-mismatch`` enforces inside one request,
     #: read across the seal instead of inside it.
-    "determination-not-attributable-to-this-context",
+    "determination-not-attributable-to-this-context": "no-counterpart",
     #: Not cited here, and the context did not move: something superseded it.
-    "determination-not-cited-by-this-record",
-    #: A ``finding_key`` the prior path cited is absent from the facts this
-    #: record was assessed against. Content-derived already, so this branch never
-    #: had the identity problem the determination branch did.
-    "finding-absent-from-the-cited-run",
-)
+    "determination-not-cited-by-this-record": "no-counterpart",
+}
+
+#: Every reason, in declaration order.
+CARRY_OVER_REASONS = tuple(CARRY_OVER_REASON_STATES)
 
 #: What this record was able to establish about the cited subscope's
 #: ``recheck_condition``. Deliberately **not** a two-valued met/unmet: three of
@@ -629,36 +693,91 @@ class MemberDisposition:
 
 @dataclass(frozen=True, slots=True)
 class EvidenceCarryOver:
-    """One citation the prior subscope's path made, and whether it carries here.
+    """One citation the prior subscope's path made, and what became of it here.
 
     Separated from the dispositions because they answer different questions. A
     disposition says what happened to a *subject*; this says what happened to the
     *evidence* — and a subscope can retreat with every member still present,
     purely because the determinations behind it stopped being attributable.
+
+    ``state`` is one of :data:`CARRY_OVER_STATES` and ``reason`` one of the
+    reasons belonging to it (:data:`CARRY_OVER_REASON_STATES`); a row that
+    pairs them any other way is refused at construction. There is deliberately
+    no ``carried`` flag: it could only have said ``equivalent`` or not, and
+    everything this row exists to keep apart would have landed on its ``false``.
     """
 
     citation: str
     citation_kind: str
+    state: str
     reason: str
     #: The content digest the **sealed** record recorded for this determination,
     #: and the one **this** record cites under the same reference when it cites
     #: one. Both are on the row so that "the document behind the handle changed"
     #: is inspectable rather than merely asserted. Empty on a finding row, whose
-    #: citation is content-derived to begin with.
+    #: comparison basis is compared aspect by aspect instead.
     sealed_content_digest: str = ""
     current_content_digest: str = ""
+    #: Finding rows only. The ``finding_key`` this record cites at the sealed
+    #: coordinates, when there is exactly one.
+    current_citation: str = ""
+    #: Finding rows only, on ``equivalent`` and ``changed``: ``yes`` when the
+    #: counterpart has another key. A new key alone is never a change.
+    key_changed: str = ""
+    #: Finding rows only, on ``changed``: which aspects differ, sorted, out of
+    #: :data:`CHANGED_ASPECTS`.
+    changed_aspects: tuple[str, ...] = ()
+    #: On ``not-provable``: the fact that stopped the comparison — the member's
+    #: disposition, or every candidate key.
+    cause: str = ""
 
-    @property
-    def carried(self) -> bool:
-        return self.reason == "carried"
+    def __post_init__(self) -> None:
+        if self.state not in CARRY_OVER_STATES:
+            raise ValueError(f"unknown carry-over state {self.state!r}")
+        expected = CARRY_OVER_REASON_STATES.get(self.reason)
+        if expected != self.state:
+            raise ValueError(
+                f"carry-over reason {self.reason!r} belongs to state {expected!r}, "
+                f"not {self.state!r}"
+            )
+        if self.key_changed and (
+            self.key_changed not in ("yes", "no")
+            or self.state not in ("equivalent", "changed")
+        ):
+            raise ValueError(
+                f"key_changed {self.key_changed!r} on a {self.state!r} row"
+            )
+        if (self.state == "changed" and self.citation_kind == "finding") != bool(
+            self.changed_aspects
+        ):
+            raise ValueError(
+                "changed_aspects is present exactly on a changed finding row, "
+                f"got {list(self.changed_aspects)} on a {self.state!r} "
+                f"{self.citation_kind} row"
+            )
+        if tuple(sorted(set(self.changed_aspects))) != self.changed_aspects or not set(
+            self.changed_aspects
+        ) <= set(CHANGED_ASPECTS):
+            raise ValueError(
+                f"changed_aspects must be sorted, distinct, and from "
+                f"{list(CHANGED_ASPECTS)}; got {list(self.changed_aspects)}"
+            )
 
     def as_document(self) -> dict[str, object]:
         document: dict[str, object] = {
             "citation": self.citation,
             "citation_kind": self.citation_kind,
+            "state": self.state,
             "reason": self.reason,
-            "carried": self.carried,
         }
+        if self.current_citation:
+            document["current_citation"] = self.current_citation
+        if self.key_changed:
+            document["key_changed"] = self.key_changed
+        if self.changed_aspects:
+            document["changed_aspects"] = list(self.changed_aspects)
+        if self.cause:
+            document["cause"] = self.cause
         if self.sealed_content_digest:
             document["sealed_content_digest"] = self.sealed_content_digest
         if self.current_content_digest:

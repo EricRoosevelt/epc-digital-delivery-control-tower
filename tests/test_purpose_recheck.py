@@ -230,7 +230,7 @@ class AcrossAModelReissueTests(_ChainCase):
                 ),
             ],
         )
-        self.assertFalse(any(item.carried for item in outcome.carry_over))
+        self.assertEqual({item.state for item in outcome.carry_over}, {"no-counterpart"})
 
     def test_that_reason_is_the_standing_rule_read_across_the_seal(self):
         """Offering the prior determinations here is refused, by the same rule.
@@ -290,18 +290,29 @@ class AcrossAModelReissueTests(_ChainCase):
         self.assertEqual(outcome.named_outcome, "")
         self.assertIn("adjudicates no prose", outcome.condition_basis)
 
-    def test_the_repaired_findings_are_new_keys_and_the_old_ones_do_not_carry(self):
-        """A re-validated model produces new finding keys; the sealed ones are gone."""
+    def test_the_repaired_findings_are_new_keys_and_changed_evidence(self):
+        """A re-validated model produces new finding keys, and different evidence.
+
+        Before ADR 0005 this row said only that the sealed key was absent. Now
+        the counterpart is found at the sealed coordinates, under its new key,
+        and recorded as what it is: a finding about another model version that
+        says something else. Never ``equivalent`` — the repair is real, and so is
+        the difference.
+        """
 
         outcome = _outcome_for(self.record, SCHEDULES, self.asset_ordinal)
         self.assertTrue(outcome.carry_over)
         self.assertEqual(
-            {item.reason for item in outcome.carry_over},
-            {"finding-absent-from-the-cited-run"},
-        )
-        self.assertEqual(
             {item.citation_kind for item in outcome.carry_over}, {"finding"}
         )
+        for row in outcome.carry_over:
+            with self.subTest(citation=row.citation):
+                self.assertEqual((row.state, row.reason), ("changed", "finding-changed"))
+                self.assertEqual(
+                    row.changed_aspects, ("finding-content", "model-version")
+                )
+                self.assertEqual(row.key_changed, "yes")
+                self.assertTrue(row.current_citation.startswith(fx.FIXTURE_MARKER))
 
     def test_a_ready_subscope_is_answered_for_without_inventing_a_condition(self):
         """READY carries no route, so there is no condition — said, not implied."""
@@ -944,13 +955,13 @@ class EvidenceIdentityAcrossRecordsTests(_ChainCase):
     def test_the_variants_are_the_four_entry_points_and_a_control(self):
         self.assertEqual(sorted(self.variants), sorted(fx.ALIGNMENT_VARIANTS))
 
-    def test_a_determination_that_did_not_change_at_all_is_carried(self):
-        """The control. Without it, "not carried" everywhere would also pass."""
+    def test_a_determination_that_did_not_change_at_all_is_equivalent(self):
+        """The control. Without it, "not equivalent" everywhere would also pass."""
 
         record = self._recheck("unchanged")
         outcome, row = self._row(record)
-        self.assertEqual(row.reason, "carried")
-        self.assertTrue(row.carried)
+        self.assertEqual(row.reason, "determination-same-reference-same-content")
+        self.assertEqual(row.state, "equivalent")
         self.assertEqual(row.citation, fx.ALIGNMENT_CONFIRMED)
         self.assertEqual(row.sealed_content_digest, row.current_content_digest)
         self.assertTrue(row.sealed_content_digest)
@@ -973,7 +984,7 @@ class EvidenceIdentityAcrossRecordsTests(_ChainCase):
         self.assertEqual(
             row.reason, "determination-content-changed-under-the-same-reference"
         )
-        self.assertFalse(row.carried)
+        self.assertEqual(row.state, "changed")
         self.assertEqual(row.citation, fx.ALIGNMENT_CONFIRMED)
         self.assertNotEqual(row.sealed_content_digest, row.current_content_digest)
         self.assertTrue(row.current_content_digest)
@@ -1355,7 +1366,7 @@ class AReviewReHeldUnderANewReferenceTests(_ChainCase):
         self.assertFalse(self.record.successor.context.is_current)
         for row in rows:
             with self.subTest(citation=row.citation):
-                self.assertFalse(row.carried)
+                self.assertEqual(row.state, "no-counterpart")
                 self.assertEqual(
                     row.reason, "determination-not-attributable-to-this-context"
                 )

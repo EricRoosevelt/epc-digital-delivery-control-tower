@@ -120,6 +120,33 @@ One consequence worth knowing: an edit that moves the declared definitions and
 not the semantics — an IDS `instructions` edit — now blocks a later refresh at
 v2.2, because the entry's evidence no longer holds. Raise the version for it.
 
+#### Purpose assessment records — not published, and changed with 1.7
+
+Records are never written under `data/processed/`, `reports/` or `ids/`, so
+none of this is in the snapshot; it is here because 1.7 re-keying every finding
+is what made it necessary (ADR 0005 §5.2–§5.4, the PM's four counterexamples).
+
+- A finding-backed reading carries `cited_findings` beside `finding_keys`: per
+  cited finding, its coordinates, model key and content id, the requirement's
+  `semantics_digest`, a content digest (status, `expected`, `actual`,
+  `reason`), the checker fingerprint, and `basis_version: 1`. Sealed with the
+  record.
+- Each `evidence_carry_over` row of a successor has a `state` — `equivalent`,
+  `changed`, `no-counterpart` or `not-provable` — and a `reason` that belongs to
+  it; finding rows add `current_citation`, `key_changed`, `changed_aspects`
+  (`checker`, `finding-content`, `model-version`, `requirement-semantics`) and
+  `cause` where they apply. The boolean `carried` is **removed**. The reason
+  `carried` is renamed `determination-same-reference-same-content`, and
+  `finding-absent-from-the-cited-run` is retired.
+- A record sealed before this change has no `cited_findings`; every finding it
+  cites rechecks as `not-provable` / `sealed-citation-has-no-comparison-basis`.
+  Nothing is reconstructed from the current rules, and the old key being present
+  does not count.
+- A re-issued model makes identical readings `changed` / `model-version`, never
+  `equivalent` (for BIM review: ADR 0005 §5.4, D-1–D-3).
+- Doctor is unchanged in this version: its recheck page shows "记录未携带" in the
+  `carried` column until its UI follow-up presents the four states.
+
 #### Unchanged
 
 `finding_key`'s derivation formula; the requirement key; ADR 0003's per-member
