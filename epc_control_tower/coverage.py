@@ -33,12 +33,24 @@ checks that ``IsExternal`` exists as an ``IFCBOOLEAN`` and never what its value
 is. Nothing is added to the rule to make this possible. Where a predicate cannot
 be read reliably off the rule — its requirement kind is defined by a checker's
 implementation rather than by IDS 1.0, or the rule source is not a rule
-directory, or it no longer matches what the run read — the row says so and
-shows **no status at all**, neither PASS nor FAIL, only how many results came
-back. A bare count of passes next to an unknown question is exactly the
-statement P8 forbids, and withholding FAIL too keeps the row's meaning from
-depending on which answer happened to come back; the failures themselves are
-still in the findings and issues the run publishes.
+directory, or the rule facets now on disk cannot be shown to be the ones the
+run evaluated — the row says so and shows **no status at all**, neither PASS
+nor FAIL, only how many results came back. A bare count of passes next to an
+unknown question is exactly the statement P8 forbids, and withholding FAIL too
+keeps the row's meaning from depending on which answer happened to come back;
+the failures themselves are still in the findings and issues the run publishes.
+
+The last of those conditions needs its own digest. The rule set's
+``normalized_digest`` covers each requirement's identity and metadata but **no
+facet parameter**: a rule's ``dataType``, ``cardinality``, applicability entity
+or ``name_pattern`` can change and leave it, and ``validation_run_id`` with it,
+exactly as they were. (That is an identity defect on ``main`` in its own right,
+outside this record's scope.) So the pipeline takes
+:func:`rule_definitions_digest` — every rule as declared, facets included —
+immediately before and immediately after the check stage, and keeps it only
+when the two agree. A predicate is derived only when the rule directory read
+for the record has that same digest; otherwise every predicate of the record is
+unavailable, and ``predicate_basis`` says why.
 
 Adoption does not exist yet (checkpoint 4). The two published samples are
 ``legacy-compat`` by PM ruling P1. Any other project is ``undeclared``: it has
@@ -63,12 +75,18 @@ Only ``run`` and ``export`` write it. ``check`` does not.
 
 from __future__ import annotations
 
+import dataclasses
 import json
 import os
 from collections.abc import Mapping
 from pathlib import Path
 
-from .determinism import atomic_write_bytes, json_bytes, sha256_bytes
+from .determinism import (
+    atomic_write_bytes,
+    canonical_json_document,
+    json_bytes,
+    sha256_bytes,
+)
 from .domain import FindingStatus, RunBundle
 
 __all__ = [
@@ -79,6 +97,7 @@ __all__ = [
     "SCOPE_RELATIONS",
     "build_coverage_record",
     "resolve_coverage_root",
+    "rule_definitions_digest",
     "write_coverage_record",
 ]
 
@@ -157,6 +176,11 @@ _LEGEND = {
         "counts of PASS, FAIL and N/A, shown only beside a derived predicate; "
         "null when the predicate is unavailable"
     ),
+    "predicate_basis": (
+        "verified: the rule definitions read for this record, facets included, "
+        "have the digest the run took around its check stage; unverified: they "
+        "could not be shown to, and no predicate is derived"
+    ),
     "element_reach": {
         "has-results-from-this-ruleset": "at least one finding of this run names the element",
         "no-result-from-this-ruleset": (
@@ -208,31 +232,95 @@ def _unavailable(reason: str) -> dict[str, object]:
     return {"state": "unavailable", "reason": reason}
 
 
-def _derive_predicates(bundle: RunBundle, ruleset_path: Path) -> dict[str, dict]:
+def _definitions_digest(definition) -> str:
+    return sha256_bytes(
+        canonical_json_document(dataclasses.asdict(definition)).encode("utf-8")
+    )
+
+
+def rule_definitions_digest(ruleset_path: Path) -> str | None:
+    """Digest of every rule in a rule directory as declared, facets included.
+
+    Computed from the parsed definitions rather than the files' bytes, so
+    reformatting a rule or checking it out with other line endings does not
+    move it; changing any declared value does. ``None`` for a rule document,
+    and for a directory that cannot currently be read as rules. Internal to the
+    coverage record: it takes no part in any identity.
+    """
+
+    ruleset_path = Path(ruleset_path)
+    if not ruleset_path.is_dir():
+        return None
+
+    from .rule_definitions import load_rule_definitions
+
+    try:
+        definition = load_rule_definitions(ruleset_path)
+    except (OSError, ValueError):
+        return None
+    return _definitions_digest(definition)
+
+
+def _derive_predicates(
+    bundle: RunBundle, ruleset_path: Path, evaluated_rules_digest: str | None
+) -> tuple[dict[str, dict], dict[str, object]]:
     """Map each requirement key of the run to its predicate, derived or not.
 
-    Read back from the rule directory the run read. The rule set rebuilt from
-    it must have the run's own normalized digest, or nothing is derived: a
-    predicate from rules other than the ones evaluated would be a guess.
+    Also returns the basis the predicates rest on. The rules are read back from
+    the directory the run read, and nothing is derived unless they are shown to
+    be the rules the run evaluated: their declared-definitions digest must equal
+    ``evaluated_rules_digest``, taken around the check stage. The rule set's
+    normalized digest is compared as well, but it cannot stand in for that —
+    it covers no facet parameter — and a predicate from rules other than the
+    ones evaluated would be a guess.
     """
 
     keys = [requirement.requirement_key for requirement in bundle.ruleset.requirements]
+
+    def nothing(reason: str):
+        basis = {"state": "unverified", "rule_definitions_digest": None, "reason": reason}
+        return {key: _unavailable(reason) for key in keys}, basis
+
     if not ruleset_path.is_dir():
-        reason = (
+        return nothing(
             "the rule source is a rule document, not a rule directory; "
             "its facets are not read here"
         )
-        return {key: _unavailable(reason) for key in keys}
+    if evaluated_rules_digest is None:
+        return nothing(
+            "the run kept no digest of the rule facets it evaluated: the rule "
+            "directory changed, or could not be read, while the run was checking"
+        )
 
     from .checkers.ids_checker import requirement_label
     from .identity import build_requirement_key
     from .rule_definitions import compile_document, load_rule_definitions
 
-    definition = load_rule_definitions(ruleset_path)
+    try:
+        definition = load_rule_definitions(ruleset_path)
+    except (OSError, ValueError):
+        return nothing(
+            "the rule directory changed after the run evaluated it and can no "
+            "longer be read as rules"
+        )
+    if _definitions_digest(definition) != evaluated_rules_digest:
+        return nothing(
+            "the rule facets on disk changed after the run evaluated them; "
+            "what the run's results answer can no longer be read from them"
+        )
     _document, reread, _expectations = compile_document(definition)
     if reread.normalized_digest != bundle.ruleset.normalized_digest:
-        reason = "the rule directory no longer matches the rule set this run evaluated"
-        return {key: _unavailable(reason) for key in keys}
+        return nothing(
+            "the rule directory no longer matches the rule set this run evaluated"
+        )
+    basis = {
+        "state": "verified",
+        "rule_definitions_digest": evaluated_rules_digest,
+        "reason": (
+            "the rule definitions read for this record have the digest the run "
+            "took immediately before and after its check stage"
+        ),
+    }
 
     predicates: dict[str, dict] = {}
     for rule in definition.rules:
@@ -265,7 +353,7 @@ def _derive_predicates(bundle: RunBundle, ruleset_path: Path) -> dict[str, dict]
         predicates.setdefault(
             key, _unavailable("no facet of the rule directory produces this requirement")
         )
-    return predicates
+    return predicates, basis
 
 
 # ---------------------------------------------------------------------------
@@ -291,13 +379,20 @@ def _execution_state(statuses: Mapping[str, int]) -> str:
     return "executed-no-result"
 
 
-def build_coverage_record(bundle: RunBundle, *, ruleset_path: Path) -> dict:
+def build_coverage_record(
+    bundle: RunBundle, *, ruleset_path: Path, evaluated_rules_digest: str | None
+) -> dict:
     """Build the coverage record of one completed validation run.
 
     Pure: reads the bundle and the rule directory the run read, writes nothing.
+    ``evaluated_rules_digest`` is the run's own digest of the rule facets it
+    evaluated (``PipelineResult.evaluated_rules_digest``). It has no default:
+    a caller that cannot supply one passes ``None`` and gets no predicate.
     """
 
-    predicates = _derive_predicates(bundle, Path(ruleset_path))
+    predicates, predicate_basis = _derive_predicates(
+        bundle, Path(ruleset_path), evaluated_rules_digest
+    )
     vocabulary = {
         discipline
         for requirement in bundle.ruleset.requirements
@@ -402,6 +497,7 @@ def build_coverage_record(bundle: RunBundle, *, ruleset_path: Path) -> dict:
                 )
             ],
         },
+        "predicate_basis": predicate_basis,
         "adoption_mechanism": "not-implemented",
         "dispatch": _DISPATCH,
         "requirement_x_model": rows,

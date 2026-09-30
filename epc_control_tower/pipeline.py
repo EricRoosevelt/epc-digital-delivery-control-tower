@@ -23,7 +23,11 @@ from pathlib import Path
 from . import CONTRACT_VERSION
 from .bcf.schema import default_schema_dir
 from .config import ProjectManifest, RunConfig, load_project_manifests
-from .coverage import build_coverage_record, write_coverage_record
+from .coverage import (
+    build_coverage_record,
+    rule_definitions_digest,
+    write_coverage_record,
+)
 from .domain import ProjectMilestone, RunBundle, RuleSet, ValidationRun
 from .exporters.legacy_bcf import BCF_FILENAME
 from .exporters.legacy_manifest import (
@@ -66,6 +70,11 @@ class PipelineResult:
     registry: Registry
     ingested: IngestResult
     ruleset: RuleSet
+    #: Digest of the rule facets the check stage evaluated, as declared — taken
+    #: just before and just after that stage, and ``None`` unless the two
+    #: agree. Only the coverage record reads it, to decide whether a predicate
+    #: can be derived; it is not part of the bundle or of any identity.
+    evaluated_rules_digest: str | None = None
 
 
 def _programmes(
@@ -160,6 +169,11 @@ def build_bundle(
         as_of=config.as_of,
     )
 
+    # The checkers read their rules for themselves during the stage, so the
+    # facets they evaluated are bracketed rather than captured: a digest taken
+    # on each side, kept only when the two agree. See `coverage` for why the
+    # rule set's normalized digest cannot do this.
+    rules_before = rule_definitions_digest(config.resolved_ruleset_path())
     checked = check(
         registry=registry,
         ruleset=ruleset,
@@ -171,6 +185,7 @@ def build_bundle(
         as_of=config.as_of,
         reports_dir=reports_dir,
     )
+    rules_after = rule_definitions_digest(config.resolved_ruleset_path())
     checked.raise_for_failures()
 
     grouped = group(
@@ -240,6 +255,7 @@ def build_bundle(
         registry=registry,
         ingested=ingested,
         ruleset=ruleset,
+        evaluated_rules_digest=rules_before if rules_before == rules_after else None,
     )
 
 
@@ -334,7 +350,9 @@ def execute(
     if coverage_root is not None:
         coverage_record_path = write_coverage_record(
             build_coverage_record(
-                result.bundle, ruleset_path=config.resolved_ruleset_path()
+                result.bundle,
+                ruleset_path=config.resolved_ruleset_path(),
+                evaluated_rules_digest=result.evaluated_rules_digest,
             ),
             coverage_root,
         )

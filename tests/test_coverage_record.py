@@ -28,6 +28,7 @@ from epc_control_tower.coverage import (
     SCOPE_RELATIONS,
     build_coverage_record,
     resolve_coverage_root,
+    rule_definitions_digest,
 )
 from epc_control_tower.determinism import sha256_file
 from epc_control_tower.pipeline import build_bundle, execute
@@ -42,10 +43,19 @@ from helpers import (
 )
 
 
-def _shipped_record() -> dict:
-    config = shipped_run_config()
+def _record_of(result, ruleset_path: Path) -> dict:
+    """The record the pipeline would keep for ``result``."""
+
     return build_coverage_record(
-        shipped_pipeline_result().bundle, ruleset_path=config.resolved_ruleset_path()
+        result.bundle,
+        ruleset_path=ruleset_path,
+        evaluated_rules_digest=result.evaluated_rules_digest,
+    )
+
+
+def _shipped_record() -> dict:
+    return _record_of(
+        shipped_pipeline_result(), shipped_run_config().resolved_ruleset_path()
     )
 
 
@@ -167,6 +177,154 @@ class PredicateTests(unittest.TestCase):
                     self.assertEqual(row["result"]["predicate"]["state"], "derived")
 
 
+#: Facet edits the rule set's normalized digest does not see (technical-director
+#: audit of PR #17, reproduced): each leaves ``normalized_digest`` — and so
+#: ``validation_run_id`` — unchanged while changing what the rule checks.
+_FACET_EDITS = {
+    # label: (file, declared, edited, what the edited value renders as)
+    "R-002 dataType": (
+        "R-002.toml", 'dataType = "IFCBOOLEAN"', 'dataType = "IFCLABEL"', "IFCLABEL"
+    ),
+    "R-001 cardinality": (
+        "R-001.toml", 'cardinality = "required"', 'cardinality = "optional"', "optional"
+    ),
+    "R-006 applicability": ("R-006.toml", 'name = "IFCWALL"', 'name = "IFCSLAB"', "IFCSLAB"),
+    "R-010 name_pattern": (
+        "R-010.toml",
+        'name_pattern = "^(origin|geo-reference)$"',
+        'name_pattern = "^(setout)$"',
+        "setout",
+    ),
+}
+
+
+def _rules_copy(scratch: Path) -> Path:
+    rules = scratch / "rules" / "epc-delivery"
+    shutil.copytree(PROJECT_ROOT / "rules" / "epc-delivery", rules)
+    return rules
+
+
+def _edit(rules: Path, filename: str, old: str, new: str) -> None:
+    path = rules / filename
+    text = path.read_bytes().decode("utf-8")
+    if text.count(old) != 1:
+        raise AssertionError(f"{filename}: expected one {old!r}")
+    path.write_bytes(text.replace(old, new).encode("utf-8"))
+
+
+class RulesEditedAfterEvaluationTests(unittest.TestCase):
+    """A predicate must be the rule the run evaluated, not the rule on disk now.
+
+    The run evaluates R-002 with ``dataType=IFCBOOLEAN``; the file is then
+    edited to ``IFCLABEL`` before the record is built. The rule set's
+    normalized digest does not cover facet parameters, so a guard built on it
+    let the record show a *derived* ``IFCLABEL`` predicate beside PASS 4 — a
+    status answering a question that was never asked. Every such edit must
+    leave every predicate unavailable and every status withheld.
+    """
+
+    def test_a_facet_edited_after_evaluation_withholds_every_status(self):
+        for label, (filename, old, new, marker) in _FACET_EDITS.items():
+            with self.subTest(edit=label), writable_test_directory("coverage-edit") as scratch:
+                rules = _rules_copy(scratch)
+                config = dataclasses.replace(shipped_run_config(), ruleset_path=rules)
+                result = build_bundle(config, reports_dir=scratch / "reports")
+                _edit(rules, filename, old, new)
+
+                record = _record_of(result, rules)
+
+                rows = record["requirement_x_model"]
+                self.assertEqual(len(rows), 84)
+                for row in rows:
+                    self.assertEqual(row["result"]["predicate"]["state"], "unavailable")
+                    self.assertIsNone(row["result"]["statuses"])
+                self.assertEqual(record["summary"]["predicate"], {"unavailable": 84})
+                self.assertNotIn(marker, json.dumps(record))
+                self.assertIn(
+                    "changed",
+                    _row(record, "structural", "R-001")["result"]["predicate"]["reason"],
+                )
+                self.assertEqual(record["predicate_basis"]["state"], "unverified")
+
+    def test_rules_edited_while_the_check_stage_runs_leave_no_digest(self):
+        # The checkers read their rules during the stage; an edit landing then
+        # means nobody can say which version a result answers.
+        with writable_test_directory("coverage-edit-during") as scratch:
+            rules = _rules_copy(scratch)
+            config = dataclasses.replace(shipped_run_config(), ruleset_path=rules)
+            registry = default_registry(config)
+            registry.checkers["ids"] = _EditingChecker(
+                registry.checkers["ids"],
+                edit=lambda: _edit(
+                    rules, "R-002.toml", 'dataType = "IFCBOOLEAN"', 'dataType = "IFCLABEL"'
+                ),
+            )
+            result = build_bundle(config, registry=registry, reports_dir=scratch / "reports")
+            record = _record_of(result, rules)
+
+        self.assertIsNone(result.evaluated_rules_digest)
+        self.assertEqual(record["summary"]["predicate"], {"unavailable": 84})
+        self.assertIn("while the run was checking", record["predicate_basis"]["reason"])
+
+    def test_a_caller_without_the_runs_digest_gets_no_predicate(self):
+        record = build_coverage_record(
+            shipped_pipeline_result().bundle,
+            ruleset_path=shipped_run_config().resolved_ruleset_path(),
+            evaluated_rules_digest=None,
+        )
+        self.assertEqual(record["summary"]["predicate"], {"unavailable": 84})
+
+    def test_unchanged_rules_verify_the_basis(self):
+        path = shipped_run_config().resolved_ruleset_path()
+        record = _shipped_record()
+        self.assertEqual(record["predicate_basis"]["state"], "verified")
+        self.assertEqual(
+            record["predicate_basis"]["rule_definitions_digest"],
+            rule_definitions_digest(path),
+        )
+        self.assertEqual(
+            shipped_pipeline_result().evaluated_rules_digest, rule_definitions_digest(path)
+        )
+
+    def test_the_digest_sees_values_and_not_formatting(self):
+        # Line endings differ by checkout (``*.toml`` has no eol rule), and the
+        # record is byte-identical across platforms, so the digest must not
+        # read bytes. A declared value, on the other hand, must move it.
+        with writable_test_directory("coverage-digest") as scratch:
+            rules = _rules_copy(scratch)
+            original = rule_definitions_digest(rules)
+            path = rules / "R-002.toml"
+            text = path.read_bytes().replace(b"\r\n", b"\n")
+            path.write_bytes(b"# a comment\r\n" + text.replace(b"\n", b"\r\n"))
+            reformatted = rule_definitions_digest(rules)
+            _edit(rules, "R-002.toml", 'dataType = "IFCBOOLEAN"', 'dataType = "IFCLABEL"')
+            edited = rule_definitions_digest(rules)
+
+        self.assertEqual(original, reformatted)
+        self.assertNotEqual(original, edited)
+
+
+class _EditingChecker:
+    """Delegates to a real checker, then edits the rules once it has run."""
+
+    def __init__(self, inner, *, edit) -> None:
+        self._inner = inner
+        self._edit = edit
+        self.id = inner.id
+        self.version = inner.version
+        self.capabilities = inner.capabilities
+
+    def config_sha256(self) -> str:
+        return self._inner.config_sha256()
+
+    def check(self, context):
+        outcome = self._inner.check(context)
+        if self._edit is not None:
+            self._edit()
+            self._edit = None
+        return outcome
+
+
 class OtherGranularitiesTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
@@ -211,9 +369,7 @@ class DroppedResultTests(unittest.TestCase):
             # Exit status of the counterexample: the run itself completes and
             # says nothing. Without the record the loss is invisible.
             result = build_bundle(config, registry=registry, reports_dir=scratch)
-        record = build_coverage_record(
-            result.bundle, ruleset_path=config.resolved_ruleset_path()
-        )
+        record = _record_of(result, config.resolved_ruleset_path())
 
         self.assertEqual(len(record["requirement_x_model"]), 84)
         row = _row(record, "structural", "R-001")
@@ -271,9 +427,7 @@ class IsolatedProjectAdoptionTests(unittest.TestCase):
                 reports_dir=scratch / "reports",
             )
             result = build_bundle(config, reports_dir=scratch / "reports")
-        record = build_coverage_record(
-            result.bundle, ruleset_path=config.resolved_ruleset_path()
-        )
+        record = _record_of(result, config.resolved_ruleset_path())
 
         self.assertEqual(record["adoption_mechanism"], "not-implemented")
         rows = record["requirement_x_model"]
@@ -292,9 +446,7 @@ class IsolatedProjectAdoptionTests(unittest.TestCase):
                 shipped_run_config(), project_manifests=(manifest,)
             )
             result = build_bundle(config, reports_dir=scratch / "reports")
-        record = build_coverage_record(
-            result.bundle, ruleset_path=config.resolved_ruleset_path()
-        )
+        record = _record_of(result, config.resolved_ruleset_path())
         self.assertEqual(record["summary"]["adoption"], {"undeclared": 14})
 
 
