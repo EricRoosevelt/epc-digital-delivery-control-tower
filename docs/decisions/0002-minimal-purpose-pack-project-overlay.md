@@ -221,6 +221,27 @@
     which the files that now exist match; and every revision-history entry above,
     including the passages that describe historical defects in the words they
     were found in.
+  - Corrected on 2026-10-01 by the ADR 0005 fix checkpoint (contract 1.7), for
+    two claims ADR 0005 measured to be false. **No field, invariant, refusal row
+    or schema changes**, and `pack.toml` and the `[overlay]` table are not
+    touched. **(1)** §3.3 said `build_ruleset_normalized_digest` hashes "every
+    field that gives the requirement its actual meaning" and that a binding
+    pinned to `2.2` cannot keep resolving against a rule set whose
+    "applicability changed underneath it". Through contract 1.6 the digest held
+    no facet parameter at all — applicability, `dataType`, `cardinality` — so six
+    kinds of semantic edit moved neither the digest nor any key (ADR 0005 §1.2),
+    and a version pin only stops such an edit when someone raises the version.
+    **(2)** §4 said that `ruleset_id` + `ruleset_version`, checked at
+    composition, "close that gap". What is true now, and what is not, is stated
+    beside each passage: since 1.7 the digest covers each requirement's
+    `semantics_digest`, and the snapshot guard refuses a published rule set
+    whose semantics moved while its version did not, so for a **published** rule
+    set the version pin does constrain semantics. For a rule directory copied
+    into a workspace — which no snapshot guard sees — it does not, and the Pack
+    and Overlay still pin only the version. The PM ruled (ADR 0005 §8, P-5) that
+    the schema does not change in this round and that such a copy may not be
+    used for a formal Purpose release until a trusted semantic binding exists.
+    The original sentences stay as written; the corrections are marked in place.
 - **Scope:** Checkpoint C only — the representation, ownership and identity
   boundary of a Purpose Pack and a Project Overlay. It does not design or
   execute runtime assessment (Checkpoint D), does not touch contract 1.6, and
@@ -1224,6 +1245,21 @@ a binding pinned to `epc-delivery` version `2.2` does not silently keep
 resolving against a `2.3` in which the same `requirement_key` survived but
 its severity or applicability changed underneath it.
 
+> **Corrected (2026-10-01, ADR 0005; see the revision history).** Two parts of
+> the paragraph above were not true when written. The normalized digest did
+> **not** hash every field that gives a requirement its meaning: through
+> contract 1.6 it held metadata and labels and no facet parameter, so an
+> applicability, `dataType` or `cardinality` edit moved nothing. And a version
+> pin only stops an edit whose author also raised the version. **What is true
+> since contract 1.7:** the digest covers each requirement's `semantics_digest`
+> (derivation 2), and for the published rule set the snapshot guard refuses a
+> refresh whose semantics moved under an unchanged version — so there the pin
+> to `2.2` does constrain semantics. **What is still not true:** that the pin
+> constrains a copy of the rules in a workspace, which no guard sees. The Pack
+> and Overlay schemas pin the version only; until a trusted semantic binding
+> exists, such a copy may not be used for a formal Purpose release (ADR 0005
+> §5.7, P-5).
+
 ### 3.4 Three separate compatibilities, not one (closes gap 4)
 
 The rejected draft's `compatible_framework = ">=1.6,<2.0"` conflated three
@@ -2033,7 +2069,10 @@ asserted from memory:
   §3.3 establishes, **not by itself proof that a bound requirement still
   means what a Pack or Overlay author assumed** — only `ruleset_id` +
   `ruleset_version`, checked alongside the key at composition, close that
-  gap.
+  gap. *(Corrected 2026-10-01, ADR 0005: they close it only where "semantics
+  moved, so the version moved" is enforced — the published rule set, by the
+  snapshot guard since contract 1.7. For a workspace copy of the rules they do
+  not; see the correction in §3.3.)*
 - **`finding_key`**, `Issue`/legacy identity, and every downstream contract
   1.6 artifact are derived transitively from the same rule-set and model
   data, never from Pack or Overlay content. Nothing in §3.1's field list is

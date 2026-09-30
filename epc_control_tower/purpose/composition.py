@@ -225,10 +225,17 @@ def _check_requirement_keys(
 ) -> None:
     """A reference resolves against the ruleset that was actually loaded.
 
-    Both halves matter. ``requirement_key`` proves the row was found;
-    ``(ruleset_id, ruleset_version)`` proves the row still means what the
-    author assumed, because severity, applicability, owner role and checker can
-    all move underneath a key that never changes.
+    Both halves matter. ``requirement_key`` proves the row was found, and
+    severity, applicability, owner role and checker can all move underneath a
+    key that never changes. ``(ruleset_id, ruleset_version)`` narrows that, and
+    how far it narrows it is worth being exact about (ADR 0005 §5.7, P-5): for
+    the published rule set, where the snapshot guard refuses a semantic change
+    under an unchanged version (contract 1.7), the pin does say the row still
+    means what the author assumed. For a copy of the rules in a workspace, which
+    no guard sees, it does not — the rules can change while the version stands
+    still — and nothing here checks the rule set's semantics digest. Such a copy
+    is not to be used for a formal Purpose release until a trusted semantic
+    binding exists.
     """
 
     address = (ruleset_id, ruleset_version)

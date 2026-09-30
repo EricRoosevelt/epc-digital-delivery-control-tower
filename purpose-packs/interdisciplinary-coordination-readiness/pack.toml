@@ -78,7 +78,10 @@ outcomes = ["satisfied", "unmet", "not-yet-evaluated"]
 
   # A general coordination requirement, so the Pack may bind it directly. The
   # ruleset id and version travel with the keys: a requirement_key proves the
-  # row was found, not that it still means what this Pack assumed.
+  # row was found, not that it still means what this Pack assumed. The version
+  # pins meaning only where a semantic edit is forced to raise it - the
+  # published rule set, by the snapshot guard - not in a workspace copy of the
+  # rules (ADR 0005 section 5.7, P-5).
   [evidence_requirements.pack_binding]
   ruleset_id = "epc-delivery"
   ruleset_version = "2.2"
