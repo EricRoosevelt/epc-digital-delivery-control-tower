@@ -708,3 +708,248 @@ finding carry-over rows: 9; recorded 'carried' although the finding behind the k
 ### END
 dirty/untracked: 0
 ```
+
+---
+
+## Round 2 — 2026-10-01
+
+Measurements behind the revision that writes the PM's rulings into ADR 0005.
+Round 1 above, and its scripts (`patches.py`, `probe.py`, `run_all.sh`), are
+left exactly as audited; round 2 adds three files beside them and runs on a
+disposable checkout of `c9cf3b2` (`main` after PR #17).
+
+- `patches_r2.py` adds four rule edits for P-3 (`r005a-title`,
+  `r005a-description`, `r010-instructions`, `r010-applicability`) and two
+  throwaway prototypes:
+  - `O1b` — O1 as P-3 ruled it: `instructions` is excluded from the semantics
+    digest only for the IDS checker; the completeness checker publishes it as
+    `expected`, so there it counts.
+  - `C` — the evidence carry-over comparison of ADR 0005 §5.2. It seals a
+    comparison basis beside every cited finding (`cited_findings`), and it
+    classifies each sealed citation into exactly one of `equivalent`,
+    `changed`, `no-counterpart` and `not-provable`. The boolean `carried` is
+    gone from the row. It is a prototype of the design, with two parts left out:
+    the checker-fingerprint aspect of §5.2, and the check on `basis_version`
+    (the prototype writes it and never reads it).
+- `probe_r2.py carry <scenario>` runs the real `assess_purpose` →
+  `recheck_purpose` chain under `O1 + O1b + C` for seven scenarios:
+  - `relax`, `retype` and `unrelated` are rule edits on the shipped models.
+  - `pre-1.7-record` takes the sealed record, removes every basis, and seals it
+    again with the real digest function. That is what an earlier build would
+    have written. The rule edit is then the unrelated one.
+  - `reissue` gives the HVAC model a new content id and re-mints every HVAC
+    `finding_key`, and changes nothing else.
+  - `reissue-deleted` does the same and also deletes the duct.
+  - `ambiguous` adds a second finding for the duct's R-005A `AssetTag` slot.
+- Every fixture value (reissued content id, run id, re-minted keys, twin key)
+  carries a `fixture` marker, as in `tests/assessment_fixtures.py`.
+- `run` has written a coverage record since `c9cf3b2`. The script points
+  `EPC_CT_COVERAGE_DIR` into the scratch directory, so nothing reaches the
+  user's state directory.
+
+Reproduce:
+
+```bash
+git worktree add --detach <throwaway> c9cf3b2
+CT=<throwaway> PY=<repo>/.venv/Scripts/python.exe PROBE_SCRATCH=<dir outside it> \
+  bash docs/evidence/rule-semantic-identity-2026-09-30/run_round2.sh
+git worktree remove --force <throwaway>
+```
+
+| Id | Question | Section |
+|---|---|---|
+| — | Is the rule directory byte-identical since contract 1.6 was recorded? | header lines |
+| P3a | Which edits move today's normalized digest | `### P3a` |
+| P3b | What title, description and R-010 edits do to findings today | `### P3b` |
+| P3c | Which per-requirement semantics digests move under O1 + O1b | `### P3c` |
+| C | The four-state comparison, seven scenarios, and the suite under it | `### C` |
+
+The complete output of one `run_round2.sh` execution on 2026-10-01, on the same
+machine and toolchain as round 1. Trailing whitespace is stripped; nothing else
+is edited.
+
+```text
+### HEAD c9cf3b2734fe3f7ae42df4c2e3131a6598e0d831
+dirty/untracked: 0
+rules tree de7a6b0e7c29aca72b896a4e1bd2746afb94ee88
+rules tree at 11e4163 de7a6b0e7c29aca72b896a4e1bd2746afb94ee88
+rules tree at 4e05c03 de7a6b0e7c29aca72b896a4e1bd2746afb94ee88
+rule_definitions_digest a0953845e0a2205a1513a506cb3211a157011b29f9f066dbbfc1aab02f6f32b6
+
+### P3a normalized digest under each edit (status quo)
+frozen legacy rule set v0.1 normalized_digest ecd1477878548dea29b4187761ecc42ef87df1a28fb1df1c4bb5ce1ec8df256b
+base normalized_digest c3be0db4aab74fc87bba53c8e4cf4842ff67a7cfef30fbfaf7aa86ba9d97e729
+base source_blob_sha256 ''
+  r002-datatype        SAME   c3be0db4aab74fc8
+  r001-cardinality     SAME   c3be0db4aab74fc8
+  r006-entity          SAME   c3be0db4aab74fc8
+  r010-pattern         SAME   c3be0db4aab74fc8
+  r005a-optional       SAME   c3be0db4aab74fc8
+  r005a-datatype       SAME   c3be0db4aab74fc8
+  r005a-instructions   SAME   c3be0db4aab74fc8
+  r005a-reformat       SAME   c3be0db4aab74fc8
+  version-2.3          moves  bff9fa452256fa04
+  r005a-title          moves  da63ff25600be14f
+  r005a-description    SAME   c3be0db4aab74fc8
+  r010-instructions    moves  7f93f38617a3d2f8
+  r010-applicability   SAME   c3be0db4aab74fc8
+
+### P3b what the display-text and R-010 edits do to findings (status quo)
+edit: r005a-title
+validation_run_id  epc-delivery-v2.2-71d28a7c8bddb4e7 -> epc-delivery-v2.2-d1e74c9be09109d5
+normalized_digest  c3be0db4aab74fc8 -> da63ff25600be14f
+findings 121 -> 121; slots in both 121; finding_key identical 0/121
+same slot, status changed: 0; status same, text changed: 0
+
+edit: r005a-description
+validation_run_id  epc-delivery-v2.2-71d28a7c8bddb4e7 -> epc-delivery-v2.2-71d28a7c8bddb4e7
+normalized_digest  c3be0db4aab74fc8 -> c3be0db4aab74fc8
+findings 121 -> 121; slots in both 121; finding_key identical 121/121
+same slot, status changed: 0; status same, text changed: 0
+
+edit: r005a-instructions
+validation_run_id  epc-delivery-v2.2-71d28a7c8bddb4e7 -> epc-delivery-v2.2-71d28a7c8bddb4e7
+normalized_digest  c3be0db4aab74fc8 -> c3be0db4aab74fc8
+findings 121 -> 121; slots in both 121; finding_key identical 121/121
+same slot, status changed: 0; status same, text changed: 0
+
+edit: r010-instructions
+validation_run_id  epc-delivery-v2.2-71d28a7c8bddb4e7 -> epc-delivery-v2.2-e5ffd9538c34e202
+normalized_digest  c3be0db4aab74fc8 -> 7f93f38617a3d2f8
+findings 121 -> 121; slots in both 121; finding_key identical 0/121
+same slot, status changed: 0; status same, text changed: 6
+
+edit: r010-applicability
+validation_run_id  epc-delivery-v2.2-71d28a7c8bddb4e7 -> epc-delivery-v2.2-71d28a7c8bddb4e7
+normalized_digest  c3be0db4aab74fc8 -> c3be0db4aab74fc8
+findings 121 -> 121; slots in both 121; finding_key identical 121/121
+same slot, status changed: 0; status same, text changed: 0
+
+### P3c which semantics digests move (O1 as P-3 ruled it: O1 + O1b)
+r005a-instructions   normalized SAME   same; semantics_digest moved on 0: []
+r010-instructions    normalized moves  same; semantics_digest moved on 1: ['R-010/shared-across-models']
+r005a-title          normalized moves  same; semantics_digest moved on 0: []
+r005a-description    normalized SAME   same; semantics_digest moved on 0: []
+r010-applicability   normalized moves  same; semantics_digest moved on 1: ['R-010/shared-across-models']
+r005a-reformat       normalized SAME   same; semantics_digest moved on 0: []
+r005a-datatype       normalized moves  same; semantics_digest moved on 2: ['R-005A/EPC_Delivery.AssetTag', 'R-005A/EPC_Delivery.SystemCode']
+r005a-optional       normalized moves  same; semantics_digest moved on 2: ['R-005A/EPC_Delivery.AssetTag', 'R-005A/EPC_Delivery.SystemCode']
+r002-datatype        normalized moves  same; semantics_digest moved on 1: ['R-002/Pset_WallCommon.IsExternal']
+
+### C the four-state comparison (O1 + O1b + C prototype)
+scenario: relax (edit r005a-optional)
+context is_current: True
+  ceiling-and-bulkhead-geometry #2 36ee62b8 hvac::38WbwIGD90nB_3T2BTU5Ed R-004A/IFCRELCONTAINEDINSPATIALSTRUCTURE: equivalent / finding-equivalent [key_changed=yes]
+  ceiling-and-bulkhead-geometry #2 4158b754 hvac::23uPJWDfXEcwHH3kdFgV9c R-004B/IFCRELCONTAINEDINSPATIALSTRUCTURE: equivalent / finding-equivalent [key_changed=yes]
+  ceiling-and-bulkhead-geometry #2 85502ee1 hvac::34Y6EIt3nDCAS1k$kPGOKm R-004B/IFCRELCONTAINEDINSPATIALSTRUCTURE: equivalent / finding-equivalent [key_changed=yes]
+  schedules-and-room-data-sheets #2 07c8194a hvac::34Y6EIt3nDCAS1k$kPGOKm R-005B/EPC_Delivery.AssetTag: equivalent / finding-equivalent [key_changed=yes]
+  schedules-and-room-data-sheets #2 6fe4194e hvac::34Y6EIt3nDCAS1k$kPGOKm R-005B/EPC_Delivery.SystemCode: equivalent / finding-equivalent [key_changed=yes]
+  schedules-and-room-data-sheets #2 8f2800a0 hvac::23uPJWDfXEcwHH3kdFgV9c R-005B/EPC_Delivery.AssetTag: equivalent / finding-equivalent [key_changed=yes]
+  schedules-and-room-data-sheets #2 bcfbee84 hvac::38WbwIGD90nB_3T2BTU5Ed R-005A/EPC_Delivery.AssetTag: changed / finding-changed [key_changed=yes; aspects=['requirement-semantics', 'finding-content']]
+  schedules-and-room-data-sheets #2 c8680857 hvac::23uPJWDfXEcwHH3kdFgV9c R-005B/EPC_Delivery.SystemCode: equivalent / finding-equivalent [key_changed=yes]
+  schedules-and-room-data-sheets #2 d19a95bc hvac::38WbwIGD90nB_3T2BTU5Ed R-005A/EPC_Delivery.SystemCode: changed / finding-changed [key_changed=yes; aspects=['requirement-semantics', 'finding-content']]
+totals: {'determination:equivalent': 6, 'finding:changed': 2, 'finding:equivalent': 7}
+any row still carries a boolean 'carried': False
+
+scenario: retype (edit r005a-datatype)
+context is_current: True
+  ceiling-and-bulkhead-geometry #2 36ee62b8 hvac::38WbwIGD90nB_3T2BTU5Ed R-004A/IFCRELCONTAINEDINSPATIALSTRUCTURE: equivalent / finding-equivalent [key_changed=yes]
+  ceiling-and-bulkhead-geometry #2 4158b754 hvac::23uPJWDfXEcwHH3kdFgV9c R-004B/IFCRELCONTAINEDINSPATIALSTRUCTURE: equivalent / finding-equivalent [key_changed=yes]
+  ceiling-and-bulkhead-geometry #2 85502ee1 hvac::34Y6EIt3nDCAS1k$kPGOKm R-004B/IFCRELCONTAINEDINSPATIALSTRUCTURE: equivalent / finding-equivalent [key_changed=yes]
+  schedules-and-room-data-sheets #2 07c8194a hvac::34Y6EIt3nDCAS1k$kPGOKm R-005B/EPC_Delivery.AssetTag: equivalent / finding-equivalent [key_changed=yes]
+  schedules-and-room-data-sheets #2 6fe4194e hvac::34Y6EIt3nDCAS1k$kPGOKm R-005B/EPC_Delivery.SystemCode: equivalent / finding-equivalent [key_changed=yes]
+  schedules-and-room-data-sheets #2 8f2800a0 hvac::23uPJWDfXEcwHH3kdFgV9c R-005B/EPC_Delivery.AssetTag: equivalent / finding-equivalent [key_changed=yes]
+  schedules-and-room-data-sheets #2 bcfbee84 hvac::38WbwIGD90nB_3T2BTU5Ed R-005A/EPC_Delivery.AssetTag: changed / finding-changed [key_changed=yes; aspects=['requirement-semantics']]
+  schedules-and-room-data-sheets #2 c8680857 hvac::23uPJWDfXEcwHH3kdFgV9c R-005B/EPC_Delivery.SystemCode: equivalent / finding-equivalent [key_changed=yes]
+  schedules-and-room-data-sheets #2 d19a95bc hvac::38WbwIGD90nB_3T2BTU5Ed R-005A/EPC_Delivery.SystemCode: changed / finding-changed [key_changed=yes; aspects=['requirement-semantics']]
+totals: {'determination:equivalent': 6, 'finding:changed': 2, 'finding:equivalent': 7}
+any row still carries a boolean 'carried': False
+
+scenario: unrelated (edit r002-datatype)
+context is_current: True
+  ceiling-and-bulkhead-geometry #2 36ee62b8 hvac::38WbwIGD90nB_3T2BTU5Ed R-004A/IFCRELCONTAINEDINSPATIALSTRUCTURE: equivalent / finding-equivalent [key_changed=yes]
+  ceiling-and-bulkhead-geometry #2 4158b754 hvac::23uPJWDfXEcwHH3kdFgV9c R-004B/IFCRELCONTAINEDINSPATIALSTRUCTURE: equivalent / finding-equivalent [key_changed=yes]
+  ceiling-and-bulkhead-geometry #2 85502ee1 hvac::34Y6EIt3nDCAS1k$kPGOKm R-004B/IFCRELCONTAINEDINSPATIALSTRUCTURE: equivalent / finding-equivalent [key_changed=yes]
+  schedules-and-room-data-sheets #2 07c8194a hvac::34Y6EIt3nDCAS1k$kPGOKm R-005B/EPC_Delivery.AssetTag: equivalent / finding-equivalent [key_changed=yes]
+  schedules-and-room-data-sheets #2 6fe4194e hvac::34Y6EIt3nDCAS1k$kPGOKm R-005B/EPC_Delivery.SystemCode: equivalent / finding-equivalent [key_changed=yes]
+  schedules-and-room-data-sheets #2 8f2800a0 hvac::23uPJWDfXEcwHH3kdFgV9c R-005B/EPC_Delivery.AssetTag: equivalent / finding-equivalent [key_changed=yes]
+  schedules-and-room-data-sheets #2 bcfbee84 hvac::38WbwIGD90nB_3T2BTU5Ed R-005A/EPC_Delivery.AssetTag: equivalent / finding-equivalent [key_changed=yes]
+  schedules-and-room-data-sheets #2 c8680857 hvac::23uPJWDfXEcwHH3kdFgV9c R-005B/EPC_Delivery.SystemCode: equivalent / finding-equivalent [key_changed=yes]
+  schedules-and-room-data-sheets #2 d19a95bc hvac::38WbwIGD90nB_3T2BTU5Ed R-005A/EPC_Delivery.SystemCode: equivalent / finding-equivalent [key_changed=yes]
+totals: {'determination:equivalent': 6, 'finding:equivalent': 9}
+any row still carries a boolean 'carried': False
+
+scenario: pre-1.7-record (edit r002-datatype)
+context is_current: True
+  ceiling-and-bulkhead-geometry #2 36ee62b8 hvac::38WbwIGD90nB_3T2BTU5Ed R-004A/IFCRELCONTAINEDINSPATIALSTRUCTURE: not-provable / sealed-citation-has-no-comparison-basis
+  ceiling-and-bulkhead-geometry #2 4158b754 hvac::23uPJWDfXEcwHH3kdFgV9c R-004B/IFCRELCONTAINEDINSPATIALSTRUCTURE: not-provable / sealed-citation-has-no-comparison-basis
+  ceiling-and-bulkhead-geometry #2 85502ee1 hvac::34Y6EIt3nDCAS1k$kPGOKm R-004B/IFCRELCONTAINEDINSPATIALSTRUCTURE: not-provable / sealed-citation-has-no-comparison-basis
+  schedules-and-room-data-sheets #2 07c8194a hvac::34Y6EIt3nDCAS1k$kPGOKm R-005B/EPC_Delivery.AssetTag: not-provable / sealed-citation-has-no-comparison-basis
+  schedules-and-room-data-sheets #2 6fe4194e hvac::34Y6EIt3nDCAS1k$kPGOKm R-005B/EPC_Delivery.SystemCode: not-provable / sealed-citation-has-no-comparison-basis
+  schedules-and-room-data-sheets #2 8f2800a0 hvac::23uPJWDfXEcwHH3kdFgV9c R-005B/EPC_Delivery.AssetTag: not-provable / sealed-citation-has-no-comparison-basis
+  schedules-and-room-data-sheets #2 bcfbee84 hvac::38WbwIGD90nB_3T2BTU5Ed R-005A/EPC_Delivery.AssetTag: not-provable / sealed-citation-has-no-comparison-basis
+  schedules-and-room-data-sheets #2 c8680857 hvac::23uPJWDfXEcwHH3kdFgV9c R-005B/EPC_Delivery.SystemCode: not-provable / sealed-citation-has-no-comparison-basis
+  schedules-and-room-data-sheets #2 d19a95bc hvac::38WbwIGD90nB_3T2BTU5Ed R-005A/EPC_Delivery.SystemCode: not-provable / sealed-citation-has-no-comparison-basis
+totals: {'determination:equivalent': 6, 'finding:not-provable': 9}
+any row still carries a boolean 'carried': False
+
+scenario: reissue
+context is_current: False
+  ceiling-and-bulkhead-geometry #2 36ee62b8 hvac::38WbwIGD90nB_3T2BTU5Ed R-004A/IFCRELCONTAINEDINSPATIALSTRUCTURE: changed / finding-changed [key_changed=yes; aspects=['model-version']]
+  ceiling-and-bulkhead-geometry #2 4158b754 hvac::23uPJWDfXEcwHH3kdFgV9c R-004B/IFCRELCONTAINEDINSPATIALSTRUCTURE: changed / finding-changed [key_changed=yes; aspects=['model-version']]
+  ceiling-and-bulkhead-geometry #2 85502ee1 hvac::34Y6EIt3nDCAS1k$kPGOKm R-004B/IFCRELCONTAINEDINSPATIALSTRUCTURE: changed / finding-changed [key_changed=yes; aspects=['model-version']]
+  schedules-and-room-data-sheets #2 07c8194a hvac::34Y6EIt3nDCAS1k$kPGOKm R-005B/EPC_Delivery.AssetTag: changed / finding-changed [key_changed=yes; aspects=['model-version']]
+  schedules-and-room-data-sheets #2 6fe4194e hvac::34Y6EIt3nDCAS1k$kPGOKm R-005B/EPC_Delivery.SystemCode: changed / finding-changed [key_changed=yes; aspects=['model-version']]
+  schedules-and-room-data-sheets #2 8f2800a0 hvac::23uPJWDfXEcwHH3kdFgV9c R-005B/EPC_Delivery.AssetTag: changed / finding-changed [key_changed=yes; aspects=['model-version']]
+  schedules-and-room-data-sheets #2 bcfbee84 hvac::38WbwIGD90nB_3T2BTU5Ed R-005A/EPC_Delivery.AssetTag: changed / finding-changed [key_changed=yes; aspects=['model-version']]
+  schedules-and-room-data-sheets #2 c8680857 hvac::23uPJWDfXEcwHH3kdFgV9c R-005B/EPC_Delivery.SystemCode: changed / finding-changed [key_changed=yes; aspects=['model-version']]
+  schedules-and-room-data-sheets #2 d19a95bc hvac::38WbwIGD90nB_3T2BTU5Ed R-005A/EPC_Delivery.SystemCode: changed / finding-changed [key_changed=yes; aspects=['model-version']]
+totals: {'determination:no-counterpart': 6, 'finding:changed': 9}
+any row still carries a boolean 'carried': False
+
+scenario: reissue-deleted
+context is_current: False
+  ceiling-and-bulkhead-geometry #2 36ee62b8 hvac::38WbwIGD90nB_3T2BTU5Ed R-004A/IFCRELCONTAINEDINSPATIALSTRUCTURE: not-provable / subject-not-present [cause=element-deleted-in-reissued-model]
+  ceiling-and-bulkhead-geometry #2 4158b754 hvac::23uPJWDfXEcwHH3kdFgV9c R-004B/IFCRELCONTAINEDINSPATIALSTRUCTURE: changed / finding-changed [key_changed=yes; aspects=['model-version']]
+  ceiling-and-bulkhead-geometry #2 85502ee1 hvac::34Y6EIt3nDCAS1k$kPGOKm R-004B/IFCRELCONTAINEDINSPATIALSTRUCTURE: changed / finding-changed [key_changed=yes; aspects=['model-version']]
+  schedules-and-room-data-sheets #2 07c8194a hvac::34Y6EIt3nDCAS1k$kPGOKm R-005B/EPC_Delivery.AssetTag: changed / finding-changed [key_changed=yes; aspects=['model-version']]
+  schedules-and-room-data-sheets #2 6fe4194e hvac::34Y6EIt3nDCAS1k$kPGOKm R-005B/EPC_Delivery.SystemCode: changed / finding-changed [key_changed=yes; aspects=['model-version']]
+  schedules-and-room-data-sheets #2 8f2800a0 hvac::23uPJWDfXEcwHH3kdFgV9c R-005B/EPC_Delivery.AssetTag: changed / finding-changed [key_changed=yes; aspects=['model-version']]
+  schedules-and-room-data-sheets #2 bcfbee84 hvac::38WbwIGD90nB_3T2BTU5Ed R-005A/EPC_Delivery.AssetTag: not-provable / subject-not-present [cause=element-deleted-in-reissued-model]
+  schedules-and-room-data-sheets #2 c8680857 hvac::23uPJWDfXEcwHH3kdFgV9c R-005B/EPC_Delivery.SystemCode: changed / finding-changed [key_changed=yes; aspects=['model-version']]
+  schedules-and-room-data-sheets #2 d19a95bc hvac::38WbwIGD90nB_3T2BTU5Ed R-005A/EPC_Delivery.SystemCode: not-provable / subject-not-present [cause=element-deleted-in-reissued-model]
+totals: {'determination:no-counterpart': 6, 'finding:changed': 6, 'finding:not-provable': 3}
+any row still carries a boolean 'carried': False
+
+scenario: ambiguous
+context is_current: True
+  ceiling-and-bulkhead-geometry #2 36ee62b8 hvac::38WbwIGD90nB_3T2BTU5Ed R-004A/IFCRELCONTAINEDINSPATIALSTRUCTURE: equivalent / finding-equivalent [key_changed=no]
+  ceiling-and-bulkhead-geometry #2 4158b754 hvac::23uPJWDfXEcwHH3kdFgV9c R-004B/IFCRELCONTAINEDINSPATIALSTRUCTURE: equivalent / finding-equivalent [key_changed=no]
+  ceiling-and-bulkhead-geometry #2 85502ee1 hvac::34Y6EIt3nDCAS1k$kPGOKm R-004B/IFCRELCONTAINEDINSPATIALSTRUCTURE: equivalent / finding-equivalent [key_changed=no]
+  schedules-and-room-data-sheets #2 07c8194a hvac::34Y6EIt3nDCAS1k$kPGOKm R-005B/EPC_Delivery.AssetTag: equivalent / finding-equivalent [key_changed=no]
+  schedules-and-room-data-sheets #2 6fe4194e hvac::34Y6EIt3nDCAS1k$kPGOKm R-005B/EPC_Delivery.SystemCode: equivalent / finding-equivalent [key_changed=no]
+  schedules-and-room-data-sheets #2 8f2800a0 hvac::23uPJWDfXEcwHH3kdFgV9c R-005B/EPC_Delivery.AssetTag: equivalent / finding-equivalent [key_changed=no]
+  schedules-and-room-data-sheets #2 bcfbee84 hvac::38WbwIGD90nB_3T2BTU5Ed R-005A/EPC_Delivery.AssetTag: not-provable / counterpart-not-unique [cause=bcfbee84-ce53-53e5-aea0-1ac4f91d965b,fixture-twin/bcfbee84-c]
+  schedules-and-room-data-sheets #2 c8680857 hvac::23uPJWDfXEcwHH3kdFgV9c R-005B/EPC_Delivery.SystemCode: equivalent / finding-equivalent [key_changed=no]
+  schedules-and-room-data-sheets #2 d19a95bc hvac::38WbwIGD90nB_3T2BTU5Ed R-005A/EPC_Delivery.SystemCode: equivalent / finding-equivalent [key_changed=no]
+totals: {'determination:equivalent': 6, 'finding:equivalent': 8, 'finding:not-provable': 1}
+any row still carries a boolean 'carried': False
+
+-- test suite under O1 + O1b + C (published tree regenerated)
+run exit=0
+11 failed, 902 passed, 4194 subtests passed in 84.81s (0:01:24)
+FAILED tests/test_contract_snapshot.py::test_verifying_the_shipped_snapshot_passes
+FAILED tests/test_purpose_authorisation.py::test_the_sealed_record_still_hashes_to_the_same_digest
+FAILED tests/test_purpose_recheck.py::test_a_determination_that_did_not_change_at_all_is_carried
+FAILED tests/test_purpose_recheck.py::test_the_repaired_findings_are_new_keys_and_the_old_ones_do_not_carry
+SUBFAILED tests/test_contract_snapshot.py::test_every_recorded_artifact_is_present_with_the_recorded_digest
+SUBFAILED tests/test_contract_snapshot.py::test_every_recorded_artifact_is_present_with_the_recorded_digest
+SUBFAILED tests/test_contract_snapshot.py::test_every_recorded_artifact_is_present_with_the_recorded_digest
+SUBFAILED tests/test_contract_snapshot.py::test_every_recorded_artifact_is_present_with_the_recorded_digest
+SUBFAILED tests/test_contract_snapshot.py::test_every_recorded_artifact_is_present_with_the_recorded_digest
+SUBFAILED tests/test_contract_snapshot.py::test_every_recorded_artifact_is_present_with_the_recorded_digest
+SUBFAILED tests/test_contract_snapshot.py::test_every_recorded_artifact_is_present_with_the_recorded_digest
+
+### END
+dirty/untracked: 0
+```
