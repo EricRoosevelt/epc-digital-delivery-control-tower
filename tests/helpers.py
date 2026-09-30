@@ -27,6 +27,7 @@ __all__ = [
     "shipped_reports_dir",
     "frozen_ruleset",
     "legacy_compat",
+    "outside_repository_directory",
     "shipped_run_config",
     "declared_rules_plus_one",
     "widened_ruleset_bundle",
@@ -45,6 +46,25 @@ def writable_test_directory(prefix: str):
     """
 
     path = PROJECT_ROOT / "tests" / f".{prefix}-{uuid.uuid4().hex}"
+    path.mkdir(mode=0o777)
+    try:
+        yield path
+    finally:
+        shutil.rmtree(path)
+
+
+@contextmanager
+def outside_repository_directory(prefix: str):
+    """A scratch directory that is not inside the repository's working tree.
+
+    For outputs that must never land in the checkout — the coverage record is
+    refused there. Made with ``mkdir`` under the system temporary directory
+    rather than with ``tempfile.mkdtemp``, for the ACL reason given above.
+    """
+
+    import tempfile
+
+    path = Path(tempfile.gettempdir()) / f"epc-ct-{prefix}-{uuid.uuid4().hex}"
     path.mkdir(mode=0o777)
     try:
         yield path

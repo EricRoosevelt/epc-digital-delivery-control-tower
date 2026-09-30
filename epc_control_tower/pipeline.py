@@ -23,6 +23,11 @@ from pathlib import Path
 from . import CONTRACT_VERSION
 from .bcf.schema import default_schema_dir
 from .config import ProjectManifest, RunConfig, load_project_manifests
+from .coverage import (
+    build_coverage_record,
+    rule_definitions_digest,
+    write_coverage_record,
+)
 from .domain import ProjectMilestone, RunBundle, RuleSet, ValidationRun
 from .exporters.legacy_bcf import BCF_FILENAME
 from .exporters.legacy_manifest import (
@@ -65,6 +70,11 @@ class PipelineResult:
     registry: Registry
     ingested: IngestResult
     ruleset: RuleSet
+    #: Digest of the rule facets the check stage evaluated, as declared — taken
+    #: just before and just after that stage, and ``None`` unless the two
+    #: agree. Only the coverage record reads it, to decide whether a predicate
+    #: can be derived; it is not part of the bundle or of any identity.
+    evaluated_rules_digest: str | None = None
 
 
 def _programmes(
@@ -159,6 +169,11 @@ def build_bundle(
         as_of=config.as_of,
     )
 
+    # The checkers read their rules for themselves during the stage, so the
+    # facets they evaluated are bracketed rather than captured: a digest taken
+    # on each side, kept only when the two agree. See `coverage` for why the
+    # rule set's normalized digest cannot do this.
+    rules_before = rule_definitions_digest(config.resolved_ruleset_path())
     checked = check(
         registry=registry,
         ruleset=ruleset,
@@ -170,6 +185,7 @@ def build_bundle(
         as_of=config.as_of,
         reports_dir=reports_dir,
     )
+    rules_after = rule_definitions_digest(config.resolved_ruleset_path())
     checked.raise_for_failures()
 
     grouped = group(
@@ -239,6 +255,7 @@ def build_bundle(
         registry=registry,
         ingested=ingested,
         ruleset=ruleset,
+        evaluated_rules_digest=rules_before if rules_before == rules_after else None,
     )
 
 
@@ -249,6 +266,9 @@ class RunResult:
     pipeline: PipelineResult
     export: ExportResult
     legacy_manifest_path: Path | None = None
+    #: Where this run's coverage record was kept, when one was asked for. Not
+    #: an artifact; see :mod:`.coverage`.
+    coverage_record_path: Path | None = None
 
 
 def _frozen_ruleset(config: RunConfig) -> RuleSet | None:
@@ -307,6 +327,7 @@ def execute(
     *,
     exporter_ids: Sequence[str] | None = None,
     registry: Registry | None = None,
+    coverage_root: Path | None = None,
 ) -> RunResult:
     """Validate, group, and write — the whole thing, in order.
 
@@ -314,10 +335,27 @@ def execute(
     parameter that could redirect one output but not another would make it
     possible to produce a half-redirected run, and a manifest describing it as
     if it were whole.
+
+    ``coverage_root`` is not such a parameter, because the coverage record is
+    not an output of the published run: no manifest describes it and nothing
+    published refers to it. When given, the record is kept there once the
+    validation is complete and before any exporter runs, so it exists for a
+    validation whose export then fails.
     """
 
     result = build_bundle(config, registry=registry)
     roots = output_roots(config)
+
+    coverage_record_path: Path | None = None
+    if coverage_root is not None:
+        coverage_record_path = write_coverage_record(
+            build_coverage_record(
+                result.bundle,
+                ruleset_path=config.resolved_ruleset_path(),
+                evaluated_rules_digest=result.evaluated_rules_digest,
+            ),
+            coverage_root,
+        )
 
     enabled = tuple(exporter_ids) if exporter_ids is not None else config.exporters
     exported = export(
@@ -375,4 +413,5 @@ def execute(
         pipeline=result,
         export=exported,
         legacy_manifest_path=legacy_manifest_path,
+        coverage_record_path=coverage_record_path,
     )
