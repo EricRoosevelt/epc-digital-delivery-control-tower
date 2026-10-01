@@ -1,4 +1,4 @@
-"""Exactly four scenarios, the mode each declares, and which entry each one calls.
+"""The scenarios, the mode each declares, and which entry each one calls.
 
 ======================  =======  ==============================================
 ``member-evidence``     fixture  one sealed record: members to path, readings,
@@ -8,28 +8,60 @@
 ``real-refusal``        real     the shipped manifest's actual refusal
 ``recheck-comparison``  fixture  the roof pair rechecked after a review re-held
                                  under the same model versions
+``recheck-…``           fixture  nine more rechecks of that first record, one
+                                 per entry of ``fixture.RECHECK_SCENARIOS``
 ======================  =======  ==============================================
 
 The first two are one record on purpose: the prototype reads two things out of a
 single sealed assessment, not two assessments that happen to agree.
 
+The nine further rechecks exist so the prototype can show every state a carry-over
+row can be in, and each side a re-issue can come from. What each is *given* is in
+the table below; what it then *records* is the Framework's answer, pinned by
+``tests/test_doctor_recheck_scenarios.py`` and decided nowhere in this package.
+
+==============================================  ================================
+``recheck-key-change-only``                     an unrelated rule edited; model
+                                                versions unchanged
+``recheck-semantics-changed``                   a cited rule's data type edited;
+                                                model versions unchanged
+``recheck-requirement-relaxed``                 a cited rule relaxed; model
+                                                versions unchanged
+``recheck-prior-without-basis``                 the prior record sealed without a
+                                                comparison basis; nothing else
+                                                moved
+``recheck-producing-reissued``                  the producing model reissued,
+                                                reading what it read
+``recheck-producing-reissued-content-changed``  the producing model reissued, its
+                                                R-005 failures now passing
+``recheck-consuming-reissued``                  the consuming model reissued
+``recheck-both-reissued``                       both reissued at once
+``recheck-member-gone``                         the producing model reissued with
+                                                the duct deleted
+==============================================  ================================
+
 The mode in :func:`scenario_index` is a **declaration**, made here so the
 prototype can label a scenario before running it. It does not set the envelope's
 ``mode`` — the entry each scenario calls does that — and the adapter's tests hold
 the two equal, so a declaration that drifted from its entry would be caught
-rather than shown.
+rather than shown. Every recheck scenario calls the fixture entry: the real entry
+has no recheck at all, because ``pcert-sample``'s own policy refuses the first
+assessment and there is no sealed real record to succeed.
 """
 
 from __future__ import annotations
 
+import functools
 from collections.abc import Callable
 from types import MappingProxyType
 
 from .envelope import FIXTURE, REAL
 from .fixture import (
     PROJECT_ID,
+    RECHECK_SCENARIOS,
     declared_request,
     first_record_envelope,
+    recheck_scenario_envelope,
     superseding_recheck_envelope,
 )
 from .real import real_envelope
@@ -50,6 +82,10 @@ SCENARIOS: MappingProxyType[str, tuple[str, Callable[[], dict[str, object]]]] = 
             "pair-verdicts": (FIXTURE, first_record_envelope),
             "real-refusal": (REAL, _real_refusal),
             "recheck-comparison": (FIXTURE, superseding_recheck_envelope),
+            **{
+                name: (FIXTURE, functools.partial(recheck_scenario_envelope, name))
+                for name in RECHECK_SCENARIOS
+            },
         }
     )
 )

@@ -1,8 +1,12 @@
 """The internal Doctor adapter hands over what the Framework produced, and no more.
 
-One claim is under test: for exactly four scenarios, the adapter returns what the
+One claim is under test: for its named scenarios, the adapter returns what the
 Framework already produced, unchanged, inside one fixed envelope, and adds no
-judgement of its own. Every test below compares the adapter against a result this
+judgement of its own. This module holds that for the four original scenarios
+record by record; ``test_doctor_recheck_scenarios`` holds it for the nine further
+rechecks, and everything below that iterates ``SCENARIOS`` — determinism, the
+audit of writes and of the network, the display elements, the index — covers all
+thirteen. Every test below compares the adapter against a result this
 module builds **independently**, by calling the Framework the way the existing
 assessment tests do, so an adapter that re-derived, reordered, trimmed or
 re-labelled anything would disagree with it.
@@ -292,11 +296,31 @@ class _AdapterCase(unittest.TestCase):
         cls.index = observed.index
 
 
-class ExactlyFourScenariosTests(_AdapterCase):
-    def test_the_scenarios_are_exactly_these_four(self):
+class TheScenariosAreExactlyTheseTests(_AdapterCase):
+    def test_the_scenarios_are_exactly_these(self):
         self.assertEqual(
             sorted(SCENARIOS),
-            ["member-evidence", "pair-verdicts", "real-refusal", "recheck-comparison"],
+            [
+                "member-evidence",
+                "pair-verdicts",
+                "real-refusal",
+                "recheck-both-reissued",
+                "recheck-comparison",
+                "recheck-consuming-reissued",
+                "recheck-key-change-only",
+                "recheck-member-gone",
+                "recheck-prior-without-basis",
+                "recheck-producing-reissued",
+                "recheck-producing-reissued-content-changed",
+                "recheck-requirement-relaxed",
+                "recheck-semantics-changed",
+            ],
+        )
+
+    def test_exactly_one_scenario_is_real(self):
+        self.assertEqual(
+            [name for name, (mode, _entry) in sorted(SCENARIOS.items()) if mode == "real"],
+            ["real-refusal"],
         )
 
     def test_an_unknown_scenario_is_not_answered_with_another_one(self):
