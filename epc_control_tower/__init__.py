@@ -17,6 +17,14 @@ __version__ = "1.0.0"
 # semantics). Bumping this is a deliberate, reviewable act: it requires a
 # CHANGELOG entry and an explicit characterization-snapshot refresh.
 #
+# 1.7 moves because the rule set's normalized digest could not see what a rule
+# checks. Each requirement now carries a semantics_digest of the predicate it
+# evaluates and the normalized digest covers it (derivation 2), so every
+# canonical key moves once. The rule set keeps its version, 2.2: the rules did
+# not change, and the snapshot guard accepts the new digest only through a
+# ledger entry naming the 1.6 baseline and evidence that the rules are the same.
+# The legacy contract does not move by a byte.
+#
 # 1.5 is Phase 4: a pure BCF exporter, the legacy one stripped of every rule
 # id and filename it knew, and issue metadata that comes from the rules
 # rather than from four constants in a module. The published archive is
@@ -50,4 +58,4 @@ __version__ = "1.0.0"
 # rows. The legacy contract did not move at all — the eight published CSV files
 # and the BCF archive are byte-identical, because the legacy writers publish
 # one named project.
-CONTRACT_VERSION = "1.6"
+CONTRACT_VERSION = "1.7"

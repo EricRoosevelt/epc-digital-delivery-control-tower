@@ -201,6 +201,7 @@ def _command_snapshot(arguments: argparse.Namespace) -> int:
     """Verify — or, with ceremony, refresh — the characterization snapshot."""
 
     from .snapshots import (
+        DERIVATION_LEDGER_NAME,
         changelog_mentions,
         compare_snapshots,
         load_snapshot,
@@ -234,12 +235,23 @@ def _command_snapshot(arguments: argparse.Namespace) -> int:
         # ceremony rather than getting one of its own: a refresh is already the
         # moment somebody says out loud what moved, and this is one more thing
         # that must be true when they do.
-        conflicts = ruleset_version_conflicts(root, current)
+        #
+        # Digests are only comparable under one derivation, so the guard also
+        # needs to know that the rules this run read are the rules a migration
+        # entry was written for: their declared-definitions digest, computed
+        # from the same rule source the run used.
+        from .coverage import rule_definitions_digest
+
+        conflicts = ruleset_version_conflicts(
+            root,
+            current,
+            rule_definitions_digest=rule_definitions_digest(config.ruleset_path),
+        )
         if conflicts:
             ruleset = current["ruleset"]
             print(
-                f"error: rule set {ruleset['id']} v{ruleset['version']} already "
-                f"names a different set of rules.",
+                f"error: rule set {ruleset['id']} v{ruleset['version']} cannot be "
+                "shown to name one set of rules.",
                 file=sys.stderr,
             )
             for conflict in conflicts:
@@ -248,7 +260,9 @@ def _command_snapshot(arguments: argparse.Namespace) -> int:
                 "\nA (ruleset_id, version) pair names one rule set. Raise the "
                 "version in the rule set's ruleset.toml: the major part when "
                 "the rule set can now reject something it used to accept, the "
-                "minor part otherwise.",
+                "minor part otherwise. A problem with a derivation or the "
+                f"ledger is answered in docs/contracts/{DERIVATION_LEDGER_NAME}, "
+                "never by editing a recorded snapshot.",
                 file=sys.stderr,
             )
             return 2

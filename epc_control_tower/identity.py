@@ -42,6 +42,8 @@ from .domain import ComponentFingerprint, Requirement
 
 __all__ = [
     "IDENTITY_NAMESPACE",
+    "KNOWN_NORMALIZED_DIGEST_DERIVATIONS",
+    "NORMALIZED_DIGEST_DERIVATION",
     "ComponentFingerprint",
     "build_artifact_bundle_id",
     "build_execution_id",
@@ -64,6 +66,23 @@ __all__ = [
 #: Project-private UUIDv5 namespace. Changing this value would re-key every
 #: published artifact, so it is fixed for the lifetime of the project.
 IDENTITY_NAMESPACE = uuid.UUID("7611c2a0-c29a-50fa-b00d-5058d25a41d3")
+
+#: Every derivation of :func:`build_ruleset_normalized_digest` this package can
+#: name, closed. Two digests are only comparable under the same derivation, so a
+#: snapshot guard that met a number outside this set would be comparing values
+#: whose meaning it does not know — and refuses instead (ADR 0005 §5.5.3).
+#:
+#: 1. Requirement metadata and labels only. Blind to every facet parameter: a
+#:    rule's applicability, ``dataType``, ``cardinality`` or ``name_pattern``
+#:    could change without moving it (ADR 0005 §1).
+#: 2. Derivation 1 plus each requirement's ``semantics_digest`` — the predicate
+#:    it actually evaluates — wherever that digest is non-empty (ADR 0005 §5.1).
+KNOWN_NORMALIZED_DIGEST_DERIVATIONS = frozenset({1, 2})
+
+#: The derivation :func:`build_ruleset_normalized_digest` computes. Recorded
+#: beside every digest a contract snapshot keeps, so the guard can tell which
+#: digests are comparable at all.
+NORMALIZED_DIGEST_DERIVATION = 2
 
 _SLUG = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]*$")
 
@@ -116,8 +135,20 @@ def build_ruleset_normalized_digest(
 
     Computed from the parsed requirements rather than from the source file, so
     it survives reformatting, re-indentation and a change of line endings, and
-    so rule sets loaded from different source formats stay comparable. Only a
-    change to the rules themselves moves it.
+    so rule sets loaded from different source formats stay comparable.
+
+    **What it covers is derivation 2** (:data:`NORMALIZED_DIGEST_DERIVATION`):
+    each requirement's metadata and labels, and — where it is non-empty — its
+    ``semantics_digest``, the predicate it evaluates. Derivation 1 had only the
+    first half, so a rule's applicability, ``dataType``, ``cardinality`` or
+    ``name_pattern`` could change without moving this digest, any
+    ``validation_run_id``, or any ``finding_key`` (ADR 0005 §1). Two things it
+    still does **not** say: that a requirement loaded from an ``.ids`` document
+    has not changed — its ``semantics_digest`` is empty, so for the frozen
+    legacy rule set this digest is exactly what derivation 1 gave — and anything
+    about presentation text a checker declares it does not evaluate, such as an
+    IDS requirement's ``instructions``. A title, a citation or an owner role is
+    still metadata here and still moves it.
 
     A delivery programme is deliberately *not* here. When each stage's
     information is due is a property of a project, not of the rule set, and it
@@ -153,6 +184,14 @@ def build_ruleset_normalized_digest(
                 "citation": requirement.citation,
                 "priority": requirement.priority,
                 "labels": list(requirement.labels),
+                # Only when there is one: an empty fingerprint is "not
+                # recorded", and leaving the key out is what keeps the frozen
+                # legacy rule set's digest byte-identical to derivation 1.
+                **(
+                    {"semantics_digest": requirement.semantics_digest}
+                    if requirement.semantics_digest
+                    else {}
+                ),
             }
             for requirement in sorted(
                 requirements, key=lambda item: (item.rule_id, item.requirement_id)

@@ -658,9 +658,16 @@ class OrdinaryAssessmentIsUnmovedTests(unittest.TestCase):
     and `pcert-sample` — whose own nine rows are untouched on disk — does not.
     """
 
-    #: `assess_purpose` over the fixture, all three activities, as of `669307e`.
+    #: `assess_purpose` over the fixture, all three activities. It was
+    #: `aef0bd06…` as of `669307e`, and it moved twice, deliberately, in the
+    #: ADR 0005 checkpoint: to `cc440ec2…` with contract 1.7, because the record
+    #: cites the `validation_run_id` and every `finding_key` and derivation 2 of
+    #: the normalized digest re-keys all of them; then to this value, because
+    #: every cited finding now carries its sealed comparison basis. Nothing this
+    #: class is about moved — the composition digest and every verdict below
+    #: are unchanged.
     BASE_ASSESSMENT_DIGEST = (
-        "aef0bd066b87a71521c7908cbebe7bc19283781420e6f7435af7fff0d1cb53de"
+        "6c524a06485f4f309a54ce76ce9ba39a628ba8f49d777d33c5e841fe348282e0"
     )
     #: `fixture_composed()`'s composition digest, as of `669307e`.
     BASE_COMPOSITION_DIGEST = (

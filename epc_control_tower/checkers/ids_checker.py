@@ -457,9 +457,14 @@ class IdsChecker:
     def config_sha256(self) -> str:
         """Digest of this checker's own configuration.
 
-        Not the hash of the IDS document: what the rules *say* already reaches
-        the validation identity through the rule set's normalized digest, and
-        counting it twice would only make the identity harder to reason about.
+        Not the hash of the IDS document. For a rule directory, what each rule
+        checks reaches the validation identity through the rule set's normalized
+        digest, which since contract 1.7 covers every requirement's
+        ``semantics_digest``; counting it twice would only make the identity
+        harder to reason about. For a rule set read from an ``.ids`` document —
+        today only the frozen legacy one — there is no ``semantics_digest``, and
+        that digest still covers only the requirement labels and metadata
+        (ADR 0005 §1, §5.1).
 
         The configuration is empty today, so this is a constant. The method
         earns its place anyway — the moment a knob is added that can change

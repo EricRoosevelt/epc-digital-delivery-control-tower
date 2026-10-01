@@ -67,7 +67,6 @@ from epc_control_tower.purpose import (
 )
 from epc_control_tower.purpose.assessment.facts import (
     ElementFact,
-    FindingFact,
     ModelVersionFact,
 )
 from helpers import PROJECT_ROOT, shipped_pipeline_result
@@ -511,19 +510,21 @@ def fixture_reissued_facts(
         if delete_chimney and finding.element_key == HVAC_CHIMNEY:
             continue
         findings.append(
-            FindingFact(
+            dataclasses.replace(
+                finding,
                 # A re-validated model produces new finding keys. Minting fixture
                 # ones rather than reusing the sealed record's is what makes the
                 # carry-over check say something: the prior citations really are
                 # gone, exactly as they would be after a real reissue.
-                finding_key=(
-                    f"{FIXTURE_MARKER}/finding/{finding.finding_key}"
-                    if repaired
-                    else finding.finding_key
+                finding_key=f"{FIXTURE_MARKER}/finding/{finding.finding_key}",
+                status="PASS",
+                # What a passing finding would say is not known here, so its
+                # content digest is minted too — marked, and never a SHA-256.
+                # The predicate and the checker are the sealed ones: only the
+                # model was fixed.
+                content_digest=(
+                    f"{FIXTURE_MARKER}/finding-content/{finding.finding_key}-pass"
                 ),
-                element_key=finding.element_key,
-                requirement_key=finding.requirement_key,
-                status="PASS" if repaired else finding.status,
             )
             if repaired
             else finding

@@ -1,5 +1,5 @@
 {
-  "artifact_bundle_id": "bundle-a1fd9360e12c71fa",
+  "artifact_bundle_id": "bundle-51f0dfee7933d72f",
   "artifacts": [
     {
       "bytes": 630,
@@ -41,25 +41,25 @@
       "bytes": 35514,
       "exporter": "csv",
       "path": "data/processed/canonical/findings.csv",
-      "sha256": "9eba66d2dd03472b5eba6ed47980420ddbf8a85ea769a33e56be1ba12278f169"
+      "sha256": "f1a582ca9502a8dc78be649f04c5348de25dcf03cdf2553c466aa6f4a51454d3"
     },
     {
       "bytes": 4649,
       "exporter": "csv",
       "path": "data/processed/canonical/issue_events.csv",
-      "sha256": "51f67d2691c2b749953e857785bfe9206ccd3a4251505ff7b672e4fd6d085755"
+      "sha256": "241507b89617b27cf25a24fc414afdc68e7c18d76529224ed18c1521faea6af6"
     },
     {
       "bytes": 1801,
       "exporter": "csv",
       "path": "data/processed/canonical/issue_findings.csv",
-      "sha256": "b4c0b6b70c79d12c53cadd3531351c626068e4ac3b22a5b16c403a7662445199"
+      "sha256": "76a743f867e842aa1a38e6f454b87835256529289ba6cbbf2dd809b043d52c3a"
     },
     {
       "bytes": 5575,
       "exporter": "csv",
       "path": "data/processed/canonical/issues.csv",
-      "sha256": "68934d33bda78da6557e5aaa4201f4b9d4b7e9076b463a5581ab371ed39f8187"
+      "sha256": "2622c5c5c82cde6c2e688d1fdd6deba125fe606df36d4f3234953c2cc3a5b6dc"
     },
     {
       "bytes": 2225,
@@ -80,16 +80,16 @@
       "sha256": "194e795a7a3d929ad51263a14970ec70e82f0016085ae6774811c1c7f4f8ab52"
     },
     {
-      "bytes": 4101,
+      "bytes": 5028,
       "exporter": "csv",
       "path": "data/processed/canonical/requirements.csv",
-      "sha256": "b4588e0672c8f36894ee41ee8df87b04bf855bd0248444fb625c843cbb57b830"
+      "sha256": "5a455f6b15bfc621698b2db4f6914a5e14a6565ba00fce28d5deefcf66b19f37"
     },
     {
-      "bytes": 124479,
+      "bytes": 125795,
       "exporter": "json",
       "path": "data/processed/canonical/run.json",
-      "sha256": "64e7095a2f74ba7a4c8af6347976e535b717f54ece82456ce86ad1741d8d0875"
+      "sha256": "09ae2325811ade29a78f4d9574ae3fdd15981da857d2e312a46aed4745520069"
     },
     {
       "bytes": 18462,
@@ -119,11 +119,11 @@
       "bytes": 55933,
       "exporter": "bcf",
       "path": "reports/bcf/issues.bcf",
-      "sha256": "488f13897594aaa96bc42978d85ccce29746e5f11505221583c33d8d9c67a604"
+      "sha256": "cec317cdeb3b5a1740eb14fa1de3d0e53450b4e7c665813bc2bafbb7ed0e47ac"
     }
   ],
   "as_of": "2026-08-13T00:00:00Z",
-  "contract_version": "1.6",
+  "contract_version": "1.7",
   "exporters": [
     {
       "config_sha256": "dab88db27e72d4044b3a235ba6c03f9b370b697fbc045447bfbbbbb97df9d705",
@@ -157,5 +157,5 @@
     "version": "1.0.0"
   },
   "programme_digest": "40d345ab9cb12b4fdc62505b1c6079025af27bec2738cadf6676c39ab5ce81f2",
-  "validation_run_id": "epc-delivery-v2.2-71d28a7c8bddb4e7"
+  "validation_run_id": "epc-delivery-v2.2-2697235be003292d"
 }

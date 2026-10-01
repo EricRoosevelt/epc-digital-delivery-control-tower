@@ -449,7 +449,10 @@
     determiner on a different basis, where **no verdict moves at all**, so nothing
     else in the record hinted that the document read was not the document sealed.
     The finding branch was already honest, because a `finding_key` is
-    content-derived and is checked against the facts. **D-13** closes it: §4.7.6
+    content-derived and is checked against the facts. *(Wrong — corrected
+    2026-10-01, ADR 0005; see the last entry of this history. The finding branch
+    had the same problem and was closed by contract 1.7's sealed comparison
+    basis.)* **D-13** closes it: §4.7.6
     fixes that every citation a sealed record makes of a determination carries a
     **content-derived digest** beside the reference, that **carried** may be
     recorded only when reference *and* digest both match, and that a matching
@@ -540,6 +543,30 @@
     checks, the two successor kinds, sealing, determinism, the identity
     boundary, §8's six counterfactuals and its seventh commitment, and every
     revision-history entry above.
+  - Corrected on 2026-10-01 by the ADR 0005 fix checkpoint (contract 1.7). Four
+    places said, or relied on, "a `finding_key` is derived from the finding's
+    own content": the D-13 entry above, §4.1's reason for citing
+    `ruleset_id` + `ruleset_version`, §4.7.2's "cites it too", and §4.7.6's
+    closing paragraph. **It never was.** A `finding_key` is derived from the
+    validation run, the model, the requirement and the element; through contract
+    1.6 the run identity held no facet parameter, so a rule could change what it
+    checks while every key stood still, and a successor then recorded a relaxed
+    rule's evidence as **carried** (ADR 0005 §2). What is true now, and built:
+    each cited finding is sealed with a comparison basis — coordinates, model
+    version, the requirement's `semantics_digest`, a content digest, the checker
+    fingerprint, `basis_version` — and each `evidence_carry_over` row, finding
+    or determination, records one of four states (`equivalent`, `changed`,
+    `no-counterpart`, `not-provable`) with a reason that belongs to it. The
+    boolean `carried` is removed; the determination reason `carried` is renamed
+    `determination-same-reference-same-content`; `finding-absent-from-the-cited-run`
+    is retired. A finding is matched by its coordinates on the same subject and
+    node, never by its key. **Unchanged:** §4.7.1's per-member correspondence,
+    every disposition, the condition statuses, the refusal tables, sealing, and
+    the identity boundary of §5 — the basis is record content and enters no
+    frozen identity. Across a model re-issue identical readings are `changed` /
+    `model-version`, never `equivalent`; whether the domain agrees is open for
+    BIM review (ADR 0005 §5.4, D-1–D-3). The original sentences stay as written
+    and are marked in place.
 - **Scope:** Checkpoint D runtime design only — the request boundary, the
   subscope construction rule ADR 0002 §3.2 explicitly left here, the
   assessment record shape, the runtime identity boundary, and the
@@ -1351,7 +1378,10 @@ assessment; none is written back into a Pack or an Overlay.
 - the cited `validation_run_id`, `ruleset_id`, and `ruleset_version` the
   bindings resolved against (§3.3 of ADR 0002: `requirement_key` proves the
   row was found, `ruleset_id` + `ruleset_version` prove it still means what
-  the binding assumed);
+  the binding assumed); *(corrected 2026-10-01, ADR 0005: the pair proves that
+  only where a semantic change is forced to move the version — the published
+  rule set, by the snapshot guard since contract 1.7 — and not for a workspace
+  copy of the rules; see ADR 0002 §3.3)*
 - the **successor reference**, when this record is one (§4.5): its `kind`
   (`recheck` or `authorisation`), and the prior record's `assessment_digest`,
   activity, and subscope ordinal it succeeds. Absent on an originating
@@ -2092,6 +2122,14 @@ activity is `UNKNOWN` again" into "the coordination-review determination this
 would have needed was made against a model version that no longer exists, so
 re-hold the review" — the same verdict, and a different instruction.
 
+> **Corrected (2026-10-01, ADR 0005).** The paragraph above compared findings by
+> `finding_key` and called that a comparison of content; it was not (see the
+> correction at the end of §4.7.6). **Built now:** every citation, finding or
+> determination, is recorded in exactly one of four states — `equivalent`,
+> `changed`, `no-counterpart`, `not-provable` — decided in a fixed order that
+> establishes whether a comparison can be made before making it, so "cannot
+> compare" is never recorded as "gone" (ADR 0005 §5.2).
+
 #### 4.7.3 "Reached READY" and "the recheck condition was met" are two sentences
 
 **They must be recorded separately, and this Pack carries a live case where they
@@ -2326,6 +2364,19 @@ honest.** A `finding_key` is *already* derived from the finding's own content
 question: a re-validated model produces different keys and the old ones do not
 survive it. The determination branch was the only one comparing names, and it is
 the only one this ruling changes.
+
+> **Corrected (2026-10-01, ADR 0005).** The paragraph above is wrong. A
+> `finding_key` is derived from the validation run, model, requirement and
+> element — not from what the finding says — and through contract 1.6 the run
+> identity could not see what a rule checked. Measured: relaxing R-005A kept both
+> duct keys while their findings went FAIL → PASS, and both were recorded as
+> carried (ADR 0005 §2.2); changing its `dataType` kept every finding byte and
+> changed the predicate (§2.3). **Built now (contract 1.7):** a sealed record
+> keeps a comparison basis beside each cited finding
+> (`record.CitedFinding`), and a successor compares it aspect by aspect —
+> `checker`, `finding-content`, `model-version`, `requirement-semantics` — with
+> the counterpart found at the same coordinates, never by key. The finding
+> branch had the determination branch's problem, and now has its fix.
 
 ---
 

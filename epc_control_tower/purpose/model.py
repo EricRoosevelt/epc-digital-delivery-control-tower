@@ -113,7 +113,11 @@ class PackBinding:
     The ruleset identity travels with the keys. A ``requirement_key`` proves
     the row was found; it does not prove the row still means what the Pack
     author assumed, because severity, owner role, applicability and checker can
-    all move underneath a key that never changes.
+    all move underneath a key that never changes. The version narrows that only
+    where a semantic edit is forced to raise it — the published rule set, by the
+    snapshot guard since contract 1.7 — and not in a workspace copy of the rules
+    (ADR 0005 §5.7, P-5). This binding does not pin the rule set's digest; the
+    schema is unchanged by the PM's ruling.
     """
 
     ruleset_id: str

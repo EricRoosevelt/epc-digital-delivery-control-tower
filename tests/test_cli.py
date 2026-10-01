@@ -57,7 +57,7 @@ class AdvertisedCommandsTests(unittest.TestCase):
         code, out, _ = run_cli("version")
         self.assertEqual(code, 0)
         self.assertIn("epc-control-tower", out)
-        self.assertIn("data contract 1.6", out)
+        self.assertIn("data contract 1.7", out)
 
     def test_components_lists_what_is_registered(self):
         code, out, _ = run_cli("components")
@@ -177,7 +177,7 @@ class RunManifestTests(unittest.TestCase):
             )
 
         self.assertEqual(code, 0, err)
-        self.assertEqual(manifest["contract_version"], "1.6")
+        self.assertEqual(manifest["contract_version"], "1.7")
         self.assertEqual(
             sorted(entry["id"] for entry in manifest["exporters"]),
             ["bcf", "csv", "json", "legacy-bcf", "legacy-pbip"],

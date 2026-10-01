@@ -22,13 +22,22 @@ same ``requirement_key`` values ``pcert-sample``'s Overlay binds to
 ``requirement_key`` alone sweep every one of them into a unit reading.
 ``status`` is carried whole, ``N/A`` included, because ``N/A`` is a third state
 and not a missing ``PASS``.
+
+A reading consults only those three. Beside them each finding carries a
+comparison basis — model, predicate digest, content digest, checker fingerprint —
+that a record seals and a recheck compares, and that no verdict is ever computed
+from (:class:`FindingFact`).
 """
 
 from __future__ import annotations
 
+import hashlib
 from collections.abc import Mapping
 from dataclasses import dataclass
 from types import MappingProxyType
+
+from ...determinism import canonical_json_document
+from ...domain import ComponentFingerprint
 
 __all__ = [
     "AssessmentFacts",
@@ -36,7 +45,12 @@ __all__ = [
     "FindingFact",
     "ModelVersionFact",
     "facts_from_bundle",
+    "finding_content_digest",
 ]
+
+#: Hashed into every ``content_digest``, so the shape of what is compared can
+#: change later without two shapes ever being read as one.
+CONTENT_BASIS = 1
 
 
 @dataclass(frozen=True, slots=True)
@@ -67,12 +81,33 @@ class FindingFact:
     whole of the relationship: the digest of an assessment may take a
     ``finding_key`` as input, and no ``finding_key`` ever takes an assessment
     value as one.
+
+    The last four fields are the **comparison basis** a record seals beside each
+    finding it cites (ADR 0005 §5.2.2), so that a later recheck can tell the same
+    evidence under another key from different evidence under any key. None of
+    them is a readiness signal, and none is a field ADR 0003 §3.4 withholds:
+
+    * ``model_key`` — which model version's finding this is;
+    * ``semantics_digest`` — the requirement's predicate (empty when the rule
+      set was read from an ``.ids`` document, and then not comparable);
+    * ``content_digest`` — what the finding *says*: its status, ``expected``,
+      ``actual`` and ``reason``;
+    * ``checker`` — the fingerprint of the checker that produced it, because a
+      checker version that moved changes behaviour no digest above can see.
+
+    They default to empty only so a hand-built fact stays constructible. A record
+    built from such a fact seals an empty basis, and a recheck reads an empty
+    basis as *not comparable*, never as equal.
     """
 
     finding_key: str
     element_key: str
     requirement_key: str
     status: str
+    model_key: str = ""
+    semantics_digest: str = ""
+    content_digest: str = ""
+    checker: ComponentFingerprint | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -159,6 +194,27 @@ class AssessmentFacts:
         )
 
 
+def finding_content_digest(finding) -> str:
+    """What one finding says, as a SHA-256: status, expected, actual, reason.
+
+    Not its key and not its coordinates: those are what a comparison matches on,
+    and the point of this digest is whether two findings that match also *say*
+    the same thing. It sees an output that moved when neither the predicate nor
+    the model did — a checker library upgrade, say — and it cannot see an
+    implementation that changed while its output happened not to (ADR 0005
+    §5.2.2, U2).
+    """
+
+    document = {
+        "basis": CONTENT_BASIS,
+        "status": str(finding.status),
+        "expected": finding.expected,
+        "actual": finding.actual,
+        "reason": finding.reason,
+    }
+    return hashlib.sha256(canonical_json_document(document).encode("utf-8")).hexdigest()
+
+
 def facts_from_bundle(bundle, project_id: str) -> AssessmentFacts:
     """Narrow one run's ``RunBundle`` to the facts an assessment may read.
 
@@ -168,17 +224,48 @@ def facts_from_bundle(bundle, project_id: str) -> AssessmentFacts:
     ``Requirement`` set is reduced to the keys a binding can name, because a
     binding cites a key and a verdict is never a function of what a rule author
     wrote *about* the rule.
+
+    From each requirement exactly two more things cross: its
+    ``semantics_digest`` and the fingerprint of the checker it routes to. Both
+    say *which check* produced a finding, never what the finding means for
+    readiness, and both are what a recheck needs to tell the same evidence under
+    a new key from different evidence (ADR 0005 §5.2.2). ``severity``,
+    ``owner_role``, ``stage``, ``priority`` and ``labels`` still do not cross.
     """
+
+    requirements = {item.requirement_key: item for item in bundle.ruleset.requirements}
+    checkers = {
+        fingerprint.component_id: fingerprint
+        for fingerprint in bundle.run.checker_fingerprints
+    }
+
+    def fact(finding) -> FindingFact:
+        requirement = requirements[finding.requirement_key]
+        checker = checkers.get(requirement.checker)
+        if checker is None:
+            # Unreachable for a bundle the pipeline built: every routed checker
+            # is fingerprinted into the validation identity. Refused rather than
+            # projected without one, because a missing fingerprint must never
+            # read as "the same checker".
+            raise ValueError(
+                f"{finding.finding_key}: checker {requirement.checker!r} has no "
+                "fingerprint in this run"
+            )
+        return FindingFact(
+            finding_key=finding.finding_key,
+            element_key=finding.element_key,
+            requirement_key=finding.requirement_key,
+            status=str(finding.status),
+            model_key=finding.model_key,
+            semantics_digest=requirement.semantics_digest,
+            content_digest=finding_content_digest(finding),
+            checker=checker,
+        )
 
     findings = tuple(
         sorted(
             (
-                FindingFact(
-                    finding_key=finding.finding_key,
-                    element_key=finding.element_key,
-                    requirement_key=finding.requirement_key,
-                    status=str(finding.status),
-                )
+                fact(finding)
                 for finding in bundle.findings
                 if finding.project_id == project_id
             ),

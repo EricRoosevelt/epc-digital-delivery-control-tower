@@ -216,11 +216,24 @@ class RuleSetVersionTests(unittest.TestCase):
     is already the moment somebody says what moved.
     """
 
+    @staticmethod
+    def shipped_rule_definitions_digest() -> str | None:
+        from epc_control_tower.coverage import rule_definitions_digest
+
+        return rule_definitions_digest(PROJECT_ROOT / "rules" / "epc-delivery")
+
     def test_the_shipped_rule_set_does_not_reuse_a_version(self):
         from epc_control_tower.snapshots import ruleset_version_conflicts
 
         recorded = load_snapshot(RECORDED)
-        self.assertEqual(ruleset_version_conflicts(PROJECT_ROOT, recorded), [])
+        self.assertEqual(
+            ruleset_version_conflicts(
+                PROJECT_ROOT,
+                recorded,
+                rule_definitions_digest=self.shipped_rule_definitions_digest(),
+            ),
+            [],
+        )
 
     def test_the_two_refreshes_that_should_not_have_happened_are_refused(self):
         # The counterfactual, pinned. Contracts 1.2 and 1.3 were both refreshed
@@ -236,9 +249,14 @@ class RuleSetVersionTests(unittest.TestCase):
             with self.subTest(contract=version):
                 recorded = load_snapshot(snapshot_path(PROJECT_ROOT, version))
                 self.assertEqual(recorded["ruleset"]["version"], "1.0")
-                conflicts = ruleset_version_conflicts(PROJECT_ROOT, recorded)
+                conflicts = ruleset_version_conflicts(
+                    PROJECT_ROOT,
+                    recorded,
+                    rule_definitions_digest=self.shipped_rule_definitions_digest(),
+                )
                 self.assertTrue(conflicts)
                 for conflict in conflicts:
+                    self.assertTrue(conflict.startswith("[version-reused] "), conflict)
                     self.assertIn("epc-delivery v1.0", conflict)
 
     def test_the_record_of_what_happened_is_left_alone(self):
