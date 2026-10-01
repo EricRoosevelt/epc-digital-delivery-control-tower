@@ -164,33 +164,93 @@
 | `unplaced` | 记录没有给出当前情况的事项 | 这些项现在是什么判断，记录没有说。构件不在了不代表问题已修复。 |
 | `none` | 记录没有给出下一步的事项 | 记录没有为这些项给出下一步。这不代表整个交接不用复核。 |
 
-**判断词（词在前，说明在旁，按检查清单文档的定义）**
+出处缩写：**B§1** = `interdisciplinary-coordination-readiness-mep-to-architecture.md` 第 1 节（Checkpoint B）；
+**Pack** = `purpose-packs/interdisciplinary-coordination-readiness/pack.toml`。下列中文都是本界面写的说明，
+代码留在旁边；它们重述原文，不增加原文没有的结论。
 
-| 记录里的词 | 旁边的说明 |
+**判断词（词在前，说明在旁）** —— 出处 B§1 “The four verdicts, defined once”。判断说的是接收方的一项工作
+能否开始，不是某项检查是否通过。
+
+| 记录里的词 | 旁边的说明 | 原文 |
+| --- | --- | --- |
+| `READY` | 必要的证据齐全且满足验收条件，没有未解决的阻碍，也没有证据缺口：在本次评估范围内，这项工作可以开始 | "Every piece of necessary evidence is present and satisfies the applicable acceptance conditions, and there is no unresolved blocker and no evidence gap. The activity can start, within the assessed scope." |
+| `BLOCKED` | 有一项已知未满足的要求，阻止这项工作 | "A known unmet requirement prevents the activity." |
+| `UNKNOWN` | 回答这个问题所需的证据没有产生，这项工作能否开始无法决定：既不能放行，也不能拒绝 | "An evidence gap makes the activity undecidable — the evidence needed to answer the question was never produced, so neither release nor refusal can be justified." |
+
+每页另有一句：“每个判断只针对接收方的一项工作、本次评估范围内的这一项，以及所列的模型版本；它不是‘模型好不好’的总评，
+也不是‘某项检查通过了’。”（B§1：“Each is a statement about one activity, in an assessed scope, against a named
+model version”；“A single ‘is the MEP model good?’ verdict would be useless here”。）
+
+**判断旁并置的事实**：记录的旧证据行里同一组有 `requirement-semantics` 变化时，判断词下方写
+“记录同时显示：和这一项放在一起评估的旧证据里，有 N 条的检查要求变了；记录不说明是放宽还是收紧。读这个判断时要一并看”。
+N 是记录里的行数；界面不由此下结论。
+
+**接收方的哪项工作（原标签“检查内容”已撤）** —— 名称依 Pack `activities[].label`，说明依 B§1
+“What Architecture does next with it”。
+
+| 记录里的代码 | 名称 | 说明 | 原文 |
+| --- | --- | --- | --- |
+| `builders-work-openings` | 土建预留开洞 | 要知道交出方的构件在哪里穿过墙、楼板和屋顶，才能在这些构件上开洞。 | "Builder's-work openings"；"needs to know where MEP penetrates architectural fabric, so openings can be cut in walls, floors and roof" |
+| `ceiling-and-bulkhead-geometry` | 吊顶反向图与包封布置 | 要知道交出方的设备在哪一层、在什么位置，才能围着它画吊顶分区和包封。 | "Reflected ceiling and bulkhead layout"；"needs to know where MEP equipment physically is, in which storey, so ceiling zones and bulkheads can be drawn around it" |
+| `schedules-and-room-data-sheets` | 房间数据表与设备明细表 | 要每件设备都带有项目的资产标识，明细表才能按它编排。 | "Room data sheets and equipment schedules"；"needs each piece of equipment to carry the project's asset identity, so a schedule can be keyed to it" |
+
+Pack 在界面上叫“交接判断规则”（原“检查清单”已撤）：Pack 自述 "states a reusable question: which production
+activities a handover is deciding about, what evidence each needs, and how those evidence outcomes reach a verdict"。
+
+**得出这个判断的读数** —— 记录的 `current_leaf_outcomes`，按它所在路径终点的证据要求查表；
+出处 Pack `evidence_requirements[]` 的 `answers` / `acceptance_condition` / `outcomes`。
+
+| 证据要求 / 读数 | 本界面的中文 | 原文依据 |
+| --- | --- | --- |
+| `asset-identity/satisfied` | 适用于它的项目资产标识要求评为通过，并且它确实被评估到 | "every element … that a bound requirement_key applies to evaluates PASS, and every such element is covered by an evaluation at all" |
+| `asset-identity/unmet` | 项目资产标识的要求没有满足 | 同上（未满足） |
+| `asset-identity/not-yet-evaluated` | 项目资产标识还没有评估到它 | "an element with no finding under the binding is not covered, and not-covered is never read as satisfied" |
+| `in-model-position/satisfied` | 已归属到接收方模型里也有的楼层 | "each MEP element in the assessed scope is assigned to a storey Architecture also models" |
+| `in-model-position/unmet` | 没有归属到楼层 | 同上（未满足） |
+| `in-model-position/not-yet-evaluated` | 楼层归属还没有评估到它 | 同上（未覆盖） |
+| `cross-model-alignment/confirmed` | 已有记录确认两侧模型对齐到共同的基准（按项目接受的方法，针对所列模型版本） | "a recorded alignment confirmation exists for the named model versions, produced by a method the project's Overlay accepts, and it reports the models aligned"；"sit on a common, agreed datum" |
+| `cross-model-alignment/misaligned` | 对齐确认的结果是两侧模型没有对齐 | 同上 |
+| `cross-model-alignment/not-yet-confirmed` | 还没有对齐确认 | 同上 |
+| `penetration-determination/no-penetration` | 已有协调评审判定：它不穿过接收方模型里的任何构件。不穿过就不需要开洞，所以这条路径上开洞情况没有被评估——这不是“开洞没问题” | "a recorded coordination-review determination … naming no penetration"；决策树注释 "an element that penetrates nothing needs no opening, so opening-status is structurally ruled out along this path" |
+| `penetration-determination/penetration-confirmed` | 已有协调评审判定：它穿过接收方模型里的构件 | "naming every architectural element the penetrating element passes through, each as an element_key of the consuming model version" |
+| `penetration-determination/not-yet-determined` | 还没有协调评审判定它是否穿过接收方模型里的构件 | 同上 |
+| `opening-status/cross-referenced` | 这一对：开洞已建在被穿过的构件上，并且有一条可核查的关联指回这个穿过它的构件 | "for the pair, the opening is modelled in the penetrated architectural element and a recorded cross-reference to this penetrating element exists" |
+| `opening-status/modelled-not-cross-referenced` | 这一对：开洞已建在被穿过的构件上，但没有可核查的关联指回这个穿过它的构件 | 同上 |
+| `opening-status/not-modelled` | 这一对：被穿过的构件上没有建出开洞 | 同上 |
+| `opening-status/not-yet-determined` | 这一对：开洞情况的评审还没有完成 | 同上 |
+
+**问题类型（Pack 的十个 `resolution_kind`，全部有说明）** —— 出处 Pack `resolution_routes[]`。
+UNKNOWN 的五个都以“不是模型缺陷”开头，与 Pack 的 `next_action` 开头 "Not a model defect" 一致。
+
+| 记录里的代码 | 本界面的中文 | 原文依据 |
+| --- | --- | --- |
+| `missing-project-asset-identity` | 缺少项目要求的资产标识 | "populate or correct the project-required asset-identity values" |
+| `asset-identity-not-evaluated` | 不是模型缺陷：资产标识的评估没有覆盖到它 | "The gap is missing coverage of the evaluation itself, not a known failure in the model." |
+| `mep-element-not-spatially-assigned` | 它没有楼层归属 | "host the element to its correct level and space … avoiding unhosted or unlevelled MEP components"；证据要求 "assigned to a storey" |
+| `in-model-position-not-evaluated` | 不是模型缺陷：楼层归属的评估没有覆盖到它 | "run the in-model-position evaluation over the full assessed scope; where a specific element still produces no finding at all …" |
+| `cross-model-misalignment` | 两侧模型没有对齐到共同的基准 | "re-acquire the project's shared coordination datum" |
+| `cross-model-alignment-not-confirmed` | 不是模型缺陷：还没有人确认两侧模型对齐到共同的基准 | "The gap is that no confirmation has been produced yet, not a known misalignment." |
+| `penetration-not-determined` | 不是模型缺陷：还没有协调评审判定它是否穿过接收方模型里的构件 | "The gap is that the determination has not been made yet, not a known defect." |
+| `opening-not-verifiably-linked` | 开洞已建，但没有可核查的关联指回穿过它的这个构件 | "add or correct the cross-reference from the modelled architectural opening back to the penetrating MEP element" |
+| `missing-corresponding-opening` | 它穿过的构件上没有建出对应的开洞 | "model the opening in the architectural model … in the architectural element this penetration passes through" |
+| `opening-status-not-determined` | 不是模型缺陷：开洞情况的评审还没有完成 | "The gap is that this review has not been completed yet, not a known missing opening." |
+
+**对这项工作的后果** —— 出处 Pack `resolution_routes[].consequence_kinds`。
+
+| 记录里的代码 | 本界面的中文 |
 | --- | --- |
-| `READY` | 证据齐全，且满足要求 |
-| `BLOCKED` | 有已知未满足的要求 |
-| `UNKNOWN` | 缺少证据，无法判断 |
+| `work-cannot-start` | 这项工作不能开始 |
+| `work-suspended` | 这项工作暂停 |
+| `rework-risk` | 有返工风险 |
+| `re-identification-and-reissue-risk` | 有重新标识并重新发布的风险 |
+
+**复检条件的标签**：`recheck_condition` 写作“复检要显示什么，这一项才算结束”。它说的是结束这一项的条件
+（Pack 各行如 "The opening-status evaluation is re-run and reports … cross-referenced"），不是发起复检的前提。
 
 **构件**：只用界面拿到的五个字段。名称为空写“模型中没有填写名称”；楼层为空写“模型中没有楼层归属”；
 专业一律写“记录未提供专业信息；本界面不从模型标识推断专业”；所属模型旁写“这是模型标识，不是专业声明”，
 并写它是“本次交接中交出方的模型”或“接收方的模型”（取自记录的模型版本比较，是交接角色，不是专业）。
-
-**本界面的中文说明（记录里是代码和英文句子，代码留在旁边；待 BIM 领域复核）**
-
-| 记录里的代码 | 本界面的中文 |
-| --- | --- |
-| `builders-work-openings` | 预留开洞 |
-| `ceiling-and-bulkhead-geometry` | 吊顶与包封几何 |
-| `schedules-and-room-data-sheets` | 明细表与房间数据表 |
-| `penetration-not-determined` | 还没有人判定它是否穿过别的构件 |
-| `missing-corresponding-opening` | 它穿过的构件上没有建出对应的开洞 |
-| `opening-not-verifiably-linked` | 有开洞，但无法核实它与这处穿越对应 |
-| `in-model-position-not-evaluated` | 它在模型中的位置还没有被检查到 |
-| `mep-element-not-spatially-assigned` | 它在模型中没有空间归属 |
-| `asset-identity-not-evaluated` | 它的资产标识还没有被检查到 |
-| `missing-project-asset-identity` | 缺少项目要求的资产标识 |
-| `IfcAirTerminal` / `IfcChimney` / `IfcDuctSegment` / `IfcRoof` / `IfcSlab` / `IfcWall` | 风口 / 烟囱 / 风管段 / 屋顶 / 楼板 / 墙 |
+IFC 类别：`IfcAirTerminal` 风口、`IfcChimney` 烟囱、`IfcDuctSegment` 风管段、`IfcRoof` 屋顶、`IfcSlab` 楼板、`IfcWall` 墙。
 
 **检查尝试没有开始**：拒绝码 `team-mapping-decision-basis-illustrative` 写作
 “项目条件未满足：处理团队的登记只是示意值”。程序故障是另一屏，写“这是程序自身的问题，
