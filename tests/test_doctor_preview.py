@@ -114,7 +114,20 @@ class PassThroughTests(unittest.TestCase):
             real = json.loads(_get(f"{base}/api/runs?mode=real")[2])["runs"]
         self.assertEqual(
             [run["run_id"] for run in fixture],
-            ["member-evidence", "pair-verdicts", "recheck-comparison"],
+            [
+                "member-evidence",
+                "pair-verdicts",
+                "recheck-both-reissued",
+                "recheck-comparison",
+                "recheck-consuming-reissued",
+                "recheck-key-change-only",
+                "recheck-member-gone",
+                "recheck-prior-without-basis",
+                "recheck-producing-reissued",
+                "recheck-producing-reissued-content-changed",
+                "recheck-requirement-relaxed",
+                "recheck-semantics-changed",
+            ],
         )
         self.assertEqual([run["run_id"] for run in real], ["real-refusal"])
 

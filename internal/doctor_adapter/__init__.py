@@ -1,6 +1,6 @@
 """A read-only internal adapter between the Framework and the BIM Doctor prototype.
 
-It hands over, for exactly four scenarios, what the Framework has already
+It hands over, for a fixed set of named scenarios, what the Framework has already
 produced — unchanged, inside one fixed envelope — and adds no judgement of its
 own. No verdict, disposition, condition status or coverage reading is made here;
 every one of them is whatever :func:`~epc_control_tower.purpose.assess_purpose`
@@ -31,9 +31,10 @@ machine contract either; the Doctor prototype is its only consumer.
 
 **Transport** is a function call, or ``python -m internal.doctor_adapter`` printing
 UTF-8 JSON on standard output: ``--index`` for ``[{"name", "mode"}]``, or a
-scenario name for its envelope. Nothing is written inside this checkout: the
-validation run the facts come from is directed at a scratch directory outside it,
-and removed afterwards.
+scenario name for its envelope. Nothing is written inside this checkout: every
+validation run the facts come from — the shipped rules, and for three recheck
+scenarios a scratch copy of them with one edit applied — is directed at a scratch
+directory outside it, and removed afterwards. ``rules/`` is never edited.
 
 **Network.** The adapter adds no network egress of its own: it opens no socket,
 runs no server, and imports no network module. Neither does the validation it

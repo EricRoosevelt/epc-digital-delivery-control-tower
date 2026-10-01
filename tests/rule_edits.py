@@ -20,7 +20,7 @@ from pathlib import Path
 
 from helpers import PROJECT_ROOT, shipped_run_config
 
-__all__ = ["EDITS", "edited_rules", "edited_run"]
+__all__ = ["EDITS", "apply_edit", "edited_rules", "edited_run"]
 
 RULES = PROJECT_ROOT / "rules" / "epc-delivery"
 
@@ -104,7 +104,7 @@ EDITS: dict[str, list[tuple[str, str, str, int]]] = {
 }
 
 
-def _apply(rules: Path, name: str) -> None:
+def apply_edit(rules: Path, name: str) -> None:
     """Apply one edit, whatever line endings the checkout gave the rule files.
 
     ``*.toml`` has no explicit ``eol`` in ``.gitattributes``, so a Windows
@@ -159,7 +159,7 @@ def edited_rules(*names: str, line_ending: str | None = None):
     rules = _scratch_rules("edited-rules", line_ending)
     try:
         for name in names:
-            _apply(rules, name)
+            apply_edit(rules, name)
         yield rules
     finally:
         shutil.rmtree(rules.parents[1])
@@ -178,7 +178,7 @@ def edited_run(*names: str):
     rules = _scratch_rules("edited-run")
     atexit.register(shutil.rmtree, rules.parents[1], True)
     for name in names:
-        _apply(rules, name)
+        apply_edit(rules, name)
     scratch = rules.parents[1]
     config = dataclasses.replace(
         shipped_run_config(),
