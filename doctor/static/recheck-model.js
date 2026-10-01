@@ -351,6 +351,20 @@ export function handoverSide(comparison, modelKey) {
   return typeof modelKey === "string" && sides.length === 1 ? sides[0] : null;
 }
 
+/** The sealed group a first-check item belongs to, or -1.
+ *
+ * Matched on the two things the recheck record itself carries for each sealed
+ * group: the activity it was under and its group number in the sealed record.
+ */
+export function sealedGroupIndex(model, activity, ordinal) {
+  return model.subscopes.findIndex(
+    (subscope) =>
+      carries(subscope.outcome, "activity_ref") &&
+      subscope.outcome.activity_ref.endsWith(`::${activity}`) &&
+      subscope.outcome.subscope_ordinal === ordinal,
+  );
+}
+
 function conditionModel(outcome) {
   if (!carries(outcome, "condition_status")) {
     return { code: null, known: false, text: NOT_CARRIED, plain: NOT_CARRIED };

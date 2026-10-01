@@ -8,6 +8,7 @@
 // Routes are #/<mode>/<run_id>/<screen>/…, so a reload or a shared link asks the
 // adapter for the same run again rather than keeping a copy of any result.
 // One recheck item is #/<mode>/<run_id>/recheck/<subscope index>/<member index>.
+// One first-check item is #/<mode>/<run_id>/item/<activity index>/<group>/<member index>.
 
 import { h, note } from "./dom.js";
 import { renderContext, screens } from "./screens.js";
@@ -148,7 +149,7 @@ async function render() {
       // the record's own context, which stays one link away.
       const wanted =
         screen ||
-        (outcome !== "record" ? "refusal" : state.envelope.record.successor ? "recheck" : "record");
+        (outcome !== "record" ? "refusal" : state.envelope.record.successor ? "recheck" : "first");
       if (wanted === "refusal" ? outcome !== "refusal" : outcome !== "record") {
         go(mode, runId);
         return;
@@ -174,10 +175,19 @@ async function render() {
         case "member":
           content = screens.member(state, Number(rest[0]), Number(rest[1]), Number(rest[2]));
           break;
+        case "first":
+          content = screens.first(state);
+          break;
+        case "item":
+          content = screens.firstItem(state, Number(rest[0]), Number(rest[1]), Number(rest[2]));
+          break;
         case "recheck":
-          content = rest.length
-            ? screens.recheckItem(state, Number(rest[0]), Number(rest[1]))
-            : screens.recheck(state);
+          // …/recheck/of/<activity>/<group>/<member> arrives from a first-check item.
+          content = !rest.length
+            ? screens.recheck(state)
+            : rest[0] === "of"
+              ? screens.recheckItemOf(state, rest[1], Number(rest[2]), Number(rest[3]))
+              : screens.recheckItem(state, Number(rest[0]), Number(rest[1]));
           break;
         case "refusal":
           content = screens.refusal(state);

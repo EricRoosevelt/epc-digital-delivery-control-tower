@@ -13,7 +13,7 @@ export const MODE_LABELS = {
 //: The adapter names its scenarios; these are this preview's words for them.
 //: An unlisted name is shown as the adapter gave it.
 export const RUN_LABELS = {
-  "member-evidence": "一份检查记录：构件与证据（模拟示例）",
+  "member-evidence": "一次首次检查：交了模型，发现这些事项",
   "pair-verdicts": "同一份检查记录：成对构件的判断（模拟示例）",
   // One example is carried end to end in this revision and has a name that says
   // what it shows; its name states only what its record holds (no model was
@@ -34,19 +34,36 @@ export const RUN_LABELS = {
   "real-refusal": "对随附样例项目的一次检查尝试",
 };
 
-// The example directory. `question` is what a manager would open the example to
-// find out; `given` is what the example was handed, written by whoever built the
-// example. Neither is something a run derived, so both are shown in the
-// directory only, under EXAMPLE_NOTE, and never on a result page.
+// The example directory, in the order a manager should meet the examples: an
+// ordinary first check, then a recheck of the same record. `question` is what a
+// manager would open the example to find out; `given` is what the example was
+// handed, written by whoever built the example. Neither is something a run
+// derived, so both are shown in the directory only, under EXAMPLE_NOTE, and
+// never on a result page.
 //
 // The adapter's `scenario_index()` returns a name and a mode and nothing else,
 // so these sentences are this preview's transcription of the adapter's own
 // description of the scenario. They belong in the adapter's index.
 export const EXAMPLES = {
+  "member-evidence": {
+    step: "第一步",
+    question: "交出方交了模型：有哪些事项要处理，各由谁处理，每一项要做什么？",
+    given:
+      "这个示例被给了：随附样例项目的两份模型；处理团队的安排，以及人工判定" +
+      "（是否穿过、洞口情况、两侧模型是否对齐），由示例设定。",
+  },
   "recheck-requirement-relaxed": {
-    question: "两侧模型都没有重新发布，复检后却有判断变了：哪些事项仍需处理，下一步是什么？",
+    step: "第二步",
+    question: "同一份记录复检之后：两侧模型都没有重新发布，却有判断变了。变的是哪一项，为什么？",
     given: "这个示例被给了：一条被引用的检查要求放宽了；交出方和接收方的模型版本都没有变。",
   },
+};
+
+// Which example rechecks the record of which. A statement about two adapter
+// scenarios that the page cannot check from one envelope; a test holds it
+// against the adapter (the recheck's prior digest is the first record's).
+export const FOLLOW_UP = {
+  "member-evidence": "recheck-requirement-relaxed",
 };
 
 export const EXAMPLE_NOTE =
@@ -64,8 +81,8 @@ export const HOME = {
   example: {
     title: "看一个模拟示例",
     body:
-      "从一份示例复检记录出发，找到待处理事项，看清涉及的构件、依据和下一步。" +
-      "示例里的项目设定与人工判定是模拟的，页面上逐条标明。",
+      "从一次首次检查出发：找到需要处理的事项，看清涉及的构件、要做什么、由谁处理、" +
+      "完成后拿什么复检；然后再看同一事项复检后的变化。示例里模拟的内容，页面上逐处标明。",
     action: "选择模拟示例",
   },
   attempt: {
@@ -277,7 +294,7 @@ export const CARRY_OVER_REASONS = {
   "no-counterpart-in-the-cited-run":
     "本次记录依据的验证运行里，这个构件在这条要求下没有检查结果。",
   "counterpart-not-cited-under-the-current-binding":
-    "验证运行里有对应的检查结果，但本次记录的读数没有引用它。",
+    "验证运行里有对应的检查结果，但本次记录没有引用它。",
   "sealed-citation-has-no-comparison-basis":
     "原记录封存时没有保存这条引用的比较依据（旧版本的记录）。本页不会用当前规则去补造，" +
     "所以只能如实显示无法比较。",
@@ -427,36 +444,157 @@ export const VERDICT_GROUPS = {
 
 // Which items the record gives a next step for. The split is the presence of a
 // next action on the place the record itself named for the item — nothing is
-// read off the verdict word, and no group is an overall status.
+// read off the verdict word, and no group is an overall status. The unit is the
+// item: an element, or a pair, under one activity of the receiving side.
 export const ACTION_GROUPS = {
   open: {
-    label: "待处理事项",
-    summary: "记录给出了下一步，需要处理",
-    none: "记录没有为任何一项给出下一步。",
-    note: "每一项的页面写明涉及的构件、依据和记录给出的下一步。",
+    label: "需要处理的事项",
+    summary: "记录给出了处理动作",
+    none: "记录没有为任何一个事项给出处理动作。",
+    note: "每个事项的页面写明涉及的构件、要做什么、由谁处理、完成后拿什么复检。",
   },
   unplaced: {
-    label: "记录没有给出当前情况的事项",
-    summary: "记录没有给出当前情况",
-    none: "每一项记录都给出了当前情况。",
-    note: "这些项现在是什么判断，记录没有说。构件不在了不代表问题已修复。",
+    label: "需要人工核对的事项",
+    summary: "记录没有给出当前情况，需要人工核对",
+    none: "每个事项记录都给出了当前情况。",
+    note: "这些事项现在是什么判断，记录没有说。构件不在了不代表问题已修复。",
   },
   none: {
-    label: "记录没有给出下一步的事项",
-    summary: "记录没有给出下一步",
-    none: "记录为每一项都给出了下一步，或没有给出当前情况。",
-    note: "记录没有为这些项给出下一步。这不代表整个交接不用复核。",
+    label: "记录没有给出后续处理动作的事项",
+    summary: "记录没有给出后续处理动作",
+    none: "没有这样的事项。",
+    note: "记录没有为下面这些事项给出后续处理动作。每一行的结论各自成立，范围写在它旁边。",
   },
 };
 
-// The record's verdict words, glossed beside the word and never instead of it.
+export const ITEM_UNIT =
+  "一个事项是一个构件（或被放在一起评估的一对构件）在接收方的一项工作上的结论。" +
+  "同一个构件可以出现在几个事项里，所以事项数不是缺陷数。";
+
+// The record's verdict words as a manager says them. A label is never shown on
+// its own: it always sits beside the work and the item it is about, and
+// "可以开始" in particular is never said of a handover as a whole. A word not
+// listed is shown as it came and is not folded into one of these three.
+export const VERDICT_LABELS = {
+  READY: "可以开始",
+  BLOCKED: "受阻",
+  UNKNOWN: "无法判断",
+};
+
+// What stays beside a conclusion, each only where it applies.
+export const BESIDE = {
+  // A READY: what it covers, and that it is not the handover.
+  readyScope: "只对这一个事项、这项工作、所列的模型版本成立；不代表整次交接完成。",
+  // An UNKNOWN: not a clean bill, and not a fault of the program.
+  unknown: "“无法判断”说的是这项工作能否开始无法判断：不等于这个构件没有问题，也不是系统出错。",
+  // The asset-identity problem types.
+  assetIdentity: "资产标识是本项目约定的要求，不是通用要求。取值从哪里来、对应哪个 Revit 参数，记录未提供。",
+  // An assignment is a row in the record, not a dispatch.
+  team: "处理团队是记录里的安排，不代表已经派发。",
+  simulatedTeam: "示例处理团队",
+  noTeam: "记录未提供",
+  defaultRole: "默认处理角色（规则给出的默认，不是指派）",
+  unchanged: "复检前后未变",
+};
+
+// Beside a READY of one particular activity: what its evidence did and did not
+// establish. Keyed by activity; an activity not listed adds nothing.
+export const READY_NOTES = {
+  "ceiling-and-bulkhead-geometry": [
+    "规则只证明构件有楼层或空间归属，没有验证接收方模型有对应楼层。",
+    "这个结论靠的是两侧模型的对齐确认，不是共享定位标记通过。",
+  ],
+};
+
+// Where a verdict's evidence came from, said beside the verdict. The tags are
+// decided per citation from its own marker; these are the words around them.
+export const BASIS_WORDS = {
+  simulated: "这个结论建立在模拟证据上：",
+  real: "这个结论的依据：",
+  sharedSimulated: "同组事项共用的依据，其中有模拟证据：",
+  sharedReal: "同组事项共用的依据：",
+  none: "这个结论没有引用任何证据。",
+  gaps: {
+    "no-finding": "没有任何检查结果（真实的缺席）",
+    "no-determination": "还没有判定（真实的缺席）",
+    "not-applicable-finding": "有检查结果，但检查不适用，没有覆盖到它",
+  },
+};
+
+// The Chinese action and recheck sentences, one pair per problem type. They
+// were written for one Pack at one version and hold for nothing else: a record
+// under any other Pack id or version is shown the Pack's own English instead.
+// No sentence names a Revit parameter or an export mapping — the Pack says
+// those are project-specific and does not name them either.
+export const ACTION_PACK = { id: "interdisciplinary-coordination-readiness", version: "0.1.0" };
+
+export const ACTIONS = {
+  "missing-project-asset-identity": {
+    action: "在源模型里给这个构件补上本项目约定的资产标识属性（见所列属性集和属性名），重新导出",
+    recheck: "重新发布的模型上，这个构件在所列每条要求下都通过，范围内没有构件漏评",
+  },
+  "asset-identity-not-evaluated": {
+    action:
+      "现有资产标识规则没有覆盖到这个构件，所以这项工作能否开始无法判断。" +
+      "这不是缺资产标识，也不是无需检查。是否要求它具备资产标识，需要项目约定。",
+    recheck: "范围内每个构件在所绑定的要求下都有评估结果",
+  },
+  "in-model-position-not-evaluated": {
+    action:
+      "这不是已知的模型缺陷，也不需要改模型。空间归属的检查规则没有覆盖到这类构件，需要扩展规则的适用范围",
+    recheck: "范围内每个构件在所绑定的要求下都有检查结果",
+  },
+  "penetration-not-determined": {
+    action:
+      "这不是已知的模型缺陷。还没有协调评审判定它是否穿过接收方的构件；" +
+      "需要开一次评审，记录“不穿过”或写明穿过哪些构件",
+    recheck: "针对所列模型版本，有一份评审判定记录",
+  },
+  "missing-corresponding-opening": {
+    action:
+      "在接收方模型里、被穿过的构件上建出洞口或竖井，不要做成交出方模型里的空洞。穿过几个构件就要几个洞口",
+    recheck: "这一对的开洞核查结果为“洞口已建且已关联”。只建洞不够",
+  },
+  "cross-model-alignment-not-confirmed": {
+    action: "这不是已知的错位。还没有人按项目接受的方法确认两侧模型对齐；需要针对所列模型版本做一次并记录",
+    recheck: "对齐确认已做，结果为已对齐，写明模型版本",
+  },
+  "mep-element-not-spatially-assigned": {
+    action: "在源模型里把构件放到正确的标高和空间上，重新导出",
+    recheck: "重新发布的模型上，这个构件的空间归属要求通过",
+  },
+  "cross-model-misalignment": {
+    action:
+      "重新获取项目共用的坐标基准，按共用原点重新导出（不靠移动几何），再按项目接受的方法重做对齐确认",
+    recheck: "针对新版本重做对齐确认，结果为已对齐",
+  },
+  "opening-not-verifiably-linked": {
+    action: "在接收方模型里，给洞口补上指回穿过它的那个构件的关联。一个洞口供几个构件穿过，每个各要一条",
+    recheck: "这一对的关联核查结果为已关联",
+  },
+  "opening-status-not-determined": {
+    action: "这不是已知的缺洞。开洞情况的评审没完成：洞口是否已建、是否已关联",
+    recheck: "核查给出明确结果（已关联／已建未关联／未建）",
+  },
+};
+
+// What a failing requirement asks for, attribute by attribute, comes only from
+// the returned data's `finding_details`. Where the data carries none, the page
+// says so; it reads no rule file and states no value, Revit parameter or
+// export mapping.
+export const DETAILS_WORDS = {
+  heading: "具体缺什么",
+  absent: "记录未提供：这份返回数据没有带出不满足的要求明细（属性集、属性名、规则的原话）。",
+};
+
+// What each verdict word means, said once in "how to read this page" and not
+// beside every item.
 //
 // A verdict is a statement about one activity of the receiving side, in an
 // assessed scope, against a named model version (Checkpoint B section 1, "The
-// four verdicts, defined once"). Each gloss therefore says what the verdict
+// four verdicts, defined once"). Each sentence therefore says what the verdict
 // means for that work — can start, is prevented, cannot be decided — and not
 // only what became of the evidence: "a check passed" is not what READY says.
-// A word not listed is shown as it came.
 export const VERDICT_WORDS = {
   READY:
     "必要的证据齐全且满足验收条件，没有未解决的阻碍，也没有证据缺口：在本次评估范围内，这项工作可以开始",
@@ -472,40 +610,40 @@ export const VERDICT_SCOPE =
 // edited. It places two recorded facts side by side and draws nothing from them.
 export const REQUIREMENT_CHANGED_NOTE =
   "记录同时显示：和这一项放在一起评估的旧证据里，有 {count} 条的检查要求变了；记录不说明是放宽还是收紧。" +
-  "读这个判断时要一并看，逐条见“依据”。";
+  "读这个结论时要一并看，逐条见“复检前的证据”。";
 
-// The reading the record gives at the end of the path that produced a verdict,
-// keyed `<evidence requirement>/<outcome>` — the Pack's own two vocabularies.
-// Each gloss restates the Pack's `answers` / `acceptance_condition` for that
-// outcome. A READY reached through "penetrates nothing" says so: it is not a
-// statement that an opening is in order.
+// The result a verdict rests on: the outcome the record gives at the end of the
+// path, keyed `<evidence requirement>/<outcome>` — the Pack's own two
+// vocabularies. A READY reached through "penetrates nothing" says so: it is not
+// a statement that an opening is in order. The storey sentences say what the
+// bound rules check — containment in a storey or a space — and no more: they do
+// not check that the receiving model has the same storey.
 export const LEAF_READINGS = {
   "asset-identity/satisfied": "适用于它的项目资产标识要求评为通过，并且它确实被评估到",
   "asset-identity/unmet": "项目资产标识的要求没有满足",
-  "asset-identity/not-yet-evaluated": "项目资产标识还没有评估到它",
-  "in-model-position/satisfied": "已归属到接收方模型里也有的楼层",
-  "in-model-position/unmet": "没有归属到楼层",
-  "in-model-position/not-yet-evaluated": "楼层归属还没有评估到它",
+  "asset-identity/not-yet-evaluated": "资产标识的规则没有覆盖到它",
+  "in-model-position/satisfied": "它有楼层或空间归属",
+  "in-model-position/unmet": "它没有楼层或空间归属",
+  "in-model-position/not-yet-evaluated": "楼层或空间归属的检查没有覆盖到它",
   "cross-model-alignment/confirmed":
     "已有记录确认两侧模型对齐到共同的基准（按项目接受的方法，针对所列模型版本）",
   "cross-model-alignment/misaligned": "对齐确认的结果是两侧模型没有对齐",
   "cross-model-alignment/not-yet-confirmed": "还没有对齐确认",
   "penetration-determination/no-penetration":
-    "已有协调评审判定：它不穿过接收方模型里的任何构件。不穿过就不需要开洞，所以这条路径上开洞情况没有被评估——这不是“开洞没问题”",
+    "已有协调评审判定：它不穿过接收方模型里的任何构件。不穿过就不需要开洞，所以开洞情况没有被评估——这不是“开洞没问题”",
   "penetration-determination/penetration-confirmed": "已有协调评审判定：它穿过接收方模型里的构件",
   "penetration-determination/not-yet-determined": "还没有协调评审判定它是否穿过接收方模型里的构件",
-  "opening-status/cross-referenced":
-    "这一对：开洞已建在被穿过的构件上，并且有一条可核查的关联指回这个穿过它的构件",
+  "opening-status/cross-referenced": "这一对：洞口已建在被穿过的构件上，并且已关联到穿过它的这个构件",
   "opening-status/modelled-not-cross-referenced":
-    "这一对：开洞已建在被穿过的构件上，但没有可核查的关联指回这个穿过它的构件",
-  "opening-status/not-modelled": "这一对：被穿过的构件上没有建出开洞",
+    "这一对：洞口已建在被穿过的构件上，但没有关联到穿过它的这个构件",
+  "opening-status/not-modelled": "这一对：被穿过的构件上没有建出洞口",
   "opening-status/not-yet-determined": "这一对：开洞情况的评审还没有完成",
 };
 
 export const LEAF_READING_WORDS = {
-  label: "得出这个判断的读数",
-  notCarried: "记录没有给出这一项现在的读数",
-  unglossed: "本界面没有这个读数的中文说明",
+  label: "这个结论依据的结果",
+  notCarried: "记录没有给出这一项现在依据的结果",
+  unglossed: "本界面没有这个结果的中文说明，见追溯信息",
 };
 
 // Which side of the handover a model is on, looked up from the record's own
@@ -543,14 +681,14 @@ export const IFC_CLASS_NAMES = {
 // The receiving side's work a verdict is about, in this preview's Chinese. The
 // name follows the Pack's `label`; `needs` restates what Checkpoint B section 1
 // ("What Architecture does next with it") says that work needs from the
-// handover. The code stays beside the name; one not listed is shown as it came.
+// handover. One not listed is shown as it came.
 export const ACTIVITY_NAMES = {
   "builders-work-openings": {
     name: "土建预留开洞",
     needs: "要知道交出方的构件在哪里穿过墙、楼板和屋顶，才能在这些构件上开洞。",
   },
   "ceiling-and-bulkhead-geometry": {
-    name: "吊顶反向图与包封布置",
+    name: "吊顶平面与包封布置",
     needs: "要知道交出方的设备在哪一层、在什么位置，才能围着它画吊顶分区和包封。",
   },
   "schedules-and-room-data-sheets": {
@@ -559,23 +697,21 @@ export const ACTIVITY_NAMES = {
   },
 };
 
-export const ACTIVITY_LABEL = "接收方的哪项工作";
-
-// The Pack's ten resolution kinds, each restating its own route. A BLOCKED kind
-// is a known defect in a source model; an UNKNOWN kind opens, as the Pack's
-// `next_action` does, by saying it is not one. The storey kinds use the noun the
-// Pack's `in-model-position` requirement uses: assignment to a storey.
+// The Pack's ten resolution kinds as a short name for the problem. A BLOCKED
+// kind is a known defect in a source model; an UNKNOWN kind opens by saying it
+// is not a *known* one — the Pack's words are "not a known defect", which is
+// less than "not a defect".
 export const RESOLUTION_KINDS = {
-  "missing-project-asset-identity": "缺少项目要求的资产标识",
-  "asset-identity-not-evaluated": "不是模型缺陷：资产标识的评估没有覆盖到它",
-  "mep-element-not-spatially-assigned": "它没有楼层归属",
-  "in-model-position-not-evaluated": "不是模型缺陷：楼层归属的评估没有覆盖到它",
+  "missing-project-asset-identity": "缺少本项目约定的资产标识",
+  "asset-identity-not-evaluated": "不是已知的模型缺陷：现有资产标识规则没有覆盖到这个构件",
+  "mep-element-not-spatially-assigned": "它没有楼层或空间归属",
+  "in-model-position-not-evaluated": "不是已知的模型缺陷：楼层或空间归属的检查没有覆盖到它",
   "cross-model-misalignment": "两侧模型没有对齐到共同的基准",
-  "cross-model-alignment-not-confirmed": "不是模型缺陷：还没有人确认两侧模型对齐到共同的基准",
-  "penetration-not-determined": "不是模型缺陷：还没有协调评审判定它是否穿过接收方模型里的构件",
-  "opening-not-verifiably-linked": "开洞已建，但没有可核查的关联指回穿过它的这个构件",
-  "missing-corresponding-opening": "它穿过的构件上没有建出对应的开洞",
-  "opening-status-not-determined": "不是模型缺陷：开洞情况的评审还没有完成",
+  "cross-model-alignment-not-confirmed": "不是已知的错位：还没有人确认两侧模型对齐",
+  "penetration-not-determined": "不是已知的模型缺陷：还没有协调评审判定它是否穿过接收方的构件",
+  "opening-not-verifiably-linked": "洞口已建，但没有关联到穿过它的这个构件",
+  "missing-corresponding-opening": "它穿过的构件上没有建出对应的洞口",
+  "opening-status-not-determined": "不是已知的缺洞：开洞情况的评审还没有完成",
 };
 
 // What a non-READY verdict costs the receiving side's work, as the Pack's route
@@ -587,21 +723,33 @@ export const CONSEQUENCE_KINDS = {
   "re-identification-and-reissue-risk": "有重新标识并重新发布的风险",
 };
 
-// Why a check attempt did not start, by refusal code. A refusal is the system's
-// answer to the request's conditions — not a fault of the program, which is
-// shown on a different screen and never as one of these.
+// Why a check attempt did not start, by refusal code, and what would have to
+// be true for one to start. A refusal is the system's answer to the request's
+// conditions — not a fault of the program, which is shown on a different screen
+// and never as one of these.
+//
+// The guidance stops at what this refusal named. It does not tell anyone to
+// edit the shipped sample: that project is a public sample with nobody to take
+// its staffing decisions, and for it the refusal is the correct end. Later
+// gates this refusal did not test are not listed as part of this diagnosis.
 export const REFUSAL_REASONS = {
   "team-mapping-decision-basis-illustrative": {
-    title: "项目条件未满足：处理团队的登记只是示意值",
+    title: "项目条件未满足：由谁处理的安排不是项目作出的决定",
     text:
-      "这次请求所用的项目设定里，“哪类问题由哪个团队处理”的登记被标为示意值，不是项目作出的决定。" +
+      "这次请求所用的项目设定里，“哪个角色由哪个团队担任”的安排只是演示用的占位内容，不是项目作出的决定。" +
       "系统因此不生成评估结果：否则结果里的处理团队会被当成项目的真实安排。",
+    action: [
+      "在一个真实项目上，要让检查能够开始：需要项目负责人实际决定系统原文（折叠在下面）点名的每个角色由谁担任，然后如实记录。" +
+        "这是一个人员决定，不是改一个标签。",
+      "如果这次请求用的是随附的公开样例：它没有项目负责人。对它而言，这次拒绝就是正确的结果，不需要、也不应该去改它的设定。",
+    ],
   },
 };
 
 export const REFUSAL_UNGLOSSED = {
   title: "系统拒绝了这次请求",
-  text: "本界面没有这个原因的中文说明，请看下面系统返回的原文。",
+  text: "本界面没有这个原因的中文说明，请展开下面系统返回的原文。",
+  action: [],
 };
 
 export const FAULT_WORDS = {
@@ -609,6 +757,9 @@ export const FAULT_WORDS = {
   unavailable: "检查程序不可用",
   note: "这是程序自身的问题，不是对任何项目或模型的判断；没有任何检查结果可以显示。",
 };
+
+// What a reader may want once, and does not need beside every item.
+export const HOW_TO_READ = "如何阅读这一页";
 
 export const UNRECOGNISED = "未识别的值，按原值显示";
 

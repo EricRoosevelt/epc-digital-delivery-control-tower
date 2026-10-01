@@ -44,16 +44,22 @@ STATIC = PROJECT_ROOT / "doctor" / "static"
 
 _DRIVER = """
 import { readFileSync } from "node:fs";
+import { firstCheckModel } from "./first-check-model.js";
 import { recheckModel } from "./recheck-model.js";
 import * as vocabulary from "./vocabulary.js";
 
 const cases = JSON.parse(readFileSync(0, "utf8"));
 const models = {};
-for (const [name, document] of Object.entries(cases)) models[name] = recheckModel(document);
+const first = {};
+for (const [name, document] of Object.entries(cases)) {
+  models[name] = recheckModel(document);
+  if (!document.successor) first[name] = firstCheckModel(document);
+}
 const keys = (name) => Object.keys(vocabulary[name]);
 process.stdout.write(
   JSON.stringify({
     models,
+    first,
     vocabulary: {
       states: keys("CARRY_OVER_STATES"),
       reasons: keys("CARRY_OVER_REASONS"),
@@ -75,6 +81,13 @@ process.stdout.write(
       resolutionKinds: vocabulary.RESOLUTION_KINDS,
       leafReadings: vocabulary.LEAF_READINGS,
       consequenceKinds: vocabulary.CONSEQUENCE_KINDS,
+      verdictLabels: vocabulary.VERDICT_LABELS,
+      actions: vocabulary.ACTIONS,
+      actionPack: vocabulary.ACTION_PACK,
+      followUp: vocabulary.FOLLOW_UP,
+      beside: vocabulary.BESIDE,
+      readyNotes: vocabulary.READY_NOTES,
+      refusalReasons: vocabulary.REFUSAL_REASONS,
     },
   }),
 );
@@ -97,7 +110,7 @@ def _run_model(documents: dict[str, object]) -> dict[str, object]:
         raise unittest.SkipTest(message)
     with tempfile.TemporaryDirectory() as directory:
         workdir = Path(directory)
-        for name in ("recheck-model.js", "vocabulary.js"):
+        for name in ("recheck-model.js", "first-check-model.js", "vocabulary.js"):
             shutil.copyfile(STATIC / name, workdir / name)
         (workdir / "package.json").write_text('{"type": "module"}\n', encoding="utf-8")
         (workdir / "driver.js").write_text(_DRIVER, encoding="utf-8")
@@ -125,6 +138,7 @@ class _Modelled(unittest.TestCase):
             {name: envelope["record"] for name, envelope in cls.envelopes.items()}
         )
         cls.models = output["models"]
+        cls.first = output["first"]
         cls.vocabulary = output["vocabulary"]
 
     def rows(self, name):
@@ -345,6 +359,318 @@ class ChangedAspectsTests(_Modelled):
             # No digest, content id or key is compared on the page.
             self.assertNotRegex(code, r"(digest|content_id|citation)\s*[!=]==?\s*\w")
             self.assertNotRegex(code, r"[!=]==?\s*[\w.\[\]]*(digest|content_id|citation)\b")
+
+
+class FirstCheckTests(_Modelled):
+    """The first-check result: items, whose they are, and what each rests on.
+
+    Counts are counts of items the record holds — an element or a pair under one
+    activity — and are never called defects. A known unmet requirement and a
+    missing piece of evidence are counted under their own words.
+    """
+
+    name = "adapter:member-evidence"
+
+    def setUp(self):
+        self.model = self.first[self.name]
+        self.record = self.envelopes[self.name]["record"]
+
+    def test_only_a_record_that_succeeds_nothing_is_a_first_check(self):
+        self.assertEqual(
+            sorted(self.first),
+            sorted(n for n, e in self.envelopes.items() if "successor" not in e["record"]),
+        )
+
+    def test_one_item_per_member_and_the_counts_are_of_items(self):
+        expected = [
+            (index, subscope["ordinal"], member_index, member["keys"])
+            for index, activity in enumerate(self.record["activities"])
+            for subscope in activity["subscopes"]
+            for member_index, member in enumerate(subscope["members"])
+        ]
+        self.assertEqual(
+            [
+                (item["activityIndex"], item["ordinal"], item["memberIndex"], item["keys"])
+                for item in self.model["items"]
+            ],
+            expected,
+        )
+        self.assertEqual(
+            self.model["counts"], {"items": 13, "todo": 8, "quiet": 5, "elements": 6}
+        )
+        # To do is "the record gives a next action", read off the subscope.
+        for item in self.model["items"]:
+            self.assertEqual(item["todo"], "next_action" in item["subscope"].get("route", {}))
+        # Blocked and undecidable are counted apart and never added into one.
+        self.assertEqual(
+            {entry["verdict"]: entry["count"] for entry in self.model["verdicts"]},
+            {"UNKNOWN": 4, "BLOCKED": 4},
+        )
+        self.assertTrue(all(item["verdict"] == "READY" for item in self.model["quiet"]))
+        source = (STATIC / "first-check-model.js").read_text(encoding="utf-8")
+        code = "\n".join(
+            line
+            for line in source.splitlines()
+            if not line.lstrip().startswith(("//", "*", "/*"))
+        )
+        self.assertNotRegex(code, r"READY|BLOCKED|UNKNOWN|score|Math\.|%")
+
+    def test_items_are_grouped_by_the_team_the_assignment_names(self):
+        teams = {team["team"]: team for team in self.model["teams"]}
+        self.assertEqual(
+            {name: team["count"] for name, team in teams.items()},
+            {
+                "coordination-team": 6,
+                "architecture-design-team": 1,
+                "information-management-team": 1,
+            },
+        )
+        self.assertEqual(
+            {name: team["roles"] for name, team in teams.items()},
+            {
+                "coordination-team": ["model-coordination"],
+                "architecture-design-team": ["architecture-lead"],
+                "information-management-team": ["information-manager"],
+            },
+        )
+        for item in self.model["todo"]:
+            self.assertEqual(
+                item["team"], item["subscope"]["assignment"]["assigned_team_or_person"]
+            )
+            self.assertEqual(item["role"], item["subscope"]["route"]["default_role"])
+        rows = [
+            (row["kind"], row["activity"], row["verdict"], len(row["items"]))
+            for row in teams["coordination-team"]["rows"]
+        ]
+        self.assertEqual(
+            rows,
+            [
+                ("penetration-not-determined", "builders-work-openings", "UNKNOWN", 2),
+                (
+                    "asset-identity-not-evaluated",
+                    "schedules-and-room-data-sheets",
+                    "UNKNOWN",
+                    1,
+                ),
+                (
+                    "missing-project-asset-identity",
+                    "schedules-and-room-data-sheets",
+                    "BLOCKED",
+                    3,
+                ),
+            ],
+        )
+        # No team in the record is no team on the page: nothing stands in for it.
+        source = (STATIC / "first-check-model.js").read_text(encoding="utf-8")
+        self.assertIn('team: carried(assignment, "assigned_team_or_person"),', source)
+        self.assertEqual(source.count("assigned_team_or_person"), 1)
+        screens = (STATIC / "screens.js").read_text(encoding="utf-8")
+        line = screens[screens.index("function teamLine(") :]
+        line = line[: line.index("\n}\n")]
+        self.assertIn("if (team === undefined) return missing(BESIDE.noTeam);", line)
+        self.assertIn('mode === "fixture"', line)
+        self.assertEqual(self.vocabulary["beside"]["simulatedTeam"], "示例处理团队")
+        self.assertEqual(self.vocabulary["beside"]["noTeam"], "记录未提供")
+
+    def test_each_items_basis_is_its_own_citations_and_named_absences(self):
+        said = {}
+        for item in self.model["items"]:
+            basis = item["basis"]
+            marked = [
+                c
+                for c in basis["findings"] + basis["determinations"]
+                if c.startswith("fixture")
+            ]
+            said[(item["activity"], item["ordinal"], item["memberIndex"])] = (
+                item["verdict"],
+                len(basis["findings"]),
+                len(basis["determinations"]),
+                basis["gaps"],
+                bool(marked),
+            )
+        self.assertEqual(
+            said,
+            {
+                ("builders-work-openings", 1, 0): ("READY", 0, 1, [], True),
+                ("builders-work-openings", 2, 0): (
+                    "UNKNOWN",
+                    0,
+                    0,
+                    ["no-determination"],
+                    False,
+                ),
+                ("builders-work-openings", 2, 1): (
+                    "UNKNOWN",
+                    0,
+                    0,
+                    ["no-determination"],
+                    False,
+                ),
+                ("builders-work-openings", 3, 0): ("READY", 0, 2, [], True),
+                ("builders-work-openings", 4, 0): ("BLOCKED", 0, 2, [], True),
+                ("ceiling-and-bulkhead-geometry", 1, 0): (
+                    "UNKNOWN",
+                    0,
+                    0,
+                    ["no-finding"],
+                    False,
+                ),
+                ("ceiling-and-bulkhead-geometry", 2, 0): ("READY", 1, 1, [], True),
+                ("ceiling-and-bulkhead-geometry", 2, 1): ("READY", 1, 1, [], True),
+                ("ceiling-and-bulkhead-geometry", 2, 2): ("READY", 1, 1, [], True),
+                ("schedules-and-room-data-sheets", 1, 0): (
+                    "UNKNOWN",
+                    0,
+                    0,
+                    ["no-finding"],
+                    False,
+                ),
+                ("schedules-and-room-data-sheets", 2, 0): ("BLOCKED", 2, 0, [], False),
+                ("schedules-and-room-data-sheets", 2, 1): ("BLOCKED", 2, 0, [], False),
+                ("schedules-and-room-data-sheets", 2, 2): ("BLOCKED", 2, 0, [], False),
+            },
+        )
+        # In this example every "can start" rests on a simulated determination,
+        # so the tag has to be beside each one and not only at the page's head.
+        self.assertTrue(all(entry[4] for entry in said.values() if entry[0] == "READY"))
+
+    def test_a_conclusion_is_never_shown_without_its_work_its_basis_and_its_limits(self):
+        screens = (STATIC / "screens.js").read_text(encoding="utf-8")
+        first = screens[
+            screens.index("// S3b — first check") : screens.index("// S4 — recheck")
+        ]
+
+        def function(name):
+            body = first[first.index(f"function {name}(") :]
+            return body[: body.index("\n}\n")]
+
+        # A verdict label is produced in one place and reaches the page only
+        # through a helper that puts the work beside it, or in the legend.
+        callers = [
+            line.strip()
+            for line in screens.splitlines()
+            if "verdictLabel(" in line and not line.lstrip().startswith(("//", "*", "function"))
+        ]
+        self.assertEqual(len(callers), 4, callers)
+        self.assertIn("activityTitle(activity)", function("workVerdict"))
+        for name in ("first", "firstItem"):
+            body = function(name)
+            with self.subTest(screen=name):
+                self.assertIn("workVerdict(item.activity, item.verdict)", body)
+                self.assertIn("basisLine(item.basis)", body)
+                self.assertIn("besideVerdict(item.activity, item.verdict)", body)
+                self.assertIn("howToRead()", body)
+        # The summary's count line is only ever built from items to do: a "can
+        # start" is never counted there, only shown beside its own item.
+        result = function("first")
+        self.assertIn("model.verdicts", result)
+        self.assertNotIn("model.quiet.length} 个事项可以开始", result)
+        beside = function("besideVerdict")
+        self.assertIn('if (value === "UNKNOWN") notes.push(BESIDE.unknown);', beside)
+        self.assertIn("notes.push(BESIDE.readyScope);", beside)
+        self.assertIn("READY_NOTES[activity]", beside)
+        words = self.vocabulary["beside"]
+        self.assertIn("不代表整次交接完成", words["readyScope"])
+        self.assertIn("不等于这个构件没有问题", words["unknown"])
+        self.assertIn("不代表已经派发", words["team"])
+        self.assertIn("本项目约定", words["assetIdentity"])
+        self.assertEqual(
+            self.vocabulary["readyNotes"],
+            {
+                "ceiling-and-bulkhead-geometry": [
+                    "规则只证明构件有楼层或空间归属，没有验证接收方模型有对应楼层。",
+                    "这个结论靠的是两侧模型的对齐确认，不是共享定位标记通过。",
+                ]
+            },
+        )
+
+    def test_the_chinese_sentences_hold_for_one_pack_version_and_english_otherwise(self):
+        screens = (STATIC / "screens.js").read_text(encoding="utf-8")
+        guard = screens[screens.index("function actionSentences(") :]
+        guard = guard[: guard.index("\n}\n")]
+        for said in (
+            "request.pack_id === ACTION_PACK.id",
+            "request.pack_version === ACTION_PACK.version",
+            "Object.hasOwn(ACTIONS, kind)",
+            "return written ? ACTIONS[kind] : null;",
+        ):
+            with self.subTest(guard=said):
+                self.assertIn(said, guard)
+        block = screens[screens.index("function actionBlock(") :]
+        block = block[: block.index("\n}\n")]
+        self.assertIn(
+            'h("span", { class: "action" }, sentences.action) : original("next_action")', block
+        )
+        self.assertIn('sentences ? sentences.recheck : original("recheck_condition")', block)
+        self.assertEqual(
+            self.record["request"]["pack_version"], self.vocabulary["actionPack"]["version"]
+        )
+
+    def test_what_is_missing_comes_from_the_returned_data_or_is_said_to_be_absent(self):
+        """No rule file is read, and no value, Revit parameter or mapping is written."""
+
+        screens = (STATIC / "screens.js").read_text(encoding="utf-8")
+        details = screens[screens.index("function detailsBlock(") :]
+        details = details[: details.index("\n}\n")]
+        self.assertIn('carries(state.envelope, "finding_details")', details)
+        self.assertIn("DETAILS_WORDS.absent", details)
+        for path in sorted(STATIC.iterdir()):
+            text = path.read_text(encoding="utf-8")
+            with self.subTest(file=path.name):
+                self.assertNotRegex(
+                    text, r"AssetTag|SystemCode|EPC_Delivery|R-00\d|rules/|\.toml"
+                )
+        self.assertNotIn("finding_details", self.envelopes[self.name])
+
+    def test_the_follow_up_really_is_a_recheck_of_this_record(self):
+        from internal.doctor_adapter import scenario_envelope
+
+        follow = self.vocabulary["followUp"]
+        self.assertEqual(follow, {"member-evidence": "recheck-requirement-relaxed"})
+        first = scenario_envelope("member-evidence")
+        again = scenario_envelope(follow["member-evidence"])
+        successor = again["record"]["successor"]
+        self.assertEqual(successor["prior_assessment_digest"], first["assessment_digest"])
+        # The same item is found by the activity and group number the recheck
+        # record carries, and its members are the sealed group's, in order.
+        sealed = {
+            (activity["activity_ref"], subscope["ordinal"]): [
+                m["keys"] for m in subscope["members"]
+            ]
+            for activity in first["record"]["activities"]
+            for subscope in activity["subscopes"]
+        }
+        self.assertEqual(
+            {
+                (outcome["activity_ref"], outcome["subscope_ordinal"]): [
+                    item["member"]["keys"] for item in outcome["dispositions"]
+                ]
+                for outcome in successor["subscopes"]
+            },
+            sealed,
+        )
+        model = (STATIC / "recheck-model.js").read_text(encoding="utf-8")
+        lookup = model[model.index("export function sealedGroupIndex(") :]
+        lookup = lookup[: lookup.index("\n}\n")]
+        self.assertIn("subscope.outcome.subscope_ordinal === ordinal", lookup)
+        self.assertNotRegex(lookup, r"keys|refined_from|activities")
+
+    def test_a_check_that_did_not_start_says_what_would_be_needed_and_no_more(self):
+        reason = self.vocabulary["refusalReasons"]["team-mapping-decision-basis-illustrative"]
+        action = "".join(reason["action"])
+        self.assertIn("项目负责人实际决定", action)
+        self.assertIn("不是改一个标签", action)
+        # Nobody is sent to edit the shipped sample.
+        self.assertIn("不需要、也不应该去改它的设定", action)
+        # Later gates this refusal did not test are not part of this diagnosis.
+        for untested in ("证据方法", "风险授权", "CONDITIONAL"):
+            self.assertNotIn(untested, reason["text"] + action)
+        screens = (STATIC / "screens.js").read_text(encoding="utf-8")
+        refusal = screens[screens.index("function refusal(") :]
+        english = refusal.index("envelope.refusal.text")
+        self.assertLess(refusal.index('"details"'), english)
+        self.assertLess(refusal.index("reason.action"), refusal.index('"details"'))
+        self.assertLess(refusal.index("REFUSAL_SCOPE_NOTE"), refusal.index('"details"'))
 
 
 class ReissuedSideTests(_Modelled):
@@ -609,21 +935,50 @@ class ScreenStructureTests(unittest.TestCase):
         self.assertIn("RECHECK_CANNOT", self._function("recheck"))
         self.assertIn("RECHECK_CANNOT", self._function("recheckItem"))
 
-    def test_the_limits_and_the_provenance_tags_are_never_inside_a_collapsed_block(self):
-        limits = self._function("limits")
-        self.assertIn("RECHECK_LIMITS", limits)
-        self.assertNotIn("details", limits)
+    def test_what_qualifies_a_conclusion_sits_beside_it_and_the_rest_is_one_fold_away(self):
+        """Simulated evidence, a requirement edit and a missing member stay in view.
+
+        The second walkthrough failed on reading load: five sentences on every
+        page, most of them about something the page did not show. What a manager
+        must read with a conclusion now sits beside that conclusion and only
+        where it applies; what he may want once is in "how to read this page".
+        A citation's own tag is still on the same line as the citation.
+        """
+
+        screens = (STATIC / "screens.js").read_text(encoding="utf-8")
         for name in ("recheck", "recheckItem"):
+            body = self._function(name)
             with self.subTest(screen=name):
-                self.assertIn("limits()", self._function(name))
+                # Beside the conclusion: its basis and the requirement edit.
+                self.assertIn("besideChange(item)", body)
+                self.assertIn("requirementNote(item)", body)
+                # One fold away: the general reading rules.
+                self.assertIn("howToRead(", body)
+                self.assertIn("RECHECK_LIMITS", body)
+        beside = self._function("besideChange")
+        self.assertIn("basisLine(basisOf(current.located.subscope), true)", beside)
+        self.assertNotIn("details", beside)
+        self.assertNotIn("details", self._function("workChange"))
+        # A re-issue's caveats and a member that left are said in the result
+        # block and on the item, outside every fold.
+        result = self._function("recheck")
+        self.assertLess(result.index("model.reissue.caveats"), result.index('"details"'))
+        self.assertIn("dispositionRow(item)", self._function("recheckItem"))
+        basis = screens[screens.index("function basisLine(") :]
+        basis = basis[: basis.index("\n}\n")]
+        self.assertIn('provenanceCounts("finding", basis.findings)', basis)
+        self.assertIn('provenanceCounts("determination", basis.determinations)', basis)
+        self.assertNotRegex(basis, r"mode|envelope")
+        # Row by row, the tag is on the citation's own line.
         card = self._function("evidenceCard")
         collapsed = card[card.index('"details"') :]
         shown = card[: card.index('"details"')]
         self.assertEqual(shown.count("provenance("), 2)
         self.assertNotIn("provenance(", collapsed)
-        for key in ('"citation"', '"current_citation"', '"cause"'):
-            with self.subTest(open=key):
-                self.assertIn(key, shown)
+        # Before and after are sourced apart, never as two tags on one line.
+        item = self._function("recheckItem")
+        self.assertIn('sources("citation")', item)
+        self.assertIn('sources("current_citation")', item)
 
     def test_the_way_back_returns_to_the_item_that_was_opened(self):
         app = (STATIC / "app.js").read_text(encoding="utf-8")
@@ -648,6 +1003,7 @@ class ScreenStructureTests(unittest.TestCase):
         path = {
             "context bar": cut("export function renderContext(", "function elementFacts("),
             "home and directory": cut("function entry() {", "function record(state) {"),
+            "first check": cut("// S3b — first check", "// S4 — recheck"),
             "recheck": self.recheck,
             "check attempt": screens[screens.index("function refusal(") :],
         }
@@ -681,12 +1037,27 @@ class ScreenStructureTests(unittest.TestCase):
                 "裁决",
                 "子范围",
                 "成员",
+                "读数",
+                "交接判断规则",
+                "示意值",
             ):
                 with self.subTest(screen=name, term=term):
                     self.assertNotIn(term, text)
-        for name in ("context bar", "home and directory", "recheck", "check attempt"):
-            with self.subTest(screen=name):
-                self.assertNotRegex(strings[name], r"\bPack\b|finding")
+        # Internal English is kept out of what a manager reads: no string that
+        # carries Chinese also carries these words. Code that reads the record's
+        # own keys (`"finding"`, `basis.findings`) is not a sentence.
+        for name in (
+            "context bar",
+            "home and directory",
+            "first check",
+            "recheck",
+            "check attempt",
+        ):
+            sentences = re.findall(r'["`]([^"`\n]*[\u4e00-\u9fff][^"`\n]*)["`]', strings[name])
+            self.assertTrue(sentences)
+            for sentence in sentences:
+                with self.subTest(screen=name, sentence=sentence):
+                    self.assertNotRegex(sentence, r"\bPack\b|finding")
 
     def test_the_first_screen_says_what_it_is_for_and_what_it_cannot_do(self):
         vocabulary = (STATIC / "vocabulary.js").read_text(encoding="utf-8")
@@ -999,9 +1370,9 @@ class AdapterScenarioTests(unittest.TestCase):
 
         examples = vocabulary[vocabulary.index("export const EXAMPLES") :]
         examples = examples[: examples.index("\n};")]
-        described = set(re.findall(r'"(recheck-[a-z-]+)": \{', examples))
-        self.assertEqual(described, {"recheck-requirement-relaxed"})
-        given = re.findall(r'given: "([^"]+)"', examples)
+        described = set(re.findall(r'"([a-z-]+)": \{', examples))
+        self.assertEqual(described, {"member-evidence", "recheck-requirement-relaxed"})
+        given = re.findall(r'given:\s*"([^"]+)"', examples)
         self.assertEqual(len(given), len(described))
         for sentence in given:
             # Said as what the example was handed, never as a finding.
@@ -1097,17 +1468,55 @@ class AdapterScenarioTests(unittest.TestCase):
                 self.assertEqual(
                     kind in unknown, item["next_action"].startswith("Not a model defect")
                 )
+                # "Not a *known* defect": the Pack's words, and less than "not a defect".
                 self.assertEqual(
-                    kind in unknown, words["resolutionKinds"][kind].startswith("不是模型缺陷")
+                    kind in unknown, words["resolutionKinds"][kind].startswith("不是已知的")
                 )
-        # The storey question is called storey assignment everywhere it is named.
+                self.assertNotIn("不是模型缺陷", words["resolutionKinds"][kind])
+        # The storey rules check containment in a storey or a space, and the
+        # words say that and no more: not that the receiving model has the storey.
         for key in ("in-model-position-not-evaluated", "mep-element-not-spatially-assigned"):
-            self.assertIn("楼层归属", words["resolutionKinds"][key])
+            self.assertIn("楼层或空间归属", words["resolutionKinds"][key])
         for key, text in words["leafReadings"].items():
             if key.startswith("in-model-position/"):
-                self.assertIn("楼层", text)
-        for text in [*words["resolutionKinds"].values(), *words["leafReadings"].values()]:
-            self.assertNotIn("位置", text)
+                self.assertIn("楼层或空间归属", text)
+        static = "".join(path.read_text(encoding="utf-8") for path in sorted(STATIC.iterdir()))
+        for said in (
+            "接收方模型里也有的楼层",
+            "天花综合",
+            "综合天花",
+            "吊顶反向图",
+            "无需处理",
+        ):
+            with self.subTest(never=said):
+                self.assertNotIn(said, static)
+        self.assertEqual(
+            words["activityNames"]["ceiling-and-bulkhead-geometry"]["name"],
+            "吊顶平面与包封布置",
+        )
+
+        # The action and recheck sentences: one pair per resolution kind, for
+        # the one Pack version they were written against.
+        self.assertEqual(sorted(words["actions"]), sorted(words["resolutionKinds"]))
+        self.assertEqual(
+            words["actionPack"], {"id": pack["pack_id"], "version": pack["pack_version"]}
+        )
+        for kind, entry in words["actions"].items():
+            with self.subTest(action=kind):
+                self.assertEqual(sorted(entry), ["action", "recheck"])
+                for text in entry.values():
+                    self.assertNotRegex(
+                        text, r"Revit|参数|导出映射|requirement_key|Overlay|Pack"
+                    )
+        self.assertEqual(
+            words["actions"]["asset-identity-not-evaluated"]["action"],
+            "现有资产标识规则没有覆盖到这个构件，所以这项工作能否开始无法判断。"
+            "这不是缺资产标识，也不是无需检查。是否要求它具备资产标识，需要项目约定。",
+        )
+        self.assertEqual(
+            words["verdictLabels"],
+            {"READY": "可以开始", "BLOCKED": "受阻", "UNKNOWN": "无法判断"},
+        )
 
         # Verdicts: the consequence for the work, and the scope it holds in.
         verdicts = words["verdictWords"]
@@ -1135,8 +1544,7 @@ class AdapterScenarioTests(unittest.TestCase):
         for text in (screens, vocabulary):
             self.assertNotIn("检查内容", text)
             self.assertNotIn("检查清单", text)
-        self.assertIn('ACTIVITY_LABEL = "接收方的哪项工作"', vocabulary)
-        self.assertIn("复检要显示什么，这一项才算结束", screens)
+        self.assertIn("完成后拿什么复检", screens)
         self.assertNotIn("可以再次复检", screens)
 
     def test_a_requirement_edit_is_said_beside_the_verdict_it_bears_on(self):
@@ -1174,9 +1582,9 @@ class AdapterScenarioTests(unittest.TestCase):
         recheck = screens[
             screens.index("// S4 — recheck") : screens.index("// SX — real refusal")
         ]
-        # Beside the verdict on the card, on the item page and in the result
-        # block; and never inside a collapsed block of its own.
-        self.assertEqual(recheck.count("requirementNote("), 4)
+        # Beside the verdict on the card, on the one-line items, on the item
+        # page and in the result block; never inside a collapsed block.
+        self.assertEqual(recheck.count("requirementNote("), 5)
         note = recheck[recheck.index("function requirementNote(") :]
         note = note[: note.index("\n}\n")]
         self.assertNotIn("details", note)
@@ -1213,8 +1621,8 @@ class AdapterScenarioTests(unittest.TestCase):
         gone = self.models["recheck-member-gone"]
         self.assertTrue(any(item["current"] is None for item in gone["items"]))
         screens = (STATIC / "screens.js").read_text(encoding="utf-8")
-        self.assertIn(": missing(LEAF_READING_WORDS.notCarried),", screens)
-        self.assertEqual(screens.count("readingRow(item),"), 2)
+        self.assertIn(": missing(LEAF_READING_WORDS.notCarried)", screens)
+        self.assertEqual(screens.count("readingRow(item),"), 1)
 
     def test_what_is_left_to_do_is_what_the_record_gives_a_next_step_for(self):
         """Three groups by what the record asks, read off the place it named.

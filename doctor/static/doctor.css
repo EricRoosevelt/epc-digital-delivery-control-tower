@@ -300,3 +300,18 @@ a.run {
 .recheck-item .member-name { font-size: 1.05rem; }
 .next-step { border-width: 2px; }
 .fault pre { margin-top: 4px; }
+
+/* A conclusion and what has to be read with it sit together. */
+.conclusion { margin: 6px 0 2px; }
+.basis { margin: 2px 0; font-size: 0.92rem; }
+.basis.simulated { background: var(--demo-bg); color: var(--demo-ink); padding: 2px 6px; }
+.basis .provenance { background: var(--surface); color: var(--ink); }
+.absence { font-weight: 600; }
+.beside { margin: 2px 0; font-size: 0.92rem; }
+.provenance-fixture { border-style: dashed; }
+h3.team { margin-top: 18px; padding-top: 10px; border-top: 2px solid var(--ink); }
+.quiet-items { list-style: none; padding: 0; margin: 6px 0; }
+.quiet-items > li { border-top: 1px solid var(--line); padding: 8px 0; }
+.action { font-weight: 600; }
+.action-block details { margin-top: 4px; }
+.how-to-read > summary { font-weight: 600; }

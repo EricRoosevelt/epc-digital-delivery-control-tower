@@ -182,7 +182,7 @@ class StaticTreeTests(unittest.TestCase):
 
         self.assertEqual(
             sorted(path.suffix for path in STATIC.iterdir()),
-            [".css", ".html", ".js", ".js", ".js", ".js", ".js"],
+            [".css", ".html", ".js", ".js", ".js", ".js", ".js", ".js"],
         )
         for path in sorted(STATIC.iterdir()):
             text = path.read_text(encoding="utf-8")
