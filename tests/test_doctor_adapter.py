@@ -358,7 +358,14 @@ class RecordIsTheFrameworksDocumentTests(_AdapterCase):
                 envelope = self.envelopes[name]
                 self.assertEqual(
                     list(envelope),
-                    ["mode", "outcome", "record", "assessment_digest", "elements"],
+                    [
+                        "mode",
+                        "outcome",
+                        "record",
+                        "assessment_digest",
+                        "elements",
+                        "finding_details",
+                    ],
                 )
                 self.assertEqual(envelope["mode"], "fixture")
                 self.assertEqual(envelope["outcome"], "record")
@@ -428,6 +435,9 @@ class OnlyAnAssessmentRefusalIsARefusalTests(unittest.TestCase):
     def _record(self):
         raise AssertionError("unreachable")
 
+    def _describe(self, _document):
+        raise AssertionError("a refusal or a crash has no record to describe")
+
     def test_other_exceptions_propagate_as_themselves(self):
         for error in (
             ValueError("a bug"),
@@ -441,7 +451,7 @@ class OnlyAnAssessmentRefusalIsARefusalTests(unittest.TestCase):
 
             with self.subTest(error=type(error).__name__):
                 with self.assertRaises(type(error)) as caught:
-                    build_envelope("fixture", produce)
+                    build_envelope("fixture", produce, self._describe)
                 self.assertIs(caught.exception, error)
 
     def test_an_assessment_refusal_becomes_the_refusal(self):
@@ -450,7 +460,7 @@ class OnlyAnAssessmentRefusalIsARefusalTests(unittest.TestCase):
         def produce():
             raise error
 
-        envelope = build_envelope("real", produce)
+        envelope = build_envelope("real", produce, self._describe)
         self.assertEqual(
             envelope["refusal"], {"code": "scope-declared-empty", "text": str(error)}
         )
@@ -458,7 +468,7 @@ class OnlyAnAssessmentRefusalIsARefusalTests(unittest.TestCase):
 
     def test_the_mode_is_one_of_two_and_nothing_else(self):
         with self.assertRaises(ValueError):
-            build_envelope("demo", self._record)
+            build_envelope("demo", self._record, self._describe)
 
 
 class DisplayElementsTests(_AdapterCase):

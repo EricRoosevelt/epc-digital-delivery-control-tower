@@ -2,9 +2,11 @@
 
 It hands over, for a fixed set of named scenarios, what the Framework has already
 produced — unchanged, inside one fixed envelope — and adds no judgement of its
-own. No verdict, disposition, condition status or coverage reading is made here;
-every one of them is whatever :func:`~epc_control_tower.purpose.assess_purpose`
-or :func:`~epc_control_tower.purpose.recheck_purpose` returned.
+own. What it adds beside a record is copied, not derived: where to find an
+element, and what a cited finding required and found. No verdict, disposition,
+condition status or coverage reading is made here; every one of them is whatever
+:func:`~epc_control_tower.purpose.assess_purpose` or
+:func:`~epc_control_tower.purpose.recheck_purpose` returned.
 
 The envelope is the seam with the Doctor UI, and its keys and meanings are fixed
 by the technical director rather than chosen here:
@@ -23,6 +25,13 @@ by the technical director rather than chosen here:
 ``elements``
     ``element_key`` → name, class, storey, GlobalId and model, read from the
     canonical element inventory for display only.
+``finding_details``
+    ``finding_key`` → ``rule_id``, ``requirement_id``, ``labels``, ``citation``,
+    ``expected``, ``actual``, ``reason`` and ``status``, copied from the
+    validation run the citing record names (:mod:`.details`). Only for a record.
+    A cited finding that may not be explained from that run — one made under
+    another run or another predicate, which includes every finding carrying the
+    fixture marker — has no entry at all, never a ``null`` one.
 
 **This is not a Framework interface.** It lives outside ``epc_control_tower``, is
 not a ``Checker``, ``GroupingPolicy`` or ``Exporter``, is absent from

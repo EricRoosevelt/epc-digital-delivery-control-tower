@@ -18,8 +18,9 @@ from epc_control_tower.purpose import (
     load_purpose_packs,
 )
 
+from .details import finding_details
 from .envelope import PROJECT_ROOT, REAL, build_envelope
-from .validated import requirement_keys_by_ruleset, validated_facts
+from .validated import detail_source, requirement_keys_by_ruleset, validated_facts
 
 __all__ = ["real_envelope"]
 
@@ -39,4 +40,5 @@ def real_envelope(request: AssessmentRequest) -> dict[str, object]:
     return build_envelope(
         REAL,
         lambda: assess_purpose(request=request, composed=composed, facts=facts),
+        lambda document: finding_details(detail_source(), document),
     )
