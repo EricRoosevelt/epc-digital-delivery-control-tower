@@ -35,9 +35,7 @@ from epc_control_tower.purpose.assessment.record import (
     CARRY_OVER_STATES,
     CHANGED_ASPECTS,
     CITED_FINDING_BASIS_VERSION,
-    AssessmentRecord,
     build_assessment_digest,
-    resolved_document,
 )
 from helpers import PROJECT_ROOT, shipped_pipeline_result, shipped_run_config
 from rule_edits import edited_run
@@ -243,44 +241,7 @@ def states(record, kind: str) -> dict[str, int]:
     return counts
 
 
-def resealed(record, transform):
-    """``record`` with ``transform`` applied to every reading, sealed again.
-
-    Sealed by the real digest function, so it passes a recheck's seal check
-    exactly as a genuinely different record would.
-    """
-
-    def step(item):
-        return dataclasses.replace(
-            item, readings=tuple(transform(reading) for reading in item.readings)
-        )
-
-    activities = tuple(
-        dataclasses.replace(
-            activity,
-            subscopes=tuple(
-                dataclasses.replace(
-                    subscope, path=tuple(step(item) for item in subscope.path)
-                )
-                for subscope in activity.subscopes
-            ),
-        )
-        for activity in record.activities
-    )
-    fields = {
-        "request": record.request,
-        "pack_schema_version": record.pack_schema_version,
-        "composition_digest": record.composition_digest,
-        "validation_run_id": record.validation_run_id,
-        "ruleset_id": record.ruleset_id,
-        "ruleset_version": record.ruleset_version,
-        "activities": activities,
-        "cited_milestones": record.cited_milestones,
-        "cited_cost_parameter_names": record.cited_cost_parameter_names,
-    }
-    return AssessmentRecord(
-        **fields, assessment_digest=build_assessment_digest(resolved_document(**fields))
-    )
+resealed = fx.resealed_record
 
 
 def reissued(facts, *, delete: str = ""):

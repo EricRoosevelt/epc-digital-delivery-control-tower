@@ -69,6 +69,11 @@ from epc_control_tower.purpose.assessment.facts import (
     ElementFact,
     ModelVersionFact,
 )
+from epc_control_tower.purpose.assessment.record import (
+    AssessmentRecord,
+    build_assessment_digest,
+    resolved_document,
+)
 from helpers import PROJECT_ROOT, shipped_pipeline_result
 from purpose_fixtures import (
     base_overlay_document,
@@ -105,11 +110,15 @@ __all__ = [
     "fixture_narrowed_penetration_determinations",
     "fixture_overlay_document",
     "fixture_re_held_determinations",
+    "fixture_record_without_comparison_basis",
     "fixture_reissued_facts",
     "fixture_reissued_request",
     "fixture_request",
+    "fixture_revalidated_facts",
+    "fixture_revalidation_run_id",
     "fixture_superseding_determinations",
     "requirement_keys_by_ruleset",
+    "resealed_record",
     "scratch_pack",
 ]
 
@@ -566,6 +575,149 @@ def fixture_reissued_request(
     """
 
     return fixture_request(activity_ids=activity_ids, facts=facts, scope=scope)
+
+
+def fixture_revalidation_run_id(label: str) -> str:
+    """The run a marked re-validation is attributed to. No such run is published."""
+
+    return f"{FIXTURE_MARKER}-validation-run/{label}-not-a-published-run"
+
+
+def fixture_revalidated_facts(
+    facts,
+    *,
+    label: str,
+    reissued_model_keys: tuple[str, ...] = (),
+    delete: str = "",
+    asset_identity_fixed: bool = False,
+):
+    """``facts`` as a **whole** re-validation this repository never published.
+
+    A second run is a second ``validation_run_id``, and every ``finding_key`` is
+    derived from it — so a re-validation re-keys every finding, not only the
+    ones something happened to. This builder says exactly that and nothing more:
+    the run identifier is :func:`fixture_revalidation_run_id` and **every**
+    finding key gains the ``fixture/finding/`` prefix, so no citation of the
+    result can be read as the output of a published validation run. What each
+    finding *says* — its status, its content digest, its requirement's semantics
+    digest, its checker fingerprint — is left exactly as ``facts`` has it.
+
+    ``facts`` has two honest sources, and the marker is owed in both:
+
+    * the shipped run's facts, with ``reissued_model_keys`` naming the model
+      versions to move. No model of ``pcert-sample`` has ever been reissued, so
+      each moved content identifier is :func:`reissued_content_id`;
+    * the facts of a real run over a *scratch copy of the rules with an edit
+      applied*. There the checker really ran and the digests are what it
+      produced, but the rule set it ran is one nobody published — so the run and
+      its keys are marked all the same.
+
+    ``delete`` removes one element and its findings. ``asset_identity_fixed``
+    turns the R-005 ``FAIL`` rows into ``PASS`` ones with a minted, marked
+    content digest, as :func:`fixture_reissued_facts` does.
+
+    :func:`fixture_reissued_facts` is left as it is — it keeps the keys of the
+    findings it does not repair, and the recheck tests pin that mix.
+    """
+
+    known = {model.model_key for model in facts.models}
+    if not set(reissued_model_keys) <= known:
+        raise AssertionError(
+            "no such model version in this project: "
+            f"{sorted(set(reissued_model_keys) - known)}"
+        )
+    bound = asset_identity_requirement_keys()
+
+    def revalidated(finding):
+        changes = {"finding_key": f"{FIXTURE_MARKER}/finding/{finding.finding_key}"}
+        if (
+            asset_identity_fixed
+            and finding.status == "FAIL"
+            and finding.requirement_key in bound
+        ):
+            changes["status"] = "PASS"
+            changes["content_digest"] = (
+                f"{FIXTURE_MARKER}/finding-content/{finding.finding_key}-pass"
+            )
+        return dataclasses.replace(finding, **changes)
+
+    return dataclasses.replace(
+        facts,
+        validation_run_id=fixture_revalidation_run_id(label),
+        models=tuple(
+            dataclasses.replace(model, content_id=reissued_content_id(model.model_key))
+            if model.model_key in reissued_model_keys
+            else model
+            for model in facts.models
+        ),
+        elements=tuple(item for item in facts.elements if item.element_key != delete),
+        findings=tuple(
+            sorted(
+                (
+                    revalidated(finding)
+                    for finding in facts.findings
+                    if not delete or finding.element_key != delete
+                ),
+                key=lambda item: (item.element_key, item.requirement_key, item.finding_key),
+            )
+        ),
+    )
+
+
+def resealed_record(record: AssessmentRecord, transform) -> AssessmentRecord:
+    """``record`` with ``transform`` applied to every reading, sealed again.
+
+    Sealed by the real digest function, so it passes a recheck's seal check
+    exactly as a genuinely different record would.
+    """
+
+    def step(item):
+        return dataclasses.replace(
+            item, readings=tuple(transform(reading) for reading in item.readings)
+        )
+
+    activities = tuple(
+        dataclasses.replace(
+            activity,
+            subscopes=tuple(
+                dataclasses.replace(
+                    subscope, path=tuple(step(item) for item in subscope.path)
+                )
+                for subscope in activity.subscopes
+            ),
+        )
+        for activity in record.activities
+    )
+    fields = {
+        "request": record.request,
+        "pack_schema_version": record.pack_schema_version,
+        "composition_digest": record.composition_digest,
+        "validation_run_id": record.validation_run_id,
+        "ruleset_id": record.ruleset_id,
+        "ruleset_version": record.ruleset_version,
+        "activities": activities,
+        "cited_milestones": record.cited_milestones,
+        "cited_cost_parameter_names": record.cited_cost_parameter_names,
+    }
+    return AssessmentRecord(
+        **fields, assessment_digest=build_assessment_digest(resolved_document(**fields))
+    )
+
+
+def fixture_record_without_comparison_basis(record: AssessmentRecord) -> AssessmentRecord:
+    """``record`` in the shape a record sealed before contract 1.7 has.
+
+    Every reading keeps its ``finding_keys`` and loses its ``cited_findings`` —
+    which is the whole of how such a record is recognised (ADR 0005 §5.2.4): by
+    what it carries, never by a version number or a date. No such record exists
+    in this repository; this one is made from a current record so that a recheck
+    of the shape can be shown, and it is sealed again so the recheck's own seal
+    check passes.
+    """
+
+    return resealed_record(
+        record, lambda reading: dataclasses.replace(reading, cited_findings=())
+    )
 
 
 #: What a re-held review's handles are built from. The store assigns a new
