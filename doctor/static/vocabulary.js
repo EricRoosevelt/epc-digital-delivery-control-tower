@@ -2,31 +2,84 @@
 // beside the original code and never replaces it; a code not listed here is
 // shown as unrecognised with its raw value, not mapped to the nearest state.
 
+// The two entries, in the manager's words. The second is deliberately not
+// called "real input": nothing can be imported here, and what it shows is one
+// attempt to check the project that ships with the repository.
 export const MODE_LABELS = {
-  fixture: "夹具演示",
-  real: "真实输入",
+  fixture: "模拟示例",
+  real: "随附项目的检查尝试",
 };
 
 //: The adapter names its scenarios; these are this preview's words for them.
 //: An unlisted name is shown as the adapter gave it.
 export const RUN_LABELS = {
-  "member-evidence": "成员证据（一份夹具记录）",
-  "pair-verdicts": "成对裁决（同一份夹具记录）",
-  // Numbered in the order the adapter lists them, and deliberately nothing
-  // more. A run name that said "a rule was relaxed" or "the producing model was
-  // re-issued" would state a cause before the page has shown what the record
-  // proves — and for a rule edit the record does not carry the cause at all.
-  "recheck-both-reissued": "复检记录 1（夹具）",
-  "recheck-comparison": "复检记录 2（夹具）",
-  "recheck-consuming-reissued": "复检记录 3（夹具）",
-  "recheck-key-change-only": "复检记录 4（夹具）",
-  "recheck-member-gone": "复检记录 5（夹具）",
-  "recheck-prior-without-basis": "复检记录 6（夹具）",
-  "recheck-producing-reissued": "复检记录 7（夹具）",
-  "recheck-producing-reissued-content-changed": "复检记录 8（夹具）",
-  "recheck-requirement-relaxed": "复检记录 9（夹具）",
-  "recheck-semantics-changed": "复检记录 10（夹具）",
-  "real-refusal": "随附项目的真实运行",
+  "member-evidence": "一份检查记录：构件与证据（模拟示例）",
+  "pair-verdicts": "同一份检查记录：成对构件的判断（模拟示例）",
+  // One example is carried end to end in this revision and has a name that says
+  // what it shows; its name states only what its record holds (no model was
+  // re-issued, and a verdict differs), which a test pins. What the example was
+  // *given* is a different statement and lives in EXAMPLES, shown in the
+  // directory only. The others keep a number until they are written up the
+  // same way.
+  "recheck-both-reissued": "复检记录 1（模拟示例）",
+  "recheck-comparison": "复检记录 2（模拟示例）",
+  "recheck-consuming-reissued": "复检记录 3（模拟示例）",
+  "recheck-key-change-only": "复检记录 4（模拟示例）",
+  "recheck-member-gone": "复检记录 5（模拟示例）",
+  "recheck-prior-without-basis": "复检记录 6（模拟示例）",
+  "recheck-producing-reissued": "复检记录 7（模拟示例）",
+  "recheck-producing-reissued-content-changed": "复检记录 8（模拟示例）",
+  "recheck-requirement-relaxed": "模型未改，但交接判断发生变化",
+  "recheck-semantics-changed": "复检记录 10（模拟示例）",
+  "real-refusal": "对随附样例项目的一次检查尝试",
+};
+
+// The example directory. `question` is what a manager would open the example to
+// find out; `given` is what the example was handed, written by whoever built the
+// example. Neither is something a run derived, so both are shown in the
+// directory only, under EXAMPLE_NOTE, and never on a result page.
+//
+// The adapter's `scenario_index()` returns a name and a mode and nothing else,
+// so these sentences are this preview's transcription of the adapter's own
+// description of the scenario. They belong in the adapter's index.
+export const EXAMPLES = {
+  "recheck-requirement-relaxed": {
+    question: "两侧模型都没有重新发布，复检后却有判断变了：哪些事项仍需处理，下一步是什么？",
+    given: "这个示例被给了：一条被引用的检查要求放宽了；交出方和接收方的模型版本都没有变。",
+  },
+};
+
+export const EXAMPLE_NOTE =
+  "示例说明由搭建示例的人提供，只说这个示例被给了什么；它不是检查得出的结论。" +
+  "检查得出了什么，只看结果页。";
+
+// The first screen: who this is for, what it answers, what it can do today —
+// and, in the same breath, what it cannot.
+export const HOME = {
+  title: "查看模型交接中仍需处理的事项",
+  lede:
+    "帮助 BIM 经理了解：一次交接前检查发现了什么；复检之后，哪些判断变了、" +
+    "哪些事项仍需处理、每一项涉及哪些构件、依据是什么、下一步做什么。",
+  status: "当前为示例预览：尚不能导入自己的 Revit 模型，也不提供整体合规或可施工结论。",
+  example: {
+    title: "看一个模拟示例",
+    body:
+      "从一份示例复检记录出发，找到待处理事项，看清涉及的构件、依据和下一步。" +
+      "示例里的项目设定与人工判定是模拟的，页面上逐条标明。",
+    action: "选择模拟示例",
+  },
+  attempt: {
+    title: "查看随附项目的检查尝试",
+    body:
+      "仓库随附一个样例项目。对它的检查尝试没有开始评估；这里说明原因。" +
+      "这不是导入入口，不能换成自己的模型。",
+    action: "查看这次检查尝试",
+  },
+  cannot: [
+    "导入自己的 Revit 或 IFC 模型",
+    "给出整体合规、可施工或“可以交付”的结论",
+    "写回模型、上传到云端，或在 Revit 里打开构件",
+  ],
 };
 
 // A key the record does not carry, and a key it carries as an empty string, are
@@ -54,26 +107,26 @@ export const FIXTURE_MARKER = "fixture";
 export const CITATION_PROVENANCE = {
   "finding-real": {
     key: "real",
-    short: "真实验证输出",
-    long: "未带夹具标记的 finding 引用：来自真实验证运行，真实 IFC 模型按真实规则评估的产物。",
+    short: "真实检查输出",
+    long: "未带模拟标记的检查结果引用：来自真实的检查运行，是真实 IFC 模型按真实规则检查的产物。",
   },
   "finding-fixture": {
     key: "fixture",
-    short: "夹具铸造（模拟）",
+    short: "模拟的检查结果",
     long:
-      `带夹具标记（以 ${FIXTURE_MARKER} 开头）的 finding 引用：由夹具铸造，` +
-      "不是任何真实验证运行的输出。",
+      `带模拟标记（以 ${FIXTURE_MARKER} 开头）的检查结果引用：由示例生成，` +
+      "不是任何真实检查运行的输出。",
   },
   "determination-fixture": {
     key: "fixture",
-    short: "夹具判定（模拟）",
-    long: `带夹具标记的判定引用：由夹具提供，没有任何协调评审真的发生过。`,
+    short: "模拟的人工判定",
+    long: "带模拟标记的判定引用：由示例提供，没有任何协调评审真的发生过。",
   },
   "determination-unmarked": {
     key: "unmarked",
     short: "来源未标注的判定",
     long:
-      "未带夹具标记的判定引用：判定不是验证运行的输出，本界面也没有可核依据说明它来自哪里，" +
+      "未带模拟标记的判定引用：判定不是检查运行的输出，本界面也没有可核依据说明它来自哪里，" +
       "因此不作真实或模拟的断言。",
   },
 };
@@ -95,16 +148,17 @@ export const CITATION_KINDS = {
 };
 
 export const PROVENANCE_NOTICE =
-  "本页每条引用旁的来源标注按该条引用自身判定（是否带夹具标记），不按整页或整份记录推断：";
+  "本页每条引用旁的来源标注按该条引用自身判定（是否带模拟标记），不按整页或整份记录推断：";
 
 // The policy row is not a citation and carries no marker, so nothing in the
 // envelope says whose decision it was. The row states what the record carries
 // and says the source is not in it — true of every row, which is what the
 // per-row rule requires.
-export const POLICY_SOURCE_NOTE = "政策来源未随信封返回：此值是记录携带的政策声明，不能据此判断它是项目决定还是夹具声明。";
+export const POLICY_SOURCE_NOTE =
+  "这条登记的来源没有随记录返回：它是记录携带的项目设定，不能据此判断它是项目的决定还是示例的设定。";
 
 export const DEMO_NOTICE =
-  "夹具演示：政策与判定为模拟。不能用于正式项目决定，不提供真实评估记录导出。";
+  "模拟示例：项目设定（例如由哪个团队处理）与人工判定是模拟的。不能用于正式项目决定，也不能导出正式检查记录。";
 
 const ABSENCES = {
   "no-finding": "本绑定下尚未评估：没有 finding",
@@ -121,8 +175,8 @@ const ABSENCES = {
 // has no such disposition, and a member that left is not a member that was fixed.
 export const DISPOSITION_ENTRIES = {
   present: {
-    text: "当前仍有对应成员；裁决与条件另看",
-    next: "看下面 Framework 给出的当前子范围：现在的裁决、下一步和责任角色都以它为准。",
+    text: "仍在本次检查范围内；判断与条件另看",
+    next: "看下面记录给出的当前情况：现在的判断、下一步和处理角色都以它为准。",
   },
   "element-deleted-in-reissued-model": {
     text: "在重发模型中删除，不等于修复",
@@ -139,12 +193,12 @@ export const DISPOSITION_ENTRIES = {
   "pairing-no-longer-derived": {
     text: "这两个构件现在不再被配成一对来检查，不等于开洞已补",
     next:
-      "记录没有为这个成员对给出下一步。请核对让它不再被配对的那份依据（见“记录给出的原因”）" +
+      "记录没有为这一对构件给出下一步。请核对让它不再被配对的那份依据（见“记录给出的原因”）" +
       "是不是你认可的结论；原来的问题没有被证明已修复。",
   },
   "outside-declared-scope": {
     text: "本次未声明该范围，不等于问题解除",
-    next: "这个成员本次没有被重新检查。需要结论时，要重新发起一次包含它的复检；本预览不能发起。",
+    next: "这个构件本次没有被重新检查。需要结论时，要重新发起一次包含它的复检；本预览不能发起。",
   },
 };
 
@@ -170,14 +224,14 @@ export const CONDITION_ENTRIES = {
     plain: "原复检条件没有机器能检查的部分，需要人阅读原条件并判断；记录对它不下结论。",
   },
   "not-comparable": {
-    text: "不可比较：对应成员集合不完整",
+    text: "不可比较：对应的构件不完整",
     plain:
-      "无法对原复检条件下结论：原来的成员有的已经不在本次记录里，条件没有完整的对象可以检查。" +
+      "无法对原复检条件下结论：原来的构件有的已经不在本次记录里，条件没有完整的对象可以检查。" +
       "这不代表条件已满足。",
   },
   "no-recheck-condition": {
     text: "原记录没有复检条件",
-    plain: "原记录没有复检条件：原来的裁决没有留下待办。",
+    plain: "原记录没有复检条件：原来的判断没有留下待办。",
   },
 };
 
@@ -229,7 +283,7 @@ export const CARRY_OVER_REASONS = {
     "所以只能如实显示无法比较。",
   "comparison-basis-version-unknown": "原记录保存的比较依据，是本系统不认识的版本。",
   "subject-not-present":
-    "这条证据所针对的成员，在本次记录里已经不在（去向见“记录给出的原因”）。成员不在不等于已修复。",
+    "这条证据所针对的构件，在本次记录里已经不在（去向见“记录给出的原因”）。构件不在不等于已修复。",
   "counterpart-not-unique":
     "本次有不止一条候选的对应检查结果，系统不从中挑选（全部候选见“记录给出的原因”）。",
   "requirement-semantics-basis-unavailable": "封存一方或当前一方没有“检查要求”的比较依据。",
@@ -268,7 +322,7 @@ export const ASPECT_NOTES = {
     "检查要求被修改过，检查结果内容也变了：结果的变化可能来自要求的修改（例如要求放宽），" +
     "不能据此说模型修好了。记录不说明要求是放宽还是收紧。",
   contentUnderSameRequirement:
-    "检查要求没有变，检查结果内容变了。这一行不记录结果是变好还是变差，请看当前裁决。",
+    "检查要求没有变，检查结果内容变了。这一行不记录结果是变好还是变差，请看当前判断。",
   checker: "检查程序（检查器或它的配置）版本不同：同样的模型和要求也可能得出不同结果。",
   unrecognised: "含有未识别的变化方面，本页因此不列“未变”的方面。",
 };
@@ -293,7 +347,7 @@ export const REISSUE_CASES = {
     headline: "交出方的模型重新发布了，接收方的模型没有变",
     detail: "交出方（{from}）的模型 {producing} 是新版本；接收方（{to}）的模型 {consuming} 还是原版本。",
     caveats: [
-      "交出方重新发布可能改变了穿越关系或成员范围，不能据此说接收方的工作（例如开洞）已经做好。",
+      "交出方重新发布可能改变了穿越关系或涉及的构件范围，不能据此说接收方的工作（例如开洞）已经做好。",
       "针对旧版本作出的判定不能归到新版本。",
     ],
   },
@@ -327,7 +381,7 @@ export const REISSUE_NEUTRAL = "本页只说明哪一侧变了、记录证明了
 // never inside a collapsed block.
 export const RECHECK_LIMITS = [
   "“比较依据一致”不代表整个交接不用复核。",
-  "成员不在了、或找不到对应证据，不代表问题已修复。",
+  "构件不在了、或找不到对应证据，不代表问题已修复。",
   "模型重新发布（不论哪一侧）不代表修复已经发生。",
   "“只有模型版本变了”不等于检查结果的内容变了。",
   "“无法比较”不是“证据缺失”：旧记录没保存比较依据时，本页如实显示无法比较。",
@@ -347,28 +401,135 @@ export const RECHECK_CANNOT = [
 // about why.
 export const VERDICT_GROUPS = {
   changed: {
-    label: "裁决变了的",
-    none: "没有裁决变了的项。",
+    label: "判断变了的",
+    none: "没有判断变了的项。",
     notes: {
       none:
-        "两侧模型都没有重新发布，这些项的裁决却变了：变化不来自模型改动。" +
+        "两侧模型都没有重新发布，这些项的判断却变了：变化不来自模型改动。" +
         "每一项的旧证据写明变了的是什么。",
       reissued:
-        "模型重新发布过（见上）。裁决变了，不说明原来的问题怎样了；" +
+        "模型重新发布过。判断变了，不说明原来的问题怎样了；" +
         "每一项的旧证据写明变了的是什么。",
-      unrecognised: "裁决变了，不说明原来的问题怎样了；每一项的旧证据写明变了的是什么。",
+      unrecognised: "判断变了，不说明原来的问题怎样了；每一项的旧证据写明变了的是什么。",
     },
   },
   unplaced: {
-    label: "记录没有给出当前对应子范围的",
-    none: "每一项记录都给出了当前对应的子范围。",
-    note: "这些项现在是什么裁决，记录没有说。成员不在了不代表问题已修复。",
+    label: "记录没有给出当前情况的",
+    none: "每一项记录都给出了当前情况。",
+    note: "这些项现在是什么判断，记录没有说。构件不在了不代表问题已修复。",
   },
   unchanged: {
-    label: "裁决没有变的",
-    none: "没有裁决保持不变的项。",
-    note: "裁决没有变，不代表证据没有变；旧证据的情况见每一项。",
+    label: "判断没有变的",
+    none: "没有判断保持不变的项。",
+    note: "判断没有变，不代表证据没有变；旧证据的情况见每一项。",
   },
+};
+
+// Which items the record gives a next step for. The split is the presence of a
+// next action on the place the record itself named for the item — nothing is
+// read off the verdict word, and no group is an overall status.
+export const ACTION_GROUPS = {
+  open: {
+    label: "待处理事项",
+    summary: "记录给出了下一步，需要处理",
+    none: "记录没有为任何一项给出下一步。",
+    note: "每一项的页面写明涉及的构件、依据和记录给出的下一步。",
+  },
+  unplaced: {
+    label: "记录没有给出当前情况的事项",
+    summary: "记录没有给出当前情况",
+    none: "每一项记录都给出了当前情况。",
+    note: "这些项现在是什么判断，记录没有说。构件不在了不代表问题已修复。",
+  },
+  none: {
+    label: "记录没有给出下一步的事项",
+    summary: "记录没有给出下一步",
+    none: "记录为每一项都给出了下一步，或没有给出当前情况。",
+    note: "记录没有为这些项给出下一步。这不代表整个交接不用复核。",
+  },
+};
+
+// The record's verdict words, glossed beside the word and never instead of it.
+// The glosses follow the definitions in the checklist's own document; a word
+// not listed is shown as it came.
+export const VERDICT_WORDS = {
+  READY: "证据齐全，且满足要求",
+  BLOCKED: "有已知未满足的要求",
+  UNKNOWN: "缺少证据，无法判断",
+};
+
+// Which side of the handover a model is on, looked up from the record's own
+// comparison. A side is not a discipline, and nothing here names one.
+export const HANDOVER_SIDES = {
+  producing: "本次交接中交出方的模型",
+  consuming: "本次交接中接收方的模型",
+};
+
+// What can truthfully be said about one element from the five fields the
+// preview is handed (name, IFC class, storey, GlobalId, model). Discipline is
+// not among them, and a model identifier is not a discipline statement.
+export const ELEMENT_WORDS = {
+  unnamed: "模型中没有填写名称",
+  noFacts: "记录没有返回这个构件的可读信息",
+  noStorey: "模型中没有楼层归属",
+  noDiscipline: "记录未提供专业信息；本界面不从模型标识推断专业",
+  modelIsNotDiscipline: "这是模型标识，不是专业声明",
+  noClassName: "本界面没有这个类别的中文名",
+  naming:
+    "名称取自模型文件本身，可能为空，也可能与别的构件重名；要在模型里定位，请用 GlobalId。",
+};
+
+// Chinese names for the IFC classes this preview has words for. The IFC class
+// stays beside the name; a class not listed is shown as it came.
+export const IFC_CLASS_NAMES = {
+  IfcAirTerminal: "风口",
+  IfcChimney: "烟囱",
+  IfcDuctSegment: "风管段",
+  IfcRoof: "屋顶",
+  IfcSlab: "楼板",
+  IfcWall: "墙",
+};
+
+// This preview's Chinese for the checklist's activities and problem types. The
+// record carries them as codes with English sentences; the code stays beside
+// the gloss, and one not listed is shown as it came.
+export const ACTIVITY_NAMES = {
+  "builders-work-openings": "预留开洞",
+  "ceiling-and-bulkhead-geometry": "吊顶与包封几何",
+  "schedules-and-room-data-sheets": "明细表与房间数据表",
+};
+
+export const RESOLUTION_KINDS = {
+  "penetration-not-determined": "还没有人判定它是否穿过别的构件",
+  "missing-corresponding-opening": "它穿过的构件上没有建出对应的开洞",
+  "opening-not-verifiably-linked": "有开洞，但无法核实它与这处穿越对应",
+  "in-model-position-not-evaluated": "它在模型中的位置还没有被检查到",
+  "mep-element-not-spatially-assigned": "它在模型中没有空间归属",
+  "asset-identity-not-evaluated": "它的资产标识还没有被检查到",
+  "missing-project-asset-identity": "缺少项目要求的资产标识",
+};
+
+// Why a check attempt did not start, by refusal code. A refusal is the system's
+// answer to the request's conditions — not a fault of the program, which is
+// shown on a different screen and never as one of these.
+export const REFUSAL_REASONS = {
+  "team-mapping-decision-basis-illustrative": {
+    title: "项目条件未满足：处理团队的登记只是示意值",
+    text:
+      "这次请求所用的项目设定里，“哪类问题由哪个团队处理”的登记被标为示意值，不是项目作出的决定。" +
+      "系统因此不生成评估结果：否则结果里的处理团队会被当成项目的真实安排。",
+  },
+};
+
+export const REFUSAL_UNGLOSSED = {
+  title: "系统拒绝了这次请求",
+  text: "本界面没有这个原因的中文说明，请看下面系统返回的原文。",
+};
+
+export const FAULT_WORDS = {
+  fault: "程序故障：没有拿到检查数据",
+  unavailable: "检查程序不可用",
+  note: "这是程序自身的问题，不是对任何项目或模型的判断；没有任何检查结果可以显示。",
 };
 
 export const UNRECOGNISED = "未识别的值，按原值显示";

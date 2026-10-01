@@ -11,6 +11,7 @@
 
 import { h, note } from "./dom.js";
 import { renderContext, screens } from "./screens.js";
+import { FAULT_WORDS } from "./vocabulary.js";
 
 const state = {
   mode: null, // the experience the manager chose
@@ -31,11 +32,11 @@ export function clearResults(mode) {
 // What is wrong with an envelope, or null. Only presence and type: the values
 // themselves are the Framework's and are shown as they are.
 function envelopeProblem(envelope, mode) {
-  if (!envelope || typeof envelope !== "object") return "信封不是对象";
+  if (!envelope || typeof envelope !== "object") return "返回的数据不是对象";
   if (envelope.mode !== mode) {
-    return `信封的 mode 为 ${JSON.stringify(envelope.mode)}，与所选模式 ${JSON.stringify(mode)} 不一致`;
+    return `返回数据的 mode 为 ${JSON.stringify(envelope.mode)}，与所选入口 ${JSON.stringify(mode)} 不一致`;
   }
-  if (!envelope.elements || typeof envelope.elements !== "object") return "信封缺少 elements";
+  if (!envelope.elements || typeof envelope.elements !== "object") return "返回的数据缺少 elements";
   if (envelope.outcome === "record") {
     if (!envelope.record || typeof envelope.record !== "object") return "outcome=record 但缺少 record";
     if (typeof envelope.assessment_digest !== "string" || !envelope.assessment_digest) {
@@ -74,12 +75,6 @@ async function fetchJson(url) {
   return body;
 }
 
-export function unavailableText(failure) {
-  return failure.unavailable
-    ? `输入不可用（不是拒绝，也不是成功）：${failure.message}`
-    : failure.message;
-}
-
 async function ensureRuns(mode) {
   if (state.runs !== null) return;
   const body = await fetchJson(`/api/runs?mode=${encodeURIComponent(mode)}`);
@@ -92,13 +87,13 @@ async function ensureEnvelope(mode, runId) {
   state.envelope = null;
   await ensureRuns(mode);
   const run = state.runs.find((item) => item.run_id === runId);
-  if (!run) throw new Error(`适配器没有为此模式提供运行 ${JSON.stringify(runId)}`);
+  if (!run) throw new Error(`这个入口下没有 ${JSON.stringify(runId)}`);
   const envelope = await fetchJson(
     `/api/envelope?mode=${encodeURIComponent(mode)}&run=${encodeURIComponent(runId)}`,
   );
   if (state.mode !== mode || state.runId !== runId) return;
   const problem = envelopeProblem(envelope, mode);
-  if (problem) throw new Error(`适配器返回的信封不符合约定：${problem}。未显示任何结果。`);
+  if (problem) throw new Error(`返回的数据不符合约定：${problem}。未显示任何结果。`);
   state.envelope = envelope;
 }
 
@@ -145,11 +140,15 @@ async function render() {
       await ensureRuns(mode);
       content = screens.runs(state);
     } else {
-      main.replaceChildren(h("p", { role: "status" }, "正在请求适配器…"));
+      main.replaceChildren(h("p", { role: "status" }, "正在读取检查记录…"));
       await ensureEnvelope(mode, runId);
       if (token !== rendering) return;
       const outcome = state.envelope.outcome;
-      const wanted = screen || (outcome === "record" ? "record" : "refusal");
+      // A recheck record opens on its result: what is left to do comes before
+      // the record's own context, which stays one link away.
+      const wanted =
+        screen ||
+        (outcome !== "record" ? "refusal" : state.envelope.record.successor ? "recheck" : "record");
       if (wanted === "refusal" ? outcome !== "refusal" : outcome !== "record") {
         go(mode, runId);
         return;
@@ -192,12 +191,17 @@ async function render() {
       state.runId = null;
       state.envelope = null;
     }
+    // A fault of the program, kept apart from a refusal: a refusal is an answer
+    // about the request and arrives as a result with its own screen. Nothing
+    // here is a statement about a project or a model.
     content = h(
       "div",
-      {},
-      h("h1", {}, "无法显示结果"),
-      note(unavailableText(failure), "problem"),
-      h("p", {}, h("a", { href: href(mode) }, "返回运行列表")),
+      { class: "fault" },
+      h("h1", {}, failure.unavailable ? FAULT_WORDS.unavailable : FAULT_WORDS.fault),
+      note(FAULT_WORDS.note, "problem"),
+      h("p", {}, "技术信息（原文）："),
+      h("pre", { class: "refusal-text" }, failure.message),
+      h("p", {}, h("a", { href: href(mode) }, "返回上一级")),
     );
   }
   if (token !== rendering || state.mode !== mode) return;

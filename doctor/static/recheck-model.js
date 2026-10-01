@@ -17,6 +17,7 @@
 // Where the record gives no such ordinal there is no lookup, by key or otherwise.
 
 import {
+  ACTION_GROUPS,
   ASPECT_NOTES,
   ASPECT_ORDER,
   CARRY_OVER_REASONS,
@@ -25,6 +26,7 @@ import {
   CITATION_KINDS,
   CONDITION_ENTRIES,
   DISPOSITION_ENTRIES,
+  HANDOVER_SIDES,
   KEY_CHANGED,
   NOT_CARRIED,
   ONLY_REKEYED,
@@ -301,6 +303,54 @@ function currentSubscope(document, activityRef, ordinal) {
   return subscope ? { activityIndex, subscope } : null;
 }
 
+// ---------------------------------------------------------------------------
+// Work to do: which items the record gives a next step for
+// ---------------------------------------------------------------------------
+
+function carried(object, key) {
+  return carries(object, key) ? object[key] : undefined;
+}
+
+/** Whether the record gives this item a next step, no current place, or neither.
+ *
+ * Read off the places the record itself named for the item: it is "open" when
+ * one of them carries a next action. The verdict word is not consulted, and
+ * nothing here says an item is fine — only that the record asks nothing of it.
+ */
+function actionKind(current) {
+  if (current === null) return "unplaced";
+  const asked = current.some(
+    (entry) => entry.located !== null && carries(carried(entry.located.subscope, "route"), "next_action"),
+  );
+  return asked ? "open" : "none";
+}
+
+function actionGroups(items) {
+  return Object.keys(ACTION_GROUPS).map((kind) => {
+    const members = items.filter((item) => item.action === kind);
+    const entry = ACTION_GROUPS[kind];
+    return {
+      kind,
+      label: entry.label,
+      summary: entry.summary,
+      count: members.length,
+      note: members.length ? entry.note : entry.none,
+      items: members.map((item) => [item.subscopeIndex, item.memberIndex]),
+    };
+  });
+}
+
+/** Which side of the handover a model is on, or null when the record cannot say.
+ *
+ * A lookup of one model key against the comparison's own `producing` and
+ * `consuming`. A side is a role in this handover, not a discipline.
+ */
+export function handoverSide(comparison, modelKey) {
+  const key = (side) => (carries(comparison, side) ? comparison[side].model_key : undefined);
+  const sides = Object.keys(HANDOVER_SIDES).filter((side) => key(side) === modelKey);
+  return typeof modelKey === "string" && sides.length === 1 ? sides[0] : null;
+}
+
 function conditionModel(outcome) {
   if (!carries(outcome, "condition_status")) {
     return { code: null, known: false, text: NOT_CARRIED, plain: NOT_CARRIED };
@@ -400,6 +450,7 @@ export function recheckModel(document) {
         disposition: dispositionModel(item),
         condition,
         current,
+        action: actionKind(current),
         verdictChange: verdictChange(outcome, current),
       };
     });
@@ -422,6 +473,7 @@ export function recheckModel(document) {
     reissue,
     subscopes,
     items,
+    actionGroups: actionGroups(items),
     verdictGroups: verdictGroups(items, reissue.name),
     evidenceTally: stateTally(subscopes.flatMap((subscope) => subscope.evidence)),
     evidenceGroups: evidenceGroups(subscopes.flatMap((subscope) => subscope.evidence)),

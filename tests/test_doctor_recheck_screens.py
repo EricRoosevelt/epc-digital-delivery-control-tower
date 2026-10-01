@@ -240,7 +240,7 @@ class FourStatesTests(_Modelled):
             "不代表问题已修复", self.vocabulary["stateEntries"]["no-counterpart"]["caveat"]
         )
         self.assertIn(
-            "成员不在不等于已修复", self.vocabulary["reasonEntries"]["subject-not-present"]
+            "构件不在不等于已修复", self.vocabulary["reasonEntries"]["subject-not-present"]
         )
         gone = self.models["member-deleted"]["items"][1]
         self.assertEqual(gone["disposition"]["code"], "element-deleted-in-reissued-model")
@@ -522,6 +522,7 @@ class ItemsStayPerMemberTests(_Modelled):
                 self.assertEqual(
                     sorted(model),
                     [
+                        "actionGroups",
                         "conditionTally",
                         "dispositionTally",
                         "evidenceGroups",
@@ -626,6 +627,144 @@ class ScreenStructureTests(unittest.TestCase):
         self.assertIn('"data-return-focus": here ? true : null', self.recheck)
         self.assertIn("返回复检事项列表", self._function("recheckItem"))
 
+    def test_the_path_screens_use_no_internal_term(self):
+        """Home, directory, recheck result, recheck item and the check attempt.
+
+        The words a manager could not read are gone from the path this revision
+        carries. They are still on the record, activity and member screens, which
+        this revision did not reach; those are named here so the list shrinks on
+        purpose rather than by accident.
+        """
+
+        screens = (STATIC / "screens.js").read_text(encoding="utf-8")
+        cut = lambda start, end: screens[screens.index(start) : screens.index(end)]  # noqa: E731
+        path = {
+            "context bar": cut("export function renderContext(", "function elementFacts("),
+            "home and directory": cut("function entry() {", "function record(state) {"),
+            "recheck": self.recheck,
+            "check attempt": screens[screens.index("function refusal(") :],
+        }
+        strings = {
+            name: "\n".join(
+                line
+                for line in text.splitlines()
+                if not line.lstrip().startswith(("//", "*", "/*"))
+            )
+            for name, text in path.items()
+        }
+        strings["vocabulary"] = "\n".join(
+            line
+            for line in (STATIC / "vocabulary.js").read_text(encoding="utf-8").splitlines()
+            if not line.lstrip().startswith("//")
+        )
+        # ABSENCES is read by the member screens only.
+        absences = strings["vocabulary"]
+        absences = absences[absences.index("const ABSENCES") :]
+        strings["vocabulary"] = strings["vocabulary"].replace(
+            absences[: absences.index("};")], ""
+        )
+        for name, text in strings.items():
+            for term in (
+                "夹具",
+                "信封",
+                "Framework",
+                "Purpose",
+                "Overlay",
+                "真实输入",
+                "裁决",
+                "子范围",
+                "成员",
+            ):
+                with self.subTest(screen=name, term=term):
+                    self.assertNotIn(term, text)
+        for name in ("context bar", "home and directory", "recheck", "check attempt"):
+            with self.subTest(screen=name):
+                self.assertNotRegex(strings[name], r"\bPack\b|finding")
+
+    def test_the_first_screen_says_what_it_is_for_and_what_it_cannot_do(self):
+        vocabulary = (STATIC / "vocabulary.js").read_text(encoding="utf-8")
+        home = vocabulary[vocabulary.index("export const HOME") :]
+        home = home[: home.index("\n};")]
+        for said in (
+            "BIM 经理",
+            "仍需处理",
+            "尚不能导入自己的 Revit 模型",
+            "整体合规或可施工结论",
+        ):
+            with self.subTest(said=said):
+                self.assertIn(said, home)
+        # The shipped project's entry promises an attempt, not an input.
+        self.assertIn('real: "随附项目的检查尝试"', vocabulary)
+        self.assertIn("这不是导入入口", home)
+        screens = (STATIC / "screens.js").read_text(encoding="utf-8")
+        entry = screens[
+            screens.index("function entry() {") : screens.index("function runLink(")
+        ]
+        self.assertLess(entry.index("HOME.lede"), entry.index("HOME.status"))
+        self.assertLess(entry.index("HOME.status"), entry.index("entry-grid"))
+        self.assertNotIn("details", entry)
+
+    def test_an_element_is_described_from_what_was_handed_over_and_nothing_else(self):
+        """Name, class, storey, GlobalId and model. Discipline is said to be missing.
+
+        The envelope's elements carry no discipline, and a model key is a model
+        identifier, not a discipline statement. The card says both, and no
+        screen maps a model key to a discipline name.
+        """
+
+        card = self._function("elementCard")
+        for key in ('"ifc_class"', '"model_key"', '"global_id"', "storeyOf(facts)"):
+            with self.subTest(read=key):
+                self.assertIn(key, card)
+        self.assertIn('["专业", missing(ELEMENT_WORDS.noDiscipline)]', card)
+        self.assertIn("ELEMENT_WORDS.modelIsNotDiscipline", card)
+        self.assertNotIn("details", card)
+        vocabulary = (STATIC / "vocabulary.js").read_text(encoding="utf-8")
+        self.assertIn("不从模型标识推断专业", vocabulary)
+        for file in ("screens.js", "recheck-model.js", "vocabulary.js"):
+            text = (STATIC / file).read_text(encoding="utf-8")
+            with self.subTest(file=file):
+                self.assertNotRegex(text, r"discipline\s*[:=]|DISCIPLINE")
+                for word in ("机电", "暖通", "建筑专业", "结构专业"):
+                    self.assertNotIn(word, text)
+        # A pair shows both elements, each with its own card.
+        item = self._function("recheckItem")
+        self.assertIn(
+            "keys.map((key) => elementCard(state, key, model.reissue.comparison))", item
+        )
+        side = (STATIC / "recheck-model.js").read_text(encoding="utf-8")
+        side = side[side.index("export function handoverSide(") :]
+        side = side[: side.index("\n}\n")]
+        self.assertIn("comparison[side].model_key", side)
+
+    def test_a_refusal_and_a_fault_are_two_different_screens(self):
+        """A project condition not met is an answer; a failure of the program is not.
+
+        The refusal arrives as a result and is worded from its code. Anything
+        else — an exception, an adapter that cannot be imported — never reaches
+        that screen: it is shown as a fault of the program, with no statement
+        about a project.
+        """
+
+        app = (STATIC / "app.js").read_text(encoding="utf-8")
+        screens = (STATIC / "screens.js").read_text(encoding="utf-8")
+        vocabulary = (STATIC / "vocabulary.js").read_text(encoding="utf-8")
+        fault = app[app.index("} catch (failure) {") :]
+        fault = fault[: fault.index("if (token !== rendering")]
+        fault = "\n".join(
+            line for line in fault.splitlines() if not line.lstrip().startswith("//")
+        )
+        self.assertIn("FAULT_WORDS.unavailable : FAULT_WORDS.fault", fault)
+        self.assertIn("FAULT_WORDS.note", fault)
+        self.assertIn("failure.message", fault)
+        self.assertNotIn("refusal", fault.replace("refusal-text", ""))
+        refusal = screens[screens.index("function refusal(") :]
+        self.assertNotIn("FAULT_WORDS", refusal)
+        self.assertIn("不是程序故障", refusal)
+        self.assertIn('"team-mapping-decision-basis-illustrative": {', vocabulary)
+        self.assertIn("项目条件未满足", vocabulary)
+        self.assertIn("不是对任何项目或模型的判断", vocabulary)
+
 
 # What the page says for each of the adapter's recheck scenarios. The rows of a
 # scenario are the Framework's and are pinned in ``test_doctor_recheck_scenarios.py``;
@@ -641,8 +780,8 @@ _NO_BASIS = (
     "所以只能如实显示无法比较。"
 )
 _SUBJECT_GONE = (
-    "这条证据所针对的成员，在本次记录里已经不在（去向见“记录给出的原因”）。"
-    + "成员不在不等于已修复。"
+    "这条证据所针对的构件，在本次记录里已经不在（去向见“记录给出的原因”）。"
+    + "构件不在不等于已修复。"
 )
 _ONLY_VERSION = "模型版本变了，检查结果内容、检查要求、检查程序未变。"
 _VERSION_AND_CONTENT = "模型版本、检查结果内容变了，检查要求、检查程序未变。"
@@ -783,7 +922,7 @@ class AdapterScenarioTests(unittest.TestCase):
         )
         self.assertIn("针对旧版本作出的判定同样不能归到新版本。", model["reissue"]["caveats"])
         screens = (STATIC / "screens.js").read_text(encoding="utf-8")
-        self.assertIn("检查结果和判定是两种证据，分开计数，不相加。", screens)
+        self.assertIn("检查结果和人工判定是两种证据，分开计数，不相加。", screens)
 
     def test_a_relaxed_requirement_and_a_repaired_model_read_differently(self):
         relaxed = self.models["recheck-requirement-relaxed"]
@@ -832,12 +971,16 @@ class AdapterScenarioTests(unittest.TestCase):
         self.assertGreater(seen["present"], 0)
         self.assertGreater(seen["left"], 0)
 
-    def test_a_run_name_states_no_cause(self):
-        """A name is a number. What happened is for the page to show from the record.
+    def test_an_example_is_described_in_the_directory_and_nowhere_else(self):
+        """The directory may say what an example was given. A result page may not.
 
-        The record does not carry why a rule changed or which way (data gap R5),
-        so a name saying "a rule was relaxed" would be the preview's own
-        conclusion — and it would hand a walkthrough participant the answer.
+        This replaces a rule that every run be named by a number. That rule kept
+        a cause the record does not carry (data gap R5) off the screen, and paid
+        for it by making the directory unusable for everyone, to protect one
+        walkthrough from a leaked answer. The line is now drawn where the claim
+        is made: what an example was *given* is its builder's statement, shown
+        in the directory and labelled as the example's description; what a run
+        *found* is the record's, and only that reaches a result page.
         """
 
         vocabulary = (STATIC / "vocabulary.js").read_text(encoding="utf-8")
@@ -846,14 +989,108 @@ class AdapterScenarioTests(unittest.TestCase):
         named = dict(re.findall(r'"(recheck-[a-z-]+)":\s*"([^"]+)"', labels))
         self.assertEqual(sorted(named), sorted({*ADAPTER_SCENARIOS, "recheck-comparison"}))
         self.assertEqual(len(set(named.values())), len(named))
+
+        examples = vocabulary[vocabulary.index("export const EXAMPLES") :]
+        examples = examples[: examples.index("\n};")]
+        described = set(re.findall(r'"(recheck-[a-z-]+)": \{', examples))
+        self.assertEqual(described, {"recheck-requirement-relaxed"})
+        given = re.findall(r'given: "([^"]+)"', examples)
+        self.assertEqual(len(given), len(described))
+        for sentence in given:
+            # Said as what the example was handed, never as a finding.
+            self.assertTrue(sentence.startswith("这个示例被给了："), sentence)
+
+        # A described example has a name, and the name states only what its own
+        # record holds: no model was re-issued, and a verdict differs.
+        self.assertEqual(named["recheck-requirement-relaxed"], "模型未改，但交接判断发生变化")
+        relaxed = self.models["recheck-requirement-relaxed"]
+        self.assertEqual(relaxed["reissue"]["name"], "none")
+        self.assertGreater(relaxed["verdictGroups"][0]["count"], 0)
+        # The rest keep a number and say they are simulated; none states a cause.
         for name, label in named.items():
+            if name in described:
+                continue
             with self.subTest(scenario=name):
-                self.assertRegex(label, r"^复检记录 \d+（夹具）$")
-        # The adapter's scenario name is not printed beside a run this preview names.
+                self.assertRegex(label, r"^复检记录 \d+（模拟示例）$")
+
+        # The description is rendered by the directory and by nothing else, and
+        # the directory says whose words it is.
         screens = (STATIC / "screens.js").read_text(encoding="utf-8")
+        directory = screens[screens.index("function runs(") : screens.index("function record(")]
+        elsewhere = screens.replace(directory, "")
+        self.assertIn("EXAMPLES[run.run_id].given", directory)
+        self.assertIn("EXAMPLE_NOTE", directory)
+        self.assertIn('"示例说明"', directory)
+        code = "\n".join(
+            line for line in elsewhere.splitlines() if not line.lstrip().startswith("//")
+        )
+        self.assertEqual(
+            re.findall(r"\bEXAMPLES\b|\bEXAMPLE_NOTE\b", code), ["EXAMPLES", "EXAMPLE_NOTE"]
+        )
+        for file in ("recheck-model.js", "app.js"):
+            with self.subTest(file=file):
+                self.assertNotIn("EXAMPLES", (STATIC / file).read_text(encoding="utf-8"))
+        # The adapter's scenario name is not printed beside a run this preview names.
         self.assertIn(
             'Object.hasOwn(RUN_LABELS, run.run_id) ? null : [" ", code(run.run_id)]', screens
         )
+
+    def test_what_is_left_to_do_is_what_the_record_gives_a_next_step_for(self):
+        """Three groups by what the record asks, read off the place it named.
+
+        An item is "to do" when the subscope the record gave for it carries a
+        next action; it has no group of its own for a verdict word, and no group
+        is an overall status.
+        """
+
+        for name, model in self.models.items():
+            record = self.envelopes[name]["record"]
+            activities = {item["activity_ref"]: item for item in record["activities"]}
+            with self.subTest(scenario=name):
+                self.assertEqual(
+                    [group["kind"] for group in model["actionGroups"]],
+                    ["open", "unplaced", "none"],
+                )
+                placed = [
+                    tuple(index) for group in model["actionGroups"] for index in group["items"]
+                ]
+                self.assertEqual(
+                    sorted(placed),
+                    sorted(
+                        (item["subscopeIndex"], item["memberIndex"]) for item in model["items"]
+                    ),
+                )
+                for group in model["actionGroups"]:
+                    self.assertEqual(group["count"], len(group["items"]))
+                    for subscope_index, member_index in group["items"]:
+                        outcome = record["successor"]["subscopes"][subscope_index]
+                        entry = outcome["dispositions"][member_index]
+                        if "current_ordinals" not in entry:
+                            self.assertEqual(group["kind"], "unplaced")
+                            continue
+                        asked = any(
+                            "next_action" in subscope.get("route", {})
+                            for subscope in activities[outcome["activity_ref"]]["subscopes"]
+                            if subscope["ordinal"] in entry["current_ordinals"]
+                        )
+                        self.assertEqual(group["kind"], "open" if asked else "none")
+        relaxed = {
+            group["kind"]: group["count"]
+            for group in self.models["recheck-requirement-relaxed"]["actionGroups"]
+        }
+        self.assertEqual(relaxed, {"open": 7, "unplaced": 0, "none": 6})
+        model = (STATIC / "recheck-model.js").read_text(encoding="utf-8")
+        action = model[
+            model.index("function actionKind(") : model.index("export function handoverSide(")
+        ]
+        self.assertNotRegex(action, r"READY|BLOCKED|UNKNOWN|verdict|score|Math\.|%")
+        vocabulary = (STATIC / "vocabulary.js").read_text(encoding="utf-8")
+        groups = vocabulary[vocabulary.index("export const ACTION_GROUPS") :]
+        groups = groups[: groups.index("\n};")]
+        for claim in ("已解决", "修好", "已修复", "通过", "就绪", "评分", "%", "不用复核"):
+            with self.subTest(claim=claim):
+                for sentence in re.findall(rf"[^。\"]*{claim}[^。\"]*", groups):
+                    self.assertRegex(sentence, "不")
 
     def test_the_two_recorded_verdicts_are_grouped_and_counted_first(self):
         """Changed, not placed, unchanged — counts of what the record holds."""
@@ -957,7 +1194,7 @@ class AdapterScenarioTests(unittest.TestCase):
         changed = relaxed["verdictGroups"][0]
         self.assertEqual(relaxed["reissue"]["name"], "none")
         self.assertEqual(changed["count"], 1)
-        self.assertIn("两侧模型都没有重新发布，这些项的裁决却变了", changed["note"])
+        self.assertIn("两侧模型都没有重新发布，这些项的判断却变了", changed["note"])
         self.assertIn("变化不来自模型改动", changed["note"])
         for name in (
             "recheck-producing-reissued",
@@ -969,8 +1206,8 @@ class AdapterScenarioTests(unittest.TestCase):
                 self.assertIn("模型重新发布过", note)
                 self.assertIn("不说明原来的问题怎样了", note)
         quiet = self.models["recheck-key-change-only"]["verdictGroups"]
-        self.assertEqual(quiet[0]["note"], "没有裁决变了的项。")
-        self.assertEqual(quiet[1]["note"], "每一项记录都给出了当前对应的子范围。")
+        self.assertEqual(quiet[0]["note"], "没有判断变了的项。")
+        self.assertEqual(quiet[1]["note"], "每一项记录都给出了当前情况。")
 
     def test_no_group_is_a_status_a_score_or_a_claim_of_repair(self):
         vocabulary = (STATIC / "vocabulary.js").read_text(encoding="utf-8")
