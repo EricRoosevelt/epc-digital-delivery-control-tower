@@ -524,6 +524,7 @@ class ItemsStayPerMemberTests(_Modelled):
                     [
                         "conditionTally",
                         "dispositionTally",
+                        "evidenceGroups",
                         "evidenceTally",
                         "items",
                         "kind",
@@ -623,6 +624,239 @@ class ScreenStructureTests(unittest.TestCase):
         )
         self.assertIn('"data-return-focus": here ? true : null', self.recheck)
         self.assertIn("返回复检事项列表", self._function("recheckItem"))
+
+
+# What the page says for each of the adapter's recheck scenarios. The rows of a
+# scenario are the Framework's and are pinned in ``test_doctor_recheck_scenarios.py``;
+# what is pinned here is the wording those rows reach the manager in.
+_REKEYED = "只是引用换了键"
+_SAME_DETERMINATION = "同一份判定：引用相同，内容摘要也相同。"
+_NOT_ATTRIBUTABLE = (
+    "模型版本已经变化，原判定是针对旧版本作出的，不能归到当前版本。"
+    "不是证据不存在，也不是原判定错误；需要针对当前版本的判定。"
+)
+_NO_BASIS = (
+    "原记录封存时没有保存这条引用的比较依据（旧版本的记录）。本页不会用当前规则去补造，"
+    "所以只能如实显示无法比较。"
+)
+_SUBJECT_GONE = (
+    "这条证据所针对的成员，在本次记录里已经不在（去向见“记录给出的原因”）。"
+    + "成员不在不等于已修复。"
+)
+_ONLY_VERSION = "模型版本变了，检查结果内容、检查要求、检查程序未变。"
+_VERSION_AND_CONTENT = "模型版本、检查结果内容变了，检查要求、检查程序未变。"
+_ONLY_SEMANTICS = "检查要求变了，模型版本、检查结果内容、检查程序未变。"
+_SEMANTICS_AND_CONTENT = "检查结果内容、检查要求变了，模型版本、检查程序未变。"
+
+_DETERMINATIONS_KEPT = {"比较依据一致": {_SAME_DETERMINATION: 6}}
+_DETERMINATIONS_LEFT_BEHIND = {"未找到对应证据": {_NOT_ATTRIBUTABLE: 6}}
+
+#: ``scenario -> (re-issue case, check-result rows, determination rows)``, each
+#: rows table being ``state label -> {the fact said beside it: count}``.
+ADAPTER_SCENARIOS = {
+    "recheck-key-change-only": (
+        "none",
+        {"比较依据一致": {_REKEYED: 9}},
+        _DETERMINATIONS_KEPT,
+    ),
+    "recheck-semantics-changed": (
+        "none",
+        {"比较依据一致": {_REKEYED: 7}, "比较依据有变化": {_ONLY_SEMANTICS: 2}},
+        _DETERMINATIONS_KEPT,
+    ),
+    "recheck-requirement-relaxed": (
+        "none",
+        {"比较依据一致": {_REKEYED: 7}, "比较依据有变化": {_SEMANTICS_AND_CONTENT: 2}},
+        _DETERMINATIONS_KEPT,
+    ),
+    "recheck-prior-without-basis": (
+        "none",
+        {"现有依据不足以比较": {_NO_BASIS: 9}},
+        _DETERMINATIONS_KEPT,
+    ),
+    "recheck-producing-reissued": (
+        "producing",
+        {"比较依据有变化": {_ONLY_VERSION: 9}},
+        _DETERMINATIONS_LEFT_BEHIND,
+    ),
+    "recheck-producing-reissued-content-changed": (
+        "producing",
+        {"比较依据有变化": {_VERSION_AND_CONTENT: 6, _ONLY_VERSION: 3}},
+        _DETERMINATIONS_LEFT_BEHIND,
+    ),
+    "recheck-consuming-reissued": (
+        "consuming",
+        {"比较依据一致": {_REKEYED: 9}},
+        _DETERMINATIONS_LEFT_BEHIND,
+    ),
+    "recheck-both-reissued": (
+        "both",
+        {"比较依据有变化": {_ONLY_VERSION: 9}},
+        _DETERMINATIONS_LEFT_BEHIND,
+    ),
+    "recheck-member-gone": (
+        "producing",
+        {"比较依据有变化": {_ONLY_VERSION: 6}, "现有依据不足以比较": {_SUBJECT_GONE: 3}},
+        _DETERMINATIONS_LEFT_BEHIND,
+    ),
+}
+
+
+class AdapterScenarioTests(unittest.TestCase):
+    """The nine recheck scenarios the adapter evaluates, as the page words them."""
+
+    @classmethod
+    def setUpClass(cls):
+        from internal.doctor_adapter import scenario_envelope, scenario_index
+
+        offered = {
+            item["name"] for item in scenario_index() if item["name"].startswith("recheck-")
+        }
+        # Every recheck the adapter offers is worded here, and no other.
+        assert offered == {*ADAPTER_SCENARIOS, "recheck-comparison"}, sorted(offered)
+        cls.envelopes = {name: scenario_envelope(name) for name in ADAPTER_SCENARIOS}
+        output = _run_model({name: item["record"] for name, item in cls.envelopes.items()})
+        cls.models = output["models"]
+        cls.vocabulary = output["vocabulary"]
+
+    @staticmethod
+    def _said(group):
+        return {
+            state["label"]: {fact["text"]: fact["count"] for fact in state["facts"]}
+            for state in group["states"]
+        }
+
+    def test_each_scenario_says_which_side_and_what_became_of_each_kind_of_evidence(self):
+        for name, (reissue, findings, determinations) in ADAPTER_SCENARIOS.items():
+            model = self.models[name]
+            with self.subTest(scenario=name):
+                self.assertTrue(model["recognised"])
+                self.assertEqual(model["reissue"]["name"], reissue)
+                groups = {group["kind"]: group for group in model["evidenceGroups"]}
+                self.assertEqual(sorted(groups), ["determination", "finding"])
+                self.assertEqual(self._said(groups["finding"]), findings)
+                self.assertEqual(self._said(groups["determination"]), determinations)
+                self.assertEqual(groups["finding"]["count"], 9)
+                self.assertEqual(groups["determination"]["count"], 6)
+                self.assertEqual(len(model["subscopes"]), 8)
+
+    def test_nothing_the_adapter_records_is_unrecognised(self):
+        for name, model in self.models.items():
+            with self.subTest(scenario=name):
+                for subscope in model["subscopes"]:
+                    self.assertTrue(subscope["condition"]["known"])
+                    for row in subscope["evidence"]:
+                        self.assertTrue(row["state"]["known"])
+                        self.assertTrue(row["reason"]["known"])
+                for item in model["items"]:
+                    self.assertTrue(item["disposition"]["known"])
+
+    def test_a_consuming_reissue_keeps_two_statements_apart(self):
+        """The check results only changed key; the determinations cannot be attributed.
+
+        Those are two facts about two kinds of evidence. Neither is said for the
+        other, and they are never added into one count that could read "unchanged".
+        """
+
+        model = self.models["recheck-consuming-reissued"]
+        groups = {group["kind"]: group for group in model["evidenceGroups"]}
+        self.assertEqual(self._said(groups["finding"]), {"比较依据一致": {_REKEYED: 9}})
+        self.assertEqual(
+            self._said(groups["determination"]), {"未找到对应证据": {_NOT_ATTRIBUTABLE: 6}}
+        )
+        both_kinds = 0
+        for subscope in model["subscopes"]:
+            said = {
+                group["kind"]: [state["code"] for state in group["states"]]
+                for group in subscope["evidenceGroups"]
+            }
+            # Wherever a subscope cites both kinds, each has its own line.
+            if len(said) == 2:
+                both_kinds += 1
+                self.assertEqual(
+                    said, {"finding": ["equivalent"], "determination": ["no-counterpart"]}
+                )
+        self.assertGreater(both_kinds, 0)
+        self.assertEqual(
+            model["reissue"]["headline"], "接收方的模型重新发布了，交出方的模型没有变"
+        )
+        self.assertIn("针对旧版本作出的判定同样不能归到新版本。", model["reissue"]["caveats"])
+        screens = (STATIC / "screens.js").read_text(encoding="utf-8")
+        self.assertIn("检查结果和判定是两种证据，分开计数，不相加。", screens)
+
+    def test_a_relaxed_requirement_and_a_repaired_model_read_differently(self):
+        relaxed = self.models["recheck-requirement-relaxed"]
+        repaired = self.models["recheck-producing-reissued-content-changed"]
+
+        def notes(model, sentence):
+            found = {
+                note
+                for subscope in model["subscopes"]
+                for row in subscope["evidence"]
+                if row["brief"] == sentence
+                for note in row["notes"]
+            }
+            self.assertEqual(len(found), 1, sentence)
+            return found.pop()
+
+        self.assertEqual(relaxed["reissue"]["name"], "none")
+        self.assertIn("不能据此说模型修好了", notes(relaxed, _SEMANTICS_AND_CONTENT))
+        self.assertEqual(repaired["reissue"]["name"], "producing")
+        after_reissue = notes(repaired, _VERSION_AND_CONTENT)
+        self.assertIn("检查要求没有变，检查结果内容变了", after_reissue)
+        # R4: the row does not say which way the result moved, and neither does the page.
+        self.assertIn("不记录结果是变好还是变差", after_reissue)
+
+    def test_every_present_member_reaches_the_subscope_the_record_named(self):
+        """…and a member the record gives no ordinal for reaches none (R1)."""
+
+        seen = {"present": 0, "left": 0}
+        for name, model in self.models.items():
+            record = self.envelopes[name]["record"]
+            for item in model["items"]:
+                with self.subTest(scenario=name, member=item["entry"]["member"]["keys"]):
+                    if item["disposition"]["code"] != "present":
+                        seen["left"] += 1
+                        self.assertIsNone(item["current"])
+                        continue
+                    seen["present"] += 1
+                    for current in item["current"]:
+                        located = current["located"]
+                        activity = record["activities"][located["activityIndex"]]
+                        self.assertEqual(
+                            activity["activity_ref"], item["outcome"]["activity_ref"]
+                        )
+                        self.assertEqual(located["subscope"]["ordinal"], current["ordinal"])
+                        self.assertEqual(located["subscope"]["verdict"], current["verdict"])
+        self.assertGreater(seen["present"], 0)
+        self.assertGreater(seen["left"], 0)
+
+    def test_every_scenario_has_a_name_a_manager_can_read(self):
+        vocabulary = (STATIC / "vocabulary.js").read_text(encoding="utf-8")
+        labels = vocabulary[vocabulary.index("export const RUN_LABELS") :]
+        labels = labels[: labels.index("};")]
+        for name in ADAPTER_SCENARIOS:
+            with self.subTest(scenario=name):
+                self.assertRegex(labels, rf'"{re.escape(name)}":\s*"复检：[^"]+（夹具）"')
+
+    def test_the_walkthrough_script_names_runs_the_adapter_offers(self):
+        text = (
+            PROJECT_ROOT / "docs" / "product" / "2026-10-02-doctor-recheck-walkthrough.md"
+        ).read_text(encoding="utf-8")
+        named = set(re.findall(r"`(recheck-[a-z-]+)`", text))
+        self.assertEqual(named, {*ADAPTER_SCENARIOS, "recheck-comparison"} & named)
+        for name in (
+            "recheck-comparison",
+            "recheck-key-change-only",
+            "recheck-semantics-changed",
+            "recheck-requirement-relaxed",
+            "recheck-producing-reissued",
+            "recheck-consuming-reissued",
+            "recheck-both-reissued",
+            "recheck-prior-without-basis",
+        ):
+            with self.subTest(run=name):
+                self.assertIn(name, named)
 
 
 if __name__ == "__main__":

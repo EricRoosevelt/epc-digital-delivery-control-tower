@@ -44,7 +44,8 @@ python doctor/serve.py        # then open http://127.0.0.1:8765/
   skips locally and fails under `CI`). A value the page does not know is shown
   as it came and marked unrecognised. The fixture notice, each citation's
   provenance tag and the five sentences that must not be misread are never
-  inside a collapsed block. Words: [recheck vocabulary](../docs/product/2026-10-02-doctor-recheck-vocabulary.md).
+  inside a collapsed block. Check results and determinations are counted
+  apart and never added together. Words: [recheck vocabulary](../docs/product/2026-10-02-doctor-recheck-vocabulary.md).
 - **An omitted key is words.** A key the envelope does not carry reads
   "记录未携带" — never `null`, `""`, `0`, `false` or a dash. A key carried as an
   empty string is a different fact: an empty `storey` is "无楼层归属", because
@@ -53,7 +54,12 @@ python doctor/serve.py        # then open http://127.0.0.1:8765/
   Without the adapter the preview reports that input is unavailable.
 - **No third-party code.** Python standard library (`http.server`) and plain
   HTML, CSS and ES modules; no build step, no `package.json`.
-- **Loopback only, writes nothing, reads no clock.**
+- **Loopback only, reads no clock, and writes nothing in this checkout.** The
+  server itself writes no file. The adapter it calls does write, outside the
+  checkout: each validation run copies the rule library into a scratch
+  directory under the system temporary directory, puts the run's by-products
+  there, and removes the directory when the run ends. The rule-edit recheck
+  scenarios edit that scratch copy; `rules/` is never written.
 
 ## Two experiences, kept apart
 

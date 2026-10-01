@@ -13,6 +13,16 @@ export const RUN_LABELS = {
   "member-evidence": "成员证据（一份夹具记录）",
   "pair-verdicts": "成对裁决（同一份夹具记录）",
   "recheck-comparison": "复检：重开评审后，原来的一对构件不再配对（夹具）",
+  "recheck-key-change-only": "复检：改了一条无关的规则，模型没有重新发布（夹具）",
+  "recheck-semantics-changed": "复检：改了一条被引用规则的数据类型，模型没有重新发布（夹具）",
+  "recheck-requirement-relaxed": "复检：放宽了一条被引用的规则，模型没有重新发布（夹具）",
+  "recheck-prior-without-basis": "复检：原记录封存时没有保存比较依据（夹具）",
+  "recheck-producing-reissued": "复检：交出方模型重新发布，检查结果读数相同（夹具）",
+  "recheck-producing-reissued-content-changed":
+    "复检：交出方模型重新发布，部分检查结果内容变了（夹具）",
+  "recheck-consuming-reissued": "复检：接收方模型重新发布（夹具）",
+  "recheck-both-reissued": "复检：双方模型都重新发布（夹具）",
+  "recheck-member-gone": "复检：交出方模型重新发布，并删除了一个构件（夹具）",
   "real-refusal": "随附项目的真实运行",
 };
 

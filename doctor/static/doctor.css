@@ -185,6 +185,10 @@ input[type="search"] { font: inherit; padding: 6px 8px; width: min(100%, 360px);
 .limits ul, .caveats { margin: 4px 0; padding-left: 1.2rem; }
 .caveats li { font-weight: 600; }
 .tally { list-style: none; padding: 0; margin: 4px 0; display: flex; flex-wrap: wrap; gap: 4px 20px; }
+.evidence-summary { list-style: none; padding: 0; margin: 4px 0; }
+.evidence-summary > li { margin: 4px 0; }
+.evidence-summary .kind { font-weight: 600; }
+.evidence-summary ul { margin: 2px 0; padding-left: 1.2rem; }
 .state-legend { margin: 8px 0; }
 .state-legend dt { font-weight: 700; margin-top: 6px; }
 .state-legend dd { margin: 0 0 0 1rem; }

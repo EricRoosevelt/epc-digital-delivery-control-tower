@@ -6,8 +6,10 @@ Run from the repository root::
 
 Nothing here evaluates anything. The server hands the browser the envelopes the
 internal adapter (A1) returns — unchanged — and the static files that lay them
-out. It writes no file, reads no clock, and binds to the loopback interface,
-because this is an internal preview and not a service.
+out. It writes no file itself, reads no clock, and binds to the loopback
+interface, because this is an internal preview and not a service. The adapter
+it calls validates against a scratch copy of the rule library that it makes
+outside this checkout and removes afterwards; nothing in the checkout is written.
 
 The one seam is :class:`Source`: which runs a mode offers, and the envelope for
 one of them. :func:`adapter_source` is the only implementation that ships, and

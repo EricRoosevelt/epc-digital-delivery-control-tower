@@ -1006,6 +1006,44 @@ function stateLegend(entries) {
   );
 }
 
+// Old evidence counted by kind first: check results and determinations are
+// different evidence and are never added together. Under each state, the
+// concrete fact its rows state.
+function evidenceSummary(groups, withFacts = true) {
+  if (!groups.length) return note("原子范围的证据路径没有引用任何证据。");
+  return h(
+    "ul",
+    { class: "evidence-summary" },
+    groups.map((group) =>
+      h(
+        "li",
+        {},
+        h(
+          "span",
+          { class: "kind" },
+          group.kind === null ? missing(NOT_CARRIED) : group.known ? group.label : unrecognised(group.kind),
+          `（${group.count} 条）`,
+        ),
+        h(
+          "ul",
+          {},
+          group.states.map((entry) =>
+            h(
+              "li",
+              {},
+              entry.code === null ? missing(NOT_CARRIED) : entry.known ? h("strong", {}, entry.label) : unrecognised(entry.code),
+              ` × ${entry.count}`,
+              withFacts
+                ? entry.facts.map((fact) => h("div", { class: "sub" }, `${fact.text} × ${fact.count}`))
+                : null,
+            ),
+          ),
+        ),
+      ),
+    ),
+  );
+}
+
 function reissueBlock(reissue) {
   return [
     h("p", { class: "headline" }, reissue.headline),
@@ -1098,7 +1136,8 @@ function recheck(state) {
         {},
         `原记录引用的旧证据（${model.subscopes.reduce((sum, item) => sum + item.evidence.length, 0)} 条），和本次记录比较的结果`,
       ),
-      tallyLine(model.evidenceTally),
+      note("检查结果和判定是两种证据，分开计数，不相加。"),
+      evidenceSummary(model.evidenceGroups),
       stateLegend(model.evidenceTally),
     ),
     limits(),
@@ -1106,6 +1145,13 @@ function recheck(state) {
 
   const returning = lastRecheckItem && lastRecheckItem.runId === state.runId ? lastRecheckItem : null;
   lastRecheckItem = null;
+  const itemGroups = [];
+  for (const item of model.items) {
+    const activityRef = carries(item.outcome, "activity_ref") ? item.outcome.activity_ref : NOT_CARRIED;
+    const last = itemGroups[itemGroups.length - 1];
+    if (last && last.activityRef === activityRef) last.items.push(item);
+    else itemGroups.push({ activityRef, items: [item] });
+  }
   content.append(
     h(
       "section",
@@ -1115,10 +1161,14 @@ function recheck(state) {
         "记录里没有“已解决”这个状态。下面每一项写明记录证明到了哪一步；" +
           "每个成员（或成员对）各占一项，不合并成一个总状态，也没有就绪评分。",
       ),
-      h(
+      // Under the activity each belongs to, in the record's order: the same
+      // element can be a member in several activities, each its own item.
+      itemGroups.map((group) => [
+        h("h3", {}, "活动：", activityShortName(group.activityRef)),
+        h(
         "ol",
         { class: "recheck-items" },
-        model.items.map((item) => {
+        group.items.map((item) => {
           const subscope = model.subscopes[item.subscopeIndex];
           const here =
             returning &&
@@ -1132,9 +1182,7 @@ function recheck(state) {
             h(
               "div",
               { class: "sub" },
-              "活动 ",
-              field(item.outcome, "activity_ref", (ref) => activityShortName(ref)),
-              " · 原子范围 ",
+              "原子范围 ",
               field(item.outcome, "subscope_ordinal", (ordinal) => `#${ordinal}`),
             ),
             definitions([
@@ -1161,7 +1209,7 @@ function recheck(state) {
                   ? unrecognised(item.condition.code)
                   : item.condition.plain,
               ],
-              [`旧证据（${subscope.evidence.length} 条）`, tallyLine(subscope.evidenceTally)],
+              [`旧证据（${subscope.evidence.length} 条）`, evidenceSummary(subscope.evidenceGroups, false)],
             ]),
             h(
               "a",
@@ -1174,7 +1222,8 @@ function recheck(state) {
             ),
           );
         }),
-      ),
+        ),
+      ]),
     ),
     h(
       "section",

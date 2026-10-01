@@ -22,6 +22,7 @@ import {
   CARRY_OVER_REASONS,
   CARRY_OVER_STATES,
   CHANGED_ASPECTS,
+  CITATION_KINDS,
   CONDITION_ENTRIES,
   DISPOSITION_ENTRIES,
   KEY_CHANGED,
@@ -235,6 +236,53 @@ const stateTally = (rows) =>
     (entry) => entry.label,
   );
 
+/** The same rows, counted apart by kind of evidence, then state, then fact.
+ *
+ * A check result and a determination are different evidence and can come out
+ * differently in one recheck — after a re-issue of the consuming model alone the
+ * check results are equivalent under new keys while the determinations cannot be
+ * attributed to the new context. Counting them together would let one read as
+ * the other, so they are never added up across kinds.
+ */
+function evidenceGroups(rows) {
+  const kinds = [];
+  for (const item of rows) {
+    const kind = carries(item.row, "citation_kind") ? item.row.citation_kind : null;
+    let group = kinds.find((entry) => entry.kind === kind);
+    if (!group) {
+      group = {
+        kind,
+        known: known(CITATION_KINDS, kind),
+        label: known(CITATION_KINDS, kind) ? CITATION_KINDS[kind] : UNRECOGNISED,
+        count: 0,
+        rows: [],
+      };
+      kinds.push(group);
+    }
+    group.count += 1;
+    group.rows.push(item);
+  }
+  // Check results first, then determinations, then anything unrecognised in
+  // the order it was met: the order of the vocabulary, not of the rows.
+  const order = Object.keys(CITATION_KINDS);
+  const rank = (entry) => (entry.known ? order.indexOf(entry.kind) : order.length);
+  kinds.sort((left, right) => rank(left) - rank(right));
+  return kinds.map(({ rows: members, ...group }) => ({
+    ...group,
+    states: stateTally(members).map((entry) => {
+      const facts = new Map();
+      for (const item of members) {
+        if (item.state.code !== entry.code) continue;
+        // What is said beside the state: the concrete fact when the row has
+        // one, otherwise the reason's own sentence.
+        const text = item.brief || (item.reason.known ? item.reason.text : "");
+        if (text) facts.set(text, (facts.get(text) ?? 0) + 1);
+      }
+      return { ...entry, facts: [...facts].map(([text, count]) => ({ text, count })) };
+    }),
+  }));
+}
+
 // ---------------------------------------------------------------------------
 // The successor, laid out as work items: one per sealed member
 // ---------------------------------------------------------------------------
@@ -300,7 +348,15 @@ export function recheckModel(document) {
           }))
         : null,
     }));
-    return { subscopeIndex, outcome, condition, evidence, evidenceTally: stateTally(evidence), items };
+    return {
+      subscopeIndex,
+      outcome,
+      condition,
+      evidence,
+      evidenceTally: stateTally(evidence),
+      evidenceGroups: evidenceGroups(evidence),
+      items,
+    };
   });
 
   const items = subscopes.flatMap((subscope) => subscope.items);
@@ -311,6 +367,7 @@ export function recheckModel(document) {
     subscopes,
     items,
     evidenceTally: stateTally(subscopes.flatMap((subscope) => subscope.evidence)),
+    evidenceGroups: evidenceGroups(subscopes.flatMap((subscope) => subscope.evidence)),
     dispositionTally: tally(
       items.map((item) => item.disposition.code),
       DISPOSITION_ENTRIES,
