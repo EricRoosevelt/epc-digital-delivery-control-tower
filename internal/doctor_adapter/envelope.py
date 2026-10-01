@@ -1,8 +1,9 @@
 """The one envelope every scenario is handed over in.
 
-Two things happen here and nothing else: a record or a refusal is placed in the
-envelope exactly as the Framework produced it, and the canonical element
-inventory is attached for display.
+Three things happen here and nothing else: a record or a refusal is placed in
+the envelope exactly as the Framework produced it, the canonical element
+inventory is attached for display, and — for a record only — what its cited
+findings required and found is attached beside it (:mod:`.details`).
 
 **Only an assessment refusal is a refusal.** :class:`PurposeAssessmentError` means
 the request was refused and no record exists, so turning it into ``outcome =
@@ -68,11 +69,21 @@ def display_elements() -> dict[str, dict[str, str]]:
     return elements
 
 
-def build_envelope(mode: str, produce: Callable[[], AssessmentRecord]) -> dict[str, object]:
+def build_envelope(
+    mode: str,
+    produce: Callable[[], AssessmentRecord],
+    describe: Callable[[dict[str, object]], dict[str, dict[str, object]]],
+) -> dict[str, object]:
     """Call ``produce`` once and place what it returned, or refused with, in the envelope.
 
     ``mode`` is supplied by the entry that was called and is checked only for
     being one of the two; nothing here can change it.
+
+    ``describe`` is given the record's document and returns its
+    ``finding_details`` (:mod:`.details`). It has no default: which run a
+    record's citations may be explained from is the entry's to say, and an entry
+    that forgot would otherwise hand over a record that silently explains
+    nothing. It is not called for a refusal, which has no record to describe.
     """
 
     if mode not in MODES:
@@ -86,12 +97,14 @@ def build_envelope(mode: str, produce: Callable[[], AssessmentRecord]) -> dict[s
             "refusal": {"code": error.code, "text": str(error)},
             "elements": display_elements(),
         }
+    document = record.as_document()
     return {
         "mode": mode,
         "outcome": "record",
-        "record": record.as_document(),
+        "record": document,
         "assessment_digest": record.assessment_digest,
         "elements": display_elements(),
+        "finding_details": describe(document),
     }
 
 
