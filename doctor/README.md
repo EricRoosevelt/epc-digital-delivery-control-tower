@@ -78,12 +78,22 @@ of the program, with the technical message and no statement about a project.
 ## The path a manager walks
 
 One path is carried end to end
-([usability revision](../docs/product/2026-10-01-doctor-usability-revision.md)):
-the first screen says who this is for and what it cannot do; the example
-directory names one example and says, labelled as the example's description,
-what it was given; the result opens on what is left to do; an item shows its
-element or its two elements, the next step, and the evidence. The record,
-activity and member screens were not revised and still use internal terms.
+([first-check path](../docs/product/2026-10-02-doctor-first-check-path.md)):
+an ordinary first check, the items that need doing grouped by the team the
+record assigns, one item with its elements, what to do, who handles it and what
+a recheck must show — and then the same item in a recheck of that record. The
+first-check screens are worded from `static/first-check-model.js`, which like
+`recheck-model.js` has no DOM in it and is exercised under Node.
+
+What qualifies a conclusion sits beside it and only where it applies: that its
+evidence is simulated (decided per citation, as before), what a "can start"
+covers, that "cannot be decided" is not a clean bill, that a team is an entry in
+the record. General reading rules, identifiers and the Pack's English are one
+fold away. The Chinese action sentences hold for one Pack version; a record
+under any other is shown the Pack's own English. What a failing requirement asks
+for is read only from the returned data's `finding_details`; the preview reads no
+rule file. The record, activity and member screens were not revised and still
+use internal terms.
 
 ## Not in this preview
 
