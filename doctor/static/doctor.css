@@ -179,15 +179,44 @@ input[type="search"] { font: inherit; padding: 6px 8px; width: min(100%, 360px);
 .location { border: 1px solid var(--line); padding: 8px 12px; }
 .context-citations { border-style: dashed; }
 
-.recheck-outcome { margin: 16px 0; }
-/* Three separate questions, stacked in reading order at every width: side by
-   side they read as one row of a comparison, which is the conflation S4 exists
-   to prevent, and the carry-over table needs the width. */
-.recheck-grid { display: grid; grid-template-columns: 1fr; gap: 12px; }
-.recheck-grid .block { margin: 0; }
-.disposition { border-top: 1px solid var(--line); padding-top: 8px; margin-top: 8px; }
+.lede { font-size: 1.05rem; }
+.headline { font-weight: 700; font-size: 1.05rem; margin: 4px 0; }
+.limits { border-width: 2px; }
+.limits ul, .caveats { margin: 4px 0; padding-left: 1.2rem; }
+.caveats li { font-weight: 600; }
+.tally { list-style: none; padding: 0; margin: 4px 0; display: flex; flex-wrap: wrap; gap: 4px 20px; }
+.state-legend { margin: 8px 0; }
+.state-legend dt { font-weight: 700; margin-top: 6px; }
+.state-legend dd { margin: 0 0 0 1rem; }
+
+/* One work item per sealed member, in the record's order. */
+.recheck-items { padding-left: 1.6rem; }
+.recheck-item { border: 1px solid var(--line); padding: 10px 12px; margin: 10px 0; }
+.recheck-item .tally { margin: 0; }
+
+/* A carry-over state is a word in a box. The border style only repeats the
+   word; no state is a colour, and none is ticked. */
+.state {
+  display: inline-block;
+  font-weight: 700;
+  padding: 0 6px;
+  border: 2px solid var(--ink);
+}
+.state-equivalent { border-style: solid; }
+.state-changed { border-style: dashed; }
+.state-no-counterpart { border-style: dotted; }
+.state-not-provable { border-style: double; border-width: 4px; }
+.evidence-rows { padding-left: 1.6rem; }
+.evidence-row { border-top: 1px solid var(--line); padding: 8px 0; }
+.evidence-row p { margin: 4px 0; }
+.evidence-head .brief { font-weight: 600; }
+.citation-line { overflow-wrap: anywhere; }
+.fact { font-weight: 600; }
+.current-subscope { border: 1px solid var(--line); padding: 4px 12px; margin: 8px 0; }
 .condition { border-width: 2px; }
 .glossary { margin: 8px 0; }
+details > summary { cursor: pointer; padding: 4px 0; }
+.from-recheck { font-weight: 600; }
 
 .refusal-text {
   white-space: pre-wrap;

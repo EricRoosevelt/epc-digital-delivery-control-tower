@@ -169,7 +169,7 @@ class StaticTreeTests(unittest.TestCase):
 
         self.assertEqual(
             sorted(path.suffix for path in STATIC.iterdir()),
-            [".css", ".html", ".js", ".js", ".js", ".js"],
+            [".css", ".html", ".js", ".js", ".js", ".js", ".js"],
         )
         for path in sorted(STATIC.iterdir()):
             text = path.read_text(encoding="utf-8")
@@ -231,15 +231,22 @@ class StaticTreeTests(unittest.TestCase):
         the pair no longer exists. Looking its ``refined_from`` element up in the
         current partition, or annotating a workbench row from the successor,
         would be the page inventing the correspondence the record declines.
+
+        The successor is read in exactly one place, ``recheck-model.js``, and no
+        other screen reads a disposition. What that module may look up in the
+        current partition — only an ordinal the record itself put in
+        ``current_ordinals`` — is pinned in ``test_doctor_recheck_screens.py``.
         """
 
         source = (STATIC / "screens.js").read_text(encoding="utf-8")
-        recheck = source[source.index("function recheck(") : source.index("function refusal(")]
+        model = (STATIC / "recheck-model.js").read_text(encoding="utf-8")
+        recheck = source[source.index("// S4 — recheck") : source.index("// SX — real refusal")]
         for name in ("successor.subscopes", ".dispositions"):
             with self.subTest(read=name):
-                self.assertGreater(recheck.count(name), 0)
-                self.assertEqual(source.count(name), recheck.count(name))
+                self.assertEqual(model.count(name), 1)
+                self.assertEqual(source.count(name), 0)
         self.assertNotIn("refined_from", recheck)
+        self.assertNotIn("refined_from", model)
         self.assertNotRegex(recheck, r"document\.activities")
 
     def test_an_omitted_key_is_words_and_never_a_value_shaped_blank(self):
@@ -252,7 +259,10 @@ class StaticTreeTests(unittest.TestCase):
         different fact and keeps its own wording.
         """
 
-        source = (STATIC / "screens.js").read_text(encoding="utf-8")
+        source = "\n".join(
+            (STATIC / name).read_text(encoding="utf-8")
+            for name in ("screens.js", "recheck-model.js")
+        )
         optional = (
             "resolution_kind",
             "route",

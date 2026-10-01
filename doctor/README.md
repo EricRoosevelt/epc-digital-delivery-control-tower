@@ -33,6 +33,18 @@ python doctor/serve.py        # then open http://127.0.0.1:8765/
   are in a legend on the same page, never hover-only. A policy `decision_basis`
   is not a citation and carries no marker, so the row says the source is not in
   the envelope rather than guessing whose decision it was.
+- **A recheck is read, not re-derived.** The recheck screens answer what
+  changed, what is still open and what to do next, in that order, with the
+  evidence details behind a fold. The four carry-over states, their reasons, the
+  changed aspects and the member dispositions are the record's; which side was
+  re-issued is `changed_models` looked up against the same comparison's
+  `producing` / `consuming`, and the role names are the request's handover. The
+  wording lives in `static/recheck-model.js`, which has no DOM in it, and
+  `tests/test_doctor_recheck_screens.py` runs it under Node (a missing Node
+  skips locally and fails under `CI`). A value the page does not know is shown
+  as it came and marked unrecognised. The fixture notice, each citation's
+  provenance tag and the five sentences that must not be misread are never
+  inside a collapsed block. Words: [recheck vocabulary](../docs/product/2026-10-02-doctor-recheck-vocabulary.md).
 - **An omitted key is words.** A key the envelope does not carry reads
   "记录未携带" — never `null`, `""`, `0`, `false` or a dash. A key carried as an
   empty string is a different fact: an empty `storey` is "无楼层归属", because
@@ -53,7 +65,9 @@ fixture.
 
 ## Not in this preview
 
-Model/version, Pack and activity selection catalogues (F2), exhaustive refusal
+Starting a recheck, marking an item resolved, assigning or notifying anyone and
+exporting a recheck record (the recheck screens say so and carry no button for
+them); model/version, Pack and activity selection catalogues (F2), exhaustive refusal
 diagnostics (F4), Revit navigation and determination originals (F5), condition
 discharge and risk authorisation (F6, E2), arbitrary model intake (F7),
 separated refusal message text (F8), and the Singapore research view.

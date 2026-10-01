@@ -7,6 +7,7 @@
 //
 // Routes are #/<mode>/<run_id>/<screen>/…, so a reload or a shared link asks the
 // adapter for the same run again rather than keeping a copy of any result.
+// One recheck item is #/<mode>/<run_id>/recheck/<subscope index>/<member index>.
 
 import { h, note } from "./dom.js";
 import { renderContext, screens } from "./screens.js";
@@ -158,13 +159,26 @@ async function render() {
           content = screens.record(state);
           break;
         case "activity":
-          content = screens.activity(state, Number(rest[0]));
+          // …/activity/<index>/sub/<ordinal>/<item…> arrives from a recheck item.
+          content = screens.activity(
+            state,
+            Number(rest[0]),
+            rest[1] === "sub"
+              ? {
+                  ordinal: Number(rest[2]),
+                  subscopeIndex: Number(rest[3]),
+                  memberIndex: Number(rest[4]),
+                }
+              : null,
+          );
           break;
         case "member":
           content = screens.member(state, Number(rest[0]), Number(rest[1]), Number(rest[2]));
           break;
         case "recheck":
-          content = screens.recheck(state);
+          content = rest.length
+            ? screens.recheckItem(state, Number(rest[0]), Number(rest[1]))
+            : screens.recheck(state);
           break;
         case "refusal":
           content = screens.refusal(state);
@@ -192,7 +206,15 @@ async function render() {
   focusMain(main);
 }
 
+// A screen may mark the place the manager came from; they are put back on it
+// instead of at the top of the page. Otherwise focus goes to the heading.
 function focusMain(main) {
+  const origin = main.querySelector("[data-return-focus]");
+  if (origin) {
+    origin.focus();
+    origin.scrollIntoView({ block: "center" });
+    return;
+  }
   const heading = main.querySelector("h1");
   if (heading) {
     heading.setAttribute("tabindex", "-1");

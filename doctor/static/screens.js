@@ -29,7 +29,12 @@ import {
   table,
   verdict,
 } from "./dom.js";
+import { recheckModel } from "./recheck-model.js";
 import {
+  CARRY_OVER_REASONS,
+  CARRY_OVER_STATES,
+  CHANGED_ASPECTS,
+  CITATION_KINDS,
   CITATION_PROVENANCE,
   CONDITION_STATES,
   DEMO_NOTICE,
@@ -39,16 +44,20 @@ import {
   NOT_CARRIED,
   POLICY_SOURCE_NOTE,
   PROVENANCE_NOTICE,
+  RECHECK_CANNOT,
+  RECHECK_LIMITS,
   REFUSAL_SCOPE_NOTE,
   RUN_LABELS,
+  UNRECOGNISED,
   absence,
-  carryOver,
   citationProvenance,
   conditionState,
-  disposition,
 } from "./vocabulary.js";
 
 const R010_HEADING = "背景引用，不能回答对齐问题";
+
+// The recheck item the manager last opened, so the list can put them back on it.
+let lastRecheckItem = null;
 const UNIMPLEMENTED_AUTHORISER = "当前未实现（E2），没有授权记录";
 
 // ---------------------------------------------------------------------------
@@ -376,6 +385,7 @@ function runs(state) {
 }
 
 function record(state) {
+  lastRecheckItem = null;
   const envelope = state.envelope;
   const document = envelope.record;
   const request = document.request;
@@ -393,9 +403,9 @@ function record(state) {
       h(
         "p",
         { class: "callout" },
-        `这是复检记录（successor.kind = ${document.successor.kind}），承接一条已封存记录。`,
+        "这是一条复检记录，承接一条已封存的记录。",
         " ",
-        link("查看复检对比", href(state.mode, state.runId, "recheck")),
+        link("查看复检结果：什么变了、什么仍未解决、下一步", href(state.mode, state.runId, "recheck")),
       ),
     );
   }
@@ -474,7 +484,11 @@ function record(state) {
 
 const filters = new Map();
 
-function activity(state, activityIndex) {
+// `from` is set when the manager arrives from a recheck item: the subscope the
+// Framework named for that item, and the item to go back to. It marks rows and
+// offers the way back; it changes nothing the workbench says about them.
+function activity(state, activityIndex, from = null) {
+  lastRecheckItem = null;
   const envelope = state.envelope;
   const document = envelope.record;
   const current = document.activities[activityIndex];
@@ -498,7 +512,7 @@ function activity(state, activityIndex) {
       ),
     ),
     h("p", { class: "sub" }, link("← 记录上下文", href(state.mode, state.runId, "record"))),
-    document.successor ? h("p", { class: "sub" }, link("复检对比", href(state.mode, state.runId, "recheck"))) : null,
+    document.successor ? h("p", { class: "sub" }, link("复检结果", href(state.mode, state.runId, "recheck"))) : null,
   );
 
   const body = h("div", { class: "workbench-body" });
@@ -510,6 +524,20 @@ function activity(state, activityIndex) {
     ]),
     note("按记录的活动与子范围顺序逐成员列出。没有总体裁决、准备度评分或“可交付”标记；成员对各有自己的裁决。"),
   );
+  if (from) {
+    body.append(
+      h(
+        "p",
+        { class: "callout" },
+        `从复检事项进入：Framework 把那一项对应到本活动的子范围 #${from.ordinal}，下表中已标出。`,
+        " ",
+        link(
+          "← 返回那一项复检事项",
+          href(state.mode, state.runId, "recheck", from.subscopeIndex, from.memberIndex),
+        ),
+      ),
+    );
+  }
 
   if (current.partition_is_empty) {
     body.append(note("本活动无准入成员，因此无裁决。", "callout"));
@@ -524,6 +552,7 @@ function activity(state, activityIndex) {
     const rows = [];
     current.subscopes.forEach((subscope) => {
       const terminal = subscope.path[subscope.path.length - 1];
+      const marked = from !== null && subscope.ordinal === from.ordinal;
       subscope.members.forEach((member, memberIndex) => {
         const readings = terminal ? readingsFor(terminal, member) : [];
         const evidence = readings.length
@@ -593,7 +622,12 @@ function activity(state, activityIndex) {
                 field(subscope, "resolution_kind", code),
               ),
             ),
-            h("td", {}, field(subscope, "ordinal", (ordinal) => `#${ordinal}`)),
+            h(
+              "td",
+              {},
+              field(subscope, "ordinal", (ordinal) => `#${ordinal}`),
+              marked ? h("div", { class: "sub from-recheck" }, "复检事项对应的子范围") : null,
+            ),
             h(
               "td",
               {},
@@ -602,7 +636,18 @@ function activity(state, activityIndex) {
                 : null,
               evidence,
             ),
-            h("td", {}, h("a", { href: locate(state, subscope, activityIndex, memberIndex) }, "查看证据与回源")),
+            h(
+              "td",
+              {},
+              h(
+                "a",
+                {
+                  href: locate(state, subscope, activityIndex, memberIndex),
+                  "data-return-focus": marked && memberIndex === 0 ? true : null,
+                },
+                "查看证据与回源",
+              ),
+            ),
           ),
         );
       });
@@ -882,202 +927,585 @@ function member(state, activityIndex, ordinal, memberIndex) {
 }
 
 // ---------------------------------------------------------------------------
-// S4 — recheck comparison
+// S4 — recheck: what changed, what is still open, what to do next
 // ---------------------------------------------------------------------------
+//
+// Two screens over one successor record. The list answers the three questions
+// in words and lays the sealed members out as work items, one per member and in
+// the record's order; an item opens to its before/after, the sealed condition,
+// the old evidence row by row, and whatever the record gives as a next step.
+//
+// The wording and the tallies come from recheck-model.js. Nothing here decides
+// a state, and there is no overall status: a member pair keeps its own line.
+//
+// Three things stay open on these screens and are never placed inside a
+// collapsed block: the fixture notice (in the context bar), the provenance tag
+// beside every citation, and the sentences in RECHECK_LIMITS.
 
 function glossary(title, entries) {
   return h(
     "details",
     { class: "glossary" },
     h("summary", {}, title),
-    tableWrap(table(null, ["代码（保留原码）", "给经理的含义"], entries.map(([key, text]) => h("tr", {}, h("td", {}, code(key)), h("td", {}, text))))),
+    tableWrap(table(null, ["记录里的代码", "本页的说法"], entries.map(([key, text]) => h("tr", {}, h("td", {}, code(key)), h("td", {}, text))))),
   );
+}
+
+function limits() {
+  return h(
+    "section",
+    { class: "block limits", "aria-label": "读这一页时请记住" },
+    h("h2", {}, "读这一页时请记住"),
+    h("ul", {}, RECHECK_LIMITS.map((text) => h("li", {}, text))),
+  );
+}
+
+/** A code the record carried and this preview has no words for. */
+function unrecognised(value) {
+  return h("span", { class: "gloss unknown" }, code(String(value)), ` ${UNRECOGNISED}`);
+}
+
+function stateBadge(state) {
+  if (state.code === null) return missing(NOT_CARRIED);
+  if (!state.known) return unrecognised(state.code);
+  return h("span", { class: `state state-${state.code}` }, state.label);
+}
+
+function tallyLine(entries) {
+  return h(
+    "ul",
+    { class: "tally" },
+    entries.map((entry) =>
+      h(
+        "li",
+        {},
+        entry.code === null
+          ? missing(NOT_CARRIED)
+          : entry.known
+            ? entry.label
+            : unrecognised(entry.code),
+        ` × ${entry.count}`,
+      ),
+    ),
+  );
+}
+
+// What each state on this page means, said once above the rows that carry it.
+// Only the states this record holds; all four are in the code table under the
+// evidence details of the list.
+function stateLegend(entries) {
+  return h(
+    "dl",
+    { class: "state-legend" },
+    entries
+      .filter((entry) => entry.known)
+      .map((entry) => [
+        h("dt", {}, `“${entry.label}”是什么意思`),
+        h("dd", {}, `${CARRY_OVER_STATES[entry.code].meaning}${CARRY_OVER_STATES[entry.code].caveat}`),
+      ]),
+  );
+}
+
+function reissueBlock(reissue) {
+  return [
+    h("p", { class: "headline" }, reissue.headline),
+    h("p", {}, reissue.detail),
+    tableWrap(
+      table(
+        null,
+        ["交接的哪一侧", "角色（取自本次请求的交接）", "模型", "是否重新发布"],
+        reissue.sides.map((side) =>
+          h(
+            "tr",
+            {},
+            h("th", { scope: "row" }, side.label),
+            h("td", {}, side.role === NOT_CARRIED ? missing(NOT_CARRIED) : side.role),
+            h("td", {}, side.now ? field(side.now, "model_key", code) : missing(NOT_CARRIED)),
+            h(
+              "td",
+              {},
+              side.reissued === null
+                ? "无法识别，见上"
+                : side.reissued
+                  ? "重新发布了（新版本）"
+                  : "没有变（原版本）",
+            ),
+          ),
+        ),
+      ),
+    ),
+    reissue.caveats.length
+      ? h("ul", { class: "caveats" }, reissue.caveats.map((text) => h("li", {}, text)))
+      : null,
+    note(reissue.neutral),
+  ];
+}
+
+function recheckIntro(state, model) {
+  const successor = state.envelope.record.successor;
+  const content = h(
+    "div",
+    {},
+    h("p", {}, link("← 记录上下文", href(state.mode, state.runId, "record"))),
+  );
+  if (model === null) {
+    content.append(h("h1", {}, "复检结果"), note("尚无可用复检对比：本记录不是复检记录。"));
+    return { content, usable: false };
+  }
+  if (!model.recognised) {
+    content.append(
+      h("h1", {}, "复检结果"),
+      h(
+        "p",
+        { class: "problem" },
+        "本记录承接了一条已封存记录，但承接类型不是本页认识的复检：successor.kind = ",
+        field(successor, "kind", unrecognised),
+        "。本页不把它当作复检来呈现。",
+      ),
+    );
+    return { content, usable: false };
+  }
+  return { content, usable: true };
 }
 
 function recheck(state) {
   const envelope = state.envelope;
   const document = envelope.record;
+  const model = recheckModel(document);
+  const { content, usable } = recheckIntro(state, model);
+  if (!usable) return content;
   const successor = document.successor;
-  const content = h(
-    "div",
-    {},
-    h("p", {}, link("← 记录上下文", href(state.mode, state.runId, "record"))),
-    h("h1", {}, "复检对比"),
-  );
-  if (!successor) {
-    content.append(note("尚无可用复检对比：本记录不是复检记录。"));
-    return content;
-  }
   const comparison = successor.model_version_context_comparison;
-  const versionRow = (label, prior, now) =>
-    h("tr", {}, h("th", { scope: "row" }, label), h("td", {}, code(prior.model_key), " ", copyable(prior.content_id)), h("td", {}, code(now.model_key), " ", copyable(now.content_id)));
+
   content.append(
-    definitions([
-      ["successor.kind", code(successor.kind)],
-      ["原记录 assessment digest", copyable(successor.prior_assessment_digest)],
-      ["本记录 assessment digest", copyable(envelope.assessment_digest)],
-    ]),
-    section(
-      "模型版本前后",
-      tableWrap(
-        table(null, ["", "原记录", "本记录"], [
-          versionRow("提交模型", comparison.prior_producing, comparison.producing),
-          versionRow("接收模型", comparison.prior_consuming, comparison.consuming),
-        ]),
-      ),
-      comparison.is_current
-        ? note("is_current = true：两个模型的内容标识都未变化，本次不是模型重发。")
-        : note(`is_current = false：发生变化的模型 ${comparison.changed_models.join("，")}。`, "callout"),
+    h("h1", {}, "复检结果"),
+    h("p", { class: "sub" }, runLabel(state.runId)),
+    h(
+      "p",
+      { class: "lede" },
+      "这一页回答三件事：这次复检什么变了、什么仍未解决、下一步做什么。先看结论，证据细节可以展开。",
     ),
-    glossary("成员去向代码说明", Object.entries(DISPOSITIONS)),
-    glossary("条件状态代码说明（现有状态没有“整句条件已满足”）", Object.entries(CONDITION_STATES)),
+    h(
+      "section",
+      { class: "block" },
+      h("h2", {}, "一、什么变了"),
+      h("h3", {}, "模型"),
+      reissueBlock(model.reissue),
+      h("h3", {}, `原记录里的成员（${model.items.length} 个），现在的去向`),
+      tallyLine(model.dispositionTally),
+      h(
+        "h3",
+        {},
+        `原记录引用的旧证据（${model.subscopes.reduce((sum, item) => sum + item.evidence.length, 0)} 条），和本次记录比较的结果`,
+      ),
+      tallyLine(model.evidenceTally),
+      stateLegend(model.evidenceTally),
+    ),
+    limits(),
   );
 
-  successor.subscopes.forEach((outcome) => {
-    const dispositions = outcome.dispositions.map((item) => {
-      const current = [];
-      if (carries(item, "current_ordinals")) {
-        item.current_ordinals.forEach((ordinal, index) =>
-          current.push(
+  const returning = lastRecheckItem && lastRecheckItem.runId === state.runId ? lastRecheckItem : null;
+  lastRecheckItem = null;
+  content.append(
+    h(
+      "section",
+      { class: "block" },
+      h("h2", {}, "二、什么仍未解决：逐项查看"),
+      note(
+        "记录里没有“已解决”这个状态。下面每一项写明记录证明到了哪一步；" +
+          "每个成员（或成员对）各占一项，不合并成一个总状态，也没有就绪评分。",
+      ),
+      h(
+        "ol",
+        { class: "recheck-items" },
+        model.items.map((item) => {
+          const subscope = model.subscopes[item.subscopeIndex];
+          const here =
+            returning &&
+            returning.subscopeIndex === item.subscopeIndex &&
+            returning.memberIndex === item.memberIndex;
+          return h(
+            "li",
+            { class: "recheck-item", id: `item-${item.subscopeIndex}-${item.memberIndex}` },
+            h("div", { class: "member-name" }, memberTitle(state, item.entry.member)),
+            memberKeys(item.entry.member),
             h(
-              "li",
-              {},
-              `#${ordinal} `,
-              field(item, "current_verdicts", (verdicts) => verdict(verdicts[index])),
-              " 终点 outcome ",
-              field(item, "current_leaf_outcomes", (outcomes) => code(outcomes[index])),
-            ),
-          ),
-        );
-      }
-      return h(
-        "div",
-        { class: "disposition" },
-        h("div", { class: "member-name" }, memberTitle(state, item.member)),
-        memberKeys(item.member),
-        h("div", {}, "去向：", field(item, "disposition", (value) => codeWithGloss(value, disposition))),
-        h(
-          "div",
-          {},
-          "cause（原文）：",
-          field(item, "cause", (text) => h("blockquote", {}, text)),
-        ),
-        // Beside the Framework's own cause, and keyed on the disposition code
-        // alone. It states what this record says on this disposition and names no
-        // verdict: "the fix landed" and "the pair stopped being derived" are
-        // indistinguishable from a verdict, which is why the disposition
-        // vocabulary separates them in the first place.
-        //
-        // This wording is written for **this Pack's** `pair_source`: the pair
-        // comes from a penetration determination, and the openings activity is
-        // what an unbuilt opening blocks. A Pack deriving pairs from something
-        // else would need its own sentence. Generalising it now was considered
-        // and declined by BIM and the technical director — this repository has
-        // one Pack, and a sentence abstracted away from the only case it has
-        // ever been read against is not more general, only vaguer.
-        item.disposition === "pairing-no-longer-derived"
-          ? h(
-              "strong",
-              { class: "caveat" },
-              "该对已不再被推导：穿透判定现为“不穿透”（见上方 cause）。" +
-                "这不等于开洞已建成，也不等于开洞缺陷已修复。",
-            )
-          : null,
-        current.length
-          ? h("div", {}, "Framework 给出的当前子范围：", h("ul", { class: "plain" }, current))
-          : h(
               "div",
               { class: "sub" },
-              "当前子范围（current_ordinals）：",
-              missing(NOT_CARRIED),
-              "；界面不另行对应。",
+              "活动 ",
+              field(item.outcome, "activity_ref", (ref) => activityShortName(ref)),
+              " · 原子范围 ",
+              field(item.outcome, "subscope_ordinal", (ordinal) => `#${ordinal}`),
             ),
-      );
-    });
-
-    const carry = outcome.evidence_carry_over.map((item) =>
+            definitions([
+              ["原裁决", field(item.outcome, "prior_verdict", verdict)],
+              [
+                "现在",
+                item.disposition.code === null
+                  ? missing(NOT_CARRIED)
+                  : item.disposition.known
+                    ? item.disposition.text
+                    : unrecognised(item.disposition.code),
+              ],
+              [
+                "当前裁决",
+                item.current
+                  ? item.current.map((current) =>
+                      h("span", {}, `子范围 #${current.ordinal} `, verdict(current.verdict), " "),
+                    )
+                  : "记录没有给出这一项当前对应的子范围",
+              ],
+              [
+                "原复检条件",
+                item.condition.code !== null && !item.condition.known
+                  ? unrecognised(item.condition.code)
+                  : item.condition.plain,
+              ],
+              [`旧证据（${subscope.evidence.length} 条）`, tallyLine(subscope.evidenceTally)],
+            ]),
+            h(
+              "a",
+              {
+                class: "run",
+                href: href(state.mode, state.runId, "recheck", item.subscopeIndex, item.memberIndex),
+                "data-return-focus": here ? true : null,
+              },
+              "查看这一项：前后差异、责任信息、下一步",
+            ),
+          );
+        }),
+      ),
+    ),
+    h(
+      "section",
+      { class: "block" },
+      h("h2", {}, "三、下一步做什么"),
       h(
-        "tr",
+        "p",
         {},
-        h(
-          "td",
-          {},
-          field(item, "citation", copyable),
+        "逐项进入上面的事项。每一项的页面写明记录给出的下一步；记录没有给出时，页面会直接说没有。",
+      ),
+      h("h3", {}, "本预览做不了的事"),
+      h("ul", {}, RECHECK_CANNOT.map((text) => h("li", {}, text))),
+      note("这些动作没有实现，所以页面上没有对应的按钮。"),
+    ),
+  );
+
+  const versionRow = (side) =>
+    h(
+      "tr",
+      {},
+      h("th", { scope: "row" }, `${side.label}模型`),
+      h("td", {}, side.prior ? [field(side.prior, "model_key", code), " ", field(side.prior, "content_id", copyable)] : missing(NOT_CARRIED)),
+      h("td", {}, side.now ? [field(side.now, "model_key", code), " ", field(side.now, "content_id", copyable)] : missing(NOT_CARRIED)),
+    );
+  content.append(
+    h(
+      "details",
+      { class: "block evidence-details" },
+      h("summary", {}, "证据细节：记录标识、模型版本的内容标识、代码对照"),
+      definitions([
+        ["successor.kind", field(successor, "kind", code)],
+        ["原记录 assessment digest", field(successor, "prior_assessment_digest", copyable)],
+        ["本记录 assessment digest", copyable(envelope.assessment_digest)],
+        ["is_current", field(comparison, "is_current", (value) => code(String(value)))],
+        [
+          "changed_models",
+          carries(comparison, "changed_models") && comparison.changed_models.length === 0
+            ? "（记录中为空列表：没有模型变化）"
+            : field(comparison, "changed_models", (keys) => keys.map((key) => [code(key), " "])),
+        ],
+      ]),
+      tableWrap(table(null, ["", "原记录", "本记录"], model.reissue.sides.map(versionRow))),
+      note("版本以内容标识表示，不以文件名当版本。哪一侧变了取自记录的 changed_models，本页不比较内容标识。"),
+      glossary("成员去向代码", Object.entries(DISPOSITIONS)),
+      glossary("原复检条件状态代码（没有“整句条件已满足”）", Object.entries(CONDITION_STATES)),
+      glossary(
+        "旧证据比较状态代码",
+        Object.entries(CARRY_OVER_STATES).map(([key, entry]) => [key, entry.label]),
+      ),
+      glossary("旧证据比较原因代码", Object.entries(CARRY_OVER_REASONS)),
+      glossary("变化方面代码", Object.entries(CHANGED_ASPECTS)),
+    ),
+  );
+  return content;
+}
+
+function citationKind(row) {
+  return field(row, "citation_kind", (kind) =>
+    Object.hasOwn(CITATION_KINDS, kind) ? CITATION_KINDS[kind] : unrecognised(kind),
+  );
+}
+
+function evidenceCard(item) {
+  const row = item.row;
+  const kind = carries(row, "citation_kind") ? row.citation_kind : null;
+  return h(
+    "li",
+    { class: "evidence-row" },
+    h(
+      "p",
+      { class: "evidence-head" },
+      stateBadge(item.state),
+      item.brief ? h("span", { class: "brief" }, ` ${item.brief}`) : null,
+    ),
+    // The citation and its provenance tag are on the line, never folded away:
+    // which of these is simulated is not a detail.
+    h(
+      "p",
+      { class: "citation-line" },
+      citationKind(row),
+      "：",
+      field(row, "citation", copyable),
+      " ",
+      carries(row, "citation") ? provenance(kind, row.citation) : null,
+    ),
+    carries(row, "current_citation")
+      ? h(
+          "p",
+          { class: "citation-line" },
+          "本次记录引用的对应证据：",
+          field(row, "current_citation", copyable),
+          " ",
+          provenance(kind, row.current_citation),
+        )
+      : null,
+    h(
+      "p",
+      {},
+      item.reason.code === null
+        ? ["原因：", missing(NOT_CARRIED)]
+        : item.reason.known
+          ? item.reason.text
+          : ["原因：", unrecognised(item.reason.code)],
+    ),
+    item.facts.map((text) => h("p", { class: "fact" }, text)),
+    item.notes.map((text) => h("p", { class: "caveat" }, text)),
+    carries(row, "cause")
+      ? h("div", {}, "记录给出的原因（原文）：", field(row, "cause", (text) => h("blockquote", {}, text)))
+      : null,
+    h(
+      "details",
+      {},
+      h("summary", {}, "证据细节（记录原码与摘要）"),
+      definitions([
+        ["state", field(row, "state", code)],
+        ["reason", field(row, "reason", code)],
+        ["key_changed", field(row, "key_changed", code)],
+        [
+          "changed_aspects",
+          field(row, "changed_aspects", (aspects) => aspects.map((aspect) => [code(aspect), " "])),
+        ],
+        ["封存时内容摘要", field(row, "sealed_content_digest", code)],
+        ["本记录内容摘要", field(row, "current_content_digest", code)],
+      ]),
+    ),
+  );
+}
+
+function currentSubscopeBlock(state, item, current) {
+  const back = [item.subscopeIndex, item.memberIndex];
+  if (!current.located) {
+    return h(
+      "div",
+      { class: "current-subscope" },
+      h("h3", {}, `当前子范围 #${current.ordinal}`),
+      note("记录给出了这个子范围编号，但本记录的活动里找不到它；本页不另行对应。", "problem"),
+    );
+  }
+  const subscope = current.located.subscope;
+  return h(
+    "div",
+    { class: "current-subscope" },
+    h("h3", {}, `当前子范围 #${current.ordinal}（Framework 给出的对应）`),
+    definitions([
+      ["当前裁决", current.verdict === undefined ? missing(NOT_CARRIED) : verdict(current.verdict)],
+      [
+        "下一步（记录原文）",
+        field(subscope, "route", (value) => field(value, "next_action", (text) => h("span", { class: "prose" }, text))),
+      ],
+      [
+        "复检条件（记录原文）",
+        field(subscope, "route", (value) =>
+          field(value, "recheck_condition", (text) => h("span", { class: "prose" }, text)),
+        ),
+      ],
+      ["Pack 默认修复角色", field(subscope, "route", (value) => field(value, "default_role", code))],
+      [
+        "Overlay 记录的映射对象",
+        field(subscope, "assignment", (value) => [
+          field(value, "assigned_team_or_person", code),
+          h("div", { class: "sub" }, POLICY_SOURCE_NOTE),
+        ]),
+      ],
+    ]),
+    note("映射对象是记录中的 Overlay 映射值，不代表已派发。当前裁决为 READY 时记录不携带下一步和角色。"),
+    h(
+      "p",
+      {},
+      link(
+        `在活动工作台查看子范围 #${current.ordinal} 的成员与证据`,
+        href(state.mode, state.runId, "activity", current.located.activityIndex, "sub", current.ordinal, ...back),
+      ),
+    ),
+  );
+}
+
+function recheckItem(state, subscopeIndex, memberIndex) {
+  const envelope = state.envelope;
+  const model = recheckModel(envelope.record);
+  const { content, usable } = recheckIntro(state, model);
+  if (!usable) return content;
+  const subscope = model.subscopes[subscopeIndex];
+  const item = subscope && subscope.items[memberIndex];
+  if (!item) throw new Error("复检记录中没有这一项");
+  const outcome = item.outcome;
+  lastRecheckItem = { runId: state.runId, subscopeIndex, memberIndex };
+  const backToList = () => h("p", {}, link("← 返回复检事项列表（回到这一项的位置）", href(state.mode, state.runId, "recheck")));
+
+  content.replaceChildren(
+    backToList(),
+    h("h1", {}, memberTitle(state, item.entry.member)),
+    definitions([
+      ["成员", memberKeys(item.entry.member)],
+      ["活动", field(outcome, "activity_ref", (ref) => [activityShortName(ref), " ", code(ref)])],
+      ["原子范围", field(outcome, "subscope_ordinal", (ordinal) => `#${ordinal}`)],
+    ]),
+    h(
+      "section",
+      { class: "block" },
+      h("h2", {}, "一、这一项什么变了"),
+      definitions([
+        [
+          "原记录",
           h(
+            "span",
+            {},
+            field(outcome, "prior_verdict", verdict),
+            " 原问题类型（记录原码）：",
+            field(outcome, "prior_resolution_kind", code),
+          ),
+        ],
+        [
+          "现在",
+          item.disposition.code === null
+            ? missing(NOT_CARRIED)
+            : item.disposition.known
+              ? h("span", {}, item.disposition.text, " ", h("span", { class: "sub" }, "记录原码 ", code(item.disposition.code)))
+              : unrecognised(item.disposition.code),
+        ],
+        ["模型", model.reissue.headline],
+      ]),
+      // Keyed on the disposition code alone, beside the Framework's own cause.
+      // This wording is written for **this Pack's** `pair_source`: the pair
+      // comes from a penetration determination, and the openings activity is
+      // what an unbuilt opening blocks. A Pack deriving pairs from something
+      // else would need its own sentence. Generalising it was considered and
+      // declined by BIM and the technical director: one Pack, one sentence.
+      item.disposition.code === "pairing-no-longer-derived"
+        ? h(
+            "strong",
+            { class: "caveat" },
+            "这两个构件已不再被配成一对检查：穿透判定现为“不穿透”（见下方记录给出的原因）。" +
+              "这不等于开洞已建成，也不等于开洞缺陷已修复。",
+          )
+        : null,
+      h(
+        "div",
+        {},
+        "记录给出的原因（原文）：",
+        field(item.entry, "cause", (text) => h("blockquote", {}, text)),
+      ),
+      item.current
+        ? h(
+            "div",
+            {},
+            "Framework 给出的当前子范围：",
+            h(
+              "ul",
+              { class: "plain" },
+              item.current.map((current) =>
+                h(
+                  "li",
+                  {},
+                  `#${current.ordinal} `,
+                  current.verdict === undefined ? missing(NOT_CARRIED) : verdict(current.verdict),
+                  " 终点 outcome ",
+                  current.leafOutcome === undefined ? missing(NOT_CARRIED) : code(current.leafOutcome),
+                ),
+              ),
+            ),
+          )
+        : h(
             "div",
             { class: "sub" },
-            field(item, "citation_kind", code),
-            " ",
-            // The kind is the record's own; the tag beside it is read off this
-            // one citation's own marker, like every other tag on these screens.
-            carries(item, "citation_kind") && carries(item, "citation")
-              ? provenance(item.citation_kind, item.citation)
-              : null,
+            "当前子范围（current_ordinals）：",
+            missing(NOT_CARRIED),
+            "；界面不另行对应。",
           ),
-        ),
-        h("td", {}, field(item, "reason", (value) => codeWithGloss(value, carryOver))),
-        h("td", {}, field(item, "carried", (value) => (value ? "是" : "否"))),
-        h("td", {}, field(item, "sealed_content_digest", code)),
-        h("td", {}, field(item, "current_content_digest", code)),
-      ),
-    );
-
-    content.append(
+    ),
+    h(
+      "section",
+      { class: "block condition" },
+      h("h2", {}, "二、什么仍未解决：原复检条件"),
       h(
-        "article",
-        { class: "recheck-outcome" },
-        h("h2", {}, `${activityShortName(outcome.activity_ref)} · 原子范围 #${outcome.subscope_ordinal}`),
-        definitions([
-          ["activity_ref", field(outcome, "activity_ref", code)],
-          ["原裁决", field(outcome, "prior_verdict", verdict)],
-          ["原 resolution_kind", field(outcome, "prior_resolution_kind", code)],
-          [
-            "原成员",
-            field(outcome, "prior_members", (members) =>
-              members.map((item) => h("div", {}, memberTitle(state, item), " ", memberKeys(item))),
-            ),
-          ],
-        ]),
-        h(
-          "div",
-          { class: "recheck-grid" },
-          h("section", { class: "block" }, h("h3", {}, "1. 成员去了哪里"), dispositions),
-          h(
-            "section",
-            { class: "block" },
-            h("h3", {}, "2. 旧证据是否仍被引用"),
-            tableWrap(table(null, ["引用", "原因", "carried", "封存时内容摘要", "本记录内容摘要"], carry)),
-          ),
-          h(
-            "section",
-            { class: "block condition" },
-            h("h3", {}, "3. 旧复检条件能证明什么"),
-            note("这里只说明原复检条件能被证明到什么程度，与当前裁决分开阅读。"),
-            definitions([
-              [
-                "原复检条件（逐字）",
-                field(outcome, "prior_recheck_condition", (text) => h("blockquote", {}, text)),
-              ],
-              [
-                "condition_status",
-                field(outcome, "condition_status", (value) => codeWithGloss(value, conditionState)),
-              ],
-              [
-                "condition_basis（原文）",
-                field(outcome, "condition_basis", (text) => h("blockquote", {}, text)),
-              ],
-              ["correspondence", field(outcome, "correspondence", code)],
-              ["named_outcome", field(outcome, "named_outcome", code)],
-              [
-                "原叶节点证据要求",
-                field(outcome, "prior_leaf_evidence_requirement_id", code),
-              ],
-            ]),
-          ),
-        ),
+        "p",
+        { class: "headline" },
+        item.condition.code !== null && !item.condition.known
+          ? unrecognised(item.condition.code)
+          : item.condition.plain,
       ),
-    );
-  });
+      note("这里只说明原复检条件被证明到了什么程度，与当前裁决分开读：当前裁决变好，不等于原条件已满足。"),
+      h(
+        "div",
+        {},
+        "原复检条件（逐字）：",
+        field(outcome, "prior_recheck_condition", (text) => h("blockquote", {}, text)),
+      ),
+      h(
+        "details",
+        {},
+        h("summary", {}, "证据细节（记录原码与依据原文）"),
+        definitions([
+          ["condition_status", field(outcome, "condition_status", (value) => codeWithGloss(value, conditionState))],
+          ["condition_basis（原文）", field(outcome, "condition_basis", (text) => h("blockquote", {}, text))],
+          ["correspondence", field(outcome, "correspondence", code)],
+          ["named_outcome", field(outcome, "named_outcome", code)],
+          ["原叶节点证据要求", field(outcome, "prior_leaf_evidence_requirement_id", code)],
+        ]),
+      ),
+    ),
+    limits(),
+    h(
+      "section",
+      { class: "block" },
+      h("h2", {}, `三、旧证据逐条（${subscope.evidence.length} 条）`),
+      note(
+        `记录按子范围保存旧证据，不按成员拆分：原子范围的 ${outcome.prior_members.length} 个成员共用下面这些行。`,
+      ),
+      stateLegend(subscope.evidenceTally),
+      provenanceLegend(),
+      subscope.evidence.length
+        ? h("ol", { class: "evidence-rows" }, subscope.evidence.map(evidenceCard))
+        : note("原子范围的证据路径没有引用任何证据。"),
+    ),
+    h(
+      "section",
+      { class: "block" },
+      h("h2", {}, "四、责任信息与下一步"),
+      item.disposition.known ? h("p", { class: "headline" }, item.disposition.next) : null,
+      item.current
+        ? item.current.map((current) => currentSubscopeBlock(state, item, current))
+        : note(
+            "记录没有给出这一项当前对应的子范围，所以本页没有下一步原文、修复角色或映射对象可以显示。" +
+              "原记录里的责任信息也没有随复检记录返回。",
+          ),
+      definitions([["风险授权人", UNIMPLEMENTED_AUTHORISER]]),
+      h("h3", {}, "本预览做不了的事"),
+      h("ul", {}, RECHECK_CANNOT.map((text) => h("li", {}, text))),
+    ),
+    backToList(),
+  );
   return content;
 }
 
@@ -1146,4 +1574,4 @@ function refusal(state) {
   return content;
 }
 
-export const screens = { entry, runs, record, activity, member, recheck, refusal };
+export const screens = { entry, runs, record, activity, member, recheck, recheckItem, refusal };
