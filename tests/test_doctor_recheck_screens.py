@@ -31,6 +31,7 @@ import re
 import shutil
 import subprocess
 import tempfile
+import tomllib
 import unittest
 from pathlib import Path
 
@@ -68,6 +69,12 @@ process.stdout.write(
       reasonEntries: vocabulary.CARRY_OVER_REASONS,
       notes: vocabulary.ASPECT_NOTES,
       reissueEntries: vocabulary.REISSUE_CASES,
+      verdictWords: vocabulary.VERDICT_WORDS,
+      verdictScope: vocabulary.VERDICT_SCOPE,
+      activityNames: vocabulary.ACTIVITY_NAMES,
+      resolutionKinds: vocabulary.RESOLUTION_KINDS,
+      leafReadings: vocabulary.LEAF_READINGS,
+      consequenceKinds: vocabulary.CONSEQUENCE_KINDS,
     },
   }),
 );
@@ -1034,6 +1041,180 @@ class AdapterScenarioTests(unittest.TestCase):
         self.assertIn(
             'Object.hasOwn(RUN_LABELS, run.run_id) ? null : [" ", code(run.run_id)]', screens
         )
+
+    def test_the_words_cover_the_pack_and_say_what_a_verdict_means_for_the_work(self):
+        """Every gloss is keyed on the Pack's vocabulary; none reads as "a check passed".
+
+        A verdict is a statement about one activity of the receiving side, in an
+        assessed scope (Checkpoint B section 1). The glosses carry that
+        consequence, the activities are named as work, and every resolution kind,
+        consequence kind and (evidence requirement, outcome) the Pack declares
+        has words here — an unglossed one would reach the manager as
+        "unrecognised", which is what happened to three of the ten.
+        """
+
+        pack = tomllib.loads(
+            (
+                PROJECT_ROOT
+                / "purpose-packs"
+                / "interdisciplinary-coordination-readiness"
+                / "pack.toml"
+            ).read_text(encoding="utf-8")
+        )
+        words = self.vocabulary
+        self.assertEqual(
+            sorted(words["activityNames"]),
+            sorted(item["activity_id"] for item in pack["activities"]),
+        )
+        routes = pack["resolution_routes"]
+        self.assertEqual(
+            sorted(words["resolutionKinds"]), sorted(item["resolution_kind"] for item in routes)
+        )
+        self.assertEqual(len(words["resolutionKinds"]), 10)
+        self.assertEqual(
+            sorted(words["consequenceKinds"]),
+            sorted({kind for item in routes for kind in item["consequence_kinds"]}),
+        )
+        self.assertEqual(
+            sorted(words["leafReadings"]),
+            sorted(
+                f"{item['evidence_requirement_id']}/{outcome}"
+                for item in pack["evidence_requirements"]
+                for outcome in item["outcomes"]
+            ),
+        )
+        # An UNKNOWN route opens, as the Pack's own next_action does, by saying
+        # it is not a model defect; a BLOCKED route never does.
+        unknown = {
+            branch["gap_kind"]
+            for node in pack["decision_nodes"]
+            for branch in node["branches"]
+            if "gap_kind" in branch
+        }
+        for item in routes:
+            kind = item["resolution_kind"]
+            with self.subTest(kind=kind):
+                self.assertEqual(
+                    kind in unknown, item["next_action"].startswith("Not a model defect")
+                )
+                self.assertEqual(
+                    kind in unknown, words["resolutionKinds"][kind].startswith("不是模型缺陷")
+                )
+        # The storey question is called storey assignment everywhere it is named.
+        for key in ("in-model-position-not-evaluated", "mep-element-not-spatially-assigned"):
+            self.assertIn("楼层归属", words["resolutionKinds"][key])
+        for key, text in words["leafReadings"].items():
+            if key.startswith("in-model-position/"):
+                self.assertIn("楼层", text)
+        for text in [*words["resolutionKinds"].values(), *words["leafReadings"].values()]:
+            self.assertNotIn("位置", text)
+
+        # Verdicts: the consequence for the work, and the scope it holds in.
+        verdicts = words["verdictWords"]
+        self.assertEqual(sorted(verdicts), ["BLOCKED", "READY", "UNKNOWN"])
+        self.assertIn("这项工作可以开始", verdicts["READY"])
+        self.assertIn("在本次评估范围内", verdicts["READY"])
+        self.assertIn("没有证据缺口", verdicts["READY"])
+        self.assertIn("阻止这项工作", verdicts["BLOCKED"])
+        self.assertIn("这项工作能否开始无法决定", verdicts["UNKNOWN"])
+        self.assertIn("既不能放行，也不能拒绝", verdicts["UNKNOWN"])
+        for text in verdicts.values():
+            for claim in ("检查通过", "合格", "没有问题"):
+                with self.subTest(claim=claim):
+                    self.assertNotIn(claim, text)
+        self.assertIn("评估范围", words["verdictScope"])
+        self.assertIn("模型版本", words["verdictScope"])
+
+        # A READY reached because the element penetrates nothing says so.
+        through_nothing = words["leafReadings"]["penetration-determination/no-penetration"]
+        self.assertIn("开洞情况没有被评估", through_nothing)
+        self.assertIn("这不是“开洞没问题”", through_nothing)
+
+        screens = (STATIC / "screens.js").read_text(encoding="utf-8")
+        vocabulary = (STATIC / "vocabulary.js").read_text(encoding="utf-8")
+        for text in (screens, vocabulary):
+            self.assertNotIn("检查内容", text)
+            self.assertNotIn("检查清单", text)
+        self.assertIn('ACTIVITY_LABEL = "接收方的哪项工作"', vocabulary)
+        self.assertIn("复检要显示什么，这一项才算结束", screens)
+        self.assertNotIn("可以再次复检", screens)
+
+    def test_a_requirement_edit_is_said_beside_the_verdict_it_bears_on(self):
+        """Two recorded facts side by side; the page concludes nothing from them.
+
+        The one verdict that moved in the relaxed example is READY under an
+        edited requirement. A gloss that said "can start" and left the edit among
+        the evidence rows would be a status without its predicate.
+        """
+
+        relaxed = self.models["recheck-requirement-relaxed"]
+        record = self.envelopes["recheck-requirement-relaxed"]["record"]
+        for subscope, outcome in zip(
+            relaxed["subscopes"], record["successor"]["subscopes"], strict=True
+        ):
+            expected = sum(
+                "requirement-semantics" in row.get("changed_aspects", [])
+                for row in outcome["evidence_carry_over"]
+            )
+            self.assertEqual(subscope["requirementChanged"], expected)
+            for item in subscope["items"]:
+                self.assertEqual(item["requirementChanged"], expected)
+        moved = [
+            item for item in relaxed["items"] if item["verdictChange"]["kind"] == "changed"
+        ]
+        self.assertEqual([item["requirementChanged"] for item in moved], [2])
+        self.assertEqual(sum(1 for item in relaxed["items"] if item["requirementChanged"]), 3)
+        for name in ("recheck-key-change-only", "recheck-producing-reissued"):
+            with self.subTest(scenario=name):
+                self.assertFalse(
+                    any(item["requirementChanged"] for item in self.models[name]["items"])
+                )
+
+        screens = (STATIC / "screens.js").read_text(encoding="utf-8")
+        recheck = screens[
+            screens.index("// S4 — recheck") : screens.index("// SX — real refusal")
+        ]
+        # Beside the verdict on the card, on the item page and in the result
+        # block; and never inside a collapsed block of its own.
+        self.assertEqual(recheck.count("requirementNote("), 4)
+        note = recheck[recheck.index("function requirementNote(") :]
+        note = note[: note.index("\n}\n")]
+        self.assertNotIn("details", note)
+        self.assertNotRegex(note, r"READY|BLOCKED|UNKNOWN|verdict")
+        vocabulary = (STATIC / "vocabulary.js").read_text(encoding="utf-8")
+        sentence = vocabulary[vocabulary.index("export const REQUIREMENT_CHANGED_NOTE") :]
+        sentence = sentence[: sentence.index(";\n")]
+        self.assertIn("记录不说明是放宽还是收紧", sentence)
+        for claim in ("所以", "因此", "修好", "放宽了"):
+            self.assertNotIn(claim, sentence)
+
+    def test_the_reading_behind_a_verdict_is_shown_when_the_record_carries_one(self):
+        """`current_leaf_outcomes`, worded from the requirement the path ended on."""
+
+        relaxed = self.models["recheck-requirement-relaxed"]
+        readings = {}
+        for item in relaxed["items"]:
+            for current in item["current"]:
+                step = current["located"]["subscope"]["path"][-1]
+                key = f"{step['evidence_requirement_id']}/{current['leafOutcome']}"
+                readings.setdefault(current["verdict"], set()).add(key)
+                self.assertIn(key, self.vocabulary["leafReadings"])
+                # The record's own reading at the end of the path it named.
+                self.assertEqual(step["outcome"], current["leafOutcome"])
+        self.assertEqual(
+            readings["READY"],
+            {
+                "penetration-determination/no-penetration",
+                "opening-status/cross-referenced",
+                "cross-model-alignment/confirmed",
+                "asset-identity/satisfied",
+            },
+        )
+        gone = self.models["recheck-member-gone"]
+        self.assertTrue(any(item["current"] is None for item in gone["items"]))
+        screens = (STATIC / "screens.js").read_text(encoding="utf-8")
+        self.assertIn(": missing(LEAF_READING_WORDS.notCarried),", screens)
+        self.assertEqual(screens.count("readingRow(item),"), 2)
 
     def test_what_is_left_to_do_is_what_the_record_gives_a_next_step_for(self):
         """Three groups by what the record asks, read off the place it named.

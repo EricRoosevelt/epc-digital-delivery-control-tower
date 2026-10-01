@@ -431,6 +431,15 @@ export function recheckModel(document) {
   const subscopes = successor.subscopes.map((outcome, subscopeIndex) => {
     const evidence = outcome.evidence_carry_over.map(evidenceModel);
     const condition = conditionModel(outcome);
+    // How many of this sealed group's rows the record marks as a requirement
+    // edit. A count of rows as recorded, so the fact can be said beside the
+    // verdict as well as among the rows.
+    const requirementChanged = evidence.filter(
+      (item) =>
+        carries(item.row, "changed_aspects") &&
+        Array.isArray(item.row.changed_aspects) &&
+        item.row.changed_aspects.includes("requirement-semantics"),
+    ).length;
     const items = outcome.dispositions.map((item, memberIndex) => {
       const current = carries(item, "current_ordinals")
         ? item.current_ordinals.map((ordinal, index) => ({
@@ -449,6 +458,7 @@ export function recheckModel(document) {
         entry: item,
         disposition: dispositionModel(item),
         condition,
+        requirementChanged,
         current,
         action: actionKind(current),
         verdictChange: verdictChange(outcome, current),
@@ -458,6 +468,7 @@ export function recheckModel(document) {
       subscopeIndex,
       outcome,
       condition,
+      requirementChanged,
       evidence,
       evidenceTally: stateTally(evidence),
       evidenceGroups: evidenceGroups(evidence),

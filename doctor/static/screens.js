@@ -31,6 +31,7 @@ import {
 } from "./dom.js";
 import { handoverSide, recheckModel } from "./recheck-model.js";
 import {
+  ACTIVITY_LABEL,
   ACTIVITY_NAMES,
   CARRY_OVER_REASONS,
   CARRY_OVER_STATES,
@@ -38,6 +39,7 @@ import {
   CITATION_KINDS,
   CITATION_PROVENANCE,
   CONDITION_STATES,
+  CONSEQUENCE_KINDS,
   DEMO_NOTICE,
   DISPOSITIONS,
   ELEMENT_WORDS,
@@ -47,6 +49,8 @@ import {
   HANDOVER_SIDES,
   HOME,
   IFC_CLASS_NAMES,
+  LEAF_READINGS,
+  LEAF_READING_WORDS,
   MODE_LABELS,
   NOT_CARRIED,
   POLICY_SOURCE_NOTE,
@@ -56,9 +60,11 @@ import {
   REFUSAL_REASONS,
   REFUSAL_SCOPE_NOTE,
   REFUSAL_UNGLOSSED,
+  REQUIREMENT_CHANGED_NOTE,
   RESOLUTION_KINDS,
   RUN_LABELS,
   UNRECOGNISED,
+  VERDICT_SCOPE,
   VERDICT_WORDS,
   absence,
   citationProvenance,
@@ -1226,11 +1232,64 @@ function elementCard(state, key, comparison) {
   );
 }
 
+// The work of the receiving side this verdict is about: its name, the code,
+// and what that work needs from the handover.
 function activityName(ref) {
   const name = activityShortName(ref);
   return Object.hasOwn(ACTIVITY_NAMES, name)
-    ? [ACTIVITY_NAMES[name], " ", h("span", { class: "sub" }, code(name))]
+    ? [
+        h("strong", {}, ACTIVITY_NAMES[name].name),
+        " ",
+        h("span", { class: "sub" }, code(name)),
+        h("div", { class: "sub" }, ACTIVITY_NAMES[name].needs),
+      ]
     : code(name);
+}
+
+// Two recorded facts side by side: the verdict, and that the same sealed
+// group's old evidence had a requirement edited. Nothing is concluded here.
+function requirementNote(item) {
+  return item.requirementChanged
+    ? h(
+        "div",
+        { class: "caveat" },
+        REQUIREMENT_CHANGED_NOTE.replace("{count}", String(item.requirementChanged)),
+      )
+    : null;
+}
+
+// The reading at the end of the path the record named for this item, in the
+// Pack's two vocabularies: which evidence requirement, and which outcome.
+function leafReading(current) {
+  if (current.leafOutcome === undefined) return missing(LEAF_READING_WORDS.notCarried);
+  const path = current.located ? current.located.subscope.path : [];
+  const step = path.length ? path[path.length - 1] : null;
+  const requirement = carries(step, "evidence_requirement_id") ? step.evidence_requirement_id : "";
+  const key = `${requirement}/${current.leafOutcome}`;
+  return Object.hasOwn(LEAF_READINGS, key)
+    ? [LEAF_READINGS[key], " ", h("span", { class: "sub" }, code(key))]
+    : [code(current.leafOutcome), " ", h("span", { class: "sub" }, LEAF_READING_WORDS.unglossed)];
+}
+
+function readingRow(item) {
+  return [
+    LEAF_READING_WORDS.label,
+    item.current
+      ? item.current.map((current) => h("div", {}, leafReading(current)))
+      : missing(LEAF_READING_WORDS.notCarried),
+  ];
+}
+
+function consequences(kinds) {
+  return kinds.map((kind) =>
+    h(
+      "div",
+      {},
+      Object.hasOwn(CONSEQUENCE_KINDS, kind)
+        ? [CONSEQUENCE_KINDS[kind], " ", h("span", { class: "sub" }, code(kind))]
+        : unrecognised(kind),
+    ),
+  );
 }
 
 function problemOf(subscope) {
@@ -1353,13 +1412,15 @@ function recheck(state) {
                     `查看判断变了的这一项：${itemTitle(state, model.subscopes[subscopeIndex].items[memberIndex].entry.member.keys)}`,
                     href(state.mode, state.runId, "recheck", subscopeIndex, memberIndex),
                   ),
+                  requirementNote(model.subscopes[subscopeIndex].items[memberIndex]),
                 ),
               ),
             ),
           )
         : null,
+      note(VERDICT_SCOPE),
       note(
-        "一个事项是一个构件，或被放在一起检查的一对构件。本页不给总体结论或评分：每个事项各有自己的判断。",
+        "一个事项是一个构件，或被放在一起评估的一对构件。本页不给总体结论或评分：每个事项各有自己的判断。",
       ),
     ),
   );
@@ -1374,25 +1435,25 @@ function recheck(state) {
       h("div", { class: "member-name" }, itemTitle(state, keys)),
       h("ul", { class: "plain element-briefs" }, keys.map((key) => elementBrief(state, key, keys.length > 1))),
       definitions([
-        ["检查内容", field(item.outcome, "activity_ref", activityName)],
+        [ACTIVITY_LABEL, field(item.outcome, "activity_ref", activityName)],
         [
           "判断",
-          h(
-            "span",
-            {},
-            "复检前 ",
-            field(item.outcome, "prior_verdict", verdictWord),
+          [
+            h("div", {}, "复检前：", field(item.outcome, "prior_verdict", verdictWord)),
             item.current
-              ? [
-                  " → 现在 ",
-                  item.current.map((current) => [
+              ? item.current.map((current) =>
+                  h(
+                    "div",
+                    {},
+                    "现在：",
                     current.verdict === undefined ? missing(NOT_CARRIED) : verdictWord(current.verdict),
-                    " ",
-                  ]),
-                ]
-              : "；现在：记录没有给出",
-          ),
+                  ),
+                )
+              : h("div", {}, "现在：记录没有给出"),
+            requirementNote(item),
+          ],
         ],
+        readingRow(item),
         problemRow(item),
         dispositionRow(item),
       ]),
@@ -1594,7 +1655,7 @@ function currentSubscopeBlock(state, item, current) {
     "p",
     { class: "sub" },
     link(
-      "在明细页查看和它一起检查的全部构件与证据",
+      "在明细页查看和它一起评估的全部构件与证据",
       href(state.mode, state.runId, "activity", current.located.activityIndex, "sub", current.ordinal, ...back),
     ),
     "（该页尚未改版，仍是内部用语）",
@@ -1623,7 +1684,11 @@ function currentSubscopeBlock(state, item, current) {
         field(subscope, "route", (value) => field(value, "next_action", (text) => h("span", { class: "prose" }, text))),
       ],
       [
-        "默认由哪个角色处理（检查清单给出）",
+        "对这项工作的后果",
+        field(subscope, "route", (value) => field(value, "consequence_kinds", consequences)),
+      ],
+      [
+        "默认由哪个角色处理（交接判断规则给出）",
         field(subscope, "route", (value) => field(value, "default_role", code)),
       ],
       [
@@ -1634,7 +1699,7 @@ function currentSubscopeBlock(state, item, current) {
         ]),
       ],
       [
-        "做到什么算可以再次复检（记录原文，英文）",
+        "复检要显示什么，这一项才算结束（记录原文，英文）",
         field(subscope, "route", (value) =>
           field(value, "recheck_condition", (text) => h("span", { class: "prose" }, text)),
         ),
@@ -1668,20 +1733,25 @@ function recheckItem(state, subscopeIndex, memberIndex) {
       { class: "block" },
       h("h2", {}, "一、现在的判断"),
       definitions([
-        ["检查内容", field(outcome, "activity_ref", activityName)],
+        [ACTIVITY_LABEL, field(outcome, "activity_ref", activityName)],
         ["复检前", field(outcome, "prior_verdict", verdictWord)],
         [
           "现在",
-          item.current
-            ? item.current.map((current) =>
-                h("div", {}, current.verdict === undefined ? missing(NOT_CARRIED) : verdictWord(current.verdict)),
-              )
-            : "记录没有给出这一项的当前情况",
+          [
+            item.current
+              ? item.current.map((current) =>
+                  h("div", {}, current.verdict === undefined ? missing(NOT_CARRIED) : verdictWord(current.verdict)),
+                )
+              : "记录没有给出这一项的当前情况",
+            requirementNote(item),
+          ],
         ],
+        readingRow(item),
         problemRow(item),
         dispositionRow(item),
         ["模型", model.reissue.headline],
       ]),
+      note(VERDICT_SCOPE),
       item.verdictChange.kind === "changed" ? h("p", { class: "caveat" }, changed.note) : null,
       // Keyed on the disposition code alone, beside the record's own cause.
       // This wording is written for **this Pack's** `pair_source`: the pair
@@ -1729,7 +1799,7 @@ function recheckItem(state, subscopeIndex, memberIndex) {
     h(
       "section",
       { class: "block condition" },
-      h("h2", {}, "四、复检前留下的条件达成了吗"),
+      h("h2", {}, "四、复检前留下的结束条件，这次达到了吗"),
       h(
         "p",
         { class: "headline" },
@@ -1737,11 +1807,11 @@ function recheckItem(state, subscopeIndex, memberIndex) {
           ? unrecognised(item.condition.code)
           : item.condition.plain,
       ),
-      note("这里只说明复检前留下的条件被证明到了什么程度，与现在的判断分开读：判断变好，不等于原条件已满足。"),
+      note("这里只说明复检前留下的结束条件被证明到了什么程度，与现在的判断分开读：判断变了，不等于原条件已满足。"),
       h(
         "div",
         {},
-        "复检前留下的条件（记录原文，英文）：",
+        "复检前留下的结束条件——复检要显示什么，这一项才算结束（记录原文，英文）：",
         field(outcome, "prior_recheck_condition", (text) => h("blockquote", {}, text)),
       ),
       h(

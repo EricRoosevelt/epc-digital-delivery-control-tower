@@ -450,12 +450,62 @@ export const ACTION_GROUPS = {
 };
 
 // The record's verdict words, glossed beside the word and never instead of it.
-// The glosses follow the definitions in the checklist's own document; a word
-// not listed is shown as it came.
+//
+// A verdict is a statement about one activity of the receiving side, in an
+// assessed scope, against a named model version (Checkpoint B section 1, "The
+// four verdicts, defined once"). Each gloss therefore says what the verdict
+// means for that work — can start, is prevented, cannot be decided — and not
+// only what became of the evidence: "a check passed" is not what READY says.
+// A word not listed is shown as it came.
 export const VERDICT_WORDS = {
-  READY: "证据齐全，且满足要求",
-  BLOCKED: "有已知未满足的要求",
-  UNKNOWN: "缺少证据，无法判断",
+  READY:
+    "必要的证据齐全且满足验收条件，没有未解决的阻碍，也没有证据缺口：在本次评估范围内，这项工作可以开始",
+  BLOCKED: "有一项已知未满足的要求，阻止这项工作",
+  UNKNOWN: "回答这个问题所需的证据没有产生，这项工作能否开始无法决定：既不能放行，也不能拒绝",
+};
+
+export const VERDICT_SCOPE =
+  "每个判断只针对接收方的一项工作、本次评估范围内的这一项，以及所列的模型版本；它不是“模型好不好”的总评，也不是“某项检查通过了”。";
+
+// Said beside the verdict word, not only among the evidence rows, whenever the
+// record's carry-over rows for the same sealed group say a requirement was
+// edited. It places two recorded facts side by side and draws nothing from them.
+export const REQUIREMENT_CHANGED_NOTE =
+  "记录同时显示：和这一项放在一起评估的旧证据里，有 {count} 条的检查要求变了；记录不说明是放宽还是收紧。" +
+  "读这个判断时要一并看，逐条见“依据”。";
+
+// The reading the record gives at the end of the path that produced a verdict,
+// keyed `<evidence requirement>/<outcome>` — the Pack's own two vocabularies.
+// Each gloss restates the Pack's `answers` / `acceptance_condition` for that
+// outcome. A READY reached through "penetrates nothing" says so: it is not a
+// statement that an opening is in order.
+export const LEAF_READINGS = {
+  "asset-identity/satisfied": "适用于它的项目资产标识要求评为通过，并且它确实被评估到",
+  "asset-identity/unmet": "项目资产标识的要求没有满足",
+  "asset-identity/not-yet-evaluated": "项目资产标识还没有评估到它",
+  "in-model-position/satisfied": "已归属到接收方模型里也有的楼层",
+  "in-model-position/unmet": "没有归属到楼层",
+  "in-model-position/not-yet-evaluated": "楼层归属还没有评估到它",
+  "cross-model-alignment/confirmed":
+    "已有记录确认两侧模型对齐到共同的基准（按项目接受的方法，针对所列模型版本）",
+  "cross-model-alignment/misaligned": "对齐确认的结果是两侧模型没有对齐",
+  "cross-model-alignment/not-yet-confirmed": "还没有对齐确认",
+  "penetration-determination/no-penetration":
+    "已有协调评审判定：它不穿过接收方模型里的任何构件。不穿过就不需要开洞，所以这条路径上开洞情况没有被评估——这不是“开洞没问题”",
+  "penetration-determination/penetration-confirmed": "已有协调评审判定：它穿过接收方模型里的构件",
+  "penetration-determination/not-yet-determined": "还没有协调评审判定它是否穿过接收方模型里的构件",
+  "opening-status/cross-referenced":
+    "这一对：开洞已建在被穿过的构件上，并且有一条可核查的关联指回这个穿过它的构件",
+  "opening-status/modelled-not-cross-referenced":
+    "这一对：开洞已建在被穿过的构件上，但没有可核查的关联指回这个穿过它的构件",
+  "opening-status/not-modelled": "这一对：被穿过的构件上没有建出开洞",
+  "opening-status/not-yet-determined": "这一对：开洞情况的评审还没有完成",
+};
+
+export const LEAF_READING_WORDS = {
+  label: "得出这个判断的读数",
+  notCarried: "记录没有给出这一项现在的读数",
+  unglossed: "本界面没有这个读数的中文说明",
 };
 
 // Which side of the handover a model is on, looked up from the record's own
@@ -490,23 +540,51 @@ export const IFC_CLASS_NAMES = {
   IfcWall: "墙",
 };
 
-// This preview's Chinese for the checklist's activities and problem types. The
-// record carries them as codes with English sentences; the code stays beside
-// the gloss, and one not listed is shown as it came.
+// The receiving side's work a verdict is about, in this preview's Chinese. The
+// name follows the Pack's `label`; `needs` restates what Checkpoint B section 1
+// ("What Architecture does next with it") says that work needs from the
+// handover. The code stays beside the name; one not listed is shown as it came.
 export const ACTIVITY_NAMES = {
-  "builders-work-openings": "预留开洞",
-  "ceiling-and-bulkhead-geometry": "吊顶与包封几何",
-  "schedules-and-room-data-sheets": "明细表与房间数据表",
+  "builders-work-openings": {
+    name: "土建预留开洞",
+    needs: "要知道交出方的构件在哪里穿过墙、楼板和屋顶，才能在这些构件上开洞。",
+  },
+  "ceiling-and-bulkhead-geometry": {
+    name: "吊顶反向图与包封布置",
+    needs: "要知道交出方的设备在哪一层、在什么位置，才能围着它画吊顶分区和包封。",
+  },
+  "schedules-and-room-data-sheets": {
+    name: "房间数据表与设备明细表",
+    needs: "要每件设备都带有项目的资产标识，明细表才能按它编排。",
+  },
 };
 
+export const ACTIVITY_LABEL = "接收方的哪项工作";
+
+// The Pack's ten resolution kinds, each restating its own route. A BLOCKED kind
+// is a known defect in a source model; an UNKNOWN kind opens, as the Pack's
+// `next_action` does, by saying it is not one. The storey kinds use the noun the
+// Pack's `in-model-position` requirement uses: assignment to a storey.
 export const RESOLUTION_KINDS = {
-  "penetration-not-determined": "还没有人判定它是否穿过别的构件",
-  "missing-corresponding-opening": "它穿过的构件上没有建出对应的开洞",
-  "opening-not-verifiably-linked": "有开洞，但无法核实它与这处穿越对应",
-  "in-model-position-not-evaluated": "它在模型中的位置还没有被检查到",
-  "mep-element-not-spatially-assigned": "它在模型中没有空间归属",
-  "asset-identity-not-evaluated": "它的资产标识还没有被检查到",
   "missing-project-asset-identity": "缺少项目要求的资产标识",
+  "asset-identity-not-evaluated": "不是模型缺陷：资产标识的评估没有覆盖到它",
+  "mep-element-not-spatially-assigned": "它没有楼层归属",
+  "in-model-position-not-evaluated": "不是模型缺陷：楼层归属的评估没有覆盖到它",
+  "cross-model-misalignment": "两侧模型没有对齐到共同的基准",
+  "cross-model-alignment-not-confirmed": "不是模型缺陷：还没有人确认两侧模型对齐到共同的基准",
+  "penetration-not-determined": "不是模型缺陷：还没有协调评审判定它是否穿过接收方模型里的构件",
+  "opening-not-verifiably-linked": "开洞已建，但没有可核查的关联指回穿过它的这个构件",
+  "missing-corresponding-opening": "它穿过的构件上没有建出对应的开洞",
+  "opening-status-not-determined": "不是模型缺陷：开洞情况的评审还没有完成",
+};
+
+// What a non-READY verdict costs the receiving side's work, as the Pack's route
+// names it. Shown beside the code; one not listed is shown as it came.
+export const CONSEQUENCE_KINDS = {
+  "work-cannot-start": "这项工作不能开始",
+  "work-suspended": "这项工作暂停",
+  "rework-risk": "有返工风险",
+  "re-identification-and-reissue-risk": "有重新标识并重新发布的风险",
 };
 
 // Why a check attempt did not start, by refusal code. A refusal is the system's
