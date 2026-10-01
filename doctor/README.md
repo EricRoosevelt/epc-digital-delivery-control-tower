@@ -61,13 +61,29 @@ python doctor/serve.py        # then open http://127.0.0.1:8765/
   there, and removes the directory when the run ends. The rule-edit recheck
   scenarios edit that scratch copy; `rules/` is never written.
 
-## Two experiences, kept apart
+## Two entries, kept apart
 
-`fixture` shows simulated policy and determinations and says so on every
-screen; it cannot be used for a project decision and offers no export. `real`
-runs the shipped project's own policy and shows its actual refusal. Choosing or
-switching a mode clears the result; a refused real run is never shown as a
-fixture.
+`fixture` is shown to the manager as **模拟示例**: simulated policy and
+determinations, said so on every screen; it cannot be used for a project
+decision and offers no export. `real` is shown as **随附项目的检查尝试** — not
+"real input", because nothing can be imported: it runs the shipped project's own
+policy and shows why that attempt did not start. Choosing or switching an entry
+clears the result; a refused attempt is never shown as an example.
+
+A refusal and a fault are different screens. A refusal is the system's answer
+about the request's conditions and arrives as a result, worded from its code. An
+exception or a missing adapter never reaches that screen: it is shown as a fault
+of the program, with the technical message and no statement about a project.
+
+## The path a manager walks
+
+One path is carried end to end
+([usability revision](../docs/product/2026-10-01-doctor-usability-revision.md)):
+the first screen says who this is for and what it cannot do; the example
+directory names one example and says, labelled as the example's description,
+what it was given; the result opens on what is left to do; an item shows its
+element or its two elements, the next step, and the evidence. The record,
+activity and member screens were not revised and still use internal terms.
 
 ## Not in this preview
 

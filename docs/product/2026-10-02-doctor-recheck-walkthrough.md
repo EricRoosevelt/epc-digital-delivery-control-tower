@@ -36,23 +36,23 @@ python doctor/serve.py
 
 打开 `http://127.0.0.1:8765/`。服务器只监听本机，不写文件。
 
-走查用的运行都在“夹具演示”里。**先不要告诉参与者这一点**——任务 1 要看他们自己
+走查用的运行都在“模拟示例”里。**先不要告诉参与者这一点**——任务 1 要看他们自己
 能不能看出来。
 
 ### 走查用到的运行
 
 | 代号 | 列表里的名字 | 适配器场景（只给主持人） | 用于 |
 | --- | --- | --- | --- |
-| A | 复检记录 2（夹具） | `recheck-comparison` | 任务 1–7：一条完整的复检任务 |
-| B | 复检记录 4（夹具） | `recheck-key-change-only` | 任务 8 |
-| C | 复检记录 10（夹具） | `recheck-semantics-changed` | 任务 9 |
-| C2 | 复检记录 9（夹具） | `recheck-requirement-relaxed` | 任务 9（第二遍） |
-| D | 复检记录 7（夹具） | `recheck-producing-reissued` | 任务 10 |
-| E | 复检记录 3（夹具） | `recheck-consuming-reissued` | 任务 10 |
-| F | 复检记录 1（夹具） | `recheck-both-reissued` | 任务 10 |
-| G | 复检记录 6（夹具） | `recheck-prior-without-basis` | 任务 11 |
-| H | 复检记录 8（夹具） | `recheck-producing-reissued-content-changed` | 任务 13 |
-| I | 复检记录 5（夹具） | `recheck-member-gone` | 任务 14 |
+| A | 复检记录 2（模拟示例） | `recheck-comparison` | 任务 1–7：一条完整的复检任务 |
+| B | 复检记录 4（模拟示例） | `recheck-key-change-only` | 任务 8 |
+| C | 复检记录 10（模拟示例） | `recheck-semantics-changed` | 任务 9 |
+| C2 | 模型未改，但交接判断发生变化 | `recheck-requirement-relaxed` | 任务 9（第二遍） |
+| D | 复检记录 7（模拟示例） | `recheck-producing-reissued` | 任务 10 |
+| E | 复检记录 3（模拟示例） | `recheck-consuming-reissued` | 任务 10 |
+| F | 复检记录 1（模拟示例） | `recheck-both-reissued` | 任务 10 |
+| G | 复检记录 6（模拟示例） | `recheck-prior-without-basis` | 任务 11 |
+| H | 复检记录 8（模拟示例） | `recheck-producing-reissued-content-changed` | 任务 13 |
+| I | 复检记录 5（模拟示例） | `recheck-member-gone` | 任务 14 |
 
 列表里的名字只有编号，故意不说每条记录是怎么来的：那正是参与者要从页面上读出来的。
 念任务时只说“复检记录 N”，不说代号背后的场景，也不念第三列。
@@ -119,7 +119,7 @@ B–I 各有 8 个子范围、13 件事；任务只要求参与者看其中指�
 
 | 任务 | 屏幕上应能读出的内容 | 读成下面这样，记为读错 |
 | --- | --- | --- |
-| 1 | 不是真实结果：顶栏写“夹具演示”，下面一行写政策与判定为模拟 | “这是我们项目的结果” |
+| 1 | 不是真实结果：顶栏写“模拟示例”，下面一行写项目设定与人工判定是模拟的 | “这是我们项目的结果” |
 | 2 | 两侧模型都没有重新发布，版本未变 | “模型改过了” |
 | 3 | 一件事；裁决变了的 0 项，它属于“记录没有给出当前对应子范围的”；没有已解决的——页面写明记录里没有“已解决”这个状态 | “已经解决了”“这项通过了” |
 | 4 | 原来是 BLOCKED；现在这两个构件不再被配成一对检查。**没有被证明修好**：不等于开洞已建成，也不等于缺陷已修复 | “洞口开好了”“问题修复了” |
