@@ -531,6 +531,7 @@ class ItemsStayPerMemberTests(_Modelled):
                         "recognised",
                         "reissue",
                         "subscopes",
+                        "verdictGroups",
                     ],
                 )
 
@@ -831,13 +832,164 @@ class AdapterScenarioTests(unittest.TestCase):
         self.assertGreater(seen["present"], 0)
         self.assertGreater(seen["left"], 0)
 
-    def test_every_scenario_has_a_name_a_manager_can_read(self):
+    def test_a_run_name_states_no_cause(self):
+        """A name is a number. What happened is for the page to show from the record.
+
+        The record does not carry why a rule changed or which way (data gap R5),
+        so a name saying "a rule was relaxed" would be the preview's own
+        conclusion — and it would hand a walkthrough participant the answer.
+        """
+
         vocabulary = (STATIC / "vocabulary.js").read_text(encoding="utf-8")
         labels = vocabulary[vocabulary.index("export const RUN_LABELS") :]
         labels = labels[: labels.index("};")]
-        for name in ADAPTER_SCENARIOS:
+        named = dict(re.findall(r'"(recheck-[a-z-]+)":\s*"([^"]+)"', labels))
+        self.assertEqual(sorted(named), sorted({*ADAPTER_SCENARIOS, "recheck-comparison"}))
+        self.assertEqual(len(set(named.values())), len(named))
+        for name, label in named.items():
             with self.subTest(scenario=name):
-                self.assertRegex(labels, rf'"{re.escape(name)}":\s*"复检：[^"]+（夹具）"')
+                self.assertRegex(label, r"^复检记录 \d+（夹具）$")
+        # The adapter's scenario name is not printed beside a run this preview names.
+        screens = (STATIC / "screens.js").read_text(encoding="utf-8")
+        self.assertIn(
+            'Object.hasOwn(RUN_LABELS, run.run_id) ? null : [" ", code(run.run_id)]', screens
+        )
+
+    def test_the_two_recorded_verdicts_are_grouped_and_counted_first(self):
+        """Changed, not placed, unchanged — counts of what the record holds."""
+
+        def said(name):
+            return {
+                group["kind"]: {
+                    (transition["from"], tuple(transition["to"])): transition["count"]
+                    for transition in group["transitions"]
+                }
+                for group in self.models[name]["verdictGroups"]
+            }
+
+        after_a_reissue = {
+            "changed": {("READY", ("UNKNOWN",)): 4},
+            "unplaced": {("READY", ()): 1, ("BLOCKED", ()): 1},
+            "unchanged": {("UNKNOWN", ("UNKNOWN",)): 4, ("BLOCKED", ("BLOCKED",)): 3},
+        }
+        nothing_moved = {
+            "changed": {},
+            "unplaced": {},
+            "unchanged": {
+                ("READY", ("READY",)): 5,
+                ("UNKNOWN", ("UNKNOWN",)): 4,
+                ("BLOCKED", ("BLOCKED",)): 4,
+            },
+        }
+        expected = {
+            "recheck-key-change-only": nothing_moved,
+            "recheck-semantics-changed": nothing_moved,
+            "recheck-prior-without-basis": nothing_moved,
+            "recheck-requirement-relaxed": {
+                "changed": {("BLOCKED", ("READY",)): 1},
+                "unplaced": {},
+                "unchanged": {
+                    ("READY", ("READY",)): 5,
+                    ("UNKNOWN", ("UNKNOWN",)): 4,
+                    ("BLOCKED", ("BLOCKED",)): 3,
+                },
+            },
+            "recheck-producing-reissued": after_a_reissue,
+            "recheck-consuming-reissued": after_a_reissue,
+            "recheck-both-reissued": after_a_reissue,
+            "recheck-producing-reissued-content-changed": {
+                "changed": {("READY", ("UNKNOWN",)): 4, ("BLOCKED", ("READY",)): 3},
+                "unplaced": {("READY", ()): 1, ("BLOCKED", ()): 1},
+                "unchanged": {("UNKNOWN", ("UNKNOWN",)): 4},
+            },
+            "recheck-member-gone": {
+                "changed": {("READY", ("UNKNOWN",)): 2},
+                "unplaced": {("READY", ()): 3, ("BLOCKED", ()): 2},
+                "unchanged": {("UNKNOWN", ("UNKNOWN",)): 4, ("BLOCKED", ("BLOCKED",)): 2},
+            },
+        }
+        self.assertEqual(sorted(expected), sorted(ADAPTER_SCENARIOS))
+        for name, groups in expected.items():
+            with self.subTest(scenario=name):
+                self.assertEqual(said(name), groups)
+
+    def test_every_item_is_in_exactly_one_group_and_the_groups_follow_the_record(self):
+        for name, model in self.models.items():
+            record = self.envelopes[name]["record"]
+            placed = [
+                tuple(index)
+                for group in model["verdictGroups"]
+                for transition in group["transitions"]
+                for index in transition["items"]
+            ]
+            with self.subTest(scenario=name):
+                self.assertEqual(
+                    sorted(placed),
+                    sorted(
+                        (item["subscopeIndex"], item["memberIndex"]) for item in model["items"]
+                    ),
+                )
+                self.assertEqual(
+                    [group["kind"] for group in model["verdictGroups"]],
+                    ["changed", "unplaced", "unchanged"],
+                )
+                for group in model["verdictGroups"]:
+                    self.assertEqual(
+                        group["count"], sum(item["count"] for item in group["transitions"])
+                    )
+                    for transition in group["transitions"]:
+                        for subscope_index, member_index in transition["items"]:
+                            outcome = record["successor"]["subscopes"][subscope_index]
+                            entry = outcome["dispositions"][member_index]
+                            # Both ends are read off the record, value for value.
+                            self.assertEqual(transition["from"], outcome["prior_verdict"])
+                            self.assertEqual(
+                                transition["to"], entry.get("current_verdicts", [])
+                            )
+                            self.assertEqual(
+                                group["kind"] == "unplaced", "current_ordinals" not in entry
+                            )
+
+    def test_a_verdict_that_moved_under_unchanged_models_is_said_to_have(self):
+        """The relaxed rule: one item BLOCKED to READY, and no model was re-issued."""
+
+        relaxed = self.models["recheck-requirement-relaxed"]
+        changed = relaxed["verdictGroups"][0]
+        self.assertEqual(relaxed["reissue"]["name"], "none")
+        self.assertEqual(changed["count"], 1)
+        self.assertIn("两侧模型都没有重新发布，这些项的裁决却变了", changed["note"])
+        self.assertIn("变化不来自模型改动", changed["note"])
+        for name in (
+            "recheck-producing-reissued",
+            "recheck-consuming-reissued",
+            "recheck-both-reissued",
+        ):
+            note = self.models[name]["verdictGroups"][0]["note"]
+            with self.subTest(scenario=name):
+                self.assertIn("模型重新发布过", note)
+                self.assertIn("不说明原来的问题怎样了", note)
+        quiet = self.models["recheck-key-change-only"]["verdictGroups"]
+        self.assertEqual(quiet[0]["note"], "没有裁决变了的项。")
+        self.assertEqual(quiet[1]["note"], "每一项记录都给出了当前对应的子范围。")
+
+    def test_no_group_is_a_status_a_score_or_a_claim_of_repair(self):
+        vocabulary = (STATIC / "vocabulary.js").read_text(encoding="utf-8")
+        groups = vocabulary[vocabulary.index("export const VERDICT_GROUPS") :]
+        groups = groups[: groups.index("\n};")]
+        for claim in ("已解决", "修好", "已修复", "通过", "就绪", "评分", "%"):
+            with self.subTest(claim=claim):
+                for sentence in re.findall(rf"[^。\"]*{claim}[^。\"]*", groups):
+                    self.assertRegex(sentence, "不")
+        model = (STATIC / "recheck-model.js").read_text(encoding="utf-8")
+        change = model[
+            model.index("function verdictChange(") : model.index(
+                "export function recheckModel("
+            )
+        ]
+        # Grouping and counting only: nothing is ranked, summed into one figure or divided.
+        self.assertNotRegex(
+            change, r"[/%]\s*\w+\.length|Math\.|score|ready|READY|BLOCKED|UNKNOWN"
+        )
 
     def test_the_walkthrough_script_names_runs_the_adapter_offers(self):
         text = (

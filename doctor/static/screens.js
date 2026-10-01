@@ -375,8 +375,10 @@ function runs(state) {
             { class: "run", href: href(mode, run.run_id) },
             mode === "real" ? `运行：${runLabel(run.run_id)}` : runLabel(run.run_id),
           ),
-          " ",
-          code(run.run_id),
+          // The adapter's own name for the run is printed only when this
+          // preview has no name for it: a scenario name can state a cause the
+          // page has not shown yet.
+          Object.hasOwn(RUN_LABELS, run.run_id) ? null : [" ", code(run.run_id)],
         ),
       ),
     ),
@@ -1145,84 +1147,120 @@ function recheck(state) {
 
   const returning = lastRecheckItem && lastRecheckItem.runId === state.runId ? lastRecheckItem : null;
   lastRecheckItem = null;
-  const itemGroups = [];
-  for (const item of model.items) {
-    const activityRef = carries(item.outcome, "activity_ref") ? item.outcome.activity_ref : NOT_CARRIED;
-    const last = itemGroups[itemGroups.length - 1];
-    if (last && last.activityRef === activityRef) last.items.push(item);
-    else itemGroups.push({ activityRef, items: [item] });
-  }
+  const verdictOrMissing = (value) => (value === null ? missing(NOT_CARRIED) : verdict(value));
+  // "From → to" where the two differ; one verdict where the record gives the
+  // same word twice, or gives no current verdict at all.
+  const transitionLine = (group, transition) =>
+    h(
+      "span",
+      { class: "transition" },
+      group.kind === "unplaced" ? "原裁决 " : null,
+      verdictOrMissing(transition.from),
+      group.kind === "changed"
+        ? [" → ", transition.to.map((value) => [verdictOrMissing(value), " "])]
+        : null,
+    );
+  const itemCard = (item) => {
+    const subscope = model.subscopes[item.subscopeIndex];
+    const here =
+      returning &&
+      returning.subscopeIndex === item.subscopeIndex &&
+      returning.memberIndex === item.memberIndex;
+    return h(
+      "li",
+      { class: "recheck-item", id: `item-${item.subscopeIndex}-${item.memberIndex}` },
+      h("div", { class: "member-name" }, memberTitle(state, item.entry.member)),
+      memberKeys(item.entry.member),
+      h(
+        "div",
+        { class: "sub" },
+        "活动 ",
+        field(item.outcome, "activity_ref", (ref) => activityShortName(ref)),
+        " · 原子范围 ",
+        field(item.outcome, "subscope_ordinal", (ordinal) => `#${ordinal}`),
+      ),
+      definitions([
+        ["原裁决", field(item.outcome, "prior_verdict", verdict)],
+        [
+          "当前裁决",
+          item.current
+            ? item.current.map((current) =>
+                h(
+                  "span",
+                  {},
+                  `子范围 #${current.ordinal} `,
+                  current.verdict === undefined ? missing(NOT_CARRIED) : verdict(current.verdict),
+                  " ",
+                ),
+              )
+            : "记录没有给出这一项当前对应的子范围",
+        ],
+        [
+          "成员现在",
+          item.disposition.code === null
+            ? missing(NOT_CARRIED)
+            : item.disposition.known
+              ? item.disposition.text
+              : unrecognised(item.disposition.code),
+        ],
+        [
+          "原复检条件",
+          item.condition.code !== null && !item.condition.known
+            ? unrecognised(item.condition.code)
+            : item.condition.plain,
+        ],
+        [`旧证据（${subscope.evidence.length} 条）`, evidenceSummary(subscope.evidenceGroups, false)],
+      ]),
+      h(
+        "a",
+        {
+          class: "run",
+          href: href(state.mode, state.runId, "recheck", item.subscopeIndex, item.memberIndex),
+          "data-return-focus": here ? true : null,
+        },
+        "查看这一项：前后差异、责任信息、下一步",
+      ),
+    );
+  };
+  const itemAt = ([subscopeIndex, memberIndex]) => model.subscopes[subscopeIndex].items[memberIndex];
   content.append(
     h(
       "section",
       { class: "block" },
-      h("h2", {}, "二、什么仍未解决：逐项查看"),
+      h("h2", {}, "二、什么仍未解决"),
       note(
-        "记录里没有“已解决”这个状态。下面每一项写明记录证明到了哪一步；" +
-          "每个成员（或成员对）各占一项，不合并成一个总状态，也没有就绪评分。",
+        "记录里没有“已解决”这个状态，本页也不给总状态或评分。下面先按“原裁决和当前裁决是否相同”" +
+          "把各项分成三组并计数，再逐项列出；每个成员（或成员对）各占一项。",
       ),
-      // Under the activity each belongs to, in the record's order: the same
-      // element can be a member in several activities, each its own item.
-      itemGroups.map((group) => [
-        h("h3", {}, "活动：", activityShortName(group.activityRef)),
-        h(
-        "ol",
-        { class: "recheck-items" },
-        group.items.map((item) => {
-          const subscope = model.subscopes[item.subscopeIndex];
-          const here =
-            returning &&
-            returning.subscopeIndex === item.subscopeIndex &&
-            returning.memberIndex === item.memberIndex;
-          return h(
+      // The answer first: counts of what the two recorded verdicts are, group by
+      // group. The items follow in the same order.
+      h(
+        "ul",
+        { class: "verdict-overview" },
+        model.verdictGroups.map((group) =>
+          h(
             "li",
-            { class: "recheck-item", id: `item-${item.subscopeIndex}-${item.memberIndex}` },
-            h("div", { class: "member-name" }, memberTitle(state, item.entry.member)),
-            memberKeys(item.entry.member),
-            h(
-              "div",
-              { class: "sub" },
-              "原子范围 ",
-              field(item.outcome, "subscope_ordinal", (ordinal) => `#${ordinal}`),
-            ),
-            definitions([
-              ["原裁决", field(item.outcome, "prior_verdict", verdict)],
-              [
-                "现在",
-                item.disposition.code === null
-                  ? missing(NOT_CARRIED)
-                  : item.disposition.known
-                    ? item.disposition.text
-                    : unrecognised(item.disposition.code),
-              ],
-              [
-                "当前裁决",
-                item.current
-                  ? item.current.map((current) =>
-                      h("span", {}, `子范围 #${current.ordinal} `, verdict(current.verdict), " "),
-                    )
-                  : "记录没有给出这一项当前对应的子范围",
-              ],
-              [
-                "原复检条件",
-                item.condition.code !== null && !item.condition.known
-                  ? unrecognised(item.condition.code)
-                  : item.condition.plain,
-              ],
-              [`旧证据（${subscope.evidence.length} 条）`, evidenceSummary(subscope.evidenceGroups, false)],
-            ]),
-            h(
-              "a",
-              {
-                class: "run",
-                href: href(state.mode, state.runId, "recheck", item.subscopeIndex, item.memberIndex),
-                "data-return-focus": here ? true : null,
-              },
-              "查看这一项：前后差异、责任信息、下一步",
-            ),
-          );
-        }),
+            {},
+            h("strong", {}, `${group.label}：${group.count} 项`),
+            group.transitions.length
+              ? h(
+                  "ul",
+                  {},
+                  group.transitions.map((transition) =>
+                    h("li", {}, transitionLine(group, transition), ` × ${transition.count}`),
+                  ),
+                )
+              : null,
+          ),
         ),
+      ),
+      model.verdictGroups.map((group) => [
+        h("h3", {}, `${group.label}（${group.count} 项）`),
+        h("p", { class: group.kind === "changed" && group.count ? "caveat" : "note" }, group.note),
+        group.transitions.map((transition) => [
+          h("h4", {}, transitionLine(group, transition), ` × ${transition.count}`),
+          h("ol", { class: "recheck-items" }, transition.items.map((index) => itemCard(itemAt(index)))),
+        ]),
       ]),
     ),
     h(

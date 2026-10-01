@@ -31,6 +31,7 @@ import {
   REISSUE_CASES,
   REISSUE_NEUTRAL,
   UNRECOGNISED,
+  VERDICT_GROUPS,
 } from "./vocabulary.js";
 
 export const RECHECK_KIND = "recheck";
@@ -320,6 +321,56 @@ function dispositionModel(item) {
   return { code, known: true, ...DISPOSITION_ENTRIES[code] };
 }
 
+/** The sealed verdict beside the verdict(s) the record gives now.
+ *
+ * Both are the record's. This only says whether they are the same word, so the
+ * items can be grouped; it is not a status and it explains nothing — a verdict
+ * can move because a model was re-issued, because a rule was edited, or because
+ * a determination stopped being attributable, and the evidence rows say which.
+ */
+function verdictChange(outcome, current) {
+  const from = carries(outcome, "prior_verdict") ? outcome.prior_verdict : null;
+  if (current === null) return { kind: "unplaced", from, to: [] };
+  const to = current.map((item) => (item.verdict === undefined ? null : item.verdict));
+  const same = from !== null && to.length > 0 && to.every((verdict) => verdict === from);
+  return { kind: same ? "unchanged" : "changed", from, to };
+}
+
+function verdictGroups(items, reissueName) {
+  return Object.keys(VERDICT_GROUPS).map((kind) => {
+    const members = items.filter((item) => item.verdictChange.kind === kind);
+    const transitions = [];
+    for (const item of members) {
+      const { from, to } = item.verdictChange;
+      const key = JSON.stringify([from, to]);
+      let transition = transitions.find((entry) => entry.key === key);
+      if (!transition) {
+        transition = { key, from, to, items: [] };
+        transitions.push(transition);
+      }
+      transition.items.push(item);
+    }
+    const entry = VERDICT_GROUPS[kind];
+    const note =
+      kind === "changed"
+        ? entry.notes[
+            reissueName === "none" ? "none" : reissueName === "unrecognised" ? "unrecognised" : "reissued"
+          ]
+        : entry.note;
+    return {
+      kind,
+      label: entry.label,
+      count: members.length,
+      note: members.length ? note : entry.none,
+      transitions: transitions.map(({ key: _key, items: grouped, ...rest }) => ({
+        ...rest,
+        count: grouped.length,
+        items: grouped.map((item) => [item.subscopeIndex, item.memberIndex]),
+      })),
+    };
+  });
+}
+
 export function recheckModel(document) {
   const successor = document.successor;
   if (!successor) return null;
@@ -330,14 +381,8 @@ export function recheckModel(document) {
   const subscopes = successor.subscopes.map((outcome, subscopeIndex) => {
     const evidence = outcome.evidence_carry_over.map(evidenceModel);
     const condition = conditionModel(outcome);
-    const items = outcome.dispositions.map((item, memberIndex) => ({
-      subscopeIndex,
-      memberIndex,
-      outcome,
-      entry: item,
-      disposition: dispositionModel(item),
-      condition,
-      current: carries(item, "current_ordinals")
+    const items = outcome.dispositions.map((item, memberIndex) => {
+      const current = carries(item, "current_ordinals")
         ? item.current_ordinals.map((ordinal, index) => ({
             ordinal,
             verdict: carries(item, "current_verdicts") ? item.current_verdicts[index] : undefined,
@@ -346,8 +391,18 @@ export function recheckModel(document) {
               : undefined,
             located: currentSubscope(document, outcome.activity_ref, ordinal),
           }))
-        : null,
-    }));
+        : null;
+      return {
+        subscopeIndex,
+        memberIndex,
+        outcome,
+        entry: item,
+        disposition: dispositionModel(item),
+        condition,
+        current,
+        verdictChange: verdictChange(outcome, current),
+      };
+    });
     return {
       subscopeIndex,
       outcome,
@@ -360,12 +415,14 @@ export function recheckModel(document) {
   });
 
   const items = subscopes.flatMap((subscope) => subscope.items);
+  const reissue = reissueModel(successor.model_version_context_comparison, handover);
   return {
     kind,
     recognised: true,
-    reissue: reissueModel(successor.model_version_context_comparison, handover),
+    reissue,
     subscopes,
     items,
+    verdictGroups: verdictGroups(items, reissue.name),
     evidenceTally: stateTally(subscopes.flatMap((subscope) => subscope.evidence)),
     evidenceGroups: evidenceGroups(subscopes.flatMap((subscope) => subscope.evidence)),
     dispositionTally: tally(

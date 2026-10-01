@@ -193,6 +193,12 @@ input[type="search"] { font: inherit; padding: 6px 8px; width: min(100%, 360px);
 .state-legend dt { font-weight: 700; margin-top: 6px; }
 .state-legend dd { margin: 0 0 0 1rem; }
 
+.verdict-overview { padding-left: 1.2rem; margin: 8px 0; }
+.verdict-overview > li { margin: 6px 0; }
+.verdict-overview ul { list-style: none; padding-left: 0.4rem; margin: 4px 0; }
+.verdict-overview ul li { margin: 4px 0; }
+h4 { font-size: 1rem; margin: 10px 0 4px; }
+
 /* One work item per sealed member, in the record's order. */
 .recheck-items { padding-left: 1.6rem; }
 .recheck-item { border: 1px solid var(--line); padding: 10px 12px; margin: 10px 0; }

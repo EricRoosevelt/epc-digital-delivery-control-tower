@@ -12,17 +12,20 @@ export const MODE_LABELS = {
 export const RUN_LABELS = {
   "member-evidence": "成员证据（一份夹具记录）",
   "pair-verdicts": "成对裁决（同一份夹具记录）",
-  "recheck-comparison": "复检：重开评审后，原来的一对构件不再配对（夹具）",
-  "recheck-key-change-only": "复检：改了一条无关的规则，模型没有重新发布（夹具）",
-  "recheck-semantics-changed": "复检：改了一条被引用规则的数据类型，模型没有重新发布（夹具）",
-  "recheck-requirement-relaxed": "复检：放宽了一条被引用的规则，模型没有重新发布（夹具）",
-  "recheck-prior-without-basis": "复检：原记录封存时没有保存比较依据（夹具）",
-  "recheck-producing-reissued": "复检：交出方模型重新发布，检查结果读数相同（夹具）",
-  "recheck-producing-reissued-content-changed":
-    "复检：交出方模型重新发布，部分检查结果内容变了（夹具）",
-  "recheck-consuming-reissued": "复检：接收方模型重新发布（夹具）",
-  "recheck-both-reissued": "复检：双方模型都重新发布（夹具）",
-  "recheck-member-gone": "复检：交出方模型重新发布，并删除了一个构件（夹具）",
+  // Numbered in the order the adapter lists them, and deliberately nothing
+  // more. A run name that said "a rule was relaxed" or "the producing model was
+  // re-issued" would state a cause before the page has shown what the record
+  // proves — and for a rule edit the record does not carry the cause at all.
+  "recheck-both-reissued": "复检记录 1（夹具）",
+  "recheck-comparison": "复检记录 2（夹具）",
+  "recheck-consuming-reissued": "复检记录 3（夹具）",
+  "recheck-key-change-only": "复检记录 4（夹具）",
+  "recheck-member-gone": "复检记录 5（夹具）",
+  "recheck-prior-without-basis": "复检记录 6（夹具）",
+  "recheck-producing-reissued": "复检记录 7（夹具）",
+  "recheck-producing-reissued-content-changed": "复检记录 8（夹具）",
+  "recheck-requirement-relaxed": "复检记录 9（夹具）",
+  "recheck-semantics-changed": "复检记录 10（夹具）",
   "real-refusal": "随附项目的真实运行",
 };
 
@@ -337,6 +340,36 @@ export const RECHECK_CANNOT = [
   "在 Revit 中打开或定位构件",
   "导出复检记录",
 ];
+
+// The sealed verdict beside the current one, as the record gives both. Three
+// groups and their counts; no group is an overall status and none says a member
+// was resolved. "Changed" is a fact about two recorded verdicts, not a judgement
+// about why.
+export const VERDICT_GROUPS = {
+  changed: {
+    label: "裁决变了的",
+    none: "没有裁决变了的项。",
+    notes: {
+      none:
+        "两侧模型都没有重新发布，这些项的裁决却变了：变化不来自模型改动。" +
+        "每一项的旧证据写明变了的是什么。",
+      reissued:
+        "模型重新发布过（见上）。裁决变了，不说明原来的问题怎样了；" +
+        "每一项的旧证据写明变了的是什么。",
+      unrecognised: "裁决变了，不说明原来的问题怎样了；每一项的旧证据写明变了的是什么。",
+    },
+  },
+  unplaced: {
+    label: "记录没有给出当前对应子范围的",
+    none: "每一项记录都给出了当前对应的子范围。",
+    note: "这些项现在是什么裁决，记录没有说。成员不在了不代表问题已修复。",
+  },
+  unchanged: {
+    label: "裁决没有变的",
+    none: "没有裁决保持不变的项。",
+    note: "裁决没有变，不代表证据没有变；旧证据的情况见每一项。",
+  },
+};
 
 export const UNRECOGNISED = "未识别的值，按原值显示";
 
