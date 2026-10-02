@@ -1621,21 +1621,27 @@ class AdapterScenarioTests(unittest.TestCase):
             "重新发布", words["consequenceKinds"]["re-identification-and-reissue-risk"]
         )
         self.assertIn("文件", words["consequenceKinds"]["re-identification-and-reissue-risk"])
-        # The head-of-page and directory notices name the three kinds of evidence
-        # and where each citation's source is shown, and both live in the wording table.
+        # The head-of-page and directory notices say which kinds a conclusion's
+        # evidence *may* be and where each citation's source is shown. Neither
+        # says a page holds all of them: no record does, and a sentence about a
+        # whole page cannot assert what that page contains.
         vocabulary_source = (STATIC / "vocabulary.js").read_text(encoding="utf-8")
         for name in ("DEMO_NOTICE", "DIRECTORY_NOTE"):
             notice = vocabulary_source[vocabulary_source.index(f"export const {name} =") :]
             notice = notice[: notice.index(";\n")]
             with self.subTest(notice=name):
                 for said in (
+                    "一个结论的证据可能是",
                     "真实检查的结果",
                     "模拟的检查结果",
                     "模拟的人工判定",
+                    "具体是哪一种，看",
                     "“依据”一行",
                     "逐条引用",
                 ):
                     self.assertIn(said, notice)
+                for asserted in ("既有", "也有", "都有", "记录里的证据"):
+                    self.assertNotIn(asserted, notice)
         self.assertIn(
             "note(DIRECTORY_NOTE)", (STATIC / "screens.js").read_text(encoding="utf-8")
         )

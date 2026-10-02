@@ -305,6 +305,7 @@ IFC 类别：`IfcAirTerminal` 风口、`IfcChimney` 烟囱、`IfcDuctSegment` �
 - **“重新发布”只指模型。** `re-identification-and-reissue-risk` 改说“引用这些标识的文件届时也要更新”
   （Checkpoint B：“rows keyed to something other than the asset tag have to be re-identified when tags arrive,
   and any document quoting them re-issued”）。
-- **目录和页首的来源提示**跟上页面：证据既有真实检查的结果，也有模拟的检查结果和模拟的人工判定；
-  是哪一种，写在每个结论旁的“依据”一行，按逐条引用标明。
+- **目录和页首的来源提示**跟上页面：一个结论的证据可能是真实检查的结果、模拟的检查结果或模拟的人工判定；
+  具体是哪一种，看每个结论旁的“依据”一行，按逐条引用标明。两句都只说“可能是哪几种”：
+  没有一份记录同时有这三种，整页级的句子不能断言这一页有什么。
 - **楼层或空间归属的动作句**里“这类构件”改成“这个构件”。记录只到构件这一层。

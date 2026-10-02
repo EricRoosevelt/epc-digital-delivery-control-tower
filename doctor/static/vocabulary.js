@@ -66,11 +66,13 @@ export const FOLLOW_UP = {
   "member-evidence": "recheck-requirement-relaxed",
 };
 
-// Said at the head of the example directory: what is simulated, and where on
-// the pages each citation's source is actually shown.
+// Said at the head of the example directory: which kinds of evidence a
+// conclusion may rest on, and where on the pages each citation's source is
+// actually shown. It says "may": no one record holds all three kinds, and a
+// sentence about a whole page cannot assert what that page contains.
 export const DIRECTORY_NOTE =
-  "每个示例是一份检查记录。记录里的证据既有真实检查的结果，也有模拟的检查结果和模拟的人工判定；" +
-  "是哪一种，写在结果页和事项页每个结论旁的“依据”一行，按逐条引用标明。处理团队的安排是示例设定的。";
+  "每个示例是一份检查记录。一个结论的证据可能是真实检查的结果，可能是模拟的检查结果，也可能是模拟的人工判定；" +
+  "具体是哪一种，看结果页和事项页每个结论旁的“依据”一行，按逐条引用标明。处理团队的安排是示例设定的。";
 
 export const EXAMPLE_NOTE =
   "示例说明由搭建示例的人提供，只说这个示例被给了什么；它不是检查得出的结论。" +
@@ -180,9 +182,11 @@ export const PROVENANCE_NOTICE =
 export const POLICY_SOURCE_NOTE =
   "这条登记的来源没有随记录返回：它是记录携带的项目设定，不能据此判断它是项目的决定还是示例的设定。";
 
+// Shown at the head of every example page, whichever record it shows — so it
+// says which kinds a conclusion's evidence may be, never which this page has.
 export const DEMO_NOTICE =
-  "模拟示例：处理团队的安排是示例设定的；证据既有真实检查的结果，也有模拟的检查结果和模拟的人工判定——" +
-  "每个结论旁的“依据”一行按逐条引用标明是哪一种。不能用于正式项目决定，也不能导出正式检查记录。";
+  "模拟示例：处理团队的安排是示例设定的；一个结论的证据可能是真实检查的结果、模拟的检查结果或模拟的人工判定，" +
+  "具体是哪一种，看每个结论旁的“依据”一行（按逐条引用标明）。不能用于正式项目决定，也不能导出正式检查记录。";
 
 const ABSENCES = {
   "no-finding": "本绑定下尚未评估：没有 finding",
