@@ -47,6 +47,7 @@ import {
   CONSEQUENCE_KINDS,
   DEMO_NOTICE,
   DETAILS_WORDS,
+  DIRECTORY_NOTE,
   DISPOSITIONS,
   ELEMENT_WORDS,
   EMPTY_STRING,
@@ -411,7 +412,7 @@ function runs(state) {
   } else {
     container.append(
       h("h1", {}, "选择一个模拟示例"),
-      note("每个示例是一份检查记录。示例里的项目设定与人工判定是模拟的；每条依据的来源在结果页逐条标明。"),
+      note(DIRECTORY_NOTE),
     );
   }
   if (!state.runs.length) {

@@ -66,6 +66,14 @@ export const FOLLOW_UP = {
   "member-evidence": "recheck-requirement-relaxed",
 };
 
+// Said at the head of the example directory: which kinds of evidence a
+// conclusion may rest on, and where on the pages each citation's source is
+// actually shown. It says "may": no one record holds all three kinds, and a
+// sentence about a whole page cannot assert what that page contains.
+export const DIRECTORY_NOTE =
+  "每个示例是一份检查记录。一个结论的证据可能是真实检查的结果，可能是模拟的检查结果，也可能是模拟的人工判定；" +
+  "具体是哪一种，看结果页和事项页每个结论旁的“依据”一行，按逐条引用标明。处理团队的安排是示例设定的。";
+
 export const EXAMPLE_NOTE =
   "示例说明由搭建示例的人提供，只说这个示例被给了什么；它不是检查得出的结论。" +
   "检查得出了什么，只看结果页。";
@@ -174,8 +182,11 @@ export const PROVENANCE_NOTICE =
 export const POLICY_SOURCE_NOTE =
   "这条登记的来源没有随记录返回：它是记录携带的项目设定，不能据此判断它是项目的决定还是示例的设定。";
 
+// Shown at the head of every example page, whichever record it shows — so it
+// says which kinds a conclusion's evidence may be, never which this page has.
 export const DEMO_NOTICE =
-  "模拟示例：项目设定（例如由哪个团队处理）与人工判定是模拟的。不能用于正式项目决定，也不能导出正式检查记录。";
+  "模拟示例：处理团队的安排是示例设定的；一个结论的证据可能是真实检查的结果、模拟的检查结果或模拟的人工判定，" +
+  "具体是哪一种，看每个结论旁的“依据”一行（按逐条引用标明）。不能用于正式项目决定，也不能导出正式检查记录。";
 
 const ABSENCES = {
   "no-finding": "本绑定下尚未评估：没有 finding",
@@ -535,13 +546,14 @@ export const ACTIONS = {
   },
   "asset-identity-not-evaluated": {
     action:
-      "现有资产标识规则没有覆盖到这个构件，所以这项工作能否开始无法判断。" +
-      "这不是缺资产标识，也不是无需检查。是否要求它具备资产标识，需要项目约定。",
+      "现有资产标识规则没有覆盖到这个构件，所以它有没有资产标识还没有被评估，不能判断是否缺少；" +
+      "这项工作能否开始也因此无法判断。先确认项目约定是否要求它具备资产标识，" +
+      "以及规则该不该覆盖到它。在确认之前，这不表示它必须具备资产标识。",
     recheck: "范围内每个构件在所绑定的要求下都有评估结果",
   },
   "in-model-position-not-evaluated": {
     action:
-      "这不是已知的模型缺陷，也不需要改模型。空间归属的检查规则没有覆盖到这类构件，需要扩展规则的适用范围",
+      "这不是已知的模型缺陷，也不需要改模型。空间归属的检查规则没有覆盖到这个构件，需要扩展规则的适用范围",
     recheck: "范围内每个构件在所绑定的要求下都有检查结果",
   },
   "penetration-not-determined": {
@@ -759,7 +771,10 @@ export const CONSEQUENCE_KINDS = {
   "work-cannot-start": "这项工作不能开始",
   "work-suspended": "这项工作暂停",
   "rework-risk": "有返工风险",
-  "re-identification-and-reissue-risk": "有重新标识并重新发布的风险",
+  // Not a re-issue of the model: Checkpoint B's consequence is that rows keyed
+  // to a placeholder have to be re-identified and the documents quoting them
+  // re-issued. "重新发布" is kept for a model and is not used here.
+  "re-identification-and-reissue-risk": "有重新标识的风险：引用这些标识的文件届时也要更新",
 };
 
 // Why a check attempt did not start, by refusal code, and what would have to
