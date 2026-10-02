@@ -1,0 +1,37 @@
+rule_id = "PV-001"
+title = "Air terminals declare one of four predefined types"
+description = "Product validation rule: every applicable IfcAirTerminal declares a predefined type of DIFFUSER, GRILLE, LOUVRE or REGISTER."
+checker = "ids"
+severity = "ERROR"
+owner_role = "mep-lead"
+stage = "Coordination"
+# Validation applicability only: the disciplines whose models this rule is
+# declared for. Both spellings, because a services model is declared under
+# either. It is not a statement about who hands what to whom.
+discipline_scope = ["HVAC", "MEP"]
+# Where this requirement comes from, said where every finding carries it. The
+# enumeration is IFC4's; the decision to accept only four of its values is this
+# rule's. IFC4 also admits USERDEFINED and NOTDEFINED, and a model using either
+# is valid IFC4 that this rule does not accept.
+citation = "Product validation rule of this repository; not a project, owner, statutory or buildingSMART requirement. Values from IFC4 ADD2 TC1 IfcAirTerminalTypeEnum."
+labels = ["IDS", "ProductValidation"]
+
+[[applicability]]
+facet = "entity"
+name = "IFCAIRTERMINAL"
+
+# An entity facet in requirement position: the class already selected must also
+# declare this type. The same shape as R-007 and R-008 in the shipped rule set.
+#
+# What a pass says is exactly this and no more: the predefined type the checker
+# read is one of the four. It does not say the value is the right one for the
+# object, and it says nothing about openings, alignment or readiness for any
+# work. Where the checker reads the value from — the occurrence, its type, or
+# both — is measured in `tests/test_product_validation_ruleset.py`.
+[[requirements]]
+facet = "entity"
+name = "IFCAIRTERMINAL"
+instructions = "Declare DIFFUSER, GRILLE, LOUVRE or REGISTER. NOTDEFINED states nothing."
+
+[requirements.predefinedType]
+enumeration = ["DIFFUSER", "GRILLE", "LOUVRE", "REGISTER"]
