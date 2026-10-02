@@ -54,8 +54,14 @@ from epc_control_tower.purpose import (
     recheck_purpose,
 )
 
+from .details import finding_details
 from .envelope import FIXTURE, PROJECT_ROOT, build_envelope
-from .validated import requirement_keys_by_ruleset, scratch_bundle, validated_facts
+from .validated import (
+    detail_source,
+    requirement_keys_by_ruleset,
+    scratch_bundle,
+    validated_facts,
+)
 
 __all__ = [
     "RECHECK_SCENARIOS",
@@ -119,10 +125,25 @@ def _first_record() -> AssessmentRecord:
     )
 
 
+def _describing(prior_of=None):
+    """``finding_details`` for a record, and for what the prior it succeeds cited.
+
+    Always from the shipped run (:func:`.validated.detail_source`), whatever the
+    scenario was given: a recheck's second set of facts is fixture-made and is
+    never a source of explanation.
+    """
+
+    def describe(document: dict[str, object]) -> dict[str, dict[str, object]]:
+        prior = None if prior_of is None else prior_of().as_document()
+        return finding_details(detail_source(), document, prior)
+
+    return describe
+
+
 def first_record_envelope() -> dict[str, object]:
     """The sealed record in which the chimney refines into a slab pair and a roof pair."""
 
-    return build_envelope(FIXTURE, _first_record)
+    return build_envelope(FIXTURE, _first_record, _describing())
 
 
 def superseding_recheck_envelope() -> dict[str, object]:
@@ -160,7 +181,7 @@ def superseding_recheck_envelope() -> dict[str, object]:
             succeeds=((activity_ref, ordinals[0]),),
         )
 
-    return build_envelope(FIXTURE, produce)
+    return build_envelope(FIXTURE, produce, _describing(_first_record))
 
 
 # ---------------------------------------------------------------------------
@@ -306,4 +327,6 @@ def recheck_scenario_envelope(name: str) -> dict[str, object]:
             ),
         )
 
-    return build_envelope(FIXTURE, produce)
+    return build_envelope(
+        FIXTURE, produce, _describing(lambda: prior_of(_first_record()))
+    )

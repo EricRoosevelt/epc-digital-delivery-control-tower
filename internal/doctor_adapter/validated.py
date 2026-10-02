@@ -35,9 +35,15 @@ from epc_control_tower.config import load_run_config
 from epc_control_tower.pipeline import build_bundle
 from epc_control_tower.purpose import AssessmentFacts, facts_from_bundle
 
+from .details import DetailSource, source_from_bundle
 from .envelope import PROJECT_ROOT
 
-__all__ = ["requirement_keys_by_ruleset", "scratch_bundle", "validated_facts"]
+__all__ = [
+    "detail_source",
+    "requirement_keys_by_ruleset",
+    "scratch_bundle",
+    "validated_facts",
+]
 
 
 def scratch_bundle(edit_rules: Callable[[Path], None] | None = None):
@@ -75,6 +81,18 @@ def _bundle():
 
 def validated_facts(project_id: str) -> AssessmentFacts:
     return facts_from_bundle(_bundle(), project_id)
+
+
+@functools.cache
+def detail_source() -> DetailSource:
+    """That same run, as the one place a cited finding may be explained from.
+
+    Always the unedited run. An edited scratch run is never offered here: its
+    findings are real output of a rule set nobody published, and what they
+    required is not what any published requirement requires.
+    """
+
+    return source_from_bundle(_bundle())
 
 
 def requirement_keys_by_ruleset() -> dict[tuple[str, str], frozenset[str]]:

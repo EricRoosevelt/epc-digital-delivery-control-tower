@@ -18,8 +18,9 @@ python doctor/serve.py        # then open http://127.0.0.1:8765/
   subscope, because the pair no longer exists — the screens do not construct
   one, by key or otherwise.
 - **One seam.** `serve.py` hands the browser A1's envelope unchanged:
-  `mode`, `outcome`, `record` + `assessment_digest` or `refusal`, and
-  `elements`. The envelope keys are fixed by the technical director. The runs a
+  `mode`, `outcome`, `record` + `assessment_digest` or `refusal`, `elements`,
+  and — beside a record only — `finding_details`. The envelope keys are fixed
+  by the technical director. The runs a
   mode offers come from the adapter's `scenario_index()`, which runs nothing;
   the envelope's own `mode` is still checked against the chosen one before
   anything is rendered.
@@ -46,6 +47,20 @@ python doctor/serve.py        # then open http://127.0.0.1:8765/
   provenance tag and the five sentences that must not be misread are never
   inside a collapsed block. Check results and determinations are counted
   apart and never added together. Words: [recheck vocabulary](../docs/product/2026-10-02-doctor-recheck-vocabulary.md).
+- **What a cited finding required comes from the run that record cites.**
+  `finding_details` maps a `finding_key` to `rule_id`, `requirement_id`,
+  `labels`, `citation`, `expected`, `actual`, `reason` and `status`, copied
+  unchanged from the validation run the citing record names — the requirement
+  that assessment was made against, never today's rule file. A citation has an
+  entry only if its record names that run and the predicate and content it
+  sealed are the run's; otherwise it has none, and no `null`. So every
+  `fixture/finding/…` citation is without one, and after a rule edit the
+  findings under the edited requirement are without one too, while the sealed
+  citations of the first assessment keep theirs. An entry carries no
+  `owner_role`, `severity` or `priority`: those are a rule author's metadata,
+  not the project's assignment. It also carries no required value, data type
+  or Revit parameter mapping; the run does not hold them. The screens do not
+  read this key yet.
 - **An omitted key is words.** A key the envelope does not carry reads
   "记录未携带" — never `null`, `""`, `0`, `false` or a dash. A key carried as an
   empty string is a different fact: an empty `storey` is "无楼层归属", because

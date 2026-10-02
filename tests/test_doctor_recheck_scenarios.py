@@ -395,19 +395,26 @@ class TheScenariosAreTheseTests(_ScenarioCase):
 
 
 class TheEnvelopeShapeDoesNotMoveTests(_ScenarioCase):
-    """Boundary 1: the same five keys, and ``record`` is ``as_document()``."""
+    """Boundary 1: the same keys, and ``record`` is ``as_document()``."""
 
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
         cls.direct = _Direct.build()
 
-    def test_the_envelope_keys_are_the_fixed_five(self):
+    def test_the_envelope_keys_are_the_fixed_six(self):
         for name, envelope in self.envelopes.items():
             with self.subTest(scenario=name):
                 self.assertEqual(
                     list(envelope),
-                    ["mode", "outcome", "record", "assessment_digest", "elements"],
+                    [
+                        "mode",
+                        "outcome",
+                        "record",
+                        "assessment_digest",
+                        "elements",
+                        "finding_details",
+                    ],
                 )
                 self.assertEqual(envelope["outcome"], "record")
                 self.assertEqual(
