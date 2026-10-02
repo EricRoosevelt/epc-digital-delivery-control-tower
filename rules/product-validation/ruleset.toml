@@ -1,0 +1,38 @@
+# The product validation rule set.
+#
+# A separate rule set, with its own identifier and its own version, and not a
+# part of `rules/epc-delivery`. The shipped run configuration does not load it,
+# so nothing this repository publishes is evaluated against it and nothing
+# published moves because it exists — `tests/test_product_validation_ruleset.py`
+# pins that as bytes.
+#
+# It is separate because of what joining the two was measured to cost: adding
+# one rule to the shipped rule set, with its version left alone, re-keys every
+# canonical finding and every issue, since the validation identity digests the
+# rule set. A rule that exists to exercise the product does not get to move
+# what the shipped project publishes.
+#
+# What "product validation" means here: these rules were written to exercise
+# this product's check, source-fix and recheck path. They are not requirements
+# of any project, owner, statute or of buildingSMART, and a model that fails
+# one has not been shown to be defective by anyone's requirement but this one.
+#
+# A workspace outside the repository uses this rule set by naming this
+# directory in its own `control-tower.toml`; see the README beside this file.
+
+[ruleset]
+ruleset_id = "product-validation"
+
+# A (ruleset_id, version) pair names exactly one set of rules. For this rule
+# set the record is `docs/contracts/ruleset-product-validation.json`, and the
+# test above refuses a rule edit that keeps the version.
+#
+# The same rule as the shipped rule set's: raise the major part when this rule
+# set can reject something it used to accept, the minor part for anything else
+# that moves a recorded digest. Add the new version to the record; a recorded
+# version is never edited.
+version = "1.0"
+title = "Product Validation Rules"
+description = "Rules written to exercise this product's check, source-fix and recheck path. Not a project, owner, statutory or buildingSMART requirement."
+purpose = "Exercise the check, source-fix and recheck path on a model the user supplies."
+milestone = "Product validation"

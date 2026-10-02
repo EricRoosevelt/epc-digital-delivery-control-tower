@@ -1,0 +1,36 @@
+<?xml version='1.0' encoding='utf-8'?>
+<ids xmlns="http://standards.buildingsmart.org/IDS" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://standards.buildingsmart.org/IDS http://standards.buildingsmart.org/IDS/1.0/ids.xsd">
+    <info>
+        <title>Product Validation Rules</title>
+        <version>1.0</version>
+        <description>Rules written to exercise this product's check, source-fix and recheck path. Not a project, owner, statutory or buildingSMART requirement.</description>
+        <purpose>Exercise the check, source-fix and recheck path on a model the user supplies.</purpose>
+        <milestone>Product validation</milestone>
+    </info>
+    <specifications>
+        <specification name="Air terminals declare one of four predefined types" ifcVersion="IFC4" identifier="PV-001" description="Product validation rule: every applicable IfcAirTerminal declares a predefined type of DIFFUSER, GRILLE, LOUVRE or REGISTER.">
+            <applicability minOccurs="0" maxOccurs="unbounded">
+                <entity>
+                    <name>
+                        <simpleValue>IFCAIRTERMINAL</simpleValue>
+                    </name>
+                </entity>
+            </applicability>
+            <requirements>
+                <entity instructions="Declare DIFFUSER, GRILLE, LOUVRE or REGISTER. NOTDEFINED states nothing.">
+                    <name>
+                        <simpleValue>IFCAIRTERMINAL</simpleValue>
+                    </name>
+                    <predefinedType>
+                        <xs:restriction base="xs:string">
+                            <xs:enumeration value="DIFFUSER" />
+                            <xs:enumeration value="GRILLE" />
+                            <xs:enumeration value="LOUVRE" />
+                            <xs:enumeration value="REGISTER" />
+                        </xs:restriction>
+                    </predefinedType>
+                </entity>
+            </requirements>
+        </specification>
+    </specifications>
+</ids>

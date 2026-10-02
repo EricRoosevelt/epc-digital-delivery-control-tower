@@ -36,11 +36,13 @@ from helpers import PROJECT_ROOT
 
 IDS_DIR = PROJECT_ROOT / "ids"
 
-#: Both rule documents: the frozen one the legacy adapters publish, and the one
-#: compiled from `rules/epc-delivery/` by every run.
+#: Every rule document: the frozen one the legacy adapters publish, the one
+#: compiled from `rules/epc-delivery/` by every run, and the one compiled from
+#: `rules/product-validation/`, which no shipped run loads.
 DOCUMENTS = (
     "epc_delivery_requirements_v0.1.ids",
     "epc-delivery_v2.2.ids",
+    "product-validation_v1.0.ids",
 )
 
 #: `ids-tool` exits 0 for a clean audit and a non-zero status per error class

@@ -1,0 +1,16 @@
+{
+  "ruleset_id": "product-validation",
+  "versions": [
+    {
+      "compiled_document": "ids/product-validation_v1.0.ids",
+      "compiled_document_sha256": "c672d560581653dfa9fc6c441079579f7a1129317cec36d7b2498a97291f5667",
+      "normalized_digest": "2b5ebbd537fae0086630bf14c4d82dd2e468a63fd53062471faf31415d9afdbf",
+      "normalized_digest_derivation": 2,
+      "requirement_keys": [
+        "b1a247b3-1e71-5af1-a288-bccc51d0cc4d"
+      ],
+      "rule_definitions_digest": "89ef383c8a331006c2c213321fc9e7d86e10f50f000493c1763e056bca0b2304",
+      "version": "1.0"
+    }
+  ]
+}
