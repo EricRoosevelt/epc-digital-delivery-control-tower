@@ -573,7 +573,10 @@ class FirstCheckTests(_Modelled):
         self.assertIn("不代表整次交接完成", words["readyScope"])
         self.assertIn("不等于这个构件没有问题", words["unknown"])
         self.assertIn("不代表已经派发", words["team"])
-        self.assertIn("本项目约定", words["assetIdentity"])
+        # That a requirement is the project's own is read off the data's labels;
+        # what stays beside an asset-identity item is only the gap.
+        self.assertIn("记录未提供", words["assetIdentity"])
+        self.assertNotIn("本项目约定", words["assetIdentity"])
         self.assertEqual(
             self.vocabulary["readyNotes"],
             {
@@ -607,20 +610,113 @@ class FirstCheckTests(_Modelled):
         )
 
     def test_what_is_missing_comes_from_the_returned_data_or_is_said_to_be_absent(self):
-        """No rule file is read, and no value, Revit parameter or mapping is written."""
+        """Eight fields per cited check result, shown as they came — or said to be absent.
+
+        No rule file is read, no rule or property is named in the page's own
+        source, and no required value, Revit parameter or export mapping is
+        written: the run holds none of them. That a requirement is the project's
+        own is read off the entry's labels.
+        """
 
         screens = (STATIC / "screens.js").read_text(encoding="utf-8")
-        details = screens[screens.index("function detailsBlock(") :]
-        details = details[: details.index("\n}\n")]
-        self.assertIn('carries(state.envelope, "finding_details")', details)
-        self.assertIn("DETAILS_WORDS.absent", details)
+        vocabulary = (STATIC / "vocabulary.js").read_text(encoding="utf-8")
+
+        def function(name):
+            body = screens[screens.index(f"function {name}(") :]
+            return body[: body.index("\n}\n")]
+
+        block = function("detailsBlock")
+        self.assertIn('carried(state.envelope, "finding_details")', block)
+        self.assertIn("basis.findings.map((key) => findingDetail(details, key))", block)
+        detail = function("findingDetail")
+        self.assertIn("const entry = carries(details, key) ? details[key] : null;", detail)
+        self.assertIn("missing(DETAILS_WORDS.absent)", detail)
+        envelope = self.envelopes[self.name]
+        entries = envelope["finding_details"]
+        fields = sorted(next(iter(entries.values())))
+        self.assertEqual(
+            fields,
+            [
+                "actual",
+                "citation",
+                "expected",
+                "labels",
+                "reason",
+                "requirement_id",
+                "rule_id",
+                "status",
+            ],
+        )
+        for name in fields:
+            with self.subTest(read=name):
+                self.assertRegex(detail, rf'"{name}"')
+        # "Project's own" comes from the label; an empty `actual` is a value.
+        self.assertIn("labels.includes(PROJECT_ASSUMPTION)", detail)
+        self.assertIn('PROJECT_ASSUMPTION = "ProjectAssumption"', vocabulary)
+        self.assertIn('entry.actual === ""', detail)
+        self.assertIn("DETAILS_WORDS.noActual", detail)
+        # A value the run did observe is not printed.
+        self.assertEqual(len(re.findall(r"entry\.actual\b", detail)), 1)
+        # Every check result this record's items cite has an entry; nothing
+        # else is looked up, and a determination has none to look up.
+        cited = {key for item in self.model["items"] for key in item["basis"]["findings"]}
+        self.assertEqual(cited, set(entries))
+        self.assertEqual(len(cited), 9)
+        todo = [item for item in self.model["todo"] if item["basis"]["findings"]]
+        self.assertEqual(len(todo), 3)
+        for item in todo:
+            for key in item["basis"]["findings"]:
+                self.assertEqual(entries[key]["status"], "FAIL")
+                self.assertIn("ProjectAssumption", entries[key]["labels"])
+                self.assertEqual(entries[key]["actual"], "")
+        # The reasons the run gives for these have words here, by exact match.
+        reasons = {entry["reason"] for entry in entries.values()}
+        for reason in reasons:
+            with self.subTest(reason=reason):
+                self.assertIn(f'"{reason}"', vocabulary)
         for path in sorted(STATIC.iterdir()):
             text = path.read_text(encoding="utf-8")
             with self.subTest(file=path.name):
                 self.assertNotRegex(
                     text, r"AssetTag|SystemCode|EPC_Delivery|R-00\d|rules/|\.toml"
                 )
-        self.assertNotIn("finding_details", self.envelopes[self.name])
+
+    def test_an_old_citations_requirement_is_the_earlier_runs_and_compares_nothing(self):
+        """On a recheck row the old citation has its entry and the new one has none.
+
+        Having the earlier assessment's words beside a row does not make the row
+        comparable: its state is the record's, and the page says so on the row.
+        """
+
+        from internal.doctor_adapter import scenario_envelope
+
+        again = scenario_envelope(self.vocabulary["followUp"]["member-evidence"])
+        entries = again["finding_details"]
+        rows = [
+            row
+            for outcome in again["record"]["successor"]["subscopes"]
+            for row in outcome["evidence_carry_over"]
+            if row["citation_kind"] == "finding"
+        ]
+        self.assertEqual(len(rows), 9)
+        for row in rows:
+            self.assertIn(row["citation"], entries)
+            self.assertNotIn(row["current_citation"], entries)
+        screens = (STATIC / "screens.js").read_text(encoding="utf-8")
+        card = screens[screens.index("function evidenceCard(") :]
+        card = card[: card.index("\n}\n")]
+        self.assertIn('kind === "finding" && carries(row, "citation")', card)
+        self.assertIn("DETAILS_WORDS.prior", card)
+        self.assertIn("findingDetail(details, row.citation)", card)
+        self.assertIn("DETAILS_WORDS.currentAbsent", card)
+        # The state is rendered from the row and before the old requirement.
+        self.assertLess(card.index("stateBadge(item.state)"), card.index("DETAILS_WORDS.prior"))
+        vocabulary = (STATIC / "vocabulary.js").read_text(encoding="utf-8")
+        self.assertIn(
+            "有这段说明不等于这一行可以比较；这一行的状态以上面写的为准。", vocabulary
+        )
+        model = (STATIC / "recheck-model.js").read_text(encoding="utf-8")
+        self.assertNotIn("finding_details", model)
 
     def test_the_follow_up_really_is_a_recheck_of_this_record(self):
         from internal.doctor_adapter import scenario_envelope

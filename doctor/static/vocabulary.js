@@ -488,7 +488,7 @@ export const BESIDE = {
   // An UNKNOWN: not a clean bill, and not a fault of the program.
   unknown: "“无法判断”说的是这项工作能否开始无法判断：不等于这个构件没有问题，也不是系统出错。",
   // The asset-identity problem types.
-  assetIdentity: "资产标识是本项目约定的要求，不是通用要求。取值从哪里来、对应哪个 Revit 参数，记录未提供。",
+  assetIdentity: "资产标识的取值从哪里来、对应哪个 Revit 参数，记录未提供。",
   // An assignment is a row in the record, not a dispatch.
   team: "处理团队是记录里的安排，不代表已经派发。",
   simulatedTeam: "示例处理团队",
@@ -578,13 +578,52 @@ export const ACTIONS = {
   },
 };
 
-// What a failing requirement asks for, attribute by attribute, comes only from
-// the returned data's `finding_details`. Where the data carries none, the page
-// says so; it reads no rule file and states no value, Revit parameter or
-// export mapping.
+// What a cited check result required and found comes only from the returned
+// data's `finding_details`, which copies eight fields out of the validation run
+// the citing record names. The page shows them as they came. It reads no rule
+// file, and states no required value, Revit parameter or export mapping — the
+// run holds none of them. A citation with no entry has none, and says so.
+//
+// The rule's own sentences (`expected`, `reason`, `citation`) are English and
+// are shown as the rule wrote them. A reason this preview has words for is
+// glossed beside the original by exact match; any other is shown alone.
 export const DETAILS_WORDS = {
   heading: "具体缺什么",
-  absent: "记录未提供：这份返回数据没有带出不满足的要求明细（属性集、属性名、规则的原话）。",
+  absent: "记录未提供：返回数据里没有这条引用的要求明细。",
+  determinations:
+    "这个结论引用的是人工判定，不是检查结果；判定没有要求明细。缺的是什么，见上面的结论和“要做什么”。",
+  nothingCited: "这个结论没有引用任何检查结果，所以没有要求明细可以显示。",
+  requirement: "不满足的要求",
+  requirementMet: "要求",
+  rule: "规则编号",
+  status: "那次检查的结果",
+  reason: "原因",
+  actual: "那次检查观察到的值",
+  noActual: "那次检查没有观察到值",
+  hasActual: "那次检查观察到了值；本页不显示取值",
+  expected: "规则的原话（英文）",
+  source: "规则给出的出处（英文原文）：",
+  projectAssumption: "这是本项目约定的要求，不是通用要求。",
+  gap: "要填什么值、对应哪个 Revit 参数，记录未提供。",
+  // On a recheck row: whose words these are, and what they do not establish.
+  prior:
+    "复检前那次评估时，这条证据的要求和结果如下。有这段说明不等于这一行可以比较；这一行的状态以上面写的为准。",
+  currentAbsent: "本次记录引用的对应证据：要求明细记录未提供。",
+};
+
+// The label a requirement carries when the project, and not a standard, asks
+// for it. Read off the entry's own `labels`; the page does not assert it.
+export const PROJECT_ASSUMPTION = "ProjectAssumption";
+
+export const FINDING_STATUS = {
+  PASS: "通过",
+  FAIL: "不通过",
+};
+
+export const REASON_GLOSSES = {
+  "The required property set does not exist":
+    "所要求的属性集不存在（要补的是整个属性集，不是给已有属性填值）",
+  "Requirement satisfied.": "要求已满足",
 };
 
 // What each verdict word means, said once in "how to read this page" and not

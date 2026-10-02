@@ -52,6 +52,7 @@ import {
   EMPTY_STRING,
   EXAMPLES,
   EXAMPLE_NOTE,
+  FINDING_STATUS,
   FOLLOW_UP,
   HANDOVER_SIDES,
   HOME,
@@ -63,8 +64,10 @@ import {
   MODE_LABELS,
   NOT_CARRIED,
   POLICY_SOURCE_NOTE,
+  PROJECT_ASSUMPTION,
   PROVENANCE_NOTICE,
   READY_NOTES,
+  REASON_GLOSSES,
   RECHECK_CANNOT,
   RECHECK_LIMITS,
   REFUSAL_REASONS,
@@ -1185,9 +1188,70 @@ function actionBlock(subscope, request, mode) {
   );
 }
 
-/** What a failing requirement asks for — only from the returned data. */
-function detailsBlock(state) {
-  return carries(state.envelope, "finding_details") ? null : h("p", {}, missing(DETAILS_WORDS.absent));
+/** What one cited check result required and found, as the returned data holds it.
+ *
+ * Eight fields copied from the run the citing record names; shown as they came.
+ * A key with no entry has none and says so. That the requirement is the
+ * project's own is read off the entry's labels, never asserted here.
+ */
+function findingDetail(details, key) {
+  const entry = carries(details, key) ? details[key] : null;
+  if (entry === null) return h("div", { class: "requirement" }, missing(DETAILS_WORDS.absent));
+  const labels = carries(entry, "labels") && Array.isArray(entry.labels) ? entry.labels : [];
+  const failed = carries(entry, "status") && entry.status === "FAIL";
+  return h(
+    "div",
+    { class: "requirement" },
+    definitions([
+      [
+        failed ? DETAILS_WORDS.requirement : DETAILS_WORDS.requirementMet,
+        field(entry, "requirement_id", (value) => h("strong", {}, code(value))),
+      ],
+      [DETAILS_WORDS.rule, field(entry, "rule_id", code)],
+      [
+        DETAILS_WORDS.status,
+        field(entry, "status", (value) =>
+          Object.hasOwn(FINDING_STATUS, value) ? FINDING_STATUS[value] : unrecognised(value),
+        ),
+      ],
+      [
+        DETAILS_WORDS.reason,
+        field(entry, "reason", (text) => [
+          Object.hasOwn(REASON_GLOSSES, text) ? h("div", {}, REASON_GLOSSES[text]) : null,
+          h("div", { class: "sub prose" }, text),
+        ]),
+      ],
+      [
+        DETAILS_WORDS.actual,
+        // An empty string is a value: the run observed nothing. A value the
+        // run did observe is not printed here.
+        carries(entry, "actual")
+          ? entry.actual === ""
+            ? DETAILS_WORDS.noActual
+            : DETAILS_WORDS.hasActual
+          : missing(NOT_CARRIED),
+      ],
+      [DETAILS_WORDS.expected, field(entry, "expected", (text) => h("span", { class: "prose" }, text))],
+    ]),
+    h(
+      "p",
+      { class: "beside" },
+      labels.includes(PROJECT_ASSUMPTION) ? `${DETAILS_WORDS.projectAssumption} ` : null,
+      DETAILS_WORDS.source,
+      field(entry, "citation", (text) => h("span", { class: "prose" }, text)),
+    ),
+  );
+}
+
+/** What is missing, for the check results a conclusion cites — or why there is none. */
+function detailsBlock(state, basis) {
+  const details = carried(state.envelope, "finding_details");
+  if (basis.findings.length) return basis.findings.map((key) => findingDetail(details, key));
+  return h(
+    "p",
+    {},
+    basis.determinations.length ? DETAILS_WORDS.determinations : DETAILS_WORDS.nothingCited,
+  );
 }
 
 function howToRead(...extra) {
@@ -1491,18 +1555,16 @@ function firstItem(state, activityIndex, ordinal, memberIndex) {
         { class: "block next-step" },
         h("h2", {}, "三、要做什么、由谁处理、完成后拿什么复检"),
         actionBlock(item.subscope, request, envelope.mode),
-        assetIdentity ? h("p", { class: "beside" }, BESIDE.assetIdentity) : null,
       ),
-      // Asked only where the verdict cites check results: a requirement's
-      // details describe a check result, and a determination has none.
-      item.basis.findings.length
-        ? h(
-            "section",
-            { class: "block" },
-            h("h2", {}, `四、${DETAILS_WORDS.heading}`),
-            detailsBlock(state),
-          )
-        : null,
+      h(
+        "section",
+        { class: "block" },
+        h("h2", {}, `四、${DETAILS_WORDS.heading}`),
+        detailsBlock(state, item.basis),
+        assetIdentity && item.basis.findings.length
+          ? h("p", { class: "beside" }, BESIDE.assetIdentity)
+          : null,
+      ),
     );
   } else {
     content.append(
@@ -2145,7 +2207,7 @@ function citationKind(row) {
   );
 }
 
-function evidenceCard(item) {
+function evidenceCard(item, details) {
   const row = item.row;
   const kind = carries(row, "citation_kind") ? row.citation_kind : null;
   return h(
@@ -2176,6 +2238,22 @@ function evidenceCard(item) {
           field(row, "current_citation", copyable),
           " ",
           provenance(kind, row.current_citation),
+        )
+      : null,
+    // What the old citation required and found, where the returned data holds
+    // it: the earlier assessment's words. Having them is not a comparison —
+    // the row's state above is the record's and stands as it is.
+    kind === "finding" && carries(row, "citation")
+      ? h(
+          "div",
+          { class: "prior-requirement" },
+          h("p", { class: "sub" }, DETAILS_WORDS.prior),
+          findingDetail(details, row.citation),
+          carries(row, "current_citation")
+            ? carries(details, row.current_citation)
+              ? findingDetail(details, row.current_citation)
+              : h("p", { class: "sub" }, DETAILS_WORDS.currentAbsent)
+            : null,
         )
       : null,
     h(
@@ -2397,7 +2475,13 @@ function recheckItem(state, subscopeIndex, memberIndex) {
                 `记录把放在一起评估的一组构件的旧证据存在一处，不按构件拆开：这一组的 ${outcome.prior_members.length} 个事项共用下面这些行。`,
               ),
               stateLegend(subscope.evidenceTally),
-              h("ol", { class: "evidence-rows" }, subscope.evidence.map(evidenceCard)),
+              h(
+                "ol",
+                { class: "evidence-rows" },
+                subscope.evidence.map((entry) =>
+                  evidenceCard(entry, carried(envelope, "finding_details")),
+                ),
+              ),
             ),
           ]
         : note("复检前这一组的证据路径没有引用任何证据。"),

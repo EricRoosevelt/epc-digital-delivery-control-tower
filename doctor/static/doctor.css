@@ -315,3 +315,7 @@ h3.team { margin-top: 18px; padding-top: 10px; border-top: 2px solid var(--ink);
 .action { font-weight: 600; }
 .action-block details { margin-top: 4px; }
 .how-to-read > summary { font-weight: 600; }
+
+/* One cited check result: what it required and what it found. */
+.requirement { border: 1px solid var(--line); padding: 6px 12px; margin: 8px 0; }
+.prior-requirement { border-left: 3px solid var(--line); padding-left: 10px; margin: 6px 0; }
