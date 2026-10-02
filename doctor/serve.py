@@ -3,6 +3,7 @@
 Run from the repository root::
 
     python doctor/serve.py            # http://127.0.0.1:8765/
+    python doctor/serve.py --workspace <dir> [--prior <dir>]
 
 Nothing here evaluates anything. The server hands the browser the envelopes the
 internal adapter (A1) returns — unchanged — and the static files that lay them
@@ -21,6 +22,7 @@ something that looks like a result.
 from __future__ import annotations
 
 import argparse
+import functools
 import json
 import sys
 from collections.abc import Callable
@@ -33,8 +35,12 @@ from urllib.parse import parse_qs, urlsplit
 STATIC = Path(__file__).resolve().parent / "static"
 REPOSITORY_ROOT = Path(__file__).resolve().parent.parent
 
-#: The two experiences. Anything else is refused before a source is asked.
-MODES = ("fixture", "real")
+#: The experiences. Anything else is refused before a source is asked.
+#: ``workspace`` offers a run only when the server was started with one.
+MODES = ("fixture", "real", "workspace")
+
+#: The one run the workspace mode offers: the workspace named at start-up.
+WORKSPACE_RUN = "workspace"
 
 #: Extensions served, with explicit types. Not ``mimetypes``: on Windows it reads
 #: the registry and can hand ES modules to the browser as ``text/plain``.
@@ -67,10 +73,18 @@ class AdapterSource:
     render a mismatch, and the adapter's own tests hold the two equal.
     """
 
-    def __init__(self, adapter) -> None:
+    def __init__(
+        self, adapter, workspace: Path | None = None, prior: Path | None = None
+    ) -> None:
         self._adapter = adapter
+        self._workspace = workspace
+        self._prior = prior
 
     def runs(self, mode: str) -> list[dict[str, str]]:
+        if mode == "workspace":
+            # Named when the server was started, or not offered at all.
+            # Nothing is looked for.
+            return [] if self._workspace is None else [{"run_id": WORKSPACE_RUN}]
         return [
             {"run_id": scenario["name"]}
             for scenario in self._adapter.scenario_index()
@@ -81,13 +95,17 @@ class AdapterSource:
         # Asked again rather than reused from ``runs``: that call answers "what
         # may this experience offer", this one answers "is this run one of them".
         # Folding them together would let a listing certify itself.
+        if mode == "workspace":
+            if self._workspace is None or run_id != WORKSPACE_RUN:
+                raise KeyError(f"{run_id!r} is not a {mode!r} run of this server")
+            return self._adapter.workspace_envelope(self._workspace, self._prior)
         declared = {item["name"]: item["mode"] for item in self._adapter.scenario_index()}
         if declared.get(run_id) != mode:
             raise KeyError(f"{run_id!r} is not a {mode!r} scenario")
         return self._adapter.scenario_envelope(run_id)
 
 
-def adapter_source() -> Source:
+def adapter_source(workspace: Path | None = None, prior: Path | None = None) -> Source:
     """The internal adapter (A1), imported only when a request needs it."""
 
     if str(REPOSITORY_ROOT) not in sys.path:
@@ -99,7 +117,7 @@ def adapter_source() -> Source:
             "The internal adapter (internal.doctor_adapter) could not be imported, so "
             f"there is nothing to show: {missing}. No sample data is bundled in its place."
         ) from missing
-    return AdapterSource(doctor_adapter)
+    return AdapterSource(doctor_adapter, workspace, prior)
 
 
 def _json(handler: BaseHTTPRequestHandler, status: HTTPStatus, body: object) -> None:
@@ -176,10 +194,25 @@ def make_handler(source_factory: Callable[[], Source]) -> type[BaseHTTPRequestHa
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--port", type=int, default=8765)
+    parser.add_argument(
+        "--workspace",
+        type=Path,
+        default=None,
+        help="A workspace outside this checkout holding a finished `epc-ct run`.",
+    )
+    parser.add_argument(
+        "--prior",
+        type=Path,
+        default=None,
+        help="An earlier run of the same scope, to compare the workspace's run with.",
+    )
     arguments = parser.parse_args(argv)
+    if arguments.prior is not None and arguments.workspace is None:
+        parser.error("--prior needs --workspace")
     if str(REPOSITORY_ROOT) not in sys.path:
         sys.path.insert(0, str(REPOSITORY_ROOT))
-    server = ThreadingHTTPServer(("127.0.0.1", arguments.port), make_handler(adapter_source))
+    source = functools.partial(adapter_source, arguments.workspace, arguments.prior)
+    server = ThreadingHTTPServer(("127.0.0.1", arguments.port), make_handler(source))
     print(f"BIM Doctor preview: http://127.0.0.1:{arguments.port}/")
     try:
         server.serve_forever()
