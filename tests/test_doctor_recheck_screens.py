@@ -1606,8 +1606,38 @@ class AdapterScenarioTests(unittest.TestCase):
                     )
         self.assertEqual(
             words["actions"]["asset-identity-not-evaluated"]["action"],
-            "现有资产标识规则没有覆盖到这个构件，所以这项工作能否开始无法判断。"
-            "这不是缺资产标识，也不是无需检查。是否要求它具备资产标识，需要项目约定。",
+            "现有资产标识规则没有覆盖到这个构件，所以它有没有资产标识还没有被评估，不能判断是否缺少；"
+            "这项工作能否开始也因此无法判断。先确认项目约定是否要求它具备资产标识，"
+            "以及规则该不该覆盖到它。在确认之前，这不表示它必须具备资产标识。",
+        )
+        # Nothing checked whether the element carries the property set, so no
+        # sentence says it is not missing one — and none makes it an obligation.
+        static = "".join(path.read_text(encoding="utf-8") for path in sorted(STATIC.iterdir()))
+        self.assertNotIn("这不是缺资产标识", static)
+        # The record reaches one element, never its class.
+        self.assertNotIn("这类构件", static)
+        # "重新发布" is said of a model only; the consequence is about documents.
+        self.assertNotIn(
+            "重新发布", words["consequenceKinds"]["re-identification-and-reissue-risk"]
+        )
+        self.assertIn("文件", words["consequenceKinds"]["re-identification-and-reissue-risk"])
+        # The head-of-page and directory notices name the three kinds of evidence
+        # and where each citation's source is shown, and both live in the wording table.
+        vocabulary_source = (STATIC / "vocabulary.js").read_text(encoding="utf-8")
+        for name in ("DEMO_NOTICE", "DIRECTORY_NOTE"):
+            notice = vocabulary_source[vocabulary_source.index(f"export const {name} =") :]
+            notice = notice[: notice.index(";\n")]
+            with self.subTest(notice=name):
+                for said in (
+                    "真实检查的结果",
+                    "模拟的检查结果",
+                    "模拟的人工判定",
+                    "“依据”一行",
+                    "逐条引用",
+                ):
+                    self.assertIn(said, notice)
+        self.assertIn(
+            "note(DIRECTORY_NOTE)", (STATIC / "screens.js").read_text(encoding="utf-8")
         )
         self.assertEqual(
             words["verdictLabels"],
