@@ -43,9 +43,7 @@ python doctor/serve.py        # then open http://127.0.0.1:8765/
   wording lives in `static/recheck-model.js`, which has no DOM in it, and
   `tests/test_doctor_recheck_screens.py` runs it under Node (a missing Node
   skips locally and fails under `CI`). A value the page does not know is shown
-  as it came and marked unrecognised. The fixture notice, each citation's
-  provenance tag and the five sentences that must not be misread are never
-  inside a collapsed block. Check results and determinations are counted
+  as it came and marked unrecognised. Check results and determinations are counted
   apart and never added together. Words: [recheck vocabulary](../docs/product/2026-10-02-doctor-recheck-vocabulary.md).
 - **What a cited finding required comes from the run that record cites.**
   `finding_details` maps a `finding_key` to `rule_id`, `requirement_id`,
@@ -59,8 +57,10 @@ python doctor/serve.py        # then open http://127.0.0.1:8765/
   citations of the first assessment keep theirs. An entry carries no
   `owner_role`, `severity` or `priority`: those are a rule author's metadata,
   not the project's assignment. It also carries no required value, data type
-  or Revit parameter mapping; the run does not hold them. The screens do not
-  read this key yet.
+  or Revit parameter mapping; the run does not hold them. A first-check
+  item lists the entry of each check result its conclusion cites; a recheck
+  row lists its old citation's entry as the earlier run's words and says that
+  having them does not make the row comparable.
 - **An omitted key is words.** A key the envelope does not carry reads
   "记录未携带" — never `null`, `""`, `0`, `false` or a dash. A key carried as an
   empty string is a different fact: an empty `storey` is "无楼层归属", because
