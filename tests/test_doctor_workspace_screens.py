@@ -432,7 +432,13 @@ class WordingTests(_Modelled):
         notes = self.tables["RULE_NOTES"]["PV-001"]
         said = "".join([*notes["passDoesNotProve"], *notes["gaps"]])
         self.assertIn("风口所在的模型", said)
-        self.assertIn("外墙所在的模型", said)
+        self.assertIn("风口所在的墙", said)
+        # The wall an air terminal sits in may be an internal one (BIM W1), and
+        # the two models may have one holder or two: neither is presumed.
+        for text in _strings(notes):
+            with self.subTest(text=text):
+                self.assertNotIn("外墙", text)
+                self.assertNotIn("持有方", text)
 
     def test_what_to_change_starts_from_the_revit_source(self):
         """The change is made in Revit and exported; no parameter mechanism is named."""
