@@ -1098,7 +1098,7 @@ class ScreenStructureTests(unittest.TestCase):
         cut = lambda start, end: screens[screens.index(start) : screens.index(end)]  # noqa: E731
         path = {
             "context bar": cut("export function renderContext(", "function elementFacts("),
-            "home and directory": cut("function entry() {", "function record(state) {"),
+            "home and directory": cut("function entry(", "function record(state) {"),
             "first check": cut("// S3b — first check", "// S4 — recheck"),
             "recheck": self.recheck,
             "check attempt": screens[screens.index("function refusal(") :],
@@ -1172,7 +1172,7 @@ class ScreenStructureTests(unittest.TestCase):
         self.assertIn("这不是导入入口", home)
         screens = (STATIC / "screens.js").read_text(encoding="utf-8")
         entry = screens[
-            screens.index("function entry() {") : screens.index("function runLink(")
+            screens.index("function entry(") : screens.index("function runLink(")
         ]
         self.assertLess(entry.index("HOME.lede"), entry.index("HOME.status"))
         self.assertLess(entry.index("HOME.status"), entry.index("entry-grid"))

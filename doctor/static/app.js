@@ -9,10 +9,12 @@
 // adapter for the same run again rather than keeping a copy of any result.
 // One recheck item is #/<mode>/<run_id>/recheck/<subscope index>/<member index>.
 // One first-check item is #/<mode>/<run_id>/item/<activity index>/<group>/<member index>.
+// A workspace run is #/workspace/workspace, one of its results is
+// …/finding/<finding_key>, and its comparison with the earlier run …/compare.
 
 import { h, note } from "./dom.js";
 import { renderContext, screens } from "./screens.js";
-import { FAULT_WORDS } from "./vocabulary.js";
+import { ENVELOPE_WORDS, FAULT_WORDS } from "./vocabulary.js";
 
 const state = {
   mode: null, // the experience the manager chose
@@ -21,7 +23,64 @@ const state = {
   envelope: null,
 };
 
-const MODES = ["fixture", "real"];
+// `workspace` offers a run only when the server was started with one; the home
+// screen asks before showing its card.
+const MODES = ["fixture", "real", "workspace"];
+
+function shapeWords(template, outcome, key) {
+  return template.replace("{outcome}", outcome).replace("{key}", key);
+}
+
+// A workspace envelope is a validation run or a refused comparison. It carries
+// no record, and a refusal carries nothing but the refusal: neither run's
+// findings, no comparison and no elements.
+function workspaceProblem(envelope) {
+  const isObject = (value) => value !== null && typeof value === "object" && !Array.isArray(value);
+  const outcome = envelope.outcome;
+  if (outcome === "validation") {
+    for (const [key, valid] of [
+      ["run", isObject],
+      ["findings", Array.isArray],
+      ["requirements", isObject],
+      ["elements", isObject],
+    ]) {
+      if (!valid(envelope[key])) return shapeWords(ENVELOPE_WORDS.missing, outcome, key);
+    }
+    for (const key of ["record", "assessment_digest", "refusal"]) {
+      if (key in envelope) return shapeWords(ENVELOPE_WORDS.unexpected, outcome, key);
+    }
+    if ("comparison" in envelope) {
+      const comparison = envelope.comparison;
+      for (const [key, valid] of [
+        ["prior_run", isObject],
+        ["changed_models", Array.isArray],
+        ["pairs", Array.isArray],
+        ["not_re_evaluated", Array.isArray],
+        ["newly_appearing", Array.isArray],
+        ["prior_elements", isObject],
+      ]) {
+        if (!isObject(comparison) || !valid(comparison[key])) {
+          return shapeWords(ENVELOPE_WORDS.missing, outcome, `comparison.${key}`);
+        }
+      }
+    }
+    return null;
+  }
+  if (outcome === "refusal") {
+    const refusal = envelope.refusal;
+    if (!refusal || typeof refusal.code !== "string" || typeof refusal.text !== "string") {
+      return shapeWords(ENVELOPE_WORDS.missing, outcome, "refusal.code / refusal.text");
+    }
+    if (!Array.isArray(refusal.reasons)) {
+      return shapeWords(ENVELOPE_WORDS.missing, outcome, "refusal.reasons");
+    }
+    for (const key of ["run", "findings", "comparison", "record", "assessment_digest"]) {
+      if (key in envelope) return shapeWords(ENVELOPE_WORDS.unexpected, outcome, key);
+    }
+    return null;
+  }
+  return `未识别的 outcome ${JSON.stringify(outcome)}`;
+}
 
 export function clearResults(mode) {
   state.mode = mode;
@@ -37,6 +96,7 @@ function envelopeProblem(envelope, mode) {
   if (envelope.mode !== mode) {
     return `返回数据的 mode 为 ${JSON.stringify(envelope.mode)}，与所选入口 ${JSON.stringify(mode)} 不一致`;
   }
+  if (mode === "workspace") return workspaceProblem(envelope);
   if (!envelope.elements || typeof envelope.elements !== "object") return "返回的数据缺少 elements";
   if (envelope.outcome === "record") {
     if (!envelope.record || typeof envelope.record !== "object") return "outcome=record 但缺少 record";
@@ -125,7 +185,17 @@ async function render() {
   if (!mode || !MODES.includes(mode)) {
     clearResults(null);
     header.replaceChildren();
-    main.replaceChildren(screens.entry());
+    // The workspace card is shown only when the server says it has a run to
+    // offer. A failed question is said as such, never as "no workspace".
+    let workspace;
+    try {
+      const body = await fetchJson("/api/runs?mode=workspace");
+      workspace = { runs: Array.isArray(body.runs) ? body.runs : [] };
+    } catch (problem) {
+      workspace = { error: problem.message };
+    }
+    if (token !== rendering) return;
+    main.replaceChildren(screens.entry(workspace));
     focusMain(main);
     return;
   }
@@ -145,16 +215,38 @@ async function render() {
       await ensureEnvelope(mode, runId);
       if (token !== rendering) return;
       const outcome = state.envelope.outcome;
+      // A workspace run has screens of its own: there is no record behind it.
+      const workspaceWanted =
+        mode === "workspace" ? screen || (outcome === "refusal" ? "refusal" : "check") : null;
       // A recheck record opens on its result: what is left to do comes before
       // the record's own context, which stays one link away.
       const wanted =
-        screen ||
-        (outcome !== "record" ? "refusal" : state.envelope.record.successor ? "recheck" : "first");
-      if (wanted === "refusal" ? outcome !== "refusal" : outcome !== "record") {
+        workspaceWanted ??
+        (screen ||
+          (outcome !== "record" ? "refusal" : state.envelope.record.successor ? "recheck" : "first"));
+      const expected = wanted === "refusal" ? "refusal" : mode === "workspace" ? "validation" : "record";
+      if (outcome !== expected) {
         go(mode, runId);
         return;
       }
-      switch (wanted) {
+      if (mode === "workspace") {
+        switch (wanted) {
+          case "check":
+            content = screens.workspaceCheck(state, null);
+            break;
+          case "finding":
+            content = screens.workspaceCheck(state, rest[0] ?? "");
+            break;
+          case "compare":
+            content = screens.workspaceCompare(state);
+            break;
+          case "refusal":
+            content = screens.workspaceRefusal(state);
+            break;
+          default:
+            content = h("div", {}, note(`没有这个页面：${wanted}`, "problem"));
+        }
+      } else switch (wanted) {
         case "record":
           content = screens.record(state);
           break;

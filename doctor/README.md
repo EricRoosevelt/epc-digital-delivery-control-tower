@@ -110,7 +110,7 @@ for is read only from the returned data's `finding_details`; the preview reads n
 rule file. The record, activity and member screens were not revised and still
 use internal terms.
 
-## A third entry, with no screen yet: a workspace run
+## A third entry: a workspace run
 
 ```bash
 python doctor/serve.py --workspace <dir> [--prior <dir>]
@@ -125,8 +125,37 @@ directory is searched for runs, and without `--workspace` the mode offers none.
 `--prior` names an earlier run of the same scope, laid out the same way.
 
 The adapter answers `GET /api/envelope?mode=workspace&run=workspace` with a
-different envelope from the two above. **No screen reads it yet**; this section
-is the seam the screens will be built against.
+different envelope from the two above, and the tables below are the seam the
+workspace screens are built against.
+
+**The screens** (`static/workspace-screens.js`; counting and lookups in the
+DOM-free `static/workspace-model.js`, exercised under Node by
+`tests/test_doctor_workspace_screens.py`; every sentence in `static/vocabulary.js`):
+
+- The home screen asks `/api/runs?mode=workspace` and shows a card only when the
+  server offers a run. A failed question is said as one, not as "no workspace".
+- `#/workspace/workspace` — the result: counts per status, which requirement was
+  checked and where it comes from (the requirement's own `labels` and
+  `citation`, never asserted by the page), and every result in a list that
+  filters by status and by IFC Tag, name or GlobalId, with one result's detail
+  beside it (`…/finding/<finding_key>`). The detail says where to go back to
+  in the authoring tool (IFC Tag first, `tag_source` when there is none), what
+  the requirement asked, the reason as the check wrote it, and — beside a pass —
+  what a pass proves and does not. A passing finding carries no observed value,
+  and no page says what one read.
+- `…/compare` — both run ids, which one the server was told is earlier, the
+  adapter's pairs grouped by their two statuses and counted, the rows only one
+  run has counted apart, and the models the adapter lists as changed. Nothing
+  here pairs two findings, and no word says a thing was fixed.
+- A refused comparison has its own screen, worded per reason code with the
+  adapter's text one fold away; a run that cannot be read is a program fault,
+  on the fault screen.
+
+No screen here says a verdict, a team or that work can start: no handover
+assessment was made. The result words are the check's own — 通过、不通过、不适用.
+The Chinese notes about one rule (`RULE_NOTES`) are used only under the rule set
+identifier and version they were written for; any other rule set shows the
+rule's English.
 
 | Key | What it holds |
 |---|---|
