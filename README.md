@@ -11,7 +11,180 @@ findings and future management KPIs.
 It uses public buildingSMART sample models and clearly identifies
 project-specific assumptions. It is not presented as a production deployment.
 
-![EPC Delivery Control Tower overview](docs/evidence/stage_3b/overview-final.png)
+## Who it is for
+
+* **BIM managers** who hand models from one discipline to the next and want to
+  see what a pre-handover check found without reading JSON or using a command
+  line. **BIM Doctor**, the local preview in [`doctor/`](doctor/), is for them.
+* **BIM and digital-delivery engineers** who want a deterministic, extensible
+  way to check IFC models against project-authored requirements and export the
+  findings as issues and BCF. This repository is meant to be forked and adapted;
+  start at [`AGENTS.md`](AGENTS.md).
+
+## What it addresses
+
+Before a model is handed from one discipline to another, a manager has to answer
+a few plain questions: what is still open, which elements it concerns, what has
+to change, who does it, and what a recheck must show. After a recheck: what
+changed, and what is still open.
+
+BIM Doctor lays those answers out for a check of IFC models against
+project-authored requirements. It is careful about what it does not say. It gives
+no overall compliance or constructability conclusion, a result that "cannot be
+decided" is not a clean bill, and a change between two runs is never called a fix.
+Underneath is the deterministic validation framework, `epc-ct`, described
+[below](#two-layers-and-which-numbers-belong-to-which).
+
+## BIM Doctor today
+
+An internal, local preview: it runs on your machine, listens on `127.0.0.1` only,
+and is not a release or a public interface. By default it shows a simulated
+example and the bundled sample project; it cannot import your own models through
+the interface. **The interface is in Chinese only**; the captions give the English
+meaning of the words that matter.
+
+![BIM Doctor home: two entries, and a strip saying the preview cannot import your own Revit model and gives no overall compliance conclusion](docs/evidence/doctor-first-minute-2026-10-03/01-doctor-home.png)
+
+*Home.* Two entries: **选择模拟示例** (choose a simulated example) and **查看这次检查尝试**
+(view the check attempt on the bundled sample project, which does not start an
+assessment and explains why). The yellow strip and the list at the foot say what
+it cannot do: import your own Revit or IFC model, give an overall compliance,
+constructability or "can be delivered" conclusion, write back to the model,
+upload, or open an element in Revit.
+
+![First-check result of the simulated example: 13 items, 8 needing handling, grouped by team](docs/evidence/doctor-first-minute-2026-10-03/02-first-check-result.png)
+
+*First-check result of the simulated example.* 13 items, 8 of which need
+handling: 4 **受阻** (blocked) and 4 **无法判断** (cannot be decided), involving 6
+distinct elements. An item is a conclusion about one element, or one pair, for one
+piece of receiving-side work, so the item count is not a defect count. Items are
+grouped by the team the record assigns.
+
+![One item: an air terminal named "chimney cover", blocked because the project-assumed EPC_Delivery property set is missing](docs/evidence/doctor-first-minute-2026-10-03/03-one-item.png)
+
+*One item.* An air terminal named "chimney cover" in the HVAC sample model is
+blocked for the work "room data sheets and equipment schedules" because the
+`EPC_Delivery` property set the project assumed is missing (rule R-005B). The page
+gives the element's GlobalId, what to do in the source model, which team handles
+it, what the item stops, and what a recheck must show. The failing check is a real
+run of the shipped rule; the team is the example's own setting, and the page says
+so. R-005 is a project-specific assumption, not a defect of the public sample.
+
+The screenshots use the bundled public sample only and were captured at commit
+`cd73f2c`; see [their provenance](docs/evidence/doctor-first-minute-2026-10-03/README.md).
+
+## Try it
+
+Python 3.11 or newer (`pyproject.toml`; CI runs 3.14). There is no other install
+step: `doctor/serve.py` imports the checkout directly.
+
+```powershell
+git clone https://github.com/EricRoosevelt/epc-digital-delivery-control-tower.git
+cd epc-digital-delivery-control-tower
+py -m venv .venv
+.\.venv\Scripts\Activate.ps1
+python -m pip install -r requirements.txt
+python doctor/serve.py
+```
+
+On macOS or Linux, create and activate the environment with
+`python3 -m venv .venv` and `source .venv/bin/activate`; the other lines are the
+same.
+
+1. Open <http://127.0.0.1:8765/>.
+2. Click **选择模拟示例** (choose a simulated example), then **打开这个示例的结果**
+   (open this example's result) under step one, the first check.
+3. Click **查看这一项** (view this item) under any item.
+4. Back in the catalogue, open step two, **模型未改，但交接判断发生变化** (models
+   unchanged, but the handover judgement changed), to see the same record after a
+   recheck.
+
+Stop the server with Ctrl+C; `--port` changes the port. The first result you open
+in a session runs the shipped rules on the sample models once, in a scratch copy
+under the system temporary directory that is removed afterwards; nothing is
+written into the checkout.
+
+## What works today
+
+Four groups, so that a simulation is never read as a result and a built part is
+never read as an accepted one.
+
+**1. Implemented, and runs today on the public samples**
+
+* `epc-ct run` validates the sample projects' IFC models (IDS validation and a
+  cross-model completeness check) and writes findings, issues and a BCF 3.0
+  archive: data contract 1.7, rule set 2.2, with the counts under
+  [Canonical pipeline at a glance](#canonical-pipeline-at-a-glance-contract-17).
+  CI regenerates every published artifact on Linux and Windows and fails if one
+  byte moves.
+* The Purpose Pack and Project Overlay loader, an assessment evaluator and a
+  `recheck` that succeeds a sealed record
+  ([below](#purpose-packs-and-project-overlays)). A library: there is no
+  `epc-ct` command for it.
+* The BIM Doctor preview software shown above: a local server and screens for the
+  first check, one item and a recheck.
+* The frozen Power BI / Speckle showcase (below, under *Other entry points*).
+
+**2. Shown only in simulation**
+
+* The handover assessment in Doctor. The team arrangement, the accepted evidence
+  methods and the human determinations (for example "does the opening pass
+  through the receiving model's element") are the example's own settings, marked
+  where they appear. The example cannot be used for a project decision and offers
+  no export. In the first-check example the check results beside them come from a
+  real run of the shipped rules; elsewhere a conclusion can also rest on a
+  simulated check result, and each conclusion says which kind it cites.
+* The recheck screens, shown on simulated scenarios built for the preview.
+* The bundled sample project's own attempt, which Doctor's second entry shows
+  being refused. That is the correct result, not a fault: the sample has never
+  staffed a team or accepted an evidence method, so every assessment it could make
+  would rest on a demonstration row (see the Purpose section below).
+
+**3. A controlled real case, awaiting acceptance**
+
+* Doctor's workspace entry, `python doctor/serve.py --workspace <dir> [--prior <dir>]`,
+  shows the result of a real `epc-ct run` held in a workspace outside the
+  checkout, and compares it with an earlier run. It shows check results and
+  where to find each element in the authoring tool. It makes no handover
+  assessment, names no team and never says anything was fixed. It is built on the
+  isolated `product-validation` rule set 1.0 ([`rules/product-validation/`](rules/product-validation/README.md)),
+  and the interface is described in [`doctor/README.md`](doctor/README.md).
+  It has been exercised privately on one real IFC model under controlled
+  conditions; that model is not in this repository. It is not yet accepted as a
+  product feature: a BIM-domain review of its evidence and wording, and a
+  walk-through of the real path by a person acting as manager, are still to come.
+
+**4. Not built**
+
+* Importing your own Revit or IFC model through the interface.
+* An overall compliance, constructability or "can be delivered" conclusion.
+* Writing back to the model, uploading, and opening an element in Revit.
+* Starting a recheck, marking an item resolved, assigning or notifying anyone,
+  and exporting a recheck record.
+* Accepting a risk, and continuing or ending a release.
+* Attributing a change to a fix made in Revit or Tekla.
+* A Singapore research view.
+
+The first three of these are the limits Doctor's own home screen states; the
+others are listed in [`doctor/README.md`](doctor/README.md) and in
+[Not implemented](#not-implemented).
+
+## Other entry points
+
+* **Build on the framework.** Start at
+  [`AGENTS.md`](AGENTS.md#where-to-extend): three extension points (`Checker`,
+  `GroupingPolicy`, `Exporter`), a rule is one TOML file under `rules/<ruleset>/`,
+  and a project is a directory under `projects/`. Run it with
+  `python -m epc_control_tower.cli run`. The published contract is described in
+  [`docs/data_contract.md`](docs/data_contract.md) and [`CHANGELOG.md`](CHANGELOG.md).
+* **The frozen Power BI / Speckle showcase.** One project at one moment, V1.0.0,
+  pinned byte for byte by test. Open the tracked Power BI Project under
+  [`dashboard/`](dashboard/README.md); its acceptance evidence is in
+  [`docs/evidence/stage_3b/`](docs/evidence/stage_3b/README.md). A fully connected
+  copy needs Power BI Desktop and the official Speckle connector; see
+  [Power BI and Speckle Control Tower](#power-bi-and-speckle-control-tower).
+
+![EPC Delivery Control Tower overview, the frozen Power BI showcase](docs/evidence/stage_3b/overview-final.png)
 
 ## Two layers, and which numbers belong to which
 
@@ -22,7 +195,7 @@ other is the single easiest mistake to make here.
 | | **Canonical pipeline** | **Frozen V1.0.0 showcase** |
 | --- | --- | --- |
 | What it is | The live framework: `epc-ct run`, every stage and exporter | A pinned demonstration of one project at one moment |
-| Version | **Framework / data contract 1.6**, rule set 2.2 | V1.0.0, IDS v0.1, 47 findings |
+| Version | **Framework / data contract 1.7**, rule set 2.2 | V1.0.0, IDS v0.1, 47 findings |
 | Scope | Both projects in `projects/` | One project, one frozen rule set version |
 | Where it lands | `data/processed/canonical/`, `reports/bcf/issues.bcf` | The eight legacy CSVs, `reports/bcf/ids_failures.bcf`, the PBIP dashboard |
 | Moves when | The pipeline or the rules change | **Never** — it is byte-pinned by test |
@@ -33,7 +206,7 @@ models and 47 findings while the canonical pipeline covers six and 121: the two
 `Legacy…` exporters reproduce a frozen identity derivation on purpose, and they
 retire together in Phase 5. See `AGENTS.md` for why that scope exists.
 
-## Canonical pipeline at a glance (contract 1.6)
+## Canonical pipeline at a glance (contract 1.7)
 
 What one `epc-ct run` currently produces across every project in `projects/`:
 
@@ -307,30 +480,44 @@ Install the dependencies:
 python -m pip install -r requirements.txt
 ```
 
-Generate the model register and inventory:
+### BIM Doctor preview
 
 ```powershell
-python src\extract_inventory.py
+python doctor\serve.py
 ```
 
-Generate the project IDS:
+Then open <http://127.0.0.1:8765/>. The walk-through is under
+[Try it](#try-it). To look at the result of a real `epc-ct run` held in a
+workspace outside this checkout, add `--workspace <dir>` and, to compare it with an
+earlier run, `--prior <dir>`; both are described in
+[`doctor/README.md`](doctor/README.md).
+
+### Canonical pipeline
 
 ```powershell
-python src\generate_ids.py
+python -m epc_control_tower.cli check
+python -m epc_control_tower.cli run
+python -m epc_control_tower.cli snapshot
 ```
 
-Validate all three IFC models and generate the reports and normalized findings:
+`check` validates without writing anything, `run` writes every enabled
+exporter's artifacts, and `snapshot` compares the published contract with its
+record. `epc-ct` is the same command once the package is installed; without
+installing it, `python -m epc_control_tower.cli` does the same, as `AGENTS.md`
+describes.
+
+### Frozen showcase
+
+The frozen V1.0.0 artifacts (the eight legacy CSVs and
+`reports/bcf/ids_failures.bcf`) are written by the same `run`, through the two
+`Legacy…` exporters; CI fails if a run changes any of their bytes. To validate
+the frozen BCF archive strictly on its own:
 
 ```powershell
-python src\validate_ids.py
-```
-
-Generate and strictly validate the deterministic BCF workflow:
-
-```powershell
-python src\generate_bcf.py
 python src\validate_bcf.py
 ```
+
+### Tests and gates
 
 Install development dependencies and run the regression suite:
 
@@ -338,6 +525,10 @@ Install development dependencies and run the regression suite:
 python -m pip install -r requirements-dev.txt
 python -m pytest -p no:cacheprovider tests -q
 ```
+
+One test, the IDS syntax audit, needs a tool the suite does not install and
+skips with instructions without it; `AGENTS.md` lists the full gate order CI
+runs.
 
 Validate the repository-safe dashboard data and tracked Power BI Project:
 
@@ -568,8 +759,11 @@ publishes, or acts on a record. That is the boundary this section is about.
   naming is a statement of design and not a check: the field is an unvalidated
   string, and nothing in the code enforces the vocabulary. A second Pack, a Pack
   registry, and any Overlay override mechanism are likewise absent, as is any
-  published machine contract, CLI surface, or Doctor experience for an
-  assessment. Where a record is stored is also still an open decision: both
+  published machine contract or `epc-ct` command for an assessment. The only
+  experience of one is the internal [BIM Doctor preview](doctor/README.md): it is
+  not a release, it shows an example whose policy and determinations are
+  simulated, and its attempt at the sample project's own assessment is refused
+  (see above). Where a record is stored is also still an open decision: both
   entry points return one and write no file, and nothing stores a determination
   either — those are read by reference, from somebody else's store, and this
   repository has none.
@@ -585,8 +779,9 @@ publishes, or acts on a record. That is the boundary this section is about.
   reaches, carrying a `resolution_kind` and the consequence *kinds* its Pack
   route names. Nothing else in this repository has a blocker concept, and the
   `Requirement` fields that look adjacent are not one: `owner_role`, `severity`,
-  `stage`, `priority` and `labels` are contract 1.6 *rule metadata*, carried for
-  validation and for reproducing the frozen legacy archive. `priority` says when
+  `stage`, `priority` and `labels` are *rule metadata* published in
+  `requirements.csv`, carried for validation and for reproducing the frozen
+  legacy archive. `priority` says when
   somebody will get to a failure, not what that failure stops; `owner_role` is
   the role the rule author expects to answer for the rule, not a final
   responsible-role decision; and severity does not soften a verdict. Nor does
@@ -634,7 +829,9 @@ nowhere.
 * The first IDS version covers selected information requirements, not all BIM quality dimensions.
 * Property actual values are left blank when IfcTester does not provide them consistently; the pipeline does not invent data.
 * The validation results demonstrate a portfolio workflow, not a contractual model acceptance decision.
-* The BCF workflow covers IDS failures only; it is not an issue-server sync.
+* The frozen BCF archive (`ids_failures.bcf`) covers the six IDS failures only.
+  The canonical `issues.bcf` also carries failures from the cross-model
+  completeness checker. Neither is an issue-server sync.
 * The Power BI evidence is a validated portfolio fixture, not a hosted
   production monitoring service.
 * Revit may be used for optional downstream visual or BCF review, but it is not
