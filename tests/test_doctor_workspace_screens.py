@@ -91,12 +91,14 @@ for (const [name, envelope] of Object.entries(input.envelopes)) {
   };
 }
 const tags = input.tags.map(([element, model_]) => model.tagReading(element, model_));
+const freeText = input.reasons.map((reason) => model.quotesFreeText(reason));
 const tables = {};
 for (const name of input.tables) tables[name] = vocabulary[name];
 process.stdout.write(
   JSON.stringify({
     out,
     tags,
+    freeText,
     tables,
     findingStatus: vocabulary.FINDING_STATUS,
     reasonGlosses: vocabulary.REASON_GLOSSES,
@@ -108,6 +110,18 @@ process.stdout.write(
   }),
 );
 """
+
+
+#: Reasons and whether each quotes a USERDEFINED type's free text. The public
+#: sample's two air terminals give the second; the first is the private case's.
+FREE_TEXT_CASES = (
+    ('The predefined type "NOTDEFINED" does not meet the required type', False),
+    ('The predefined type "chimney cover" does not meet the required type', True),
+    ('The predefined type "louvre" does not meet the required type', True),
+    ('The predefined type "USERDEFINED" does not meet the required type', False),
+    ("Requirement satisfied.", False),
+    ("No applicable elements exist in this model.", False),
+)
 
 
 def _node(payload: dict[str, object]) -> dict[str, object]:
@@ -188,7 +202,8 @@ class _Modelled(unittest.TestCase):
             {
                 "envelopes": cls.envelopes,
                 "tags": cls.tag_cases,
-                "tables": [*WORKSPACE_TABLES, "HOME"],
+                "tables": [*WORKSPACE_TABLES, "HOME", "REASON_GLOSSES"],
+                "reasons": [reason for reason, _ in FREE_TEXT_CASES],
             }
         )
         cls.out = cls.output["out"]
@@ -328,9 +343,23 @@ class RuleNotesTests(_Modelled):
         for limit in ("取值正确", "写成 GRILLE 也会通过", "洞口", "对齐", "任何工作可以开始"):
             with self.subTest(limit=limit):
                 self.assertIn(limit, said)
-        self.assertIn("USERDEFINED", notes["userDefined"])
-        self.assertIn("自由文本", notes["userDefined"])
+        # W3: what a pass proves is the predicate, read where the checker reads.
         self.assertIn("四个值之一", notes["passProves"])
+        self.assertIn("逐字等于", notes["passProves"])
+        # A type and an instance that disagree still pass, as measured with
+        # IfcTester: type LOUVRE, instance DIFFUSER -> PASS.
+        self.assertIn("类型是 LOUVRE、实例是 DIFFUSER，也会通过", said)
+        # USERDEFINED's text is compared exactly, case and spaces included, as
+        # measured: "LOUVRE" passes; "louvre", "Louvre", " LOUVRE", "LOUVRE " fail.
+        for boundary in (
+            "USERDEFINED",
+            "自由文本",
+            "逐字、区分大小写",
+            "louvre、Louvre 或前后带空格则不通过",
+        ):
+            with self.subTest(boundary=boundary):
+                self.assertIn(boundary, said)
+        self.assertNotIn("userDefined", notes)
 
     def test_no_sentence_says_what_a_pass_read(self):
         """A passing finding carries no observed value, so no page says one."""
@@ -392,9 +421,35 @@ class TagTests(_Modelled):
         self.assertTrue(emitted <= set(words["short"]))
         self.assertIn("ElementId", words["note"])
         # The page cannot know how far the Tag-to-ElementId match was checked in
-        # any one project, so it never says; it asks for the check every time.
-        self.assertIn("核对名称和类别", words["note"])
-        self.assertNotRegex(words["note"], r"核对过|个别对象")
+        # any one project, so it never says, nor calls it reliable or not; it
+        # gives the check a person can do every time.
+        for step in ("按 ID 选择", "名称和类别", "不要按这个 Tag 去改"):
+            with self.subTest(step=step):
+                self.assertIn(step, words["note"])
+        self.assertNotRegex(words["note"], r"核对过|个别对象|可靠")
+
+    def test_the_storey_is_said_to_be_the_ifcs_and_an_object_is_found_by_id(self):
+        """W5: the storey shown is the IFC's; Revit is searched by ID, never by level.
+
+        That one case's schedule levels were empty is not said of every model.
+        """
+
+        workspace = self.tables["WORKSPACE"]
+        self.assertEqual(workspace["columns"]["storey"], "楼层（IFC）")
+        self.assertEqual(workspace["element"]["storey"], "楼层（IFC）")
+        said = self.tables["TAG_WORDS"]["byIdNotStorey"]
+        for words in ("按 ID 找对象", "不要按楼层找", "IFC 文件", "不一定"):
+            with self.subTest(words=words):
+                self.assertIn(words, said)
+        for name in WORKSPACE_TABLES:
+            for text in _strings(self.tables[name]):
+                with self.subTest(table=name, text=text):
+                    self.assertNotRegex(text, r"标高为空|没有标高")
+        screens = (STATIC / "workspace-screens.js").read_text(encoding="utf-8")
+        locate = screens[
+            screens.index("function locateBlock(") : screens.index("function passBlock(")
+        ]
+        self.assertIn("TAG_WORDS.byIdNotStorey", locate)
         self.assertIn("IFC Tag", self.tables["WORKSPACE"]["columns"]["tag"])
 
 
@@ -440,6 +495,48 @@ class WordingTests(_Modelled):
                 self.assertNotIn("外墙", text)
                 self.assertNotIn("持有方", text)
 
+    def test_where_the_checker_reads_is_not_where_revit_is_changed(self):
+        """W6: two rows; no type is required and no parameter mapping is invented."""
+
+        action = self.tables["RULE_NOTES"]["PV-001"]["action"]
+        self.assertEqual(set(action), {"what", "reads", "revise", "undecided"})
+        self.assertIn("不是 Revit 里该改的位置", action["reads"])
+        self.assertIn("返回数据没有记录，本页不指定", action["revise"])
+        self.assertIn("如果决定在类型上改", action["revise"])
+        self.assertNotRegex(action["revise"], r"IfcExportAs|必须|应当在类型")
+        workspace = self.tables["WORKSPACE"]
+        self.assertEqual(workspace["actionReads"], "检查器读哪里")
+        self.assertEqual(workspace["actionRevise"], "在 Revit 里改哪里")
+        self.assertNotIn("actionWhere", workspace)
+
+    def test_a_failed_product_validation_rule_is_not_a_project_defect(self):
+        """W2: said beside a failure, only when the labels say product validation."""
+
+        self.assertIn("不等于原项目的交付缺陷", self.tables["WORKSPACE"]["failNotDefect"])
+        screens = (STATIC / "workspace-screens.js").read_text(encoding="utf-8")
+        self.assertEqual(screens.count("WORKSPACE.failNotDefect"), 1)
+        self.assertIn(
+            'status === "FAIL" && isProductValidation(requirement)\n'
+            '        ? h("p", { class: "beside" }, WORKSPACE.failNotDefect)',
+            screens,
+        )
+        for other in ("screens.js", "app.js"):
+            with self.subTest(file=other):
+                self.assertNotIn("failNotDefect", (STATIC / other).read_text(encoding="utf-8"))
+
+    def test_the_reason_gloss_and_a_free_text_reason(self):
+        """W7: the gloss says "not one of the required values"; free text gets a note."""
+
+        glosses = self.tables["REASON_GLOSSES"]
+        self.assertEqual(
+            glosses['The predefined type "NOTDEFINED" does not meet the required type'],
+            "预定义类型“NOTDEFINED”不属于要求的取值",
+        )
+        self.assertEqual(self.output["freeText"], [expected for _, expected in FREE_TEXT_CASES])
+        self.assertIn("自由文本", self.tables["RULE_NOTES"]["PV-001"]["reasonFreeText"])
+        screens = (STATIC / "workspace-screens.js").read_text(encoding="utf-8")
+        self.assertEqual(screens.count("(text) => reasonText(text, notes)"), 3)
+
     def test_what_to_change_starts_from_the_revit_source(self):
         """The change is made in Revit and exported; no parameter mechanism is named."""
 
@@ -457,9 +554,24 @@ class WordingTests(_Modelled):
             with self.subTest(said=said):
                 self.assertIn(said, with_workspace)
         self.assertNotIn("示例预览", with_workspace)
+        # A question that failed is said as such: not "examples only".
+        unknown = home["statusWorkspaceUnknown"]
+        for said in ("未能确认", "不等于没有工作区"):
+            with self.subTest(said=said):
+                self.assertIn(said, unknown)
+        self.assertNotIn("示例预览", unknown)
+        self.assertIn("不等于没有工作区", self.tables["WORKSPACE_HOME"]["unknown"])
+        # Viewing a finished workspace is not choosing a model on the page.
+        self.assertIn("在页面上导入、选择或更换模型", home["cannot"][0])
+        self.assertIn("不能在页面上选择或更换模型", self.tables["WORKSPACE_HOME"]["body"])
         screens = (STATIC / "screens.js").read_text(encoding="utf-8")
         entry = screens[screens.index("function entry(") : screens.index("function runLink(")]
-        self.assertIn("workspaceRun ? HOME.statusWithWorkspace : HOME.status", entry)
+        self.assertIn(
+            "workspaceRun\n        ? HOME.statusWithWorkspace\n"
+            '        : carries(workspace, "error")\n          ? HOME.statusWorkspaceUnknown\n'
+            "          : HOME.status",
+            entry,
+        )
 
     def test_every_refusal_code_has_words(self):
         self.assertEqual(set(self.tables["WORKSPACE_REFUSAL_REASONS"]), set(REFUSAL_CODES))

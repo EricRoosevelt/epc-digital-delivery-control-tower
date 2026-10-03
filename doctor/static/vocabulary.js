@@ -95,6 +95,11 @@ export const HOME = {
   statusWithWorkspace:
     "当前同时提供两样：启动服务器时指定的工作区里一次已经跑完的真实检查，以及模拟示例。" +
     "页面上不能导入、选择或更换模型，也不提供整体合规或可施工结论。",
+  // Said instead of `status` when the server could not be asked whether it was
+  // started with a workspace: neither "examples only" nor "a real check" is known.
+  statusWorkspaceUnknown:
+    "未能确认服务器是否指定了工作区，所以这里没有真实检查的入口；这不等于没有工作区，错误原文在下面。" +
+    "模拟示例照常可看。页面上不能导入、选择或更换模型，也不提供整体合规或可施工结论。",
   example: {
     title: "看一个模拟示例",
     body:
@@ -110,7 +115,7 @@ export const HOME = {
     action: "查看这次检查尝试",
   },
   cannot: [
-    "导入自己的 Revit 或 IFC 模型",
+    "在页面上导入、选择或更换模型，包括自己的 Revit 或 IFC 模型",
     "给出整体合规、可施工或“可以交付”的结论",
     "写回模型、上传到云端，或在 Revit 里打开构件",
   ],
@@ -650,7 +655,7 @@ export const REASON_GLOSSES = {
     "所要求的属性集不存在（要补的是整个属性集，不是给已有属性填值）",
   "Requirement satisfied.": "要求已满足",
   'The predefined type "NOTDEFINED" does not meet the required type':
-    "预定义类型“NOTDEFINED”不满足要求的类型",
+    "预定义类型“NOTDEFINED”不属于要求的取值",
   "No applicable elements exist in this model.": "这个模型里没有这条要求适用的构件",
 };
 
@@ -866,9 +871,10 @@ export const WORKSPACE_HOME = {
   title: "查看一次真实检查",
   body:
     "启动服务器时指定了一个工作区，里面是一次已经跑完的检查：每个构件在每条要求下的结果。" +
-    "若同时指定了前一次运行，还可以看两次的前后对比。这里只有检查结果，没有交接判断。",
+    "若同时指定了前一次运行，还可以看两次的前后对比。这里只有检查结果，没有交接判断。" +
+    "页面只查看这次已经跑完的检查，不能在页面上选择或更换模型。",
   action: "查看这次检查",
-  unknown: "未能确认服务器是否指定了工作区：",
+  unknown: "未能确认服务器是否指定了工作区（不等于没有工作区）。错误原文：",
 };
 
 // Short labels and the sentences around them. Every string a workspace page
@@ -912,7 +918,7 @@ export const WORKSPACE = {
     tag: "IFC Tag",
     name: "名称",
     class: "类别",
-    storey: "楼层",
+    storey: "楼层（IFC）",
     model: "模型",
   },
   pickOne: "从结果列表里选一条，在这里看它的详情。",
@@ -922,7 +928,8 @@ export const WORKSPACE = {
   findHeading: "回到 Revit 找哪个对象",
   actionHeading: "要改什么",
   actionWhat: "改成什么",
-  actionWhere: "改在哪里",
+  actionReads: "检查器读哪里",
+  actionRevise: "在 Revit 里改哪里",
   actionUndecided: "还没有决定的",
   requirementHeading: "具体要求与这次检查的观察",
   reason: "原因（检查结果的原文）",
@@ -937,6 +944,10 @@ export const WORKSPACE = {
   passUnwritten:
     "通过只说明这条要求被判为满足；它能证明到哪里，本界面没有为这条规则写说明，请看规则原话。",
   notApplicable: "不适用：这个模型里没有这条要求适用的构件。不适用不是通过。",
+  // Beside a failure only, and only when the requirement's own labels mark it a
+  // product validation rule.
+  failNotDefect:
+    "不满足这条产品验证规则，不等于原项目的交付缺陷。这条规则的来源以返回数据的标签（ProductValidation）和出处原文为准。",
   noFinding: "这次检查里没有这一条结果。",
   identityHeading: "追溯信息：这次检查的运行号、规则集版本与模型文件",
   findingTrace: "追溯信息：这条结果的内部键",
@@ -958,7 +969,7 @@ export const WORKSPACE = {
   element: {
     name: "名称",
     class: "类别",
-    storey: "楼层",
+    storey: "楼层（IFC）",
     model: "所属模型",
     file: "模型文件",
     globalId: "GlobalId",
@@ -970,8 +981,13 @@ export const WORKSPACE = {
 // element with no `tag` key under a readable file states no Tag in that file.
 export const TAG_WORDS = {
   note:
-    "IFC Tag 是导出时写进 IFC 的标记；Revit 导出的通常是构件的 ElementId，可以在 Revit 里按 ID 选中它。" +
-    "本页不能确认这一对应：选中后请核对名称和类别。",
+    "IFC Tag 是导出时写进 IFC 的标记；Revit 导出的通常是构件的 ElementId。" +
+    "核对：在 Revit 里用“按 ID 选择”选中这个 ID，看选中对象的名称和类别是否与本页相同；" +
+    "相同再按它处理，不同就不要按这个 Tag 去改，改用 GlobalId 在 IFC 里定位。",
+  // Beside every element: where the storey on this page comes from.
+  byIdNotStorey:
+    "在 Revit 里按 ID 找对象，不要按楼层找：本页的楼层取自 IFC 文件里的空间归属，" +
+    "不一定能和 Revit 明细表里的标高对上。",
   sources: {
     "model-file": "模型文件里这个构件没有写 Tag。",
     "model-file-not-located": "没有找到这次检查读的那个模型文件，所以读不到 Tag。",
@@ -1020,26 +1036,29 @@ export const RULE_NOTES = {
     predicate:
       "每个适用的风口（IfcAirTerminal）都要声明预定义类型，取值是 DIFFUSER、GRILLE、LOUVRE、REGISTER 之一。" +
       "IFC4 还允许 USERDEFINED 和 NOTDEFINED；不接受它们是这条规则自己的决定，用它们的模型仍是有效的 IFC4。",
-    passProves: "检查器读到的预定义类型属于 DIFFUSER、GRILLE、LOUVRE、REGISTER 四个值之一。",
+    passProves:
+      "检查器按它的读取顺序取到的那一个值（见“检查器读哪里”），逐字等于 DIFFUSER、GRILLE、LOUVRE、REGISTER 四个值之一。",
     passDoesNotProve: [
       "取值正确：四个值中任何一个都会通过，写成 GRILLE 也会通过。",
+      "类型和构件实例的取值一致：类型上是四个值之一时，实例上写的值不参与比较；类型是 LOUVRE、实例是 DIFFUSER，也会通过。",
+      "规则不接受的 USERDEFINED 没有出现：类型声明 USERDEFINED 时，检查器比较的是它的自由文本，逐字、区分大小写；" +
+        "文本恰好是 LOUVRE 会通过，写成 louvre、Louvre 或前后带空格则不通过。",
       "墙上有对应的洞口。",
       "风口所在的模型与风口所在的墙所属的模型已经对齐。",
       "任何工作可以开始，包括吊顶和开洞工作。",
     ],
-    userDefined:
-      "检查器会先把 USERDEFINED 换成它的自由文本再比较：类型写的是 USERDEFINED、文本恰好拼成 LOUVRE，也会通过。" +
-      "规则不接受 USERDEFINED，但这项检查分不出这种情况。",
     action: {
       what:
         "回到 Revit 源模型，让这个风口导出后的预定义类型是 DIFFUSER、GRILLE、LOUVRE、REGISTER 之一；重新导出 IFC，再检查。" +
         "NOTDEFINED 等于什么都没说。",
-      where:
-        "检查器先读它的类型对象：类型上是四个值之一时，比较的是类型上的值；类型什么也没说时，才读构件本身的值。" +
-        "在 Revit 的类型上改值，会作用于这个类型的全部实例。",
+      reads:
+        "检查器先看导出的 IFC 里它的类型对象：类型上是四个值之一，比较类型上的值；类型声明 USERDEFINED，比较它的自由文本；" +
+        "类型什么也没说时，才读构件实例本身的值。这说的是检查器读 IFC 的顺序，不是 Revit 里该改的位置。",
+      revise:
+        "这个值在 Revit 里从哪里写出（类型还是实例、哪个参数、哪项导出设置），返回数据没有记录，本页不指定。" +
+        "改之前先在 Revit 里确认；如果决定在类型上改，会作用于这个类型的全部实例。",
       undecided:
-        "取哪一个值、由谁决定和操作、用哪个 Revit 参数或导出设置写出这个值，返回数据都没有提供。" +
-        "规则只要求四个值之一，不判断哪一个对。",
+        "取哪一个值、由谁决定和操作，返回数据都没有提供。规则只要求四个值之一，不判断哪一个对。",
     },
     recheck: "用同一规则集版本、同一组模型和同一导出设置重新检查，看这个构件在这条要求下的结果。",
     gaps: [
@@ -1047,6 +1066,10 @@ export const RULE_NOTES = {
       "风口所在的模型与风口所在的墙所属的模型是否对齐：需要一份对齐确认记录。",
       "取值是否选对：分类判断要另行记录；检查通过不能反过来证明分类判断正确。",
     ],
+    // Beside a reason whose quoted value is free text rather than one of the
+    // enumeration's values: the checker compared a USERDEFINED type's text.
+    reasonFreeText:
+      "引号里不是预定义类型的枚举值，而是自由文本：类型声明 USERDEFINED 时，检查器拿它的自由文本来比较。",
   },
 };
 
