@@ -430,7 +430,7 @@ IFC 类别：`IfcAirTerminal` 风口、`IfcChimney` 烟囱、`IfcDuctSegment` �
 
 | 键 | 本界面的中文 |
 | --- | --- |
-| `note` | IFC Tag 是导出时写进 IFC 的标记；Revit 导出的通常是构件的 ElementId，可以在 Revit 里按 ID 选中它。这一对应只在个别对象上从 Revit 界面核对过，本页没有逐个核对：选中后请对一下名称和类别。 |
+| `note` | IFC Tag 是导出时写进 IFC 的标记；Revit 导出的通常是构件的 ElementId，可以在 Revit 里按 ID 选中它。本页不能确认这一对应：选中后请核对名称和类别。 |
 | `sources.model-file` | 模型文件里这个构件没有写 Tag。 |
 | `sources.model-file-not-located` | 没有找到这次检查读的那个模型文件，所以读不到 Tag。 |
 | `sources.model-file-differs` | 工作区里的模型文件已经不是这次检查读的那个版本，所以不读取 Tag。 |
@@ -458,15 +458,15 @@ IFC 类别：`IfcAirTerminal` 风口、`IfcChimney` 烟囱、`IfcDuctSegment` �
 | `PV-001.passProves` | 检查器读到的预定义类型属于 DIFFUSER、GRILLE、LOUVRE、REGISTER 四个值之一。 |
 | `PV-001.passDoesNotProve[0]` | 取值正确：四个值中任何一个都会通过，写成 GRILLE 也会通过。 |
 | `PV-001.passDoesNotProve[1]` | 墙上有对应的洞口。 |
-| `PV-001.passDoesNotProve[2]` | 两侧模型已经对齐。 |
+| `PV-001.passDoesNotProve[2]` | 风口所在的模型与外墙所在的模型已经对齐。 |
 | `PV-001.passDoesNotProve[3]` | 任何工作可以开始，包括吊顶和开洞工作。 |
 | `PV-001.userDefined` | 检查器会先把 USERDEFINED 换成它的自由文本再比较：类型写的是 USERDEFINED、文本恰好拼成 LOUVRE，也会通过。规则不接受 USERDEFINED，但这项检查分不出这种情况。 |
-| `PV-001.action.what` | 把它在 IFC 里的预定义类型写成 DIFFUSER、GRILLE、LOUVRE、REGISTER 之一，重新导出，再检查。NOTDEFINED 等于什么都没说。 |
+| `PV-001.action.what` | 回到 Revit 源模型，让这个风口导出后的预定义类型是 DIFFUSER、GRILLE、LOUVRE、REGISTER 之一；重新导出 IFC，再检查。NOTDEFINED 等于什么都没说。 |
 | `PV-001.action.where` | 检查器先读它的类型对象：类型上是四个值之一时，比较的是类型上的值；类型什么也没说时，才读构件本身的值。在 Revit 的类型上改值，会作用于这个类型的全部实例。 |
 | `PV-001.action.undecided` | 取哪一个值、由谁决定和操作、用哪个 Revit 参数或导出设置写出这个值，返回数据都没有提供。规则只要求四个值之一，不判断哪一个对。 |
 | `PV-001.recheck` | 用同一规则集版本、同一组模型和同一导出设置重新检查，看这个构件在这条要求下的结果。 |
-| `PV-001.gaps[0]` | 风口对应的外墙洞口：需要两侧一起做协调评审判定；这项检查不比较两个模型的构件。 |
-| `PV-001.gaps[1]` | 两侧模型是否对齐：需要一份对齐确认记录。 |
+| `PV-001.gaps[0]` | 风口对应的外墙洞口：需要风口所在模型和外墙所在模型的持有方一起做协调评审判定；这项检查不比较两个模型的构件。 |
+| `PV-001.gaps[1]` | 风口所在的模型与外墙所在的模型是否对齐：需要一份对齐确认记录。 |
 | `PV-001.gaps[2]` | 取值是否选对：分类判断要另行记录；检查通过不能反过来证明分类判断正确。 |
 
 **前后对比（`WORKSPACE_COMPARE`）**
@@ -559,3 +559,26 @@ IFC 类别：`IfcAirTerminal` 风口、`IfcChimney` 烟囱、`IfcDuctSegment` �
   仍只说证据“可能是”哪几种，不断言某份记录同时具有三类证据。
 - `re-identification-and-reissue-risk` 改为“有重新标识的风险：引用这些标识的文件届时也须重新出具”。
   “重新发布”仍只指模型。
+
+## 15. 2026-10-03 经理走查前的 C2 措辞修正
+
+依据：BIM 对 #26 的三条约束（经技术总监转述）和产品经理关于首页的决定。路径与未关闭项见
+[真实检查路径](2026-10-03-doctor-real-check-path.md)第 8 节。
+
+| 位置 | 原句 | 现在 |
+| --- | --- | --- |
+| `RULE_NOTES.PV-001.passDoesNotProve[2]` | 两侧模型已经对齐。 | 风口所在的模型与外墙所在的模型已经对齐。 |
+| `RULE_NOTES.PV-001.gaps[0]` | 风口对应的外墙洞口：需要两侧一起做协调评审判定；这项检查不比较两个模型的构件。 | 风口对应的外墙洞口：需要风口所在模型和外墙所在模型的持有方一起做协调评审判定；这项检查不比较两个模型的构件。 |
+| `RULE_NOTES.PV-001.gaps[1]` | 两侧模型是否对齐：需要一份对齐确认记录。 | 风口所在的模型与外墙所在的模型是否对齐：需要一份对齐确认记录。 |
+| `TAG_WORDS.note` 的后半句 | 这一对应只在个别对象上从 Revit 界面核对过，本页没有逐个核对：选中后请对一下名称和类别。 | 本页不能确认这一对应：选中后请核对名称和类别。 |
+| `RULE_NOTES.PV-001.action.what` 的前半句 | 把它在 IFC 里的预定义类型写成 DIFFUSER、GRILLE、LOUVRE、REGISTER 之一，重新导出，再检查。 | 回到 Revit 源模型，让这个风口导出后的预定义类型是 DIFFUSER、GRILLE、LOUVRE、REGISTER 之一；重新导出 IFC，再检查。 |
+| `HOME.statusWithWorkspace`（新增，只在服务器带工作区启动时代替 `HOME.status`） | （带工作区时仍显示）当前为示例预览：尚不能导入自己的 Revit 模型，也不提供整体合规或可施工结论。 | 当前同时提供两样：启动服务器时指定的工作区里一次已经跑完的真实检查，以及模拟示例。页面上不能导入、选择或更换模型，也不提供整体合规或可施工结论。 |
+
+三条规则：
+
+- **两个模型按各自持有什么来称呼**（风口所在的模型、外墙所在的模型），不写专业名，也不从模型标识推断专业。
+  页面上能看到的专业只有返回数据里项目清单声明的 `discipline`，原样显示在模型名旁。
+- **Tag 的说明不讲核对历史。** 某个项目里核对过多少对象，返回数据里没有；页面每次都请人自己核对名称和类别。
+- **“改成什么”从 Revit 源头说起**，不规定用哪个参数或导出机制；那仍是“还没有决定的”一行。
+
+没有带工作区启动时，首页仍是原来的 `HOME.status`。

@@ -188,7 +188,7 @@ class _Modelled(unittest.TestCase):
             {
                 "envelopes": cls.envelopes,
                 "tags": cls.tag_cases,
-                "tables": list(WORKSPACE_TABLES),
+                "tables": [*WORKSPACE_TABLES, "HOME"],
             }
         )
         cls.out = cls.output["out"]
@@ -391,7 +391,10 @@ class TagTests(_Modelled):
         self.assertEqual(set(words["sources"]), emitted)
         self.assertTrue(emitted <= set(words["short"]))
         self.assertIn("ElementId", words["note"])
-        self.assertIn("只在个别对象上从 Revit 界面核对过", words["note"])
+        # The page cannot know how far the Tag-to-ElementId match was checked in
+        # any one project, so it never says; it asks for the check every time.
+        self.assertIn("核对名称和类别", words["note"])
+        self.assertNotRegex(words["note"], r"核对过|个别对象")
         self.assertIn("IFC Tag", self.tables["WORKSPACE"]["columns"]["tag"])
 
 
@@ -413,6 +416,44 @@ class WordingTests(_Modelled):
         self.assertIn("--prior", compare["prior"])
         self.assertIn("--workspace", compare["current"])
         self.assertIn("不能证明先后", compare["order"])
+
+    def test_the_two_models_are_named_by_what_they_hold(self):
+        """No "两侧": a side is the model holding the air terminal or the wall.
+
+        A discipline name could only come from the returned data's declared
+        `discipline`, never from a model identifier, and no sentence here needs
+        one.
+        """
+
+        for name in WORKSPACE_TABLES:
+            for text in _strings(self.tables[name]):
+                with self.subTest(table=name, text=text):
+                    self.assertNotIn("两侧", text)
+        notes = self.tables["RULE_NOTES"]["PV-001"]
+        said = "".join([*notes["passDoesNotProve"], *notes["gaps"]])
+        self.assertIn("风口所在的模型", said)
+        self.assertIn("外墙所在的模型", said)
+
+    def test_what_to_change_starts_from_the_revit_source(self):
+        """The change is made in Revit and exported; no parameter mechanism is named."""
+
+        what = self.tables["RULE_NOTES"]["PV-001"]["action"]["what"]
+        self.assertTrue(what.startswith("回到 Revit 源模型"), what)
+        self.assertIn("重新导出", what)
+        self.assertNotIn("在 IFC 里", what)
+        self.assertNotIn("参数", what)
+
+    def test_the_home_says_what_it_offers_when_a_workspace_is_named(self):
+        home = self.tables["HOME"]
+        self.assertIn("尚不能导入自己的 Revit 模型", home["status"])
+        with_workspace = home["statusWithWorkspace"]
+        for said in ("同时提供", "真实检查", "模拟示例", "整体合规或可施工结论"):
+            with self.subTest(said=said):
+                self.assertIn(said, with_workspace)
+        self.assertNotIn("示例预览", with_workspace)
+        screens = (STATIC / "screens.js").read_text(encoding="utf-8")
+        entry = screens[screens.index("function entry(") : screens.index("function runLink(")]
+        self.assertIn("workspaceRun ? HOME.statusWithWorkspace : HOME.status", entry)
 
     def test_every_refusal_code_has_words(self):
         self.assertEqual(set(self.tables["WORKSPACE_REFUSAL_REASONS"]), set(REFUSAL_CODES))

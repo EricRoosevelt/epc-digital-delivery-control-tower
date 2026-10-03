@@ -90,6 +90,11 @@ export const HOME = {
     "帮助 BIM 经理了解：一次交接前检查发现了什么；复检之后，哪些判断变了、" +
     "哪些事项仍需处理、每一项涉及哪些构件、依据是什么、下一步做什么。",
   status: "当前为示例预览：尚不能导入自己的 Revit 模型，也不提供整体合规或可施工结论。",
+  // Said instead of `status` when the server was started with a workspace:
+  // the home then offers a real check beside the examples.
+  statusWithWorkspace:
+    "当前同时提供两样：启动服务器时指定的工作区里一次已经跑完的真实检查，以及模拟示例。" +
+    "页面上不能导入、选择或更换模型，也不提供整体合规或可施工结论。",
   example: {
     title: "看一个模拟示例",
     body:
@@ -966,7 +971,7 @@ export const WORKSPACE = {
 export const TAG_WORDS = {
   note:
     "IFC Tag 是导出时写进 IFC 的标记；Revit 导出的通常是构件的 ElementId，可以在 Revit 里按 ID 选中它。" +
-    "这一对应只在个别对象上从 Revit 界面核对过，本页没有逐个核对：选中后请对一下名称和类别。",
+    "本页不能确认这一对应：选中后请核对名称和类别。",
   sources: {
     "model-file": "模型文件里这个构件没有写 Tag。",
     "model-file-not-located": "没有找到这次检查读的那个模型文件，所以读不到 Tag。",
@@ -1019,7 +1024,7 @@ export const RULE_NOTES = {
     passDoesNotProve: [
       "取值正确：四个值中任何一个都会通过，写成 GRILLE 也会通过。",
       "墙上有对应的洞口。",
-      "两侧模型已经对齐。",
+      "风口所在的模型与外墙所在的模型已经对齐。",
       "任何工作可以开始，包括吊顶和开洞工作。",
     ],
     userDefined:
@@ -1027,7 +1032,7 @@ export const RULE_NOTES = {
       "规则不接受 USERDEFINED，但这项检查分不出这种情况。",
     action: {
       what:
-        "把它在 IFC 里的预定义类型写成 DIFFUSER、GRILLE、LOUVRE、REGISTER 之一，重新导出，再检查。" +
+        "回到 Revit 源模型，让这个风口导出后的预定义类型是 DIFFUSER、GRILLE、LOUVRE、REGISTER 之一；重新导出 IFC，再检查。" +
         "NOTDEFINED 等于什么都没说。",
       where:
         "检查器先读它的类型对象：类型上是四个值之一时，比较的是类型上的值；类型什么也没说时，才读构件本身的值。" +
@@ -1038,8 +1043,8 @@ export const RULE_NOTES = {
     },
     recheck: "用同一规则集版本、同一组模型和同一导出设置重新检查，看这个构件在这条要求下的结果。",
     gaps: [
-      "风口对应的外墙洞口：需要两侧一起做协调评审判定；这项检查不比较两个模型的构件。",
-      "两侧模型是否对齐：需要一份对齐确认记录。",
+      "风口对应的外墙洞口：需要风口所在模型和外墙所在模型的持有方一起做协调评审判定；这项检查不比较两个模型的构件。",
+      "风口所在的模型与外墙所在的模型是否对齐：需要一份对齐确认记录。",
       "取值是否选对：分类判断要另行记录；检查通过不能反过来证明分类判断正确。",
     ],
   },
