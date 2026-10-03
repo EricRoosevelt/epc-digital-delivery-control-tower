@@ -242,7 +242,7 @@ UNKNOWN 的五个都以“不是模型缺陷”开头，与 Pack 的 `next_actio
 | `work-cannot-start` | 这项工作不能开始 |
 | `work-suspended` | 这项工作暂停 |
 | `rework-risk` | 有返工风险 |
-| `re-identification-and-reissue-risk` | 有重新标识的风险：引用这些标识的文件届时也要更新 |
+| `re-identification-and-reissue-risk` | 有重新标识的风险：引用这些标识的文件届时也须重新出具（第 14 节） |
 
 **复检条件的标签**：`recheck_condition` 写作“复检要显示什么，这一项才算结束”。它说的是结束这一项的条件
 （Pack 各行如 "The opening-status evaluation is re-run and reports … cross-referenced"），不是发起复检的前提。
@@ -309,3 +309,253 @@ IFC 类别：`IfcAirTerminal` 风口、`IfcChimney` 烟囱、`IfcDuctSegment` �
   具体是哪一种，看每个结论旁的“依据”一行，按逐条引用标明。两句都只说“可能是哪几种”：
   没有一份记录同时有这三种，整页级的句子不能断言这一页有什么。
 - **楼层或空间归属的动作句**里“这类构件”改成“这个构件”。记录只到构件这一层。
+
+## 14. 2026-10-03 真实检查路径（工作区入口）新增的说法
+
+依据：产品任务书第 2、4、5、10 节，产品收口与设计指导第 3、4 节，BIM 选例表与取值决定原文（私有区，
+本节不转录其私有标识），规则集说明 `rules/product-validation/README.md`，以及 `doctor/README.md` 里工作区返回数据的字段表。
+路径与取舍见[真实检查路径](2026-10-03-doctor-real-check-path.md)。
+
+三条规则：
+
+- **这里没有交接判断。** 结果只用检查自己的三个词：`FAIL` 不通过、`PASS` 通过、`N/A` 不适用。
+  “受阻／可以开始／无法判断”不出现在这些页面上；页首和每页开头写明没有交接判断。
+- **界面不比较。** 配对、未再评估、新出现、哪些模型变了，都取返回数据的 `comparison`；界面只计数和排列。
+  任何一句都不说“修复”“解决”“改善”。哪一次是“前一次”，是启动命令的指定，页面写明。
+- **通过不带观察值。** 通过的检查结果 `actual` 为空，页面不写它读到了什么。
+
+**入口名**：`workspace` 写作“工作区里的真实检查”。
+
+**原因原文的中文**（按原文逐字匹配，原文始终在旁边）：
+
+| 原文 | 本界面的中文 |
+| --- | --- |
+| The required property set does not exist | 所要求的属性集不存在（要补的是整个属性集，不是给已有属性填值） |
+| Requirement satisfied. | 要求已满足 |
+| The predefined type "NOTDEFINED" does not meet the required type | 预定义类型“NOTDEFINED”不满足要求的类型 |
+| No applicable elements exist in this model. | 这个模型里没有这条要求适用的构件 |
+
+**首页卡片（`WORKSPACE_HOME`）** —— 只在服务器带工作区启动时出现
+
+| 键 | 本界面的中文 |
+| --- | --- |
+| `title` | 查看一次真实检查 |
+| `body` | 启动服务器时指定了一个工作区，里面是一次已经跑完的检查：每个构件在每条要求下的结果。若同时指定了前一次运行，还可以看两次的前后对比。这里只有检查结果，没有交接判断。 |
+| `action` | 查看这次检查 |
+| `unknown` | 未能确认服务器是否指定了工作区： |
+
+**结果页与单条结果（`WORKSPACE`）**
+
+| 键 | 本界面的中文 |
+| --- | --- |
+| `directoryNote` | 工作区只能在启动服务器时指定；这里不能选择、上传或更换模型。 |
+| `directoryNone` | 服务器启动时没有指定工作区，所以这里没有可以查看的检查。要查看，用下面的命令重新启动服务器： |
+| `startCommand` | python doctor/serve.py --workspace <工作区目录> [--prior <前一次运行的目录>] |
+| `openRun` | 打开这次检查的结果 |
+| `back` | ← 返回首页 |
+| `backToList` | ← 返回结果列表 |
+| `contextNoJudgement` | 只有检查结果，没有交接判断 |
+| `contextRun` | 检查运行 |
+| `resultTitle` | 一次真实检查的结果 |
+| `noJudgement` | 这是一次检查的结果，不是交接判断：页面只说每个构件在每条要求下通过、不通过还是不适用，不对任何工作能否开始下结论。 |
+| `summary` | 本次结果：共 {count} 条检查结果 |
+| `unit` | 单位是条：一条是一个构件在一条要求下的结果；模型里没有这条要求适用的构件时，是整个模型的一条。 |
+| `compareLink` | 看与前一次运行的对比 |
+| `compareTeaser` | 服务器启动时还指定了前一次运行。两次结果的前后对比： |
+| `checkedHeading` | 检查了什么 |
+| `ruleTitle` | 要求 |
+| `rulePredicate` | 这条规则要求 |
+| `ruleExpected` | 规则的原话（英文） |
+| `ruleOrigin` | 出处（返回数据的引文，英文原文） |
+| `ruleLabels` | 返回数据的标签 |
+| `productValidation` | 返回数据的标签（ProductValidation）标明：这是一条产品验证规则。 |
+| `noRuleNotes` | 本界面没有为这条规则写中文说明；规则以返回数据里的英文原话为准。 |
+| `noRequirement` | 返回数据没有这条结果所属要求的说明。 |
+| `listHeading` | 逐条结果 |
+| `filterLabel` | 按 IFC Tag、名称或 GlobalId 查找 |
+| `filterAll` | 全部 |
+| `filterNone` | 没有符合筛选条件的结果。 |
+| `filterShown` | 显示 {shown} 条，共 {count} 条 |
+| `columns.status` | 结果 |
+| `columns.tag` | IFC Tag |
+| `columns.name` | 名称 |
+| `columns.class` | 类别 |
+| `columns.storey` | 楼层 |
+| `columns.model` | 模型 |
+| `pickOne` | 从结果列表里选一条，在这里看它的详情。 |
+| `detailKicker` | 一条真实检查结果 |
+| `wholeModel` | 整个模型 |
+| `resultHeading` | 结果 |
+| `findHeading` | 回到 Revit 找哪个对象 |
+| `actionHeading` | 要改什么 |
+| `actionWhat` | 改成什么 |
+| `actionWhere` | 改在哪里 |
+| `actionUndecided` | 还没有决定的 |
+| `requirementHeading` | 具体要求与这次检查的观察 |
+| `reason` | 原因（检查结果的原文） |
+| `actual` | 观察值一栏 |
+| `actualEmpty` | 检查结果中为空。 |
+| `actualHidden` | 检查结果带有观察值；本页不显示取值。 |
+| `recheckHeading` | 复检时看什么 |
+| `passHeading` | 这条通过证明了什么 |
+| `passProves` | 它证明： |
+| `passDoesNotProve` | 它不证明： |
+| `passNoValue` | 通过的检查结果不带它读到的值：只记录了“要求已满足”。 |
+| `passUnwritten` | 通过只说明这条要求被判为满足；它能证明到哪里，本界面没有为这条规则写说明，请看规则原话。 |
+| `notApplicable` | 不适用：这个模型里没有这条要求适用的构件。不适用不是通过。 |
+| `noFinding` | 这次检查里没有这一条结果。 |
+| `identityHeading` | 追溯信息：这次检查的运行号、规则集版本与模型文件 |
+| `findingTrace` | 追溯信息：这条结果的内部键 |
+| `identity.run` | 检查运行号 |
+| `identity.ruleset` | 规则集 |
+| `identity.asOf` | 逻辑日期（运行配置给定，不是运行的时间） |
+| `identity.checkers` | 检查程序 |
+| `identity.models` | 模型 |
+| `identity.modelId` | 模型 |
+| `identity.declaredDiscipline` | 项目清单声明的专业 |
+| `identity.filename` | 文件 |
+| `identity.digest` | 文件内容摘要（SHA-256） |
+| `identity.tagSource` | IFC Tag 的来源 |
+| `identity.elementKey` | 追溯用内部键 |
+| `identity.findingKey` | 检查结果键 |
+| `identity.requirementKey` | 要求键 |
+| `element.name` | 名称 |
+| `element.class` | 类别 |
+| `element.storey` | 楼层 |
+| `element.model` | 所属模型 |
+| `element.file` | 模型文件 |
+| `element.globalId` | GlobalId |
+
+**IFC Tag（`TAG_WORDS`）** —— `tag_source` 的三个值各有一句；表格里用短语，详情里用整句
+
+| 键 | 本界面的中文 |
+| --- | --- |
+| `note` | IFC Tag 是导出时写进 IFC 的标记；Revit 导出的通常是构件的 ElementId，可以在 Revit 里按 ID 选中它。这一对应只在个别对象上从 Revit 界面核对过，本页没有逐个核对：选中后请对一下名称和类别。 |
+| `sources.model-file` | 模型文件里这个构件没有写 Tag。 |
+| `sources.model-file-not-located` | 没有找到这次检查读的那个模型文件，所以读不到 Tag。 |
+| `sources.model-file-differs` | 工作区里的模型文件已经不是这次检查读的那个版本，所以不读取 Tag。 |
+| `sourceNotCarried` | 返回数据没有说明这个模型的 Tag 从哪里读，所以没有 Tag。 |
+| `modelLevel` | 这条结果针对整个模型，没有具体构件可找。 |
+| `useGlobalId` | 在 IFC 里定位用 GlobalId。 |
+| `short.model-file` | 文件里没有 Tag |
+| `short.model-file-not-located` | 未找到模型文件 |
+| `short.model-file-differs` | 模型文件版本不同 |
+| `short.notCarried` | 来源未说明 |
+| `short.modelLevel` | 整个模型 |
+
+**引文的中文（`CITATION_GLOSSES`）** —— 只在返回数据的引文逐字等于原文时显示
+
+| 原文 | 本界面的中文 |
+| --- | --- |
+| Product validation rule of this repository; not a project, owner, statutory or buildingSMART requirement. Values from IFC4 ADD2 TC1 IfcAirTerminalTypeEnum. | 本仓库的产品验证规则；不是项目、业主、法规或 buildingSMART 的要求。取值来自 IFC4 ADD2 TC1 的 IfcAirTerminalTypeEnum。 |
+
+**规则说明（`RULE_NOTES`）** —— 只在返回数据的规则集是 `product-validation` 1.0、规则是 `PV-001` 时使用；出处为规则集说明与 BIM 原文，其他规则集或版本只显示英文原话
+
+| 键 | 本界面的中文 |
+| --- | --- |
+| `PV-001.title` | 风口要声明四种预定义类型之一 |
+| `PV-001.predicate` | 每个适用的风口（IfcAirTerminal）都要声明预定义类型，取值是 DIFFUSER、GRILLE、LOUVRE、REGISTER 之一。IFC4 还允许 USERDEFINED 和 NOTDEFINED；不接受它们是这条规则自己的决定，用它们的模型仍是有效的 IFC4。 |
+| `PV-001.passProves` | 检查器读到的预定义类型属于 DIFFUSER、GRILLE、LOUVRE、REGISTER 四个值之一。 |
+| `PV-001.passDoesNotProve[0]` | 取值正确：四个值中任何一个都会通过，写成 GRILLE 也会通过。 |
+| `PV-001.passDoesNotProve[1]` | 墙上有对应的洞口。 |
+| `PV-001.passDoesNotProve[2]` | 两侧模型已经对齐。 |
+| `PV-001.passDoesNotProve[3]` | 任何工作可以开始，包括吊顶和开洞工作。 |
+| `PV-001.userDefined` | 检查器会先把 USERDEFINED 换成它的自由文本再比较：类型写的是 USERDEFINED、文本恰好拼成 LOUVRE，也会通过。规则不接受 USERDEFINED，但这项检查分不出这种情况。 |
+| `PV-001.action.what` | 把它在 IFC 里的预定义类型写成 DIFFUSER、GRILLE、LOUVRE、REGISTER 之一，重新导出，再检查。NOTDEFINED 等于什么都没说。 |
+| `PV-001.action.where` | 检查器先读它的类型对象：类型上是四个值之一时，比较的是类型上的值；类型什么也没说时，才读构件本身的值。在 Revit 的类型上改值，会作用于这个类型的全部实例。 |
+| `PV-001.action.undecided` | 取哪一个值、由谁决定和操作、用哪个 Revit 参数或导出设置写出这个值，返回数据都没有提供。规则只要求四个值之一，不判断哪一个对。 |
+| `PV-001.recheck` | 用同一规则集版本、同一组模型和同一导出设置重新检查，看这个构件在这条要求下的结果。 |
+| `PV-001.gaps[0]` | 风口对应的外墙洞口：需要两侧一起做协调评审判定；这项检查不比较两个模型的构件。 |
+| `PV-001.gaps[1]` | 两侧模型是否对齐：需要一份对齐确认记录。 |
+| `PV-001.gaps[2]` | 取值是否选对：分类判断要另行记录；检查通过不能反过来证明分类判断正确。 |
+
+**前后对比（`WORKSPACE_COMPARE`）**
+
+| 键 | 本界面的中文 |
+| --- | --- |
+| `title` | 复检对比：同一项检查，前后两次运行 |
+| `lede` | 下面的配对、未再评估和新出现都由返回数据给出，页面只计数和排列。 |
+| `runsHeading` | 两次运行 |
+| `prior` | 被指定为前一次的运行（启动时用 --prior 指定） |
+| `current` | 本次运行（启动时用 --workspace 指定） |
+| `order` | 哪一次在前，是启动服务器时的指定；返回数据本身不能证明先后。 |
+| `same` | 两次运行的规则集、各条要求的谓词、检查程序、逻辑日期和模型组都相同；其中任何一项不同，系统都会拒绝对比，不给出任何一侧的结果。 |
+| `changedHeading` | 一、什么变了 |
+| `differs` | 两次结果不同的：{count} 条 |
+| `differsNone` | 没有两次结果不同的。 |
+| `unchanged` | 两次结果相同的：{count} 条 |
+| `unchangedNone` | 没有两次结果相同的。 |
+| `transition` | {prior} → {current}：{count} 条 |
+| `rows` | {count} 条 |
+| `notReEvaluated.label` | 只在前一次有结果的（本次没有再评估）：{count} 条 |
+| `notReEvaluated.note` | 这些只有前一次的结果，本次没有再评估。它们不是通过。 |
+| `newlyAppearing.label` | 只在本次有结果的（新出现）：{count} 条 |
+| `newlyAppearing.note` | 这些结果前一次没有。 |
+| `inCurrent.true` | 构件还在本次的构件清单里 |
+| `inCurrent.false` | 构件不在本次的构件清单里 |
+| `inCurrent.null` | 整个模型的一条结果，不针对构件 |
+| `inPrior.true` | 构件在前一次的构件清单里 |
+| `inPrior.false` | 构件不在前一次的构件清单里 |
+| `inPrior.null` | 整个模型的一条结果，不针对构件 |
+| `whyHeading` | 二、为什么会变：返回数据能说明的部分 |
+| `changedModels` | 两次之间内容变了的模型（返回数据列出）： |
+| `noChangedModels` | 返回数据没有列出内容变了的模型：两次读的是同样的模型文件。 |
+| `unchangedModels` | 内容未变的模型： |
+| `why` | 两次的规则集、要求谓词、检查程序和逻辑日期都相同。在返回数据比较过的这些输入里，两次之间不同的只有上面列出的模型文件内容；模型文件里改了哪些地方，返回数据没有逐项列出。 |
+| `notInData` | 在 Revit 里改了什么、取值由谁决定、由谁操作，返回数据没有记录。 |
+| `gapsHeading` | 三、还缺什么证据 |
+| `passLink` | 一条通过证明了什么、没证明什么，见通过那几条的详情。 |
+| `open` | 查看 |
+| `detailHeading` | 和前一次运行比 |
+| `detailPrior` | 前一次的结果 |
+| `detailCurrent` | 本次的结果 |
+| `detailNewly` | 前一次运行没有这一条结果：它是新出现的。 |
+| `detailNone` | 返回数据的对比里没有这一条。 |
+| `priorReason` | 前一次的原因（原文） |
+| `currentReason` | 本次的原因（原文） |
+| `noComparison` | 服务器启动时没有指定前一次运行，所以没有对比。要对比，启动时加上 --prior。 |
+| `elementMissing` | 返回数据没有这个构件的可读信息 |
+
+**对比被拒绝（`WORKSPACE_REFUSAL`）** —— 拒绝码与系统原文始终在折叠区
+
+| 键 | 本界面的中文 |
+| --- | --- |
+| `title` | 这两次运行不能对比 |
+| `lede` | 系统拒绝了这次对比，并列出了全部原因。这是对请求条件的答复，不是程序故障，也不是检查结果：任何一侧的检查结果都没有返回。 |
+| `reasonsHeading` | 为什么不能对比 |
+| `actionHeading` | 要能对比，需要什么 |
+| `action[0]` | 两次运行要用同一规则集（同一版本、同一内容）、同一组要求、同一检查程序、同一逻辑日期和同一组模型；两次之间只能是模型文件的内容不同。 |
+| `action[1]` | 确认启动时用 --prior 指定的确实是同一项检查的前一次运行；或者去掉 --prior 重新启动服务器，只看本次检查的结果。 |
+| `scope` | 处理这些原因之后能否对比，以下一次返回为准。 |
+| `original` | 系统返回的原文（英文）与拒绝码 |
+| `code` | 拒绝码 |
+| `unglossed` | 本界面没有这个原因的中文说明，见下面的原文。 |
+| `noResult` | 没有任何结果、零问题统计或完成比例：被拒绝不是一次没有问题的检查。 |
+
+**拒绝原因（`WORKSPACE_REFUSAL_REASONS`）** —— 九个拒绝码，各一句
+
+| 键 | 本界面的中文 |
+| --- | --- |
+| `ruleset-id-differs` | 两次用的不是同一个规则集。 |
+| `ruleset-version-differs` | 两次用的规则集版本不同。 |
+| `ruleset-digest-differs` | 两次用的规则集内容不同（内容摘要不同）。 |
+| `requirement-set-differs` | 两次评估的不是同一组要求。 |
+| `requirement-semantics-not-recorded` | 有一次运行没有记录某条要求的谓词摘要，无法证明两次是同一个检查。 |
+| `requirement-semantics-differs` | 同一条要求，两次的谓词不同：检查的内容改过。 |
+| `checker-differs` | 两次的检查程序、版本或配置不同。 |
+| `as-of-differs` | 两次运行的逻辑日期不同。 |
+| `model-set-differs` | 两次检查的不是同一组模型。 |
+
+**返回数据形状不符（`ENVELOPE_WORDS`）** —— 显示为程序故障，不是结果也不是拒绝
+
+| 键 | 本界面的中文 |
+| --- | --- |
+| `missing` | outcome={outcome} 但缺少 {key} |
+| `unexpected` | outcome={outcome} 却同时带有 {key} |
+
+**顺带完成的两处措辞**（收口文件第 9 节）：
+
+- 页首与目录的来源提示加上：“示例中的项目设定，包括处理团队安排、证据方法的接受等，是演示用设定，不代表真实项目决定。”
+  仍只说证据“可能是”哪几种，不断言某份记录同时具有三类证据。
+- `re-identification-and-reissue-risk` 改为“有重新标识的风险：引用这些标识的文件届时也须重新出具”。
+  “重新发布”仍只指模型。

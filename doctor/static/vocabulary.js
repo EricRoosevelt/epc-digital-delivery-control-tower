@@ -8,6 +8,9 @@
 export const MODE_LABELS = {
   fixture: "模拟示例",
   real: "随附项目的检查尝试",
+  // A run somebody finished in a workspace named when the server was started.
+  // Not "upload" and not "your model": nothing can be chosen from the page.
+  workspace: "工作区里的真实检查",
 };
 
 //: The adapter names its scenarios; these are this preview's words for them.
@@ -72,7 +75,8 @@ export const FOLLOW_UP = {
 // sentence about a whole page cannot assert what that page contains.
 export const DIRECTORY_NOTE =
   "每个示例是一份检查记录。一个结论的证据可能是真实检查的结果，可能是模拟的检查结果，也可能是模拟的人工判定；" +
-  "具体是哪一种，看结果页和事项页每个结论旁的“依据”一行，按逐条引用标明。处理团队的安排是示例设定的。";
+  "具体是哪一种，看结果页和事项页每个结论旁的“依据”一行，按逐条引用标明。" +
+  "示例中的项目设定，包括处理团队安排、证据方法的接受等，是演示用设定，不代表真实项目决定。";
 
 export const EXAMPLE_NOTE =
   "示例说明由搭建示例的人提供，只说这个示例被给了什么；它不是检查得出的结论。" +
@@ -185,7 +189,8 @@ export const POLICY_SOURCE_NOTE =
 // Shown at the head of every example page, whichever record it shows — so it
 // says which kinds a conclusion's evidence may be, never which this page has.
 export const DEMO_NOTICE =
-  "模拟示例：处理团队的安排是示例设定的；一个结论的证据可能是真实检查的结果、模拟的检查结果或模拟的人工判定，" +
+  "模拟示例：示例中的项目设定，包括处理团队安排、证据方法的接受等，是演示用设定，不代表真实项目决定；" +
+  "一个结论的证据可能是真实检查的结果、模拟的检查结果或模拟的人工判定，" +
   "具体是哪一种，看每个结论旁的“依据”一行（按逐条引用标明）。不能用于正式项目决定，也不能导出正式检查记录。";
 
 const ABSENCES = {
@@ -627,15 +632,21 @@ export const DETAILS_WORDS = {
 // for it. Read off the entry's own `labels`; the page does not assert it.
 export const PROJECT_ASSUMPTION = "ProjectAssumption";
 
+// A check's own three results. On the workspace pages these are the only
+// result words: no handover assessment was made there, so no verdict is said.
 export const FINDING_STATUS = {
-  PASS: "通过",
   FAIL: "不通过",
+  PASS: "通过",
+  "N/A": "不适用",
 };
 
 export const REASON_GLOSSES = {
   "The required property set does not exist":
     "所要求的属性集不存在（要补的是整个属性集，不是给已有属性填值）",
   "Requirement satisfied.": "要求已满足",
+  'The predefined type "NOTDEFINED" does not meet the required type':
+    "预定义类型“NOTDEFINED”不满足要求的类型",
+  "No applicable elements exist in this model.": "这个模型里没有这条要求适用的构件",
 };
 
 // What each verdict word means, said once in "how to read this page" and not
@@ -773,8 +784,9 @@ export const CONSEQUENCE_KINDS = {
   "rework-risk": "有返工风险",
   // Not a re-issue of the model: Checkpoint B's consequence is that rows keyed
   // to a placeholder have to be re-identified and the documents quoting them
-  // re-issued. "重新发布" is kept for a model and is not used here.
-  "re-identification-and-reissue-risk": "有重新标识的风险：引用这些标识的文件届时也要更新",
+  // re-issued. "重新发布" is kept for a model and is not used here; a document
+  // is "重新出具", the source's word, not merely updated.
+  "re-identification-and-reissue-risk": "有重新标识的风险：引用这些标识的文件届时也须重新出具",
 };
 
 // Why a check attempt did not start, by refusal code, and what would have to
@@ -830,3 +842,304 @@ export const carryOverReason = (value) => glossed(CARRY_OVER_REASONS, value);
 // Shown on every refusal, whatever the code: clearing the reason this run was
 // refused is not a promise that the next one is assessable.
 export const REFUSAL_SCOPE_NOTE = "处理当前拒绝原因不保证随后可评估；其余限制尚未由本次运行验证。";
+
+// ---------------------------------------------------------------------------
+// The workspace entry: one real check, and its comparison with an earlier run
+// ---------------------------------------------------------------------------
+//
+// A workspace envelope is a validation run and nothing more. No handover
+// assessment was made, so these pages say no verdict, team, work consequence or
+// "can start"; the result words are the check's own three (FINDING_STATUS).
+//
+// Every sentence that compares is about two statuses the adapter put side by
+// side. None says a thing was mended, and none is used for a row only one run
+// evaluated. Which run is the earlier one is the start-up command's word, and
+// the pages say so.
+
+// The home card, shown only when the server was started with a workspace.
+export const WORKSPACE_HOME = {
+  title: "查看一次真实检查",
+  body:
+    "启动服务器时指定了一个工作区，里面是一次已经跑完的检查：每个构件在每条要求下的结果。" +
+    "若同时指定了前一次运行，还可以看两次的前后对比。这里只有检查结果，没有交接判断。",
+  action: "查看这次检查",
+  unknown: "未能确认服务器是否指定了工作区：",
+};
+
+// Short labels and the sentences around them. Every string a workspace page
+// shows is here, so the wording can be reviewed — and later translated — in one
+// place.
+export const WORKSPACE = {
+  directoryNote: "工作区只能在启动服务器时指定；这里不能选择、上传或更换模型。",
+  directoryNone:
+    "服务器启动时没有指定工作区，所以这里没有可以查看的检查。要查看，用下面的命令重新启动服务器：",
+  startCommand: "python doctor/serve.py --workspace <工作区目录> [--prior <前一次运行的目录>]",
+  openRun: "打开这次检查的结果",
+  back: "← 返回首页",
+  backToList: "← 返回结果列表",
+  contextNoJudgement: "只有检查结果，没有交接判断",
+  contextRun: "检查运行",
+  resultTitle: "一次真实检查的结果",
+  noJudgement:
+    "这是一次检查的结果，不是交接判断：页面只说每个构件在每条要求下通过、不通过还是不适用，" +
+    "不对任何工作能否开始下结论。",
+  summary: "本次结果：共 {count} 条检查结果",
+  unit:
+    "单位是条：一条是一个构件在一条要求下的结果；模型里没有这条要求适用的构件时，是整个模型的一条。",
+  compareLink: "看与前一次运行的对比",
+  compareTeaser: "服务器启动时还指定了前一次运行。两次结果的前后对比：",
+  checkedHeading: "检查了什么",
+  ruleTitle: "要求",
+  rulePredicate: "这条规则要求",
+  ruleExpected: "规则的原话（英文）",
+  ruleOrigin: "出处（返回数据的引文，英文原文）",
+  ruleLabels: "返回数据的标签",
+  productValidation: "返回数据的标签（ProductValidation）标明：这是一条产品验证规则。",
+  noRuleNotes: "本界面没有为这条规则写中文说明；规则以返回数据里的英文原话为准。",
+  noRequirement: "返回数据没有这条结果所属要求的说明。",
+  listHeading: "逐条结果",
+  filterLabel: "按 IFC Tag、名称或 GlobalId 查找",
+  filterAll: "全部",
+  filterNone: "没有符合筛选条件的结果。",
+  filterShown: "显示 {shown} 条，共 {count} 条",
+  columns: {
+    status: "结果",
+    tag: "IFC Tag",
+    name: "名称",
+    class: "类别",
+    storey: "楼层",
+    model: "模型",
+  },
+  pickOne: "从结果列表里选一条，在这里看它的详情。",
+  detailKicker: "一条真实检查结果",
+  wholeModel: "整个模型",
+  resultHeading: "结果",
+  findHeading: "回到 Revit 找哪个对象",
+  actionHeading: "要改什么",
+  actionWhat: "改成什么",
+  actionWhere: "改在哪里",
+  actionUndecided: "还没有决定的",
+  requirementHeading: "具体要求与这次检查的观察",
+  reason: "原因（检查结果的原文）",
+  actual: "观察值一栏",
+  actualEmpty: "检查结果中为空。",
+  actualHidden: "检查结果带有观察值；本页不显示取值。",
+  recheckHeading: "复检时看什么",
+  passHeading: "这条通过证明了什么",
+  passProves: "它证明：",
+  passDoesNotProve: "它不证明：",
+  passNoValue: "通过的检查结果不带它读到的值：只记录了“要求已满足”。",
+  passUnwritten:
+    "通过只说明这条要求被判为满足；它能证明到哪里，本界面没有为这条规则写说明，请看规则原话。",
+  notApplicable: "不适用：这个模型里没有这条要求适用的构件。不适用不是通过。",
+  noFinding: "这次检查里没有这一条结果。",
+  identityHeading: "追溯信息：这次检查的运行号、规则集版本与模型文件",
+  findingTrace: "追溯信息：这条结果的内部键",
+  identity: {
+    run: "检查运行号",
+    ruleset: "规则集",
+    asOf: "逻辑日期（运行配置给定，不是运行的时间）",
+    checkers: "检查程序",
+    models: "模型",
+    modelId: "模型",
+    declaredDiscipline: "项目清单声明的专业",
+    filename: "文件",
+    digest: "文件内容摘要（SHA-256）",
+    tagSource: "IFC Tag 的来源",
+    elementKey: "追溯用内部键",
+    findingKey: "检查结果键",
+    requirementKey: "要求键",
+  },
+  element: {
+    name: "名称",
+    class: "类别",
+    storey: "楼层",
+    model: "所属模型",
+    file: "模型文件",
+    globalId: "GlobalId",
+  },
+};
+
+// The IFC Tag, beside every Tag shown, and what is said when there is none.
+// Which of the three sources applies is the returned data's `tag_source`; an
+// element with no `tag` key under a readable file states no Tag in that file.
+export const TAG_WORDS = {
+  note:
+    "IFC Tag 是导出时写进 IFC 的标记；Revit 导出的通常是构件的 ElementId，可以在 Revit 里按 ID 选中它。" +
+    "这一对应只在个别对象上从 Revit 界面核对过，本页没有逐个核对：选中后请对一下名称和类别。",
+  sources: {
+    "model-file": "模型文件里这个构件没有写 Tag。",
+    "model-file-not-located": "没有找到这次检查读的那个模型文件，所以读不到 Tag。",
+    "model-file-differs": "工作区里的模型文件已经不是这次检查读的那个版本，所以不读取 Tag。",
+  },
+  sourceNotCarried: "返回数据没有说明这个模型的 Tag 从哪里读，所以没有 Tag。",
+  modelLevel: "这条结果针对整个模型，没有具体构件可找。",
+  useGlobalId: "在 IFC 里定位用 GlobalId。",
+  // The same facts in a table cell; the sentence above is in the detail.
+  short: {
+    "model-file": "文件里没有 Tag",
+    "model-file-not-located": "未找到模型文件",
+    "model-file-differs": "模型文件版本不同",
+    notCarried: "来源未说明",
+    modelLevel: "整个模型",
+  },
+};
+
+// What the data's own words say, glossed by exact match only. A citation not
+// listed is shown alone, as it came.
+export const CITATION_GLOSSES = {
+  "Product validation rule of this repository; not a project, owner, statutory or buildingSMART requirement. Values from IFC4 ADD2 TC1 IfcAirTerminalTypeEnum.":
+    "本仓库的产品验证规则；不是项目、业主、法规或 buildingSMART 的要求。取值来自 IFC4 ADD2 TC1 的 IfcAirTerminalTypeEnum。",
+};
+
+// The label a requirement carries when it is a product validation rule. Read
+// off the requirement's own `labels`; the page does not assert it.
+export const PRODUCT_VALIDATION = "ProductValidation";
+
+// Sentences about one rule, for the one rule set version they were written
+// against. A `(ruleset id, version)` pair names exactly one set of rules — the
+// rule set's own test refuses an edited rule under a kept version — so under
+// any other rule set or version none of these is shown and the rule's English
+// stands alone.
+//
+// Their sources: the rule set's README (what a pass says and does not say,
+// where the checker reads the value from, USERDEFINED replaced by its text) and
+// the BIM reviewer's selection and value decision (the four things a pass does
+// not prove, the evidence still missing). No sentence says what value a pass
+// read: a passing check result carries none.
+export const RULE_NOTES_FOR = { ruleset: "product-validation", version: "1.0" };
+
+export const RULE_NOTES = {
+  "PV-001": {
+    title: "风口要声明四种预定义类型之一",
+    predicate:
+      "每个适用的风口（IfcAirTerminal）都要声明预定义类型，取值是 DIFFUSER、GRILLE、LOUVRE、REGISTER 之一。" +
+      "IFC4 还允许 USERDEFINED 和 NOTDEFINED；不接受它们是这条规则自己的决定，用它们的模型仍是有效的 IFC4。",
+    passProves: "检查器读到的预定义类型属于 DIFFUSER、GRILLE、LOUVRE、REGISTER 四个值之一。",
+    passDoesNotProve: [
+      "取值正确：四个值中任何一个都会通过，写成 GRILLE 也会通过。",
+      "墙上有对应的洞口。",
+      "两侧模型已经对齐。",
+      "任何工作可以开始，包括吊顶和开洞工作。",
+    ],
+    userDefined:
+      "检查器会先把 USERDEFINED 换成它的自由文本再比较：类型写的是 USERDEFINED、文本恰好拼成 LOUVRE，也会通过。" +
+      "规则不接受 USERDEFINED，但这项检查分不出这种情况。",
+    action: {
+      what:
+        "把它在 IFC 里的预定义类型写成 DIFFUSER、GRILLE、LOUVRE、REGISTER 之一，重新导出，再检查。" +
+        "NOTDEFINED 等于什么都没说。",
+      where:
+        "检查器先读它的类型对象：类型上是四个值之一时，比较的是类型上的值；类型什么也没说时，才读构件本身的值。" +
+        "在 Revit 的类型上改值，会作用于这个类型的全部实例。",
+      undecided:
+        "取哪一个值、由谁决定和操作、用哪个 Revit 参数或导出设置写出这个值，返回数据都没有提供。" +
+        "规则只要求四个值之一，不判断哪一个对。",
+    },
+    recheck: "用同一规则集版本、同一组模型和同一导出设置重新检查，看这个构件在这条要求下的结果。",
+    gaps: [
+      "风口对应的外墙洞口：需要两侧一起做协调评审判定；这项检查不比较两个模型的构件。",
+      "两侧模型是否对齐：需要一份对齐确认记录。",
+      "取值是否选对：分类判断要另行记录；检查通过不能反过来证明分类判断正确。",
+    ],
+  },
+};
+
+// The before/after page. The pairing, the rows only one run has and the models
+// whose content changed are the adapter's; the page counts and arranges them.
+export const WORKSPACE_COMPARE = {
+  title: "复检对比：同一项检查，前后两次运行",
+  lede: "下面的配对、未再评估和新出现都由返回数据给出，页面只计数和排列。",
+  runsHeading: "两次运行",
+  prior: "被指定为前一次的运行（启动时用 --prior 指定）",
+  current: "本次运行（启动时用 --workspace 指定）",
+  order: "哪一次在前，是启动服务器时的指定；返回数据本身不能证明先后。",
+  same:
+    "两次运行的规则集、各条要求的谓词、检查程序、逻辑日期和模型组都相同；其中任何一项不同，系统都会拒绝对比，" +
+    "不给出任何一侧的结果。",
+  changedHeading: "一、什么变了",
+  differs: "两次结果不同的：{count} 条",
+  differsNone: "没有两次结果不同的。",
+  unchanged: "两次结果相同的：{count} 条",
+  unchangedNone: "没有两次结果相同的。",
+  transition: "{prior} → {current}：{count} 条",
+  rows: "{count} 条",
+  notReEvaluated: {
+    label: "只在前一次有结果的（本次没有再评估）：{count} 条",
+    note: "这些只有前一次的结果，本次没有再评估。它们不是通过。",
+  },
+  newlyAppearing: {
+    label: "只在本次有结果的（新出现）：{count} 条",
+    note: "这些结果前一次没有。",
+  },
+  inCurrent: {
+    true: "构件还在本次的构件清单里",
+    false: "构件不在本次的构件清单里",
+    null: "整个模型的一条结果，不针对构件",
+  },
+  inPrior: {
+    true: "构件在前一次的构件清单里",
+    false: "构件不在前一次的构件清单里",
+    null: "整个模型的一条结果，不针对构件",
+  },
+  whyHeading: "二、为什么会变：返回数据能说明的部分",
+  changedModels: "两次之间内容变了的模型（返回数据列出）：",
+  noChangedModels: "返回数据没有列出内容变了的模型：两次读的是同样的模型文件。",
+  unchangedModels: "内容未变的模型：",
+  why:
+    "两次的规则集、要求谓词、检查程序和逻辑日期都相同。在返回数据比较过的这些输入里，两次之间不同的只有上面列出的模型文件内容；" +
+    "模型文件里改了哪些地方，返回数据没有逐项列出。",
+  notInData: "在 Revit 里改了什么、取值由谁决定、由谁操作，返回数据没有记录。",
+  gapsHeading: "三、还缺什么证据",
+  passLink: "一条通过证明了什么、没证明什么，见通过那几条的详情。",
+  open: "查看",
+  detailHeading: "和前一次运行比",
+  detailPrior: "前一次的结果",
+  detailCurrent: "本次的结果",
+  detailNewly: "前一次运行没有这一条结果：它是新出现的。",
+  detailNone: "返回数据的对比里没有这一条。",
+  priorReason: "前一次的原因（原文）",
+  currentReason: "本次的原因（原文）",
+  noComparison: "服务器启动时没有指定前一次运行，所以没有对比。要对比，启动时加上 --prior。",
+  elementMissing: "返回数据没有这个构件的可读信息",
+};
+
+// What is wrong with a workspace envelope's shape. Shown as a fault of the
+// program, never as a result or a refusal.
+export const ENVELOPE_WORDS = {
+  missing: "outcome={outcome} 但缺少 {key}",
+  unexpected: "outcome={outcome} 却同时带有 {key}",
+};
+
+// Why a comparison was refused, by code. Each is one precondition the adapter
+// names; the code and the adapter's own sentence stay on the page beside it.
+export const WORKSPACE_REFUSAL = {
+  title: "这两次运行不能对比",
+  lede:
+    "系统拒绝了这次对比，并列出了全部原因。这是对请求条件的答复，不是程序故障，也不是检查结果：" +
+    "任何一侧的检查结果都没有返回。",
+  reasonsHeading: "为什么不能对比",
+  actionHeading: "要能对比，需要什么",
+  action: [
+    "两次运行要用同一规则集（同一版本、同一内容）、同一组要求、同一检查程序、同一逻辑日期和同一组模型；" +
+      "两次之间只能是模型文件的内容不同。",
+    "确认启动时用 --prior 指定的确实是同一项检查的前一次运行；或者去掉 --prior 重新启动服务器，只看本次检查的结果。",
+  ],
+  scope: "处理这些原因之后能否对比，以下一次返回为准。",
+  original: "系统返回的原文（英文）与拒绝码",
+  code: "拒绝码",
+  unglossed: "本界面没有这个原因的中文说明，见下面的原文。",
+  noResult: "没有任何结果、零问题统计或完成比例：被拒绝不是一次没有问题的检查。",
+};
+
+export const WORKSPACE_REFUSAL_REASONS = {
+  "ruleset-id-differs": "两次用的不是同一个规则集。",
+  "ruleset-version-differs": "两次用的规则集版本不同。",
+  "ruleset-digest-differs": "两次用的规则集内容不同（内容摘要不同）。",
+  "requirement-set-differs": "两次评估的不是同一组要求。",
+  "requirement-semantics-not-recorded": "有一次运行没有记录某条要求的谓词摘要，无法证明两次是同一个检查。",
+  "requirement-semantics-differs": "同一条要求，两次的谓词不同：检查的内容改过。",
+  "checker-differs": "两次的检查程序、版本或配置不同。",
+  "as-of-differs": "两次运行的逻辑日期不同。",
+  "model-set-differs": "两次检查的不是同一组模型。",
+};

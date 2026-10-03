@@ -31,6 +31,7 @@ import {
 } from "./dom.js";
 import { basisOf, firstCheckItem, firstCheckModel, leafOf } from "./first-check-model.js";
 import { handoverSide, recheckModel, sealedGroupIndex } from "./recheck-model.js";
+import { workspaceCheck, workspaceCompare, workspaceRefusal } from "./workspace-screens.js";
 import {
   ACTION_GROUPS,
   ACTION_PACK,
@@ -81,6 +82,8 @@ import {
   VERDICT_LABELS,
   VERDICT_SCOPE,
   VERDICT_WORDS,
+  WORKSPACE,
+  WORKSPACE_HOME,
   absence,
   citationProvenance,
   conditionState,
@@ -96,16 +99,16 @@ const UNIMPLEMENTED_AUTHORISER = "当前未实现（E2），没有授权记录";
 // Omitted keys, and the provenance of one citation
 // ---------------------------------------------------------------------------
 
-function carries(object, key) {
+export function carries(object, key) {
   return object !== null && typeof object === "object" && Object.hasOwn(object, key);
 }
 
-function carried(object, key) {
+export function carried(object, key) {
   return carries(object, key) ? object[key] : undefined;
 }
 
 /** ``render(value)`` when the key is carried, the two absences named otherwise. */
-function field(object, key, render) {
+export function field(object, key, render) {
   if (!carries(object, key)) return missing(NOT_CARRIED);
   const value = object[key];
   if (value === "") return missing(EMPTY_STRING);
@@ -176,7 +179,7 @@ export function runLabel(runId) {
   return Object.hasOwn(RUN_LABELS, runId) ? RUN_LABELS[runId] : runId;
 }
 
-function short(value) {
+export function short(value) {
   return value && value.length > 12 ? `${value.slice(0, 12)}…` : value;
 }
 
@@ -201,6 +204,12 @@ export function renderContext(state) {
         {},
         `交接：${context.handover.from_role} → ${context.handover.to_role} · ${context.handover.milestone}`,
       ),
+    );
+  } else if (state.envelope && state.envelope.outcome === "validation") {
+    // A workspace run: which run, and that it is a check and nothing more.
+    bar.append(
+      h("span", {}, `${WORKSPACE.contextRun} `, field(state.envelope.run, "validation_run_id", code)),
+      h("span", { class: "no-judgement" }, WORKSPACE.contextNoJudgement),
     );
   } else if (state.envelope && state.envelope.outcome === "refusal") {
     bar.append(h("span", {}, "本次没有检查结果"));
@@ -261,7 +270,7 @@ function activityShortName(activityRef) {
   return index >= 0 ? activityRef.slice(index + 2) : activityRef;
 }
 
-function tableWrap(node) {
+export function tableWrap(node) {
   return h("div", { class: "table-wrap" }, node);
 }
 
@@ -339,8 +348,10 @@ function locate(state, subscopeMembers, activity, memberIndex) {
 // S0 — entry
 // ---------------------------------------------------------------------------
 
-function entry() {
-  const card = (mode, words, primary) =>
+// `workspace` is what the server answered when asked for workspace runs: the
+// runs it offers, or the error it gave. The card is there only for a run.
+function entry(workspace = { runs: [] }) {
+  const card = (mode, words, primary, runId = null) =>
     h(
       "article",
       { class: primary ? "entry-card primary" : "entry-card" },
@@ -352,12 +363,14 @@ function entry() {
           type: "button",
           onclick: () => {
             clearResults(mode);
-            go(mode);
+            if (runId === null) go(mode);
+            else go(mode, runId);
           },
         },
         words.action,
       ),
     );
+  const workspaceRun = carries(workspace, "runs") && workspace.runs.length ? workspace.runs[0] : null;
   return h(
     "div",
     { class: "home" },
@@ -372,9 +385,13 @@ function entry() {
       h(
         "div",
         { class: "entry-grid" },
-        card("fixture", HOME.example, true),
+        workspaceRun ? card("workspace", WORKSPACE_HOME, true, workspaceRun.run_id) : null,
+        card("fixture", HOME.example, !workspaceRun),
         card("real", HOME.attempt, false),
       ),
+      carries(workspace, "error")
+        ? h("p", { class: "problem" }, WORKSPACE_HOME.unknown, workspace.error)
+        : null,
     ),
     h(
       "section",
@@ -402,6 +419,31 @@ function runLink(mode, run) {
 function runs(state) {
   const mode = state.mode;
   const container = h("div", {});
+  if (mode === "workspace") {
+    // Named when the server was started; nothing on this page chooses one.
+    container.append(
+      h("p", {}, link(WORKSPACE.back, href())),
+      h("h1", {}, MODE_LABELS.workspace),
+      note(WORKSPACE.directoryNote),
+    );
+    if (!state.runs.length) {
+      container.append(
+        h("p", { class: "problem" }, WORKSPACE.directoryNone),
+        h("pre", { class: "refusal-text" }, WORKSPACE.startCommand),
+      );
+      return container;
+    }
+    container.append(
+      h(
+        "ul",
+        { class: "run-list" },
+        state.runs.map((run) =>
+          h("li", {}, h("a", { class: "run", href: href(mode, run.run_id) }, WORKSPACE.openRun)),
+        ),
+      ),
+    );
+    return container;
+  }
   if (mode === "real") {
     container.append(
       h("h1", {}, MODE_LABELS.real),
@@ -1683,7 +1725,7 @@ function glossary(title, entries) {
 }
 
 /** A code the record carried and this preview has no words for. */
-function unrecognised(value) {
+export function unrecognised(value) {
   return h("span", { class: "gloss unknown" }, code(String(value)), ` ${UNRECOGNISED}`);
 }
 
@@ -1805,19 +1847,19 @@ function reissueBlock(reissue) {
 // described: name, IFC class, storey, GlobalId and model. Discipline is not
 // among them and is said to be missing rather than read off the model key.
 
-function className(ifcClass) {
+export function className(ifcClass) {
   return Object.hasOwn(IFC_CLASS_NAMES, ifcClass)
     ? [IFC_CLASS_NAMES[ifcClass], " ", h("span", { class: "sub" }, code(ifcClass))]
     : [code(ifcClass), " ", h("span", { class: "sub" }, ELEMENT_WORDS.noClassName)];
 }
 
 // A carried empty storey is a value: the element has no storey assignment.
-function storeyOf(facts) {
+export function storeyOf(facts) {
   if (!carries(facts, "storey")) return missing(NOT_CARRIED);
   return facts.storey === "" ? ELEMENT_WORDS.noStorey : facts.storey;
 }
 
-function named(facts) {
+export function named(facts) {
   return facts !== null && carries(facts, "name") && facts.name !== "";
 }
 
@@ -2625,6 +2667,9 @@ function refusal(state) {
 
 export const screens = {
   entry,
+  workspaceCheck,
+  workspaceCompare,
+  workspaceRefusal,
   runs,
   record,
   activity,
