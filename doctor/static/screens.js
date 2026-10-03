@@ -31,10 +31,12 @@ import {
 } from "./dom.js";
 import { basisOf, firstCheckItem, firstCheckModel, leafOf } from "./first-check-model.js";
 import { handoverSide, recheckModel, sealedGroupIndex } from "./recheck-model.js";
+import { fill } from "./i18n.js";
 import { workspaceCheck, workspaceCompare, workspaceRefusal } from "./workspace-screens.js";
 import {
   ACTION_GROUPS,
   ACTION_PACK,
+  ACTION_TEXT,
   ACTIONS,
   ACTIVITY_NAMES,
   BASIS_WORDS,
@@ -44,10 +46,13 @@ import {
   CHANGED_ASPECTS,
   CITATION_KINDS,
   CITATION_PROVENANCE,
+  COMMON,
   CONDITION_STATES,
   CONSEQUENCE_KINDS,
+  CONTEXT,
   DEMO_NOTICE,
   DETAILS_WORDS,
+  DIRECTORY,
   DIRECTORY_NOTE,
   DISPOSITIONS,
   ELEMENT_WORDS,
@@ -55,6 +60,7 @@ import {
   EXAMPLES,
   EXAMPLE_NOTE,
   FINDING_STATUS,
+  FIRST,
   FOLLOW_UP,
   HANDOVER_SIDES,
   HOME,
@@ -68,6 +74,7 @@ import {
   POLICY_SOURCE_NOTE,
   PROJECT_ASSUMPTION,
   PROVENANCE_NOTICE,
+  READING_GUIDE,
   READY_NOTES,
   REASON_GLOSSES,
   RECHECK_CANNOT,
@@ -87,7 +94,7 @@ import {
   absence,
   citationProvenance,
   conditionState,
-} from "./vocabulary.js";
+} from "./words.js";
 
 const R010_HEADING = "背景引用，不能回答对齐问题";
 
@@ -112,7 +119,7 @@ export function field(object, key, render) {
   if (!carries(object, key)) return missing(NOT_CARRIED);
   const value = object[key];
   if (value === "") return missing(EMPTY_STRING);
-  if (Array.isArray(value) && value.length === 0) return missing("（记录中为空列表）");
+  if (Array.isArray(value) && value.length === 0) return missing(COMMON.emptyList);
   return render(value);
 }
 
@@ -171,7 +178,7 @@ function provenanceLegend() {
 // ---------------------------------------------------------------------------
 
 function modeLabel(mode) {
-  return MODE_LABELS[mode] || `未识别的入口（${mode}）`;
+  return MODE_LABELS[mode] || fill(COMMON.unknownMode, { mode });
 }
 
 // The adapter names its scenarios; an unlisted name is shown as it came.
@@ -198,21 +205,25 @@ export function renderContext(state) {
     // Who hands what to whom, and nothing else: version fingerprints are on
     // the record's own page and in each screen's tracing details.
     bar.append(
-      h("span", {}, `项目 ${request.project_id}`),
+      h("span", {}, fill(CONTEXT.project, { project: request.project_id })),
       h(
         "span",
         {},
-        `交接：${context.handover.from_role} → ${context.handover.to_role} · ${context.handover.milestone}`,
+        fill(CONTEXT.handover, {
+          from: context.handover.from_role,
+          to: context.handover.to_role,
+          milestone: context.handover.milestone,
+        }),
       ),
     );
   } else if (state.envelope && state.envelope.outcome === "validation") {
     // A workspace run: which run, and that it is a check and nothing more.
     bar.append(
-      h("span", {}, `${WORKSPACE.contextRun} `, field(state.envelope.run, "validation_run_id", code)),
-      h("span", { class: "no-judgement" }, WORKSPACE.contextNoJudgement),
+      h("span", {}, `${CONTEXT.workspaceRun} `, field(state.envelope.run, "validation_run_id", code)),
+      h("span", { class: "no-judgement" }, CONTEXT.noJudgement),
     );
   } else if (state.envelope && state.envelope.outcome === "refusal") {
-    bar.append(h("span", {}, "本次没有检查结果"));
+    bar.append(h("span", {}, CONTEXT.noResult));
   }
   bar.append(
     h(
@@ -225,7 +236,7 @@ export function renderContext(state) {
           go();
         },
       },
-      "返回首页",
+      CONTEXT.home,
     ),
   );
   parts.push(bar);
@@ -389,7 +400,7 @@ function entry(workspace = { runs: [] }) {
     h(
       "section",
       { class: "block" },
-      h("h2", {}, "现在可以做什么"),
+      h("h2", {}, HOME.canHeading),
       h(
         "div",
         { class: "entry-grid" },
@@ -404,9 +415,9 @@ function entry(workspace = { runs: [] }) {
     h(
       "section",
       { class: "block" },
-      h("h2", {}, "现在还不能做什么"),
+      h("h2", {}, HOME.cannotHeading),
       h("ul", {}, HOME.cannot.map((text) => h("li", {}, text))),
-      note("这些功能没有实现，所以页面上没有对应的入口。"),
+      note(HOME.cannotNote),
     ),
   );
 }
@@ -455,18 +466,16 @@ function runs(state) {
   if (mode === "real") {
     container.append(
       h("h1", {}, MODE_LABELS.real),
-      note(
-        "仓库随附一个样例项目，下面是对它的一次检查尝试。目前不能选择别的模型，也不能导入自己的模型。",
-      ),
+      note(DIRECTORY.realNote),
     );
   } else {
     container.append(
-      h("h1", {}, "选择一个模拟示例"),
+      h("h1", {}, DIRECTORY.exampleTitle),
       note(DIRECTORY_NOTE),
     );
   }
   if (!state.runs.length) {
-    container.append(note("这个入口下目前没有可以查看的内容。", "problem"));
+    container.append(note(DIRECTORY.empty, "problem"));
     return container;
   }
   if (mode === "real") {
@@ -497,11 +506,11 @@ function runs(state) {
             h(
               "p",
               { class: "example-given" },
-              h("span", { class: "example-tag" }, "示例说明"),
+              h("span", { class: "example-tag" }, DIRECTORY.exampleTag),
               " ",
               EXAMPLES[run.run_id].given,
             ),
-            h("p", {}, h("a", { class: "run", href: href(mode, run.run_id) }, "打开这个示例的结果")),
+            h("p", {}, h("a", { class: "run", href: href(mode, run.run_id) }, DIRECTORY.open)),
           ),
         ),
       ),
@@ -513,8 +522,8 @@ function runs(state) {
       h(
         "section",
         { class: "block" },
-        h("h2", {}, "其他模拟示例"),
-        note("这些示例还没有写说明，复检记录暂时只有编号；本轮没有改到它们。"),
+        h("h2", {}, DIRECTORY.othersHeading),
+        note(DIRECTORY.othersNote),
         h("ul", { class: "run-list" }, others.map((run) => h("li", {}, runLink(mode, run)))),
       ),
     );
@@ -1095,7 +1104,7 @@ function activityTitle(name) {
 function workVerdict(activity, value) {
   return [
     h("strong", {}, activityTitle(activity)),
-    "：",
+    COMMON.colon,
     value === undefined ? missing(NOT_CARRIED) : verdictLabel(value),
   ];
 }
@@ -1181,15 +1190,28 @@ function problemName(kind) {
   return Object.hasOwn(RESOLUTION_KINDS, kind) ? RESOLUTION_KINDS[kind] : unrecognised(kind);
 }
 
-/** The Chinese action and recheck sentences, for the one Pack they were written for. */
-function actionSentences(kind, request) {
+/**
+ * The action and recheck sentences, for the one Pack they were written for.
+ *
+ * Whether there are any is the same in both languages: the Chinese glosses
+ * exist for one Pack version. Which words fill them is the language's: the
+ * gloss, or — where the wording says so — the record's own English, read from
+ * the subscope's route as it came.
+ */
+function actionSentences(kind, request, subscope = null) {
   const written =
     carries(request, "pack_id") &&
     request.pack_id === ACTION_PACK.id &&
     carries(request, "pack_version") &&
     request.pack_version === ACTION_PACK.version &&
     Object.hasOwn(ACTIONS, kind);
-  return written ? ACTIONS[kind] : null;
+  if (!written) return null;
+  if (ACTION_TEXT.source === "record" && subscope !== null) {
+    const original = (key) =>
+      field(subscope, "route", (value) => field(value, key, (text) => h("span", { class: "prose" }, text)));
+    return { action: original("next_action"), recheck: original("recheck_condition") };
+  }
+  return ACTIONS[kind];
 }
 
 function consequences(kinds) {
@@ -1205,7 +1227,7 @@ function consequences(kinds) {
  * original is always one fold away.
  */
 function actionBlock(subscope, request, mode) {
-  const sentences = actionSentences(carried(subscope, "resolution_kind"), request);
+  const sentences = actionSentences(carried(subscope, "resolution_kind"), request, subscope);
   const original = (key) =>
     field(subscope, "route", (value) => field(value, key, (text) => h("span", { class: "prose" }, text)));
   return h(
@@ -1321,24 +1343,20 @@ function howToRead(...extra) {
     { class: "block how-to-read" },
     h("summary", {}, HOW_TO_READ),
     h("p", {}, ITEM_UNIT),
-    h("h3", {}, "三个判断词"),
+    h("h3", {}, READING_GUIDE.verdictWords),
     h(
       "dl",
       { class: "state-legend" },
       Object.entries(VERDICT_LABELS).map(([word, label]) => [
         h("dt", {}, verdictLabel(word)),
-        h("dd", {}, `${label}：${VERDICT_WORDS[word]}。`),
+        h("dd", {}, fill(READING_GUIDE.verdictLine, { label, meaning: VERDICT_WORDS[word] })),
       ]),
     ),
     h("p", {}, VERDICT_SCOPE),
-    h("h3", {}, "证据来源的标注"),
+    h("h3", {}, READING_GUIDE.provenance),
     provenanceLegend(),
-    h("h3", {}, "处理团队与默认处理角色"),
-    h(
-      "p",
-      {},
-      "处理团队取自记录里的人员安排；默认处理角色是规则给出的默认，是安排的输入，不是指派。两者分开显示。",
-    ),
+    h("h3", {}, READING_GUIDE.teams),
+    h("p", {}, READING_GUIDE.teamsBody),
     extra,
   );
 }
@@ -1354,7 +1372,7 @@ function vocabularyOrder(left, right) {
 }
 
 function firstIntro(state) {
-  return h("div", {}, h("p", {}, link("← 返回示例目录", href(state.mode))));
+  return h("div", {}, h("p", {}, link(FIRST.back, href(state.mode))));
 }
 
 function first(state) {
@@ -1374,12 +1392,12 @@ function first(state) {
   const content = firstIntro(state);
 
   content.append(
-    h("h1", {}, "首次检查结果：需要处理的事项"),
-    h("p", { class: "sub" }, `${modeLabel(envelope.mode)}：${runLabel(state.runId)}`),
+    h("h1", {}, FIRST.title),
+    h("p", { class: "sub" }, fill(FIRST.runLine, { mode: modeLabel(envelope.mode), run: runLabel(state.runId) })),
     h(
       "section",
       { class: "block result" },
-      h("h2", {}, `本次结果：共 ${model.counts.items} 个事项，其中 ${model.counts.todo} 个需要处理`),
+      h("h2", {}, fill(FIRST.summary, { items: model.counts.items, todo: model.counts.todo })),
       h(
         "ul",
         { class: "result-lines" },
@@ -1389,19 +1407,19 @@ function first(state) {
           h(
             "li",
             {},
-            h("strong", {}, `${entry.count} 个事项`),
-            "：对应的那项工作 ",
+            h("strong", {}, fill(FIRST.items, { count: entry.count })),
+            FIRST.verdictLine,
             entry.verdict === undefined ? missing(NOT_CARRIED) : verdictLabel(entry.verdict),
           ),
         ),
         h(
           "li",
           {},
-          h("strong", {}, `${model.counts.quiet} 个事项`),
-          `：${ACTION_GROUPS.none.summary}（列在本页下方）`,
+          h("strong", {}, fill(FIRST.items, { count: model.counts.quiet })),
+          fill(FIRST.quietLine, { summary: ACTION_GROUPS.none.summary }),
         ),
       ),
-      h("p", { class: "sub" }, `${ITEM_UNIT}这份记录共涉及 ${model.counts.elements} 个不同的构件。`),
+      h("p", { class: "sub" }, fill(FIRST.elementsLine, { unit: ITEM_UNIT, count: model.counts.elements })),
     ),
   );
 
@@ -1422,14 +1440,14 @@ function first(state) {
       // The action sentence where one was written for this problem type; the
       // problem's name otherwise. The team's table above names the problem.
       definitions([
-        actionSentences(item.kind, request)
-          ? ["要做什么", actionSentences(item.kind, request).action]
-          : ["问题", item.kind === undefined ? missing(NOT_CARRIED) : problemName(item.kind)],
+        actionSentences(item.kind, request, item.subscope)
+          ? [FIRST.action, actionSentences(item.kind, request, item.subscope).action]
+          : [FIRST.problem, item.kind === undefined ? missing(NOT_CARRIED) : problemName(item.kind)],
       ]),
       h(
         "a",
         { class: "run", href: itemHref(item), "data-return-focus": here(item) ? true : null },
-        "查看这一项：具体对象、要做什么、由谁处理、拿什么复检",
+        FIRST.openItem,
       ),
     );
 
@@ -1437,34 +1455,34 @@ function first(state) {
     h(
       "section",
       { class: "block open-items" },
-      h("h2", {}, `${ACTION_GROUPS.open.label}，按处理团队（${model.counts.todo} 个事项）`),
+      h("h2", {}, fill(FIRST.openHeading, { label: ACTION_GROUPS.open.label, count: model.counts.todo })),
       model.teams.length ? null : h("p", {}, ACTION_GROUPS.open.none),
       model.teams.map((team) => [
         h(
           "h3",
           { class: "team" },
-          "处理团队 ",
+          FIRST.team,
           teamLine(team.team, envelope.mode),
-          `：${team.count} 个事项`,
+          fill(FIRST.teamCount, { count: team.count }),
         ),
         h(
           "p",
           { class: "sub" },
-          `${BESIDE.defaultRole}：`,
+          `${BESIDE.defaultRole}${COMMON.colon}`,
           team.roles.length ? team.roles.map((role) => [code(role), " "]) : missing(NOT_CARRIED),
           ` ${BESIDE.team}`,
         ),
         tableWrap(
           table(
             null,
-            ["问题", "哪项工作：结论", "事项数"],
+            [FIRST.columns.problem, FIRST.columns.work, FIRST.columns.count],
             team.rows.map((row) =>
               h(
                 "tr",
                 {},
                 h("td", {}, row.kind === undefined ? missing(NOT_CARRIED) : problemName(row.kind)),
                 h("td", {}, workVerdict(row.activity, row.verdict)),
-                h("td", {}, `${row.items.length} 个事项`),
+                h("td", {}, fill(FIRST.items, { count: row.items.length })),
               ),
             ),
           ),
@@ -1481,7 +1499,7 @@ function first(state) {
     h(
       "section",
       { class: "block" },
-      h("h2", {}, `${ACTION_GROUPS.none.label}（${model.counts.quiet} 个事项）`),
+      h("h2", {}, fill(FIRST.quietHeading, { label: ACTION_GROUPS.none.label, count: model.counts.quiet })),
       h("p", {}, model.quiet.length ? ACTION_GROUPS.none.note : ACTION_GROUPS.none.none),
       ((said) =>
         h(
@@ -1496,7 +1514,7 @@ function first(state) {
               { href: itemHref(item), "data-return-focus": here(item) ? true : null },
               itemTitle(state, item.keys),
             ),
-              " ｜ ",
+              FIRST.separator,
               workVerdict(item.activity, item.verdict),
               basisLine(item.basis),
               besideVerdict(item.activity, item.verdict, said),
@@ -1512,12 +1530,12 @@ function first(state) {
       h(
         "section",
         { class: "block" },
-        h("h2", {}, "然后：看这份记录复检之后的变化"),
+        h("h2", {}, FIRST.nextHeading),
         h(
           "p",
           {},
-          link(`打开示例“${runLabel(next)}”`, href(state.mode, next)),
-          "。每个事项的页面里也有直达它复检变化的链接。",
+          link(fill(FIRST.nextLink, { run: runLabel(next) }), href(state.mode, next)),
+          FIRST.nextAfter,
         ),
       ),
     );
@@ -1528,12 +1546,12 @@ function first(state) {
     h(
       "details",
       { class: "block evidence-details" },
-      h("summary", {}, "追溯信息：记录标识、规则版本、记录原码"),
+      h("summary", {}, FIRST.traceSummary),
       h(
         "p",
         {},
-        link("这份记录的请求范围、版本与来源", href(state.mode, state.runId, "record")),
-        "（该页尚未改版，仍是内部用语）",
+        link(FIRST.recordLink, href(state.mode, state.runId, "record")),
+        FIRST.notRevised,
       ),
       definitions([
         ["assessment digest", copyable(envelope.assessment_digest)],
@@ -1543,7 +1561,7 @@ function first(state) {
       tableWrap(
         table(
           null,
-          ["事项", "activity_ref", "内部分组编号", "verdict", "resolution_kind"],
+          [FIRST.traceItem, "activity_ref", FIRST.traceOrdinal, "verdict", "resolution_kind"],
           model.items.map((item) =>
             h(
               "tr",
@@ -1898,15 +1916,19 @@ export function named(facts) {
 
 function elementTitle(state, key) {
   const facts = elementFacts(state, key);
-  return named(facts) ? facts.name : "未命名构件";
+  return named(facts) ? facts.name : COMMON.unnamedElement;
 }
 
 function itemTitle(state, keys) {
-  return keys.map((key) => elementTitle(state, key)).join(" 与 ");
+  return keys.map((key) => elementTitle(state, key)).join(COMMON.and);
 }
 
 function countWord(keys) {
-  return keys.length === 1 ? "一个构件" : keys.length === 2 ? "一对构件" : `${keys.length} 个构件`;
+  return keys.length === 1
+    ? COMMON.oneElement
+    : keys.length === 2
+      ? COMMON.twoElements
+      : fill(COMMON.nElements, { count: keys.length });
 }
 
 // `withName` when the line has to say which of several elements it is about.
@@ -1916,11 +1938,11 @@ function elementBrief(state, key, withName) {
   return h(
     "li",
     {},
-    withName ? [h("strong", {}, elementTitle(state, key)), "："] : null,
+    withName ? [h("strong", {}, elementTitle(state, key)), COMMON.colon] : null,
     field(facts, "ifc_class", className),
     " · ",
     storeyOf(facts),
-    " · 模型 ",
+    COMMON.inModel,
     field(facts, "model_key", code),
   );
 }

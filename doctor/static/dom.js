@@ -1,6 +1,9 @@
 // DOM helpers. Every value from an envelope reaches the page as a text node,
 // never as markup: a refusal message or a Pack sentence is shown, not executed.
 
+import { fill } from "./i18n.js";
+import { COPY } from "./words.js";
+
 export function h(tag, attributes = {}, ...children) {
   const node = document.createElement(tag);
   for (const [name, value] of Object.entries(attributes)) {
@@ -34,17 +37,17 @@ export function copyable(value) {
     {
       type: "button",
       class: "copy",
-      "aria-label": `复制 ${value}`,
+      "aria-label": fill(COPY.label, { value }),
       onclick: async () => {
         try {
           await navigator.clipboard.writeText(value);
-          button.textContent = "已复制";
+          button.textContent = COPY.done;
         } catch {
-          button.textContent = "请手动选择复制";
+          button.textContent = COPY.manual;
         }
       },
     },
-    "复制",
+    COPY.button,
   );
   return h("span", { class: "copyable" }, code(value), button);
 }

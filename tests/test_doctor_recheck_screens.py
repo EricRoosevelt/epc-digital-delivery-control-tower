@@ -627,10 +627,18 @@ class FirstCheckTests(_Modelled):
             "request.pack_id === ACTION_PACK.id",
             "request.pack_version === ACTION_PACK.version",
             "Object.hasOwn(ACTIONS, kind)",
-            "return written ? ACTIONS[kind] : null;",
+            "if (!written) return null;",
+            "return ACTIONS[kind];",
         ):
             with self.subTest(guard=said):
                 self.assertIn(said, guard)
+        # Whether there are sentences is decided before the language is: in
+        # English the record's own route words fill them, read as they came.
+        self.assertLess(
+            guard.index("if (!written) return null;"),
+            guard.index('ACTION_TEXT.source === "record"'),
+        )
+        self.assertIn('field(value, key,', guard)
         block = screens[screens.index("function actionBlock(") :]
         block = block[: block.index("\n}\n")]
         self.assertIn(
@@ -1173,19 +1181,27 @@ class ScreenStructureTests(unittest.TestCase):
                     self.assertNotIn(term, text)
         # Internal English is kept out of what a manager reads: no string that
         # carries Chinese also carries these words. Code that reads the record's
-        # own keys (`"finding"`, `basis.findings`) is not a sentence.
+        # own keys (`"finding"`, `basis.findings`) is not a sentence. The words
+        # the context bar, the home, the directory and the first-check result
+        # used to write inline are in vocabulary.js's moved tables now, and are
+        # read from there.
+        vocabulary = (STATIC / "vocabulary.js").read_text(encoding="utf-8")
+        strings["moved"] = vocabulary[vocabulary.index("export const COMMON") :]
+        checked = 0
         for name in (
             "context bar",
             "home and directory",
             "first check",
             "recheck",
             "check attempt",
+            "moved",
         ):
             sentences = re.findall(r'["`]([^"`\n]*[\u4e00-\u9fff][^"`\n]*)["`]', strings[name])
-            self.assertTrue(sentences)
+            checked += len(sentences)
             for sentence in sentences:
                 with self.subTest(screen=name, sentence=sentence):
                     self.assertNotRegex(sentence, r"\bPack\b|finding")
+        self.assertGreater(checked, 100)
 
     def test_the_first_screen_says_what_it_is_for_and_what_it_cannot_do(self):
         vocabulary = (STATIC / "vocabulary.js").read_text(encoding="utf-8")
@@ -1526,7 +1542,10 @@ class AdapterScenarioTests(unittest.TestCase):
         elsewhere = screens.replace(directory, "")
         self.assertIn("EXAMPLES[run.run_id].given", directory)
         self.assertIn("EXAMPLE_NOTE", directory)
-        self.assertIn('"示例说明"', directory)
+        # The tag that says this is the example's description, not a result.
+        self.assertIn("DIRECTORY.exampleTag", directory)
+        vocabulary = (STATIC / "vocabulary.js").read_text(encoding="utf-8")
+        self.assertIn('exampleTag: "示例说明"', vocabulary)
         code = "\n".join(
             line for line in elsewhere.splitlines() if not line.lstrip().startswith("//")
         )

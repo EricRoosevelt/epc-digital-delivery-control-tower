@@ -57,6 +57,22 @@ a { color: var(--accent); }
   .context { position: sticky; top: 0; z-index: 2; }
 }
 .context:empty { display: none; }
+
+/* The interface language: on every screen, above the context bar. */
+.language { background: var(--surface); border-bottom: 1px solid var(--line); }
+.language-switch {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 8px;
+  align-items: center;
+  justify-content: flex-end;
+  padding: 4px 16px;
+  font-size: 14px;
+}
+.language-switch button { padding: 2px 10px; }
+.language-switch button[aria-pressed="true"] { border-color: var(--ink); font-weight: 700; }
+.untranslated { max-width: 44rem; }
+.untranslated .actions { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; }
 .context-bar {
   display: flex;
   flex-wrap: wrap;

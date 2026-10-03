@@ -211,6 +211,33 @@ A directory that holds no finished run, or a run document that is not the one
 its manifest describes, is a fault and is reported as one — never as a refusal
 and never as a result.
 
+## Interface language
+
+The viewer chooses Chinese or English on every screen. The choice is read when
+the page loads (`?lang=en`, then what this browser chose before, then Chinese)
+and changing it reloads the same `#/…` route: the run, the record, the mode and
+the element shown do not change, only the words.
+
+English is a second wording table, never a second page:
+
+- `static/vocabulary.js` holds the Chinese tables and `static/vocabulary-en.js`
+  the English ones, key for key; `static/words.js` hands every screen the table
+  for the chosen language. A table with no English yet is Chinese in both.
+- In English, a screen whose words are not all translated is not drawn. It says
+  "This page has not been translated yet" and offers the same page in Chinese.
+  `TRANSLATED` in `static/app.js` lists the screens drawn in English.
+- Where the record, the Pack or this repository's product documents already say
+  it in English — what to do, what a recheck must show, an activity's name, what
+  a verdict means — the English page shows that text, not a translation of the
+  Chinese gloss. What the record carries is read from the record.
+- A module that adds a page can keep its own two tables and register them with
+  `bilingual(name, zh, en)` from `static/i18n.js`, as `static/language.js`
+  does; it does not have to add to the central tables. The parity tests in
+  `tests/test_doctor_english.py` read every registered pair.
+
+The English entries, which of them are quoted originals and which carry domain
+meaning, are listed in `docs/product/2026-10-03-doctor-english-vocabulary.md`.
+
 ## Not in this preview
 
 Starting a recheck, marking an item resolved, assigning or notifying anyone and
