@@ -43,7 +43,19 @@ CJK = re.compile(r"[一-鿿]")
 CJK_TEXT = re.compile(r"[一-鿿\u3000-\u303f\uff00-\uffef]")
 
 #: The screens drawn in English. Everything else says it is not translated yet.
-TRANSLATED = {"entry", "runs/fixture", "runs/real", "first", "item", "recheck"}
+TRANSLATED = {
+    "entry",
+    "runs/fixture",
+    "runs/real",
+    "runs/workspace",
+    "first",
+    "item",
+    "recheck",
+    "workspace/check",
+    "workspace/finding",
+    "workspace/compare",
+    "workspace/refusal",
+}
 
 #: Where each translated screen starts in screens.js.
 ROOTS = [
@@ -63,13 +75,12 @@ EMPTY_IN_ENGLISH = {
     "IFC_CLASS_NAMES",
     # A check's reason is the record's own English.
     "REASON_GLOSSES",
+    # A rule's citation is the returned data's own English.
+    "CITATION_GLOSSES",
 }
 
 #: Tables a translated screen may touch without English, and why.
 WITHOUT_ENGLISH = {
-    # Only the workspace branch of runs() reads it: route runs/workspace,
-    # which is not translated and is not drawn in English.
-    "WORKSPACE",
     # Read only to decide whether action sentences exist for this Pack
     # version; in English their words are the record's own route text.
     "ACTIONS",
@@ -529,6 +540,108 @@ class SameRecordTests(unittest.TestCase):
         for name in self.documents:
             with self.subTest(document=name):
                 self.assertEqual(dict(codes(self.zh[name])), dict(codes(self.en[name])))
+
+
+_WORKSPACE_DRIVER = """
+import { readFileSync } from "node:fs";
+globalThis.location = { search: process.argv[2] };
+const model = await import("./workspace-model.js");
+const envelopes = JSON.parse(readFileSync(0, "utf8"));
+const out = {};
+for (const [name, envelope] of Object.entries(envelopes)) {
+  if (envelope.outcome !== "validation") continue;
+  const requirements = Object.values(envelope.requirements);
+  out[name] = {
+    groups: model.statusGroups(envelope.findings).map((group) => ({
+      status: group.status,
+      known: group.known,
+      count: group.count,
+      keys: group.findings.map((finding) => finding.finding_key),
+    })),
+    notes: requirements.map((one) => model.ruleNotes(envelope.run, one) !== null),
+    productValidation: requirements.map((one) => model.isProductValidation(one)),
+    freeText: envelope.findings.map((finding) => model.quotesFreeText(finding.reason)),
+    transitions: envelope.comparison ? model.transitions(envelope.comparison) : null,
+    placed: envelope.comparison
+      ? envelope.findings.map(
+          (finding) => model.comparisonOf(envelope.comparison, finding.finding_key).kind,
+        )
+      : null,
+  };
+}
+process.stdout.write(JSON.stringify(out));
+"""
+
+
+class WorkspaceTests(unittest.TestCase):
+    """The workspace pages: one real check, its comparison, a refused comparison."""
+
+    def test_the_workspace_modules_read_words_through_words_js(self):
+        english = {
+            name
+            for name, pair in _load("?lang=en")["registry"].items()
+            if pair["en"] is not None
+        }
+        for name in ("workspace-screens.js", "workspace-model.js"):
+            source = (STATIC / name).read_text(encoding="utf-8")
+            with self.subTest(file=name):
+                self.assertNotIn('from "./vocabulary.js"', source)
+                imported = re.search(r'import \{([^}]*)\} from "\./words\.js"', source).group(1)
+                tables = {item.strip() for item in imported.split(",") if item.strip()}
+                self.assertEqual(tables - english, set())
+                self.assertFalse(CJK_TEXT.findall(_code(source)))
+
+    def test_the_rule_notes_quote_the_rule_where_it_speaks_english(self):
+        rule = tomllib.loads(
+            (PROJECT_ROOT / "rules" / "product-validation" / "PV-001.toml").read_text(
+                encoding="utf-8"
+            )
+        )
+        notes = _load("?lang=en")["registry"]["RULE_NOTES"]["en"]["PV-001"]
+        self.assertEqual(notes["title"], rule["title"])
+        instruction = rule["requirements"][0]["instructions"]
+        # "Declare DIFFUSER, GRILLE, LOUVRE or REGISTER. NOTDEFINED states nothing."
+        self.assertTrue(notes["action"]["what"].endswith(instruction.split(". ", 1)[1]))
+
+    def test_the_same_run_gives_the_same_model_in_both_languages(self):
+        """Groups, transitions, pairing and which notes apply do not depend on the language."""
+
+        import sys
+
+        sys.path.insert(0, str(PROJECT_ROOT / "tests"))
+        from internal.doctor_adapter import workspace_envelope
+        from test_doctor_workspace import _runs
+
+        runs = _runs()
+        envelopes = {
+            "compared": workspace_envelope(runs.after, runs.before),
+            "swapped": workspace_envelope(runs.before, runs.after),
+            "single": workspace_envelope(runs.after),
+            "refused": workspace_envelope(runs.before, runs.shipped_rules),
+        }
+        node = shutil.which("node")
+        if node is None:
+            raise unittest.SkipTest("node is not on PATH")
+        outputs = {}
+        for search in ("", "?lang=en"):
+            with tempfile.TemporaryDirectory() as directory:
+                workdir = Path(directory)
+                for path in STATIC.glob("*.js"):
+                    shutil.copyfile(path, workdir / path.name)
+                (workdir / "package.json").write_text('{"type": "module"}\n', encoding="utf-8")
+                (workdir / "driver.mjs").write_text(_WORKSPACE_DRIVER, encoding="utf-8")
+                completed = subprocess.run(
+                    [node, "driver.mjs", search],
+                    cwd=workdir,
+                    input=json.dumps(envelopes).encode("utf-8"),
+                    capture_output=True,
+                    check=False,
+                )
+            if completed.returncode != 0:
+                raise AssertionError(completed.stderr.decode("utf-8", "replace"))
+            outputs[search] = json.loads(completed.stdout.decode("utf-8"))
+        self.assertEqual(set(outputs[""]), {"compared", "swapped", "single"})
+        self.assertEqual(outputs[""], outputs["?lang=en"])
 
 
 if __name__ == "__main__":

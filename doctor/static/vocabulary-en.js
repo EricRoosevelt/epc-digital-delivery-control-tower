@@ -302,6 +302,7 @@ export const ENVELOPE_WORDS = {
 
 export const COMMON = {
   colon: ": ",
+  aside: " ({text})",
   emptyList: "(an empty list in the record)",
   unknownMode: "Unrecognised entry ({mode})",
   unnamedElement: "Unnamed element",
@@ -891,3 +892,257 @@ export const REISSUE_CASES = {
 
 export const REISSUE_NEUTRAL =
   "This page only says which side changed and what the record shows; it does not judge good or bad from the direction of a re-issue.";
+
+// ---------------------------------------------------------------------------
+// The workspace pages: one real check, its comparison, a refused comparison
+// ---------------------------------------------------------------------------
+
+// The rule's citation is the returned data's own English: nothing to gloss.
+export const CITATION_GLOSSES = {};
+
+export const WORKSPACE = {
+  directoryNote: "A workspace can only be named when the server is started; you cannot choose, upload or change a model here.",
+  directoryNone:
+    "The server was started without a workspace, so there is no check to look at here. To look at one, restart the server with this command:",
+  startCommand: "python doctor/serve.py --workspace <workspace directory> [--prior <earlier run directory>]",
+  openRun: "Open this check's results",
+  back: "← Back to the home page",
+  backToList: "← Back to the list of results",
+  contextNoJudgement: "Check results only, no handover judgement",
+  contextRun: "Check run",
+  resultTitle: "Results of a real check",
+  noJudgement:
+    "These are the results of a check, not a handover judgement: the page says only whether each element passed, failed or was not applicable under each requirement, and concludes nothing about whether any work can start.",
+  summary: { one: "This result: {count} check result", other: "This result: {count} check results" },
+  unit:
+    "The unit is one result: one element under one requirement; where a model has no element the requirement applies to, it is one result for the whole model.",
+  compareLink: "See the comparison with the earlier run",
+  compareTeaser: "The server was also started with an earlier run. Before and after:",
+  checkedHeading: "What was checked",
+  ruleTitle: "Requirement",
+  rulePredicate: "What this rule asks",
+  ruleExpected: "The rule's own words",
+  ruleOrigin: "Source (the returned data's citation, as written)",
+  ruleLabels: "Labels in the returned data",
+  productValidation: "The label in the returned data (ProductValidation) says: this is a product validation rule.",
+  noRuleNotes: "This interface has written no notes for this rule; the rule's own words in the returned data are what counts.",
+  noRequirement: "The returned data has no description of the requirement this result belongs to.",
+  listHeading: "Results, one by one",
+  filterLabel: "Find by IFC Tag, name or GlobalId",
+  filterAll: "All",
+  filterNone: "No result matches the filter.",
+  filterShown: "Showing {shown} of {count}",
+  columns: {
+    status: "Result",
+    tag: "IFC Tag",
+    name: "Name",
+    class: "Class",
+    storey: "Storey (IFC)",
+    model: "Model",
+  },
+  pickOne: "Choose a result from the list to see its details here.",
+  detailKicker: "One result of a real check",
+  wholeModel: "Whole model",
+  resultHeading: "Result",
+  findHeading: "Which object to find in Revit",
+  actionHeading: "What to change",
+  actionWhat: "Change it to",
+  actionReads: "Where the checker reads",
+  actionRevise: "Where to change it in Revit",
+  actionUndecided: "Not decided yet",
+  requirementHeading: "The requirement, and what this check observed",
+  reason: "Reason (as the check result gives it)",
+  actual: "Observed value",
+  actualEmpty: "Empty in the check result.",
+  actualHidden: "The check result carries an observed value; this page does not show it.",
+  recheckHeading: "What to look at in a recheck",
+  passHeading: "What this pass proves",
+  passProves: "It proves: ",
+  passDoesNotProve: "It does not prove:",
+  passNoValue: "A passing check result does not carry the value it read: it records only \"Requirement satisfied.\"",
+  passUnwritten:
+    "A pass says only that this requirement was judged met; how far that goes, this interface has written no notes for this rule — see the rule's own words.",
+  notApplicable: "Not applicable: this model has no element the requirement applies to. Not applicable is not a pass.",
+  failNotDefect:
+    "Not meeting this product validation rule is not a delivery defect of the original project. Where this rule comes from is what the returned data's label (ProductValidation) and the citation as written say.",
+  noFinding: "This check has no such result.",
+  identityHeading: "Tracing: this check's run identifier, rule set version and model files",
+  findingTrace: "Tracing: this result's internal keys",
+  identity: {
+    run: "Check run identifier",
+    ruleset: "Rule set",
+    asOf: "Logical date (given by the run configuration, not when it ran)",
+    checkers: "Checkers",
+    models: "Models",
+    modelId: "Model",
+    declaredDiscipline: "Discipline declared in the project manifest",
+    filename: "File",
+    digest: "File content digest (SHA-256)",
+    tagSource: "Where the IFC Tag comes from",
+    elementKey: "Internal key for tracing",
+    findingKey: "Check result key",
+    requirementKey: "Requirement key",
+  },
+  element: {
+    name: "Name",
+    class: "Class",
+    storey: "Storey (IFC)",
+    model: "Model",
+    file: "Model file",
+    globalId: "GlobalId",
+  },
+};
+
+export const TAG_WORDS = {
+  note:
+    "The IFC Tag is a marker written into the IFC at export; what Revit writes is usually the element's ElementId. To check: in Revit, use \"Select by ID\" with this ID and see whether the selected object's name and class match this page; if they do, work from it; if they do not, do not change anything by this Tag, and find the element in the IFC by its GlobalId instead.",
+  byIdNotStorey:
+    "Find the object in Revit by its ID, not by storey: the storey on this page is the IFC file's spatial assignment, which may not match the levels in a Revit schedule.",
+  storeyFromIfc:
+    "The storey on this page is the IFC file's spatial assignment, which may not match the levels in a Revit schedule; do not look for the object by storey alone.",
+  sources: {
+    "model-file": "The model file has no Tag for this element.",
+    "model-file-not-located": "The model file this check read was not found, so the Tag cannot be read.",
+    "model-file-differs": "The model file in the workspace is no longer the version this check read, so the Tag is not read.",
+  },
+  sourceNotCarried: "The returned data does not say where this model's Tags are read from, so there is no Tag.",
+  modelLevel: "This result is about the whole model; there is no single element to find.",
+  useGlobalId: "To find it in the IFC, use the GlobalId.",
+  short: {
+    "model-file": "No Tag in the file",
+    "model-file-not-located": "Model file not found",
+    "model-file-differs": "Model file version differs",
+    notCarried: "Source not stated",
+    modelLevel: "Whole model",
+  },
+};
+
+export const RULE_NOTES = {
+  "PV-001": {
+    title: "Air terminals declare one of four predefined types",
+    predicate:
+      "Every applicable air terminal (IfcAirTerminal) declares a predefined type of DIFFUSER, GRILLE, LOUVRE or REGISTER. " +
+      "IFC4 also admits USERDEFINED and NOTDEFINED; not accepting them is this rule's own decision, and a model using them is still valid IFC4.",
+    passProves:
+      "The one value the checker took in its reading order (the type's value first; a USERDEFINED type's free text; the element instance only when the type says nothing) is, character for character, one of DIFFUSER, GRILLE, LOUVRE and REGISTER.",
+    passDoesNotProve: [
+      "That the value is right: any of the four passes; GRILLE passes too.",
+      "That the type and the element instance agree: when the type carries one of the four, the instance's value is not compared; type LOUVRE with instance DIFFUSER also passes.",
+      "That no USERDEFINED, which the rule does not accept, is present: when the type declares USERDEFINED, the checker compares its free text, character for character and case-sensitively; text that happens to be LOUVRE passes, while louvre, Louvre or text with leading or trailing spaces does not.",
+      "That the wall has a corresponding opening.",
+      "That the air terminal's model and the model of the wall it sits in are aligned.",
+      "That any work can start, including ceiling and opening work.",
+    ],
+    action: {
+      what:
+        "Go back to the Revit source model and make this air terminal's exported predefined type one of DIFFUSER, GRILLE, LOUVRE and REGISTER; re-export the IFC and check again. NOTDEFINED states nothing.",
+      reads:
+        "The checker looks first at its type object in the exported IFC: if the type carries one of the four, the type's value is compared; if the type declares USERDEFINED, its free text is compared; only when the type says nothing is the element instance's own value read. This is the order in which the checker reads the IFC, not where to make the change in Revit.",
+      revise:
+        "Where this value is written from in Revit (type or instance, which parameter, which export setting), the returned data does not record, and this page does not say. Confirm it in Revit before changing anything; if you decide to change it on the type, the change applies to every instance of that type.",
+      undecided:
+        "Which value to use, and who decides and makes the change, the returned data does not say. The rule asks only for one of the four values and does not judge which is right.",
+    },
+    recheck:
+      "Check again with the same rule set version, the same set of models and the same export settings, and look at this element's result under this requirement.",
+    gaps: [
+      "The opening in the wall the air terminal sits in: a coordination-review determination is needed, made against the air terminal's model and the model of that wall; this check does not compare elements across the two models.",
+      "Whether the air terminal's model and the model of the wall it sits in are aligned: an alignment confirmation record is needed.",
+      "Whether the value chosen is right: the classification decision has to be recorded separately; a pass cannot prove in reverse that the classification is right.",
+    ],
+    reasonFreeText:
+      "What is in the quotation marks is not an enumeration value but free text: when the type declares USERDEFINED, the checker compares its free text.",
+  },
+};
+
+export const WORKSPACE_COMPARE = {
+  title: "Recheck comparison: the same check, two runs",
+  lede: "The pairs, the rows not re-evaluated and the newly appearing rows below are the returned data's; the page only counts and arranges them.",
+  runsHeading: "The two runs",
+  prior: "The run named as the earlier one (given with --prior at start-up)",
+  current: "This run (given with --workspace at start-up)",
+  order: "Which run came first is what the server was told at start-up; the returned data itself cannot prove the order.",
+  same:
+    "The two runs have the same rule set, the same predicate for each requirement, the same checkers, the same logical date and the same set of models; were any of them different, the system would refuse the comparison and give neither side's results.",
+  changedHeading: "1. What changed",
+  differs: { one: "Results that differ between the runs: {count}", other: "Results that differ between the runs: {count}" },
+  differsNone: "No result differs between the runs.",
+  unchanged: { one: "Results that are the same in both runs: {count}", other: "Results that are the same in both runs: {count}" },
+  unchangedNone: "No result is the same in both runs.",
+  transition: { one: "{prior} → {current}: {count} row", other: "{prior} → {current}: {count} rows" },
+  rows: { one: "{count} row", other: "{count} rows" },
+  notReEvaluated: {
+    label: {
+      one: "With a result in the earlier run only (not re-evaluated this time): {count}",
+      other: "With a result in the earlier run only (not re-evaluated this time): {count}",
+    },
+    note: "These have a result from the earlier run only and were not re-evaluated this time. They are not passes.",
+  },
+  newlyAppearing: {
+    label: {
+      one: "With a result in this run only (newly appearing): {count}",
+      other: "With a result in this run only (newly appearing): {count}",
+    },
+    note: "The earlier run did not have these results.",
+  },
+  inCurrent: {
+    true: "The element is still in this run's list of elements",
+    false: "The element is not in this run's list of elements",
+    null: "A result for the whole model, not for an element",
+  },
+  inPrior: {
+    true: "The element is in the earlier run's list of elements",
+    false: "The element is not in the earlier run's list of elements",
+    null: "A result for the whole model, not for an element",
+  },
+  whyHeading: "2. Why it changed: what the returned data can say",
+  changedModels: "Models whose content changed between the runs (listed by the returned data):",
+  noChangedModels: "The returned data lists no model whose content changed: both runs read the same model files.",
+  unchangedModels: "Models whose content did not change:",
+  why:
+    "The two runs have the same rule set, requirement predicates, checkers and logical date. Of the inputs the returned data compared, the only difference between the runs is the content of the model files listed above; what changed inside those files, the returned data does not list item by item.",
+  notInData: "What was changed in Revit, who decided the value and who made the change, the returned data does not record.",
+  gapsHeading: "3. What evidence is still missing",
+  passLink: "What a pass proves and does not prove: see the details of the passing results.",
+  open: "Open",
+  detailHeading: "Compared with the earlier run",
+  detailPrior: "Earlier result",
+  detailCurrent: "This result",
+  detailNewly: "The earlier run has no such result: it is newly appearing.",
+  detailNone: "The returned data's comparison does not include this result.",
+  priorReason: "Earlier reason (as written)",
+  currentReason: "This reason (as written)",
+  noComparison:
+    "The server was started without an earlier run, so there is no comparison. To compare, add --prior at start-up.",
+  elementMissing: "The returned data has nothing readable about this element",
+};
+
+export const WORKSPACE_REFUSAL = {
+  title: "These two runs cannot be compared",
+  lede:
+    "The system refused this comparison and listed every reason. This is an answer about the request's conditions — not a program fault and not a check result: neither side's results were returned.",
+  reasonsHeading: "Why they cannot be compared",
+  actionHeading: "What a comparison needs",
+  action: [
+    "Both runs must use the same rule set (the same version and content), the same set of requirements, the same checkers, the same logical date and the same set of models; between the runs only the content of the model files may differ.",
+    "Make sure the run given with --prior at start-up really is the earlier run of the same check; or restart the server without --prior and look at this check's results alone.",
+  ],
+  scope: "Whether they can be compared once these reasons are dealt with is for the next answer to say.",
+  original: "What the system returned (as written) and the refusal code",
+  code: "Refusal code",
+  unglossed: "This interface has no English for this reason; see what the system returned below.",
+  noResult: "No result, no zero-problem count and no completion ratio: a refused comparison is not a check without problems.",
+};
+
+export const WORKSPACE_REFUSAL_REASONS = {
+  "ruleset-id-differs": "The two runs did not use the same rule set.",
+  "ruleset-version-differs": "The two runs used different rule set versions.",
+  "ruleset-digest-differs": "The two runs used different rule set content (the content digests differ).",
+  "requirement-set-differs": "The two runs did not evaluate the same set of requirements.",
+  "requirement-semantics-not-recorded":
+    "One run did not record the predicate digest of a requirement, so it cannot be shown that both are the same check.",
+  "requirement-semantics-differs": "The same requirement has a different predicate in the two runs: what is checked was changed.",
+  "checker-differs": "The two runs used different checkers, versions or configuration.",
+  "as-of-differs": "The two runs have different logical dates.",
+  "model-set-differs": "The two runs did not check the same set of models.",
+};
