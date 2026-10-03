@@ -31,9 +31,10 @@ import {
 } from "./dom.js";
 import { basisOf, firstCheckItem, firstCheckModel, leafOf } from "./first-check-model.js";
 import { handoverSide, recheckModel, sealedGroupIndex } from "./recheck-model.js";
-import { fill } from "./i18n.js";
+import { compose, fill, plural } from "./i18n.js";
 import { workspaceCheck, workspaceCompare, workspaceRefusal } from "./workspace-screens.js";
 import {
+  ACTION,
   ACTION_GROUPS,
   ACTION_PACK,
   ACTION_TEXT,
@@ -55,8 +56,10 @@ import {
   DIRECTORY,
   DIRECTORY_NOTE,
   DISPOSITIONS,
+  ELEMENT_CARD,
   ELEMENT_WORDS,
   EMPTY_STRING,
+  EVIDENCE,
   EXAMPLES,
   EXAMPLE_NOTE,
   FINDING_STATUS,
@@ -66,6 +69,7 @@ import {
   HOME,
   HOW_TO_READ,
   IFC_CLASS_NAMES,
+  ITEM,
   ITEM_UNIT,
   LEAF_READINGS,
   LEAF_READING_WORDS,
@@ -77,7 +81,9 @@ import {
   READING_GUIDE,
   READY_NOTES,
   REASON_GLOSSES,
+  RECHECK,
   RECHECK_CANNOT,
+  RECHECK_ITEM,
   RECHECK_LIMITS,
   REFUSAL_REASONS,
   REFUSAL_SCOPE_NOTE,
@@ -89,6 +95,7 @@ import {
   VERDICT_LABELS,
   VERDICT_SCOPE,
   VERDICT_WORDS,
+  WORK,
   WORKSPACE,
   WORKSPACE_HOME,
   absence,
@@ -290,7 +297,7 @@ function codeWithGloss(value, lookup) {
   return h(
     "span",
     {},
-    code(value || "（空）"),
+    code(value || EVIDENCE.empty),
     " ",
     h("span", { class: gloss.known ? "gloss" : "gloss unknown" }, gloss.text),
   );
@@ -1235,11 +1242,11 @@ function actionBlock(subscope, request, mode) {
     { class: "action-block" },
     definitions([
       [
-        sentences ? "要做什么" : "要做什么（规则原文，英文）",
+        sentences ? ACTION.what : ACTION.whatOriginal,
         sentences ? h("span", { class: "action" }, sentences.action) : original("next_action"),
       ],
       [
-        "处理团队",
+        ACTION.team,
         [
           field(subscope, "assignment", (value) =>
             teamLine(carries(value, "assigned_team_or_person") ? value.assigned_team_or_person : undefined, mode),
@@ -1249,11 +1256,11 @@ function actionBlock(subscope, request, mode) {
       ],
       [BESIDE.defaultRole, field(subscope, "route", (value) => field(value, "default_role", code))],
       [
-        "对这项工作的后果",
+        ACTION.consequence,
         field(subscope, "route", (value) => field(value, "consequence_kinds", consequences)),
       ],
       [
-        sentences ? "完成后拿什么复检" : "完成后拿什么复检（规则原文，英文）",
+        sentences ? ACTION.recheck : ACTION.recheckOriginal,
         sentences ? sentences.recheck : original("recheck_condition"),
       ],
     ]),
@@ -1261,7 +1268,7 @@ function actionBlock(subscope, request, mode) {
       ? h(
           "details",
           {},
-          h("summary", {}, "规则原文（英文）"),
+          h("summary", {}, ACTION.original),
           definitions([
             ["next_action", original("next_action")],
             ["recheck_condition", original("recheck_condition")],
@@ -1407,7 +1414,7 @@ function first(state) {
           h(
             "li",
             {},
-            h("strong", {}, fill(FIRST.items, { count: entry.count })),
+            h("strong", {}, plural(FIRST.items, entry.count)),
             FIRST.verdictLine,
             entry.verdict === undefined ? missing(NOT_CARRIED) : verdictLabel(entry.verdict),
           ),
@@ -1415,11 +1422,11 @@ function first(state) {
         h(
           "li",
           {},
-          h("strong", {}, fill(FIRST.items, { count: model.counts.quiet })),
+          h("strong", {}, plural(FIRST.items, model.counts.quiet)),
           fill(FIRST.quietLine, { summary: ACTION_GROUPS.none.summary }),
         ),
       ),
-      h("p", { class: "sub" }, fill(FIRST.elementsLine, { unit: ITEM_UNIT, count: model.counts.elements })),
+      h("p", { class: "sub" }, plural(FIRST.elementsLine, model.counts.elements, { unit: ITEM_UNIT })),
     ),
   );
 
@@ -1455,7 +1462,7 @@ function first(state) {
     h(
       "section",
       { class: "block open-items" },
-      h("h2", {}, fill(FIRST.openHeading, { label: ACTION_GROUPS.open.label, count: model.counts.todo })),
+      h("h2", {}, plural(FIRST.openHeading, model.counts.todo, { label: ACTION_GROUPS.open.label })),
       model.teams.length ? null : h("p", {}, ACTION_GROUPS.open.none),
       model.teams.map((team) => [
         h(
@@ -1463,7 +1470,7 @@ function first(state) {
           { class: "team" },
           FIRST.team,
           teamLine(team.team, envelope.mode),
-          fill(FIRST.teamCount, { count: team.count }),
+          plural(FIRST.teamCount, team.count),
         ),
         h(
           "p",
@@ -1482,7 +1489,7 @@ function first(state) {
                 {},
                 h("td", {}, row.kind === undefined ? missing(NOT_CARRIED) : problemName(row.kind)),
                 h("td", {}, workVerdict(row.activity, row.verdict)),
-                h("td", {}, fill(FIRST.items, { count: row.items.length })),
+                h("td", {}, plural(FIRST.items, row.items.length)),
               ),
             ),
           ),
@@ -1499,7 +1506,7 @@ function first(state) {
     h(
       "section",
       { class: "block" },
-      h("h2", {}, fill(FIRST.quietHeading, { label: ACTION_GROUPS.none.label, count: model.counts.quiet })),
+      h("h2", {}, plural(FIRST.quietHeading, model.counts.quiet, { label: ACTION_GROUPS.none.label })),
       h("p", {}, model.quiet.length ? ACTION_GROUPS.none.note : ACTION_GROUPS.none.none),
       ((said) =>
         h(
@@ -1591,30 +1598,30 @@ function firstItem(state, activityIndex, ordinal, memberIndex) {
   const document = envelope.record;
   const request = document.request;
   const item = firstCheckItem(firstCheckModel(document), activityIndex, ordinal, memberIndex);
-  if (!item) throw new Error("记录中没有这一项");
+  if (!item) throw new Error(ITEM.missing);
   lastFirstItem = { runId: state.runId, activityIndex, ordinal, memberIndex };
   const back = () =>
-    h("p", {}, link("← 返回事项列表（回到这一项的位置）", href(state.mode, state.runId, "first")));
+    h("p", {}, link(ITEM.back, href(state.mode, state.runId, "first")));
   const next = Object.hasOwn(FOLLOW_UP, state.runId) ? FOLLOW_UP[state.runId] : null;
   const assetIdentity = item.kind !== undefined && item.kind.includes("asset-identity");
   const content = h("div", {});
 
   content.append(
     back(),
-    h("p", { class: "kicker" }, `首次检查事项 · ${countWord(item.keys)}`),
+    h("p", { class: "kicker" }, fill(ITEM.kicker, { count: countWord(item.keys) })),
     h("h1", {}, itemTitle(state, item.keys)),
     h(
       "section",
       { class: "block" },
-      h("h2", {}, "一、结论"),
+      h("h2", {}, ITEM.conclusion),
       h("p", { class: "headline conclusion" }, workVerdict(item.activity, item.verdict)),
       basisLine(item.basis),
       besideVerdict(item.activity, item.verdict),
       definitions([
-        item.kind === undefined ? null : ["问题", problemName(item.kind)],
+        item.kind === undefined ? null : [FIRST.problem, problemName(item.kind)],
         [LEAF_READING_WORDS.label, leafName(item.leaf)],
         [
-          "这项工作需要什么",
+          ITEM.needs,
           Object.hasOwn(ACTIVITY_NAMES, item.activity)
             ? ACTIVITY_NAMES[item.activity].needs
             : missing(NOT_CARRIED),
@@ -1630,7 +1637,7 @@ function firstItem(state, activityIndex, ordinal, memberIndex) {
       h(
         "section",
         { class: "block next-step" },
-        h("h2", {}, "二、要做什么、由谁处理、完成后拿什么复检"),
+        h("h2", {}, ITEM.actionHeading),
         actionBlock(item.subscope, request, envelope.mode),
       ),
     );
@@ -1639,8 +1646,8 @@ function firstItem(state, activityIndex, ordinal, memberIndex) {
       h(
         "section",
         { class: "block" },
-        h("h2", {}, "二、后续"),
-        h("p", {}, "记录没有为这一项给出后续处理动作、处理团队或默认处理角色。"),
+        h("h2", {}, ITEM.followUpHeading),
+        h("p", {}, ITEM.noFollowUp),
       ),
     );
   }
@@ -1648,7 +1655,7 @@ function firstItem(state, activityIndex, ordinal, memberIndex) {
     h(
       "section",
       { class: "block" },
-      h("h2", {}, item.keys.length === 2 ? "三、是哪两个构件" : "三、是哪个构件"),
+      h("h2", {}, item.keys.length === 2 ? ITEM.whichTwo : ITEM.whichOne),
       h(
         "div",
         { class: "locations" },
@@ -1662,7 +1669,7 @@ function firstItem(state, activityIndex, ordinal, memberIndex) {
       h(
         "section",
         { class: "block" },
-        h("h2", {}, `四、${DETAILS_WORDS.heading}`),
+        h("h2", {}, fill(ITEM.details, { heading: DETAILS_WORDS.heading })),
         detailsBlock(state, item.basis),
         assetIdentity && item.basis.findings.length
           ? h("p", { class: "beside" }, BESIDE.assetIdentity)
@@ -1676,15 +1683,15 @@ function firstItem(state, activityIndex, ordinal, memberIndex) {
       h(
         "section",
         { class: "block" },
-        h("h2", {}, "然后：这一项复检后的变化"),
+        h("h2", {}, ITEM.nextHeading),
         h(
           "p",
           {},
           link(
-            `在示例“${runLabel(next)}”里看这一项`,
+            fill(ITEM.nextLink, { run: runLabel(next) }),
             href(state.mode, next, "recheck", "of", item.activity, item.ordinal, item.memberIndex),
           ),
-          "。那是对这同一份记录的一次复检，同样是模拟示例。",
+          ITEM.nextAfter,
         ),
       ),
     );
@@ -1696,7 +1703,7 @@ function firstItem(state, activityIndex, ordinal, memberIndex) {
     h(
       "details",
       { class: "block evidence-details" },
-      h("summary", {}, "依据逐条：这个结论引用的证据"),
+      h("summary", {}, ITEM.basisSummary),
       h(
         "ul",
         { class: "plain" },
@@ -1712,7 +1719,7 @@ function firstItem(state, activityIndex, ordinal, memberIndex) {
       ),
       item.basis.context.length
         ? [
-            h("p", {}, "背景引用：不是这个结论的依据，逐字显示。"),
+            h("p", {}, ITEM.context),
             h("ul", { class: "plain" }, item.basis.context.map((text) => h("li", {}, h("blockquote", {}, text)))),
           ]
         : null,
@@ -1721,15 +1728,15 @@ function firstItem(state, activityIndex, ordinal, memberIndex) {
     h(
       "details",
       { class: "block evidence-details" },
-      h("summary", {}, "追溯信息：内部键与记录原码"),
+      h("summary", {}, ITEM.traceSummary),
       definitions([
-        ["内部键", item.keys.map((key, index) => [index ? " + " : "", code(key)])],
+        [ITEM.keys, item.keys.map((key, index) => [index ? " + " : "", code(key)])],
         ["activity_ref", code(item.activityRef)],
-        ["内部分组编号", `#${item.ordinal}`],
+        [ITEM.ordinal, `#${item.ordinal}`],
         ["verdict", item.verdict === undefined ? missing(NOT_CARRIED) : code(item.verdict)],
         ["resolution_kind", item.kind === undefined ? missing(NOT_CARRIED) : code(item.kind)],
         [
-          "终点 outcome",
+          ITEM.leaf,
           item.leaf === null || item.leaf.outcome === undefined
             ? missing(NOT_CARRIED)
             : code(`${item.leaf.requirement}/${item.leaf.outcome}`),
@@ -1739,10 +1746,10 @@ function firstItem(state, activityIndex, ordinal, memberIndex) {
         "p",
         {},
         link(
-          "在明细页查看完整的证据路径",
+          ITEM.memberLink,
           href(state.mode, state.runId, "member", item.activityIndex, item.ordinal, item.memberIndex),
         ),
-        "（该页尚未改版，仍是内部用语）",
+        FIRST.notRevised,
       ),
     ),
     back(),
@@ -1771,7 +1778,7 @@ function glossary(title, entries) {
     "details",
     { class: "glossary" },
     h("summary", {}, title),
-    tableWrap(table(null, ["记录里的代码", "本页的说法"], entries.map(([key, text]) => h("tr", {}, h("td", {}, code(key)), h("td", {}, text))))),
+    tableWrap(table(null, [EVIDENCE.glossaryCode, EVIDENCE.glossarySaid], entries.map(([key, text]) => h("tr", {}, h("td", {}, code(key)), h("td", {}, text))))),
   );
 }
 
@@ -1815,7 +1822,7 @@ function stateLegend(entries) {
     entries
       .filter((entry) => entry.known)
       .map((entry) => [
-        h("dt", {}, `“${entry.label}”是什么意思`),
+        h("dt", {}, fill(EVIDENCE.meaning, { label: entry.label })),
         h("dd", {}, `${CARRY_OVER_STATES[entry.code].meaning}${CARRY_OVER_STATES[entry.code].caveat}`),
       ]),
   );
@@ -1825,7 +1832,7 @@ function stateLegend(entries) {
 // different evidence and are never added together. Under each state, the
 // concrete fact its rows state.
 function evidenceSummary(groups, withFacts = true) {
-  if (!groups.length) return note("复检前的证据路径没有引用任何证据。");
+  if (!groups.length) return note(EVIDENCE.none);
   return h(
     "ul",
     { class: "evidence-summary" },
@@ -1837,7 +1844,7 @@ function evidenceSummary(groups, withFacts = true) {
           "span",
           { class: "kind" },
           group.kind === null ? missing(NOT_CARRIED) : group.known ? group.label : unrecognised(group.kind),
-          `（${group.count} 条）`,
+          plural(EVIDENCE.rows, group.count),
         ),
         h(
           "ul",
@@ -1866,7 +1873,12 @@ function reissueBlock(reissue) {
     tableWrap(
       table(
         null,
-        ["交接的哪一侧", "角色（取自本次请求的交接）", "模型", "是否重新发布"],
+        [
+          EVIDENCE.reissueColumns.side,
+          EVIDENCE.reissueColumns.role,
+          EVIDENCE.reissueColumns.model,
+          EVIDENCE.reissueColumns.reissued,
+        ],
         reissue.sides.map((side) =>
           h(
             "tr",
@@ -1878,10 +1890,10 @@ function reissueBlock(reissue) {
               "td",
               {},
               side.reissued === null
-                ? "无法识别，见上"
+                ? EVIDENCE.unrecognisedSide
                 : side.reissued
-                  ? "重新发布了（新版本）"
-                  : "没有变（原版本）",
+                  ? EVIDENCE.reissued
+                  : EVIDENCE.notReissued,
             ),
           ),
         ),
@@ -1928,7 +1940,7 @@ function countWord(keys) {
     ? COMMON.oneElement
     : keys.length === 2
       ? COMMON.twoElements
-      : fill(COMMON.nElements, { count: keys.length });
+      : plural(COMMON.nElements, keys.length);
 }
 
 // `withName` when the line has to say which of several elements it is about.
@@ -1954,7 +1966,7 @@ function elementCard(state, key, comparison) {
       "div",
       { class: "location" },
       h("div", { class: "member-name" }, missing(ELEMENT_WORDS.noFacts)),
-      definitions([["追溯用内部键", copyable(key)]]),
+      definitions([[ELEMENT_CARD.traceKey, copyable(key)]]),
     );
   }
   const side = handoverSide(comparison, carries(facts, "model_key") ? facts.model_key : null);
@@ -1963,19 +1975,19 @@ function elementCard(state, key, comparison) {
     { class: "location" },
     h("div", { class: "member-name" }, named(facts) ? facts.name : missing(ELEMENT_WORDS.unnamed)),
     definitions([
-      ["类别", field(facts, "ifc_class", className)],
-      ["楼层", storeyOf(facts)],
+      [ELEMENT_CARD.class, field(facts, "ifc_class", className)],
+      [ELEMENT_CARD.storey, storeyOf(facts)],
       [
-        "所属模型",
+        ELEMENT_CARD.model,
         field(facts, "model_key", (value) => [
           code(value),
-          side ? `：${HANDOVER_SIDES[side]}` : null,
+          side ? `${COMMON.colon}${HANDOVER_SIDES[side]}` : null,
           h("div", { class: "sub" }, ELEMENT_WORDS.modelIsNotDiscipline),
         ]),
       ],
-      ["专业", missing(ELEMENT_WORDS.noDiscipline)],
+      [ELEMENT_CARD.disciplineRow, missing(ELEMENT_WORDS.noDiscipline)],
       ["GlobalId", field(facts, "global_id", copyable)],
-      ["追溯用内部键", code(key)],
+      [ELEMENT_CARD.traceKey, code(key)],
     ]),
   );
 }
@@ -1987,7 +1999,7 @@ function requirementNote(item) {
     ? h(
         "p",
         { class: "beside caveat" },
-        REQUIREMENT_CHANGED_NOTE.replace("{count}", String(item.requirementChanged)),
+        fill(REQUIREMENT_CHANGED_NOTE, { count: item.requirementChanged }),
       )
     : null;
 }
@@ -1998,14 +2010,14 @@ function requirementNote(item) {
 function workChange(item) {
   const name = field(item.outcome, "activity_ref", (ref) => h("strong", {}, activityTitle(activityShortName(ref))));
   const before = field(item.outcome, "prior_verdict", verdictLabel);
-  if (!item.current) return [name, "：复检前 ", before, "；现在：记录没有给出"];
+  if (!item.current) return compose(WORK.missing, { work: name, before });
   const now = item.current.map((current) => [
     current.verdict === undefined ? missing(NOT_CARRIED) : verdictLabel(current.verdict),
     " ",
   ]);
   return item.verdictChange.kind === "unchanged"
-    ? [name, "：", before, ` （${BESIDE.unchanged}）`]
-    : [name, "：复检前 ", before, " → 现在 ", now];
+    ? compose(WORK.unchanged, { work: name, before, note: BESIDE.unchanged })
+    : compose(WORK.changed, { work: name, before, now });
 }
 
 // Beside the current verdict: where its evidence came from, and whatever else
@@ -2048,7 +2060,7 @@ function problemRow(item) {
       )
     : [];
   return places.length
-    ? ["问题", places.map((current) => h("div", {}, problemOf(current.located.subscope)))]
+    ? [FIRST.problem, places.map((current) => h("div", {}, problemOf(current.located.subscope)))]
     : null;
 }
 
@@ -2058,16 +2070,18 @@ function actionRow(item, request) {
   const sentences = item.current
     ? item.current
         .filter((current) => current.located)
-        .map((current) => actionSentences(carried(current.located.subscope, "resolution_kind"), request))
+        .map((current) =>
+          actionSentences(carried(current.located.subscope, "resolution_kind"), request, current.located.subscope),
+        )
         .filter((entry) => entry !== null)
     : [];
-  return sentences.length ? ["要做什么", sentences.map((entry) => h("div", {}, entry.action))] : null;
+  return sentences.length ? [ACTION.what, sentences.map((entry) => h("div", {}, entry.action))] : null;
 }
 
 function dispositionRow(item) {
   if (item.disposition.code === "present") return null;
   return [
-    "这个事项现在",
+    EVIDENCE.dispositionNow,
     item.disposition.code === null
       ? missing(NOT_CARRIED)
       : item.disposition.known
@@ -2078,20 +2092,20 @@ function dispositionRow(item) {
 
 function recheckIntro(state, model) {
   const successor = state.envelope.record.successor;
-  const content = h("div", {}, h("p", {}, link("← 返回示例目录", href(state.mode))));
+  const content = h("div", {}, h("p", {}, link(FIRST.back, href(state.mode))));
   if (model === null) {
-    content.append(h("h1", {}, "复检结果"), note("这份记录不是复检记录，没有复检前后的对比可以显示。"));
+    content.append(h("h1", {}, RECHECK.title), note(RECHECK.notRecheck));
     return { content, usable: false };
   }
   if (!model.recognised) {
     content.append(
-      h("h1", {}, "复检结果"),
+      h("h1", {}, RECHECK.title),
       h(
         "p",
         { class: "problem" },
-        "这份记录承接了一条已封存的记录，但承接类型不是本页认识的复检：successor.kind = ",
+        RECHECK.unknownSuccessor,
         field(successor, "kind", unrecognised),
-        "。本页不把它当作复检来呈现。",
+        RECHECK.unknownSuccessorAfter,
       ),
     );
     return { content, usable: false };
@@ -2128,24 +2142,31 @@ function recheck(state) {
   // The answer first: how many items the record asks something of, whether a
   // model was re-issued, and which items read differently from before.
   content.append(
-    h("h1", {}, "复检结果：需要处理的事项"),
-    h("p", { class: "sub" }, `${modeLabel(envelope.mode)}：${runLabel(state.runId)}`),
+    h("h1", {}, RECHECK.resultTitle),
+    h("p", { class: "sub" }, fill(FIRST.runLine, { mode: modeLabel(envelope.mode), run: runLabel(state.runId) })),
     h(
       "section",
       { class: "block result" },
-      h("h2", {}, `本次结果：共 ${model.items.length} 个事项`),
+      h("h2", {}, plural(RECHECK.summary, model.items.length)),
       h(
         "ul",
         { class: "result-lines" },
-        shown.map((group) => h("li", {}, h("strong", {}, `${group.count} 个事项`), `：${group.summary}`)),
+        shown.map((group) =>
+          h(
+            "li",
+            {},
+            h("strong", {}, plural(RECHECK.groupLine, group.count)),
+            fill(RECHECK.groupSummary, { summary: group.summary }),
+          ),
+        ),
       ),
-      h("p", {}, "模型：", model.reissue.headline, "。"),
+      h("p", {}, fill(RECHECK.models, { headline: model.reissue.headline })),
       model.reissue.caveats.length
         ? h("ul", { class: "caveats" }, model.reissue.caveats.map((text) => h("li", {}, text)))
         : null,
       moved.length
         ? [
-            h("p", { class: "caveat" }, `${moved.length} 个事项的结论和复检前不同：`),
+            h("p", { class: "caveat" }, plural(RECHECK.moved, moved.length)),
             h(
               "ul",
               { class: "quiet-items" },
@@ -2154,7 +2175,7 @@ function recheck(state) {
                   "li",
                   {},
                   link(title(item), itemHref(item)),
-                  " ｜ ",
+                  FIRST.separator,
                   workChange(item),
                   besideChange(item),
                   requirementNote(item),
@@ -2165,7 +2186,7 @@ function recheck(state) {
         : null,
       h("p", {}, changed.note),
       editedCount
-        ? h("p", {}, `复检前引用的 ${evidenceCount} 条旧证据里，有 ${editedCount} 条的检查要求变了。`)
+        ? h("p", {}, fill(RECHECK.requirementChanged, { count: evidenceCount, edited: editedCount }))
         : null,
     ),
   );
@@ -2190,7 +2211,7 @@ function recheck(state) {
           href: itemHref(item),
           "data-return-focus": here ? true : null,
         },
-        "查看这一项：具体对象、要做什么、由谁处理、拿什么复检",
+        FIRST.openItem,
       ),
     );
   };
@@ -2208,7 +2229,7 @@ function recheck(state) {
         },
         title(item),
       ),
-      " ｜ ",
+      FIRST.separator,
       workChange(item),
       besideChange(item),
       requirementNote(item),
@@ -2218,7 +2239,7 @@ function recheck(state) {
       h(
         "section",
         { class: group.kind === "open" ? "block open-items" : "block" },
-        h("h2", {}, `${group.label}（${group.count} 个事项）`),
+        h("h2", {}, plural(RECHECK.groupHeading, group.count, { label: group.label })),
         h("p", {}, group.note),
         group.kind === "none"
           ? h("ul", { class: "quiet-items" }, group.items.map((index) => quietLine(itemAt(index))))
@@ -2230,12 +2251,12 @@ function recheck(state) {
     h(
       "section",
       { class: "block" },
-      h("h2", {}, "本预览做不了的事"),
+      h("h2", {}, RECHECK.cannotHeading),
       h("ul", {}, RECHECK_CANNOT.map((text) => h("li", {}, text))),
-      note("这些动作没有实现，所以页面上没有对应的按钮。"),
+      note(RECHECK.cannotNote),
     ),
     howToRead(
-      h("h3", {}, "读复检结果时"),
+      h("h3", {}, RECHECK.limitsHeading),
       h("ul", {}, RECHECK_LIMITS.map((text) => h("li", {}, text))),
     ),
   );
@@ -2244,7 +2265,7 @@ function recheck(state) {
     h(
       "tr",
       {},
-      h("th", { scope: "row" }, `${side.label}模型`),
+      h("th", { scope: "row" }, fill(RECHECK.sideModel, { side: side.label })),
       h("td", {}, side.prior ? [field(side.prior, "model_key", code), " ", field(side.prior, "content_id", copyable)] : missing(NOT_CARRIED)),
       h("td", {}, side.now ? [field(side.now, "model_key", code), " ", field(side.now, "content_id", copyable)] : missing(NOT_CARRIED)),
     );
@@ -2252,48 +2273,54 @@ function recheck(state) {
     h(
       "details",
       { class: "block evidence-details" },
-      h("summary", {}, "复检前后的比较明细：模型、事项、旧证据"),
-      h("h3", {}, "模型"),
+      h("summary", {}, RECHECK.detailsSummary),
+      h("h3", {}, RECHECK.modelsHeading),
       reissueBlock(model.reissue),
-      h("h3", {}, `复检前记录里的事项（${model.items.length} 个），现在的情况`),
+      h("h3", {}, plural(RECHECK.itemsHeading, model.items.length)),
       tallyLine(model.dispositionTally),
-      h("h3", {}, `复检前引用的旧证据（${evidenceCount} 条），和本次记录比较的结果`),
-      note("检查结果和人工判定是两种证据，分开计数，不相加。"),
+      h("h3", {}, plural(RECHECK.evidenceHeading, evidenceCount)),
+      note(RECHECK.kindsNote),
       evidenceSummary(model.evidenceGroups),
       stateLegend(model.evidenceTally),
     ),
     h(
       "details",
       { class: "block evidence-details" },
-      h("summary", {}, "追溯信息：记录标识、模型版本指纹、记录原码对照"),
+      h("summary", {}, RECHECK.traceSummary),
       h(
         "p",
         {},
-        link("这份记录的请求范围、版本与来源", href(state.mode, state.runId, "record")),
-        "（该页尚未改版，仍是内部用语）",
+        link(FIRST.recordLink, href(state.mode, state.runId, "record")),
+        FIRST.notRevised,
       ),
       definitions([
         ["successor.kind", field(successor, "kind", code)],
-        ["复检前记录的指纹（assessment digest）", field(successor, "prior_assessment_digest", copyable)],
-        ["本记录的指纹（assessment digest）", copyable(envelope.assessment_digest)],
+        [RECHECK.priorDigest, field(successor, "prior_assessment_digest", copyable)],
+        [RECHECK.currentDigest, copyable(envelope.assessment_digest)],
         ["is_current", field(comparison, "is_current", (value) => code(String(value)))],
         [
           "changed_models",
           carries(comparison, "changed_models") && comparison.changed_models.length === 0
-            ? "（记录中为空列表：没有模型变化）"
+            ? RECHECK.noChange
             : field(comparison, "changed_models", (keys) => keys.map((key) => [code(key), " "])),
         ],
       ]),
-      tableWrap(table(null, ["", "复检前记录", "本记录"], model.reissue.sides.map(versionRow))),
-      note("版本以内容指纹表示，不以文件名当版本。哪一侧变了取自记录的 changed_models，本页不比较指纹。"),
-      glossary("事项现在的情况：记录原码", Object.entries(DISPOSITIONS)),
-      glossary("复检前留下的条件：状态原码（没有“整句条件已满足”）", Object.entries(CONDITION_STATES)),
+      tableWrap(
+        table(
+          null,
+          [RECHECK.versionColumns.side, RECHECK.versionColumns.prior, RECHECK.versionColumns.current],
+          model.reissue.sides.map(versionRow),
+        ),
+      ),
+      note(RECHECK.versionNote),
+      glossary(RECHECK.glossaryDispositions, Object.entries(DISPOSITIONS)),
+      glossary(RECHECK.glossaryConditions, Object.entries(CONDITION_STATES)),
       glossary(
-        "旧证据比较：状态原码",
+        RECHECK.glossaryStates,
         Object.entries(CARRY_OVER_STATES).map(([key, entry]) => [key, entry.label]),
       ),
-      glossary("旧证据比较：原因原码", Object.entries(CARRY_OVER_REASONS)),
-      glossary("变化方面：原码", Object.entries(CHANGED_ASPECTS)),
+      glossary(RECHECK.glossaryReasons, Object.entries(CARRY_OVER_REASONS)),
+      glossary(RECHECK.glossaryAspects, Object.entries(CHANGED_ASPECTS)),
     ),
   );
   return content;
@@ -2323,7 +2350,7 @@ function evidenceCard(item, details) {
       "p",
       { class: "citation-line" },
       citationKind(row),
-      "：",
+      COMMON.colon,
       field(row, "citation", copyable),
       " ",
       carries(row, "citation") ? provenance(kind, row.citation) : null,
@@ -2332,7 +2359,7 @@ function evidenceCard(item, details) {
       ? h(
           "p",
           { class: "citation-line" },
-          "本次记录引用的对应证据：",
+          EVIDENCE.currentCitation,
           field(row, "current_citation", copyable),
           " ",
           provenance(kind, row.current_citation),
@@ -2358,20 +2385,20 @@ function evidenceCard(item, details) {
       "p",
       {},
       item.reason.code === null
-        ? ["原因：", missing(NOT_CARRIED)]
+        ? [EVIDENCE.reason, missing(NOT_CARRIED)]
         : item.reason.known
           ? item.reason.text
-          : ["原因：", unrecognised(item.reason.code)],
+          : [EVIDENCE.reason, unrecognised(item.reason.code)],
     ),
     item.facts.map((text) => h("p", { class: "fact" }, text)),
     item.notes.map((text) => h("p", { class: "caveat" }, text)),
     carries(row, "cause")
-      ? h("div", {}, "记录给出的原因（原文）：", field(row, "cause", (text) => h("blockquote", {}, text)))
+      ? h("div", {}, EVIDENCE.recordCause, field(row, "cause", (text) => h("blockquote", {}, text)))
       : null,
     h(
       "details",
       {},
-      h("summary", {}, "追溯信息（记录原码与内容指纹）"),
+      h("summary", {}, EVIDENCE.trace),
       definitions([
         ["state", field(row, "state", code)],
         ["reason", field(row, "reason", code)],
@@ -2380,8 +2407,8 @@ function evidenceCard(item, details) {
           "changed_aspects",
           field(row, "changed_aspects", (aspects) => aspects.map((aspect) => [code(aspect), " "])),
         ],
-        ["复检前的内容指纹", field(row, "sealed_content_digest", code)],
-        ["本记录的内容指纹", field(row, "current_content_digest", code)],
+        [EVIDENCE.priorDigest, field(row, "sealed_content_digest", code)],
+        [EVIDENCE.currentDigest, field(row, "current_content_digest", code)],
       ]),
     ),
   );
@@ -2393,10 +2420,7 @@ function currentSubscopeBlock(state, item, current) {
     return h(
       "div",
       { class: "current-subscope" },
-      note(
-        `记录给出了这一项的当前位置（内部编号 #${current.ordinal}），但在本记录里找不到它；本页不另行对应。`,
-        "problem",
-      ),
+      note(fill(EVIDENCE.currentMissing, { ordinal: current.ordinal }), "problem"),
     );
   }
   const subscope = current.located.subscope;
@@ -2404,10 +2428,10 @@ function currentSubscopeBlock(state, item, current) {
     "p",
     { class: "sub" },
     link(
-      "在明细页查看和它一起评估的全部构件与证据",
+      EVIDENCE.memberLink,
       href(state.mode, state.runId, "activity", current.located.activityIndex, "sub", current.ordinal, ...back),
     ),
-    "（该页尚未改版，仍是内部用语）",
+    FIRST.notRevised,
   );
   // The record carries a next step, a role and a team only where it asks for
   // something. Where it carries none of them, that is said once.
@@ -2415,7 +2439,7 @@ function currentSubscopeBlock(state, item, current) {
     return h(
       "div",
       { class: "current-subscope" },
-      h("p", {}, "记录没有为这一项给出后续处理动作、处理团队或默认处理角色。"),
+      h("p", {}, ITEM.noFollowUp),
       trace,
     );
   }
@@ -2435,11 +2459,11 @@ function recheckItem(state, subscopeIndex, memberIndex) {
   if (!usable) return content;
   const subscope = model.subscopes[subscopeIndex];
   const item = subscope && subscope.items[memberIndex];
-  if (!item) throw new Error("复检记录中没有这一项");
+  if (!item) throw new Error(RECHECK_ITEM.missing);
   const outcome = item.outcome;
   const keys = item.entry.member.keys;
   lastRecheckItem = { runId: state.runId, subscopeIndex, memberIndex };
-  const backToList = () => h("p", {}, link("← 返回复检事项列表（回到这一项的位置）", href(state.mode, state.runId, "recheck")));
+  const backToList = () => h("p", {}, link(RECHECK_ITEM.back, href(state.mode, state.runId, "recheck")));
   const changed = model.verdictGroups.find((group) => group.kind === "changed");
   const rows = subscope.evidence.map((entry) => entry.row);
   // Old evidence and what this record cites in its place are two sets of
@@ -2454,16 +2478,21 @@ function recheckItem(state, subscopeIndex, memberIndex) {
       rows.filter((row) => row.citation_kind === "determination" && carries(row, key)).map((row) => row[key]),
     ),
   ];
-  const priorSentences = actionSentences(carried(outcome, "prior_resolution_kind"), request);
+  // The recheck condition left before carries its own words in the record.
+  const priorSentences = actionSentences(carried(outcome, "prior_resolution_kind"), request, {
+    route: carries(outcome, "prior_recheck_condition")
+      ? { recheck_condition: carried(outcome, "prior_recheck_condition") }
+      : {},
+  });
 
   content.replaceChildren(
     backToList(),
-    h("p", { class: "kicker" }, `复检事项 · ${countWord(keys)}`),
+    h("p", { class: "kicker" }, fill(RECHECK_ITEM.kicker, { count: countWord(keys) })),
     h("h1", {}, itemTitle(state, keys)),
     h(
       "section",
       { class: "block" },
-      h("h2", {}, "一、结论"),
+      h("h2", {}, ITEM.conclusion),
       h("p", { class: "headline conclusion" }, workChange(item)),
       besideChange(item),
       requirementNote(item),
@@ -2478,21 +2507,20 @@ function recheckItem(state, subscopeIndex, memberIndex) {
         ? h(
             "strong",
             { class: "caveat" },
-            "这两个构件已不再被配成一对检查：穿透判定现为“不穿透”（见下方记录给出的原因）。" +
-              "这不等于开洞已建成，也不等于开洞缺陷已修复。",
+            RECHECK_ITEM.pairNote,
           )
         : null,
       definitions([
         problemRow(item),
         readingRow(item),
         dispositionRow(item),
-        ["模型", model.reissue.headline],
+        [RECHECK_ITEM.model, model.reissue.headline],
       ]),
       carries(item.entry, "cause")
         ? h(
             "div",
             {},
-            "记录给出的原因（原文）：",
+            EVIDENCE.recordCause,
             field(item.entry, "cause", (text) => h("blockquote", {}, text)),
           )
         : null,
@@ -2500,28 +2528,25 @@ function recheckItem(state, subscopeIndex, memberIndex) {
     h(
       "section",
       { class: "block" },
-      h("h2", {}, keys.length === 2 ? "二、是哪两个构件" : "二、是哪个构件"),
+      h("h2", {}, keys.length === 2 ? RECHECK_ITEM.whichTwo : RECHECK_ITEM.whichOne),
       h("div", { class: "locations" }, keys.map((key) => elementCard(state, key, model.reissue.comparison))),
       note(ELEMENT_WORDS.naming),
     ),
     h(
       "section",
       { class: "block next-step" },
-      h("h2", {}, "三、要做什么、由谁处理、完成后拿什么复检"),
+      h("h2", {}, RECHECK_ITEM.actionHeading),
       item.disposition.known && item.disposition.code !== "present"
         ? h("p", { class: "headline" }, item.disposition.next)
         : null,
       item.current
         ? item.current.map((current) => currentSubscopeBlock(state, item, current))
-        : note(
-            "记录没有给出这一项的当前情况，所以本页没有处理动作、处理团队或默认处理角色可以显示。" +
-              "复检前记录里的这些信息也没有随复检记录返回。",
-          ),
+        : note(RECHECK_ITEM.noCurrent),
     ),
     h(
       "section",
       { class: "block condition" },
-      h("h2", {}, "四、复检前留下的结束条件，这次达到了吗"),
+      h("h2", {}, RECHECK_ITEM.conditionHeading),
       h(
         "p",
         { class: "headline" },
@@ -2529,19 +2554,19 @@ function recheckItem(state, subscopeIndex, memberIndex) {
           ? unrecognised(item.condition.code)
           : item.condition.plain,
       ),
-      priorSentences ? h("p", {}, "复检前留下的结束条件：", priorSentences.recheck, "。") : null,
-      note("这里只说复检前留下的结束条件被证明到了什么程度，与现在的结论分开读：结论变了，不等于原条件已满足。"),
+      priorSentences ? h("p", {}, compose(RECHECK_ITEM.priorCondition, { text: priorSentences.recheck })) : null,
+      note(RECHECK_ITEM.conditionNote),
       h(
         "details",
         {},
-        h("summary", {}, "规则原文（英文）与记录原码"),
+        h("summary", {}, RECHECK_ITEM.originalSummary),
         definitions([
           [
             "prior_recheck_condition",
             field(outcome, "prior_recheck_condition", (text) => h("blockquote", {}, text)),
           ],
           ["condition_status", field(outcome, "condition_status", (value) => codeWithGloss(value, conditionState))],
-          ["condition_basis（原文）", field(outcome, "condition_basis", (text) => h("blockquote", {}, text))],
+          [RECHECK_ITEM.conditionBasis, field(outcome, "condition_basis", (text) => h("blockquote", {}, text))],
           ["correspondence", field(outcome, "correspondence", code)],
           ["named_outcome", field(outcome, "named_outcome", code)],
           ["prior_leaf_evidence_requirement_id", field(outcome, "prior_leaf_evidence_requirement_id", code)],
@@ -2551,27 +2576,27 @@ function recheckItem(state, subscopeIndex, memberIndex) {
     h(
       "section",
       { class: "block" },
-      h("h2", {}, "五、复检前的证据"),
+      h("h2", {}, RECHECK_ITEM.evidenceHeading),
       subscope.evidence.length
         ? [
             h(
               "p",
               {},
-              `和这一项放在一起评估的旧证据共 ${subscope.evidence.length} 条`,
-              subscope.requirementChanged ? `，其中 ${subscope.requirementChanged} 条的检查要求变了` : "",
-              "。",
+              plural(RECHECK_ITEM.evidenceCount, subscope.evidence.length),
+              subscope.requirementChanged
+                ? plural(RECHECK_ITEM.requirementChanged, subscope.requirementChanged)
+                : "",
+              RECHECK_ITEM.end,
             ),
             // Before and after are two sets of citations with two sources,
             // said apart rather than as two labels on one line.
-            h("p", { class: "basis" }, "复检前引用的证据，来源：", sources("citation")),
-            h("p", { class: "basis" }, "本次记录引用的对应证据，来源：", sources("current_citation")),
+            h("p", { class: "basis" }, RECHECK_ITEM.priorSources, sources("citation")),
+            h("p", { class: "basis" }, RECHECK_ITEM.currentSources, sources("current_citation")),
             h(
               "details",
               {},
-              h("summary", {}, "逐条查看旧证据和比较结果"),
-              note(
-                `记录把放在一起评估的一组构件的旧证据存在一处，不按构件拆开：这一组的 ${outcome.prior_members.length} 个事项共用下面这些行。`,
-              ),
+              h("summary", {}, RECHECK_ITEM.rowsSummary),
+              note(plural(RECHECK_ITEM.shared, outcome.prior_members.length)),
               stateLegend(subscope.evidenceTally),
               h(
                 "ol",
@@ -2582,31 +2607,31 @@ function recheckItem(state, subscopeIndex, memberIndex) {
               ),
             ),
           ]
-        : note("复检前这一组的证据路径没有引用任何证据。"),
+        : note(RECHECK_ITEM.noEvidence),
     ),
     h(
       "section",
       { class: "block" },
-      h("h2", {}, "本预览做不了的事"),
+      h("h2", {}, RECHECK.cannotHeading),
       h("ul", {}, RECHECK_CANNOT.map((text) => h("li", {}, text))),
     ),
     howToRead(
-      h("h3", {}, "读复检结果时"),
+      h("h3", {}, RECHECK.limitsHeading),
       h("ul", {}, RECHECK_LIMITS.map((text) => h("li", {}, text))),
     ),
     h(
       "details",
       { class: "block evidence-details" },
-      h("summary", {}, "追溯信息：内部键与记录原码"),
+      h("summary", {}, ITEM.traceSummary),
       definitions([
-        ["内部键", memberKeys(item.entry.member)],
+        [ITEM.keys, memberKeys(item.entry.member)],
         ["activity_ref", field(outcome, "activity_ref", code)],
-        ["复检前的内部分组编号", field(outcome, "subscope_ordinal", (ordinal) => `#${ordinal}`)],
+        [RECHECK_ITEM.priorOrdinal, field(outcome, "subscope_ordinal", (ordinal) => `#${ordinal}`)],
         ["prior_verdict", field(outcome, "prior_verdict", code)],
         ["prior_resolution_kind", field(outcome, "prior_resolution_kind", code)],
         ["disposition", field(item.entry, "disposition", code)],
         [
-          "现在的内部分组编号、verdict 与终点 outcome",
+          RECHECK_ITEM.currentLine,
           item.current
             ? item.current.map((current) =>
                 h(
@@ -2632,7 +2657,7 @@ function recheckItem(state, subscopeIndex, memberIndex) {
 function recheckItemOf(state, activity, ordinal, memberIndex) {
   const model = recheckModel(state.envelope.record);
   const index = model !== null && model.recognised ? sealedGroupIndex(model, activity, ordinal) : -1;
-  if (index < 0) throw new Error("复检记录中没有这一项");
+  if (index < 0) throw new Error(RECHECK_ITEM.missing);
   return recheckItem(state, index, memberIndex);
 }
 

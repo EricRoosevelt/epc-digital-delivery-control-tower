@@ -33,7 +33,7 @@ const MODES = ["fixture", "real", "workspace"];
 // is not translated yet instead of being drawn half in each language; in
 // Chinese every screen is drawn. Which screen a route shows never depends on
 // the language — only whether its words can be shown in it.
-export const TRANSLATED = new Set(["entry", "runs/fixture", "runs/real", "first"]);
+export const TRANSLATED = new Set(["entry", "runs/fixture", "runs/real", "first", "item", "recheck"]);
 
 function inLanguage(name) {
   return LANG !== "en" || TRANSLATED.has(name);

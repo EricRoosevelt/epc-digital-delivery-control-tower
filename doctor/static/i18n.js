@@ -75,3 +75,29 @@ export function fill(template, values) {
     template,
   );
 }
+
+/**
+ * A counted wording: the form for one or for more, with `{count}` and any other
+ * placeholders filled. A wording that is the same whatever the count is a plain
+ * string; one that is not has `one` and `other` in every language, so the two
+ * tables keep the same shape.
+ */
+export function plural(entry, count, values = {}) {
+  const form = typeof entry === "string" ? entry : count === 1 ? entry.one : entry.other;
+  return fill(form, { count, ...values });
+}
+
+/**
+ * A wording template whose placeholders may be page nodes, not only text: the
+ * pieces in order, ready to hand to a node. Punctuation stays in the template,
+ * where each language puts its own.
+ */
+export function compose(template, values) {
+  return template
+    .split(/(\{\w+\})/)
+    .filter((part) => part !== "")
+    .map((part) => {
+      const match = /^\{(\w+)\}$/.exec(part);
+      return match && Object.hasOwn(values, match[1]) ? values[match[1]] : part;
+    });
+}

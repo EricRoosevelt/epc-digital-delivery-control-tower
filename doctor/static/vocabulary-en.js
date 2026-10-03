@@ -308,7 +308,7 @@ export const COMMON = {
   and: " and ",
   oneElement: "One element",
   twoElements: "A pair of elements",
-  nElements: "{count} elements",
+  nElements: { one: "{count} element", other: "{count} elements" },
   inModel: " · model ",
 };
 
@@ -336,19 +336,22 @@ export const FIRST = {
   back: "← Back to the examples",
   title: "First check result: items to deal with",
   runLine: "{mode}: {run}",
-  summary: "This result: {items} items, {todo} of which need dealing with",
-  items: "{count} items",
+  summary: "This result: {items} in all; to deal with: {todo}",
+  items: { one: "{count} item", other: "{count} items" },
   verdictLine: ": the work concerned is ",
   quietLine: ": {summary} (listed further down this page)",
-  elementsLine: "{unit} This record involves {count} different elements.",
+  elementsLine: {
+    one: "{unit} This record involves {count} element.",
+    other: "{unit} This record involves {count} different elements.",
+  },
   action: "What to do",
   problem: "Problem",
   openItem: "See this item: the element, what to do, who deals with it, what a recheck must show",
-  openHeading: "{label}, by handling team ({count} items)",
+  openHeading: { one: "{label}, by handling team ({count} item)", other: "{label}, by handling team ({count} items)" },
   team: "Handling team ",
-  teamCount: ": {count} items",
+  teamCount: { one: ": {count} item", other: ": {count} items" },
   columns: { problem: "Problem", work: "Which work: conclusion", count: "Items" },
-  quietHeading: "{label} ({count} items)",
+  quietHeading: { one: "{label} ({count} item)", other: "{label} ({count} items)" },
   separator: " | ",
   nextHeading: "Then: see how this record changed after a recheck",
   nextLink: "Open the example \"{run}\"",
@@ -399,3 +402,492 @@ export const COPY = {
   done: "Copied",
   manual: "Select it to copy by hand",
 };
+
+// ---------------------------------------------------------------------------
+// The first-check item and the recheck (part 2 of the English path)
+// ---------------------------------------------------------------------------
+
+// A check's reason is the record's own English: there is nothing to gloss.
+export const REASON_GLOSSES = {};
+
+export const FINDING_STATUS = {
+  FAIL: "Fail",
+  PASS: "Pass",
+  "N/A": "Not applicable",
+};
+
+export const ITEM = {
+  missing: "The record has no such item",
+  back: "← Back to the list of items (to this item's place)",
+  kicker: "First-check item · {count}",
+  conclusion: "1. Conclusion",
+  needs: "What this work needs",
+  actionHeading: "2. What to do, who deals with it, what a recheck must show",
+  followUpHeading: "2. Follow-up",
+  noFollowUp: "The record gives no follow-up action, handling team or default handling role for this item.",
+  whichOne: "3. Which element",
+  whichTwo: "3. Which two elements",
+  details: "4. {heading}",
+  nextHeading: "Then: how this item changed after a recheck",
+  nextLink: "See this item in the example \"{run}\"",
+  nextAfter: ". That is a recheck of this same record, and also a simulated example.",
+  basisSummary: "Basis, citation by citation: the evidence this conclusion cites",
+  context: "Background citations: not the basis of this conclusion, shown word for word.",
+  traceSummary: "Tracing: internal keys and record codes",
+  keys: "Internal keys",
+  ordinal: "Internal group number",
+  leaf: "Final outcome",
+  memberLink: "See the full evidence path on the detail page",
+};
+
+export const ACTION = {
+  what: "What to do",
+  whatOriginal: "What to do (the rule's own words)",
+  team: "Handling team",
+  consequence: "What it means for this work",
+  recheck: "What a recheck must show",
+  recheckOriginal: "What a recheck must show (the rule's own words)",
+  original: "The rule's own words",
+};
+
+export const ELEMENT_CARD = {
+  traceKey: "Internal key for tracing",
+  class: "Class",
+  storey: "Storey",
+  model: "Model",
+  disciplineRow: "Discipline",
+};
+
+export const CONSEQUENCE_KINDS = {
+  "work-cannot-start": "This work cannot start",
+  "work-suspended": "This work is suspended",
+  "rework-risk": "Risk of rework",
+  "re-identification-and-reissue-risk":
+    "Risk of re-identification: documents that cite these identifiers would then have to be reissued too",
+};
+
+export const LEAF_READINGS = {
+  "asset-identity/satisfied": "The project asset-identity requirements that apply to it passed, and it was actually evaluated",
+  "asset-identity/unmet": "The project asset-identity requirement is not met",
+  "asset-identity/not-yet-evaluated": "The asset-identity rules did not cover it",
+  "in-model-position/satisfied": "It has a storey or space assignment",
+  "in-model-position/unmet": "It has no storey or space assignment",
+  "in-model-position/not-yet-evaluated": "The storey or space check did not cover it",
+  "cross-model-alignment/confirmed":
+    "A record confirms the two models are aligned to a common datum (by the method the project accepts, for the listed model versions)",
+  "cross-model-alignment/misaligned": "The alignment confirmation found the two models not aligned",
+  "cross-model-alignment/not-yet-confirmed": "No alignment confirmation yet",
+  "penetration-determination/no-penetration":
+    "A coordination-review determination says it passes through no element of the receiving model. With no penetration no opening is needed, so the opening was not assessed — this is not \"the opening is fine\"",
+  "penetration-determination/penetration-confirmed":
+    "A coordination-review determination says it passes through elements of the receiving model",
+  "penetration-determination/not-yet-determined":
+    "No coordination review has determined yet whether it passes through elements of the receiving model",
+  "opening-status/cross-referenced":
+    "This pair: the opening is modelled in the element passed through, and linked to the element passing through it",
+  "opening-status/modelled-not-cross-referenced":
+    "This pair: the opening is modelled in the element passed through, but not linked to the element passing through it",
+  "opening-status/not-modelled": "This pair: no opening is modelled in the element passed through",
+  "opening-status/not-yet-determined": "This pair: the review of the opening has not been completed yet",
+};
+
+export const LEAF_READING_WORDS = {
+  label: "The result this conclusion rests on",
+  notCarried: "The record does not give the result this item now rests on",
+  unglossed: "This interface has no English for this result; see the tracing details",
+};
+
+export const DETAILS_WORDS = {
+  heading: "What exactly is missing",
+  absent: "Not given in the record: the returned data has no requirement details for this citation.",
+  determinations:
+    "This conclusion cites human determinations, not check results; a determination has no requirement details. What is missing is said in the conclusion and in \"What to do\" above.",
+  nothingCited: "This conclusion cites no check result, so there are no requirement details to show.",
+  requirement: "Requirement not met",
+  requirementMet: "Requirement",
+  rule: "Rule",
+  status: "Result of that check",
+  reason: "Reason",
+  actual: "Value that check observed",
+  noActual: "That check observed no value",
+  hasActual: "That check observed a value; this page does not show it",
+  expected: "The rule's own words",
+  source: "Source the rule gives: ",
+  projectAssumption: "This is a requirement agreed for this project, not a general one.",
+  gap: "What value to fill in, and which Revit parameter it maps to, the record does not say.",
+  prior:
+    "At the assessment before the recheck, this evidence's requirement and result were as follows. Having this description does not make the row comparable; the row's state is what is written above.",
+  currentAbsent: "The corresponding evidence this record cites: its requirement details are not given in the record.",
+};
+
+export const EVIDENCE = {
+  currentCitation: "Corresponding evidence this record cites: ",
+  reason: "Reason: ",
+  recordCause: "Reason the record gives (as written): ",
+  trace: "Tracing (record codes and content fingerprints)",
+  priorDigest: "Content fingerprint before the recheck",
+  currentDigest: "Content fingerprint in this record",
+  none: "The evidence path before the recheck cites no evidence.",
+  rows: { one: " ({count} row)", other: " ({count} rows)" },
+  empty: "(empty)",
+  glossaryCode: "Code in the record",
+  glossarySaid: "What this page says",
+  meaning: "What \"{label}\" means",
+  dispositionNow: "This item now",
+  currentMissing:
+    "The record gives this item's current place (internal number #{ordinal}), but it cannot be found in this record; this page does not match it up another way.",
+  memberLink: "See every element and piece of evidence assessed with it on the detail page",
+  reissueColumns: {
+    side: "Side of the handover",
+    role: "Role (from this request's handover)",
+    model: "Model",
+    reissued: "Re-issued?",
+  },
+  unrecognisedSide: "Cannot be recognised; see above",
+  reissued: "Re-issued (new version)",
+  notReissued: "Unchanged (original version)",
+};
+
+export const WORK = {
+  unchanged: "{work}: {before} ({note})",
+  changed: "{work}: before the recheck {before} → now {now}",
+  missing: "{work}: before the recheck {before}; now: not given in the record",
+};
+
+export const RECHECK = {
+  title: "Recheck result",
+  notRecheck: "This record is not a recheck record, so there is no before-and-after to show.",
+  unknownSuccessor:
+    "This record follows a sealed record, but not as a recheck this page recognises: successor.kind = ",
+  unknownSuccessorAfter: ". This page does not present it as a recheck.",
+  resultTitle: "Recheck result: items to deal with",
+  summary: { one: "This result: {count} item", other: "This result: {count} items" },
+  groupLine: { one: "{count} item", other: "{count} items" },
+  groupSummary: ": {summary}",
+  models: "Models: {headline}.",
+  moved: {
+    one: "{count} item's conclusion differs from before the recheck:",
+    other: "{count} items' conclusions differ from before the recheck:",
+  },
+  requirementChanged:
+    "Of the old evidence cited before the recheck ({count} in all), the check requirement changed for {edited}.",
+  groupHeading: { one: "{label} ({count} item)", other: "{label} ({count} items)" },
+  cannotHeading: "What this preview cannot do",
+  cannotNote: "These actions are not implemented, so the page has no buttons for them.",
+  limitsHeading: "When reading a recheck result",
+  sideModel: "{side} model",
+  detailsSummary: "Before-and-after details: models, items, old evidence",
+  modelsHeading: "Models",
+  itemsHeading: {
+    one: "The item in the record before the recheck ({count}), and where it stands now",
+    other: "The items in the record before the recheck ({count}), and where they stand now",
+  },
+  evidenceHeading: {
+    one: "The old evidence cited before the recheck ({count} row), compared with this record",
+    other: "The old evidence cited before the recheck ({count} rows), compared with this record",
+  },
+  kindsNote: "Check results and human determinations are two kinds of evidence, counted apart and never added together.",
+  traceSummary: "Tracing: record identity, model version fingerprints, record codes",
+  priorDigest: "Fingerprint of the record before the recheck (assessment digest)",
+  currentDigest: "Fingerprint of this record (assessment digest)",
+  noChange: "(an empty list in the record: no model changed)",
+  versionColumns: { side: "Side", prior: "Record before the recheck", current: "This record" },
+  versionNote:
+    "A version is a content fingerprint, not a file name. Which side changed is taken from the record's changed_models; this page does not compare fingerprints.",
+  glossaryDispositions: "Where items stand now: record codes",
+  glossaryConditions: "Conditions left before the recheck: state codes (there is no \"the whole condition is met\")",
+  glossaryStates: "Old-evidence comparison: state codes",
+  glossaryReasons: "Old-evidence comparison: reason codes",
+  glossaryAspects: "Aspects that changed: codes",
+};
+
+export const RECHECK_ITEM = {
+  missing: "The recheck record has no such item",
+  back: "← Back to the recheck items (to this item's place)",
+  kicker: "Recheck item · {count}",
+  pairNote:
+    "These two elements are no longer paired for checking: the penetration determination is now \"no penetration\" (see the reason the record gives below). " +
+    "This does not mean the opening has been built, nor that the opening defect has been fixed.",
+  model: "Models",
+  whichOne: "2. Which element",
+  whichTwo: "2. Which two elements",
+  actionHeading: "3. What to do, who deals with it, what a recheck must show",
+  noCurrent:
+    "The record does not give this item's current place, so this page has no action, handling team or default handling role to show. " +
+    "Those details from the record before the recheck did not come back with the recheck record either.",
+  conditionHeading: "4. Was the exit condition left before the recheck reached this time?",
+  priorCondition: "The exit condition left before the recheck: {text}",
+  end: ".",
+  conditionNote:
+    "This says only how far the exit condition left before the recheck has been shown to be reached; read it apart from the conclusion now. A changed conclusion does not mean the original condition is met.",
+  originalSummary: "The rule's own words and record codes",
+  conditionBasis: "condition_basis (as written)",
+  evidenceHeading: "5. The evidence before the recheck",
+  evidenceCount: {
+    one: "{count} piece of old evidence was assessed together with this item",
+    other: "{count} pieces of old evidence were assessed together with this item",
+  },
+  requirementChanged: {
+    one: ", and for {count} of them the check requirement changed",
+    other: ", and for {count} of them the check requirement changed",
+  },
+  priorSources: "Evidence cited before the recheck, by source: ",
+  currentSources: "Corresponding evidence this record cites, by source: ",
+  rowsSummary: "See each piece of old evidence and how it compared",
+  shared: {
+    one: "The record keeps the old evidence of a group of elements assessed together in one place, not split by element: the group's {count} item shares the rows below.",
+    other: "The record keeps the old evidence of a group of elements assessed together in one place, not split by element: the group's {count} items share the rows below.",
+  },
+  noEvidence: "The group's evidence path before the recheck cites no evidence.",
+  priorOrdinal: "Internal group number before the recheck",
+  currentLine: "Current internal group number, verdict and final outcome",
+};
+
+export const RECHECK_MODEL = {
+  producing: "Handing-over side",
+  consuming: "Receiving side",
+  listSeparator: ", ",
+  aspectsChanged: "{list} changed",
+  aspectsSame: "; {list} unchanged",
+  end: ".",
+  unrecognisedAspect: "\"{code}\" ({unrecognised})",
+  unrecognisedKey: "key_changed = \"{value}\" ({unrecognised})",
+  onlyRekeyed: "{rekeyed}: neither the evidence content nor the comparison basis changed.",
+};
+
+export const REQUIREMENT_CHANGED_NOTE =
+  "The record also shows that, among the old evidence assessed together with this item, the check requirement changed for {count}; the record does not say whether it was relaxed or tightened. " +
+  "Read this conclusion with that in mind; row by row, see \"The evidence before the recheck\".";
+
+export const RECHECK_CANNOT = [
+  "Start a new recheck or upload a new model",
+  "Mark an item resolved, closed or risk-accepted",
+  "Assign or notify anyone",
+  "Open or locate an element in Revit",
+  "Export a recheck record",
+];
+
+export const RECHECK_LIMITS = [
+  "\"Comparison basis unchanged\" does not mean the whole handover needs no review.",
+  "An element that is gone, or evidence with no counterpart, does not mean the problem was fixed.",
+  "A model re-issued (on either side) does not mean a fix has happened.",
+  "\"Only the model version changed\" does not mean the check result's content changed.",
+  "\"Cannot be compared\" is not \"evidence missing\": where the old record kept no comparison basis, this page says honestly that it cannot compare.",
+];
+
+export const HANDOVER_SIDES = {
+  producing: "the handing-over side's model in this handover",
+  consuming: "the receiving side's model in this handover",
+};
+
+export const CITATION_KINDS = {
+  finding: "Check-result citation",
+  determination: "Determination citation",
+};
+
+export const CARRY_OVER_STATES = {
+  equivalent: {
+    label: "Comparison basis unchanged",
+    meaning: "This old evidence has exactly one counterpart in this record, and every aspect compared is the same. ",
+    caveat: "It only means the evidence need not be gathered again because its citation changed key; it does not mean the whole handover needs no review.",
+  },
+  changed: {
+    label: "Comparison basis changed",
+    meaning: "This old evidence has exactly one counterpart in this record, but at least one aspect differs. ",
+    caveat: "Even if the result reads the same, it still counts as changed; which aspects changed is said on the row.",
+  },
+  "no-counterpart": {
+    label: "No counterpart found",
+    meaning: "It can be compared, but this record cites no evidence corresponding to it. ",
+    caveat: "No counterpart does not mean the problem was fixed.",
+  },
+  "not-provable": {
+    label: "Not enough basis to compare",
+    meaning: "The comparison itself cannot be made, so it can be called neither unchanged nor changed. ",
+    caveat: "This is \"cannot be compared\", not \"evidence missing\", and not \"no counterpart\".",
+  },
+};
+
+export const CARRY_OVER_REASONS = {
+  "finding-equivalent":
+    "There is exactly one corresponding check result; model version, check result content, check requirement and checker are the same, aspect by aspect.",
+  "finding-changed": "There is exactly one corresponding check result; compared aspect by aspect, at least one differs.",
+  "no-counterpart-in-the-cited-run":
+    "In the validation run this record rests on, this element has no check result under this requirement.",
+  "counterpart-not-cited-under-the-current-binding":
+    "The validation run has a corresponding check result, but this record does not cite it.",
+  "sealed-citation-has-no-comparison-basis":
+    "When the original record was sealed it kept no comparison basis for this citation (a record from an older version). This page will not make one up from the current rules, so it can only say honestly that it cannot compare.",
+  "comparison-basis-version-unknown": "The comparison basis the original record kept is of a version this system does not recognise.",
+  "subject-not-present":
+    "The element this evidence is about is no longer in this record (where it went: see \"the reason the record gives\"). An element that is gone is not fixed.",
+  "counterpart-not-unique":
+    "This time there is more than one candidate corresponding check result, and the system does not choose between them (all candidates: see \"the reason the record gives\").",
+  "requirement-semantics-basis-unavailable": "The sealed side or the current side has no comparison basis for the check requirement.",
+  "comparison-basis-incomplete":
+    "The sealed side or the current side lacks part of the comparison basis (model version, check result content digest or checker fingerprint).",
+  "determination-same-reference-same-content": "The same determination: the same reference and the same content digest.",
+  "determination-content-changed-under-the-same-reference":
+    "The same reference, but the determination's content is no longer what the original record read (made again, re-attributed or re-signed). The new determination is read as evidence as usual; it just cannot be called the same determination as the original.",
+  "determination-not-cited-by-this-record":
+    "The model version did not change, and this record no longer cites this determination: another determination replaced it.",
+  "determination-not-attributable-to-this-context":
+    "The model version has changed, and the original determination was made against the old version, so it cannot be attributed to the current one. The evidence is not missing and the original determination is not wrong; a determination against the current version is needed.",
+};
+
+export const CHANGED_ASPECTS = {
+  "model-version": "model version",
+  "finding-content": "check result content",
+  "requirement-semantics": "check requirement",
+  checker: "checker",
+};
+
+export const ASPECT_NOTES = {
+  onlyModelVersion:
+    "Only the model version changed; that does not mean the check result's content changed. Nor does the record conclude whether this evidence can carry over to the new version.",
+  semanticsSameOutcome:
+    "The check requirement was edited, and the check result reads the same as before — but it was reached under the edited requirement and cannot be treated as the same evidence.",
+  semanticsAndContent:
+    "The check requirement was edited and the check result content changed too: the change in result may come from the edit to the requirement (for example a relaxed requirement), so it cannot be taken to mean the model was fixed. The record does not say whether the requirement was relaxed or tightened.",
+  contentUnderSameRequirement:
+    "The check requirement did not change, and the check result content did. This row does not record whether the result got better or worse; see the current conclusion.",
+  checker: "The checker (the check program or its configuration) version differs: the same model and requirement may give a different result.",
+  unrecognised: "There is an unrecognised aspect of change, so this page does not list the unchanged aspects.",
+};
+
+export const KEY_CHANGED = {
+  yes: "The citation changed key (the new key is the \"corresponding evidence this record cites\" above). A change of key is not itself a change.",
+  no: "The citation's key did not change.",
+};
+
+export const ONLY_REKEYED = "Only the citation's key changed";
+
+export const CONDITION_STATES = {
+  "named-outcome-observed": "Only the named outcome observed; the rest of the condition not checked",
+  "named-outcome-not-observed": "Named outcome not observed",
+  "no-machine-checkable-part": "The condition has no machine-checkable part; a person must read it",
+  "not-comparable": "Cannot be compared: the corresponding elements are incomplete",
+  "no-recheck-condition": "The original record had no recheck condition",
+};
+
+export const CONDITION_ENTRIES = {
+  "named-outcome-observed": {
+    text: "Only the named outcome observed; the rest of the condition not checked",
+    plain:
+      "The outcome named in the original recheck condition is now observed. The rest of the condition was not checked by machine and needs a person to confirm it against the original condition; this is not \"the whole condition is met\".",
+  },
+  "named-outcome-not-observed": {
+    text: "Named outcome not observed",
+    plain: "The outcome named in the original recheck condition is not observed now: the original condition is not reached.",
+  },
+  "no-machine-checkable-part": {
+    text: "The condition has no machine-checkable part; a person must read it",
+    plain:
+      "The original recheck condition has no part a machine can check; a person needs to read the original condition and judge it. The record draws no conclusion on it.",
+  },
+  "not-comparable": {
+    text: "Cannot be compared: the corresponding elements are incomplete",
+    plain:
+      "No conclusion can be drawn on the original recheck condition: some of the original elements are no longer in this record, so the condition has no complete subject to check. This does not mean the condition is met.",
+  },
+  "no-recheck-condition": {
+    text: "The original record had no recheck condition",
+    plain: "The original record had no recheck condition: the original conclusion left nothing outstanding.",
+  },
+};
+
+export const DISPOSITIONS = {
+  present: "Still in this check's scope; conclusion and condition are read separately",
+  "element-deleted-in-reissued-model": "Deleted in the re-issued model; that is not a fix",
+  "element-out-of-subject-class": "No longer of this activity's subject classes; that is not a fix",
+  "pairing-no-longer-derived": "These two elements are no longer paired for checking; that does not mean the opening was added",
+  "outside-declared-scope": "This scope was not declared this time; that does not mean the problem is gone",
+};
+
+export const DISPOSITION_ENTRIES = {
+  present: {
+    text: "Still in this check's scope; conclusion and condition are read separately",
+    next: "See the current place the record gives below: the conclusion now, the next step and the handling role all follow it.",
+  },
+  "element-deleted-in-reissued-model": {
+    text: "Deleted in the re-issued model; that is not a fix",
+    next:
+      "The record gives no next step for a deleted element. Check in the source model whether this deletion was an intended design change; this preview cannot record that confirmation.",
+  },
+  "element-out-of-subject-class": {
+    text: "No longer of this activity's subject classes; that is not a fix",
+    next:
+      "The record gives no next step for it. Check whether the element's class (the export mapping) was changed on purpose; a changed class only means this activity no longer checks it.",
+  },
+  "pairing-no-longer-derived": {
+    text: "These two elements are no longer paired for checking; that does not mean the opening was added",
+    next:
+      "The record gives no next step for this pair. Check whether the basis that stopped them being paired (see \"the reason the record gives\") is a conclusion you accept; the original problem has not been shown to be fixed.",
+  },
+  "outside-declared-scope": {
+    text: "This scope was not declared this time; that does not mean the problem is gone",
+    next: "This element was not checked again this time. For a conclusion, a new recheck that includes it is needed; this preview cannot start one.",
+  },
+};
+
+export const VERDICT_GROUPS = {
+  changed: {
+    label: "Conclusions that changed",
+    none: "No conclusion changed.",
+    notes: {
+      none: "Neither model was re-issued, yet these conclusions changed: the change does not come from a model edit. Each item's old evidence says what changed.",
+      reissued: "A model was re-issued. A changed conclusion does not say what became of the original problem; each item's old evidence says what changed.",
+      unrecognised: "A changed conclusion does not say what became of the original problem; each item's old evidence says what changed.",
+    },
+  },
+  unplaced: {
+    label: "Items whose current place the record does not give",
+    none: "The record gives a current place for every item.",
+    note: "The record does not say what these items' conclusions are now. An element that is gone does not mean the problem was fixed.",
+  },
+  unchanged: {
+    label: "Conclusions that did not change",
+    none: "No conclusion stayed the same.",
+    note: "An unchanged conclusion does not mean the evidence is unchanged; see each item for the old evidence.",
+  },
+};
+
+export const REISSUE_CASES = {
+  none: {
+    headline: "Neither model was re-issued (versions unchanged)",
+    detail: "This recheck uses the same pair of model versions as the original record, so the differences below do not come from model edits.",
+    caveats: [],
+  },
+  producing: {
+    headline: "The handing-over side's model was re-issued; the receiving side's model did not change",
+    detail: "The handing-over side's ({from}) model {producing} is a new version; the receiving side's ({to}) model {consuming} is the original version.",
+    caveats: [
+      "Re-issuing on the handing-over side may have changed what passes through what, or which elements are involved; it cannot be taken to mean the receiving side's work (for example the openings) is done.",
+      "A determination made against an old version cannot be attributed to the new one.",
+    ],
+  },
+  consuming: {
+    headline: "The receiving side's model was re-issued; the handing-over side's model did not change",
+    detail: "The receiving side's ({to}) model {consuming} is a new version; the handing-over side's ({from}) model {producing} is the original version.",
+    caveats: [
+      "Re-issuing on the receiving side may be the way to a fix, but it does not mean the fix has happened (for example that the opening is complete).",
+      "Likewise, a determination made against an old version cannot be attributed to the new one.",
+    ],
+  },
+  both: {
+    headline: "Both the handing-over and the receiving side's models were re-issued",
+    detail: "The handing-over side's ({from}) model {producing} and the receiving side's ({to}) model {consuming} are both new versions.",
+    caveats: [
+      "Both sides changed at once: this page attributes no change in any evidence to either side.",
+      "A re-issue does not mean a fix has happened; a determination made against an old version cannot be attributed to the new one.",
+    ],
+  },
+  unrecognised: {
+    headline: "The record's model version comparison cannot be recognised; shown as it came",
+    detail: "The changed models the record gives do not match this record's handing-over and receiving sides, or the two fields contradict each other. This page does not guess which side.",
+    caveats: [],
+  },
+};
+
+export const REISSUE_NEUTRAL =
+  "This page only says which side changed and what the record shows; it does not judge good or bad from the direction of a re-issue.";

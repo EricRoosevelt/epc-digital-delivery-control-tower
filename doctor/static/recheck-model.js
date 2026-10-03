@@ -30,11 +30,12 @@ import {
   KEY_CHANGED,
   NOT_CARRIED,
   ONLY_REKEYED,
+  RECHECK_MODEL,
   REISSUE_CASES,
   REISSUE_NEUTRAL,
   UNRECOGNISED,
   VERDICT_GROUPS,
-} from "./vocabulary.js";
+} from "./words.js";
 
 export const RECHECK_KIND = "recheck";
 
@@ -102,8 +103,8 @@ export function reissueModel(comparison, handover) {
     };
   };
   const sides = [
-    side("交出方", "from_role", "prior_producing", "producing"),
-    side("接收方", "to_role", "prior_consuming", "consuming"),
+    side(RECHECK_MODEL.producing, "from_role", "prior_producing", "producing"),
+    side(RECHECK_MODEL.consuming, "to_role", "prior_consuming", "consuming"),
   ];
   const modelKey = (index) => (sides[index].now ? sides[index].now.model_key : NOT_CARRIED);
   return {
@@ -150,20 +151,22 @@ function aspectsModel(aspects) {
   const unrecognised = aspects.filter((code) => !known(CHANGED_ASPECTS, code));
   const changed = [
     ...recognised.map((code) => CHANGED_ASPECTS[code]),
-    ...unrecognised.map((code) => `“${code}”（${UNRECOGNISED}）`),
+    ...unrecognised.map((code) => fill(RECHECK_MODEL.unrecognisedAspect, { code, unrecognised: UNRECOGNISED })),
   ];
   const notes = [];
-  let sentence = `${changed.join("、")}变了`;
+  let sentence = fill(RECHECK_MODEL.aspectsChanged, { list: changed.join(RECHECK_MODEL.listSeparator) });
   if (unrecognised.length) {
     // The unchanged aspects are the rest of a closed list. With a value outside
     // that list on the row, this file no longer knows the list, and says so.
-    sentence += "。";
+    sentence += RECHECK_MODEL.end;
     notes.push(ASPECT_NOTES.unrecognised);
   } else {
     const same = ASPECT_ORDER.filter((code) => !aspects.includes(code)).map(
       (code) => CHANGED_ASPECTS[code],
     );
-    sentence += same.length ? `，${same.join("、")}未变。` : "。";
+    sentence += same.length
+      ? fill(RECHECK_MODEL.aspectsSame, { list: same.join(RECHECK_MODEL.listSeparator) }) + RECHECK_MODEL.end
+      : RECHECK_MODEL.end;
   }
   const has = (code) => aspects.includes(code);
   if (!unrecognised.length && recognised.length === 1 && has("model-version")) {
@@ -182,7 +185,7 @@ function keyChangedSentence(row) {
   if (!carries(row, "key_changed")) return null;
   return known(KEY_CHANGED, row.key_changed)
     ? KEY_CHANGED[row.key_changed]
-    : `key_changed = “${row.key_changed}”（${UNRECOGNISED}）`;
+    : fill(RECHECK_MODEL.unrecognisedKey, { value: row.key_changed, unrecognised: UNRECOGNISED });
 }
 
 export function evidenceModel(row) {
@@ -196,7 +199,7 @@ export function evidenceModel(row) {
   if (state.code === "equivalent") {
     if (row.key_changed === "yes") {
       brief = ONLY_REKEYED;
-      facts.push(`${ONLY_REKEYED}：证据内容和比较依据都没有变。`);
+      facts.push(fill(RECHECK_MODEL.onlyRekeyed, { rekeyed: ONLY_REKEYED }));
     } else {
       const sentence = keyChangedSentence(row);
       if (sentence) facts.push(sentence);

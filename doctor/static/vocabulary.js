@@ -1198,7 +1198,7 @@ export const COMMON = {
   and: " 与 ",
   oneElement: "一个构件",
   twoElements: "一对构件",
-  nElements: "{count} 个构件",
+  nElements: { one: "{count} 个构件", other: "{count} 个构件" },
   inModel: " · 模型 ",
 };
 
@@ -1229,18 +1229,21 @@ export const FIRST = {
   title: "首次检查结果：需要处理的事项",
   runLine: "{mode}：{run}",
   summary: "本次结果：共 {items} 个事项，其中 {todo} 个需要处理",
-  items: "{count} 个事项",
+  items: { one: "{count} 个事项", other: "{count} 个事项" },
   verdictLine: "：对应的那项工作 ",
   quietLine: "：{summary}（列在本页下方）",
-  elementsLine: "{unit}这份记录共涉及 {count} 个不同的构件。",
+  elementsLine: {
+    one: "{unit}这份记录共涉及 {count} 个不同的构件。",
+    other: "{unit}这份记录共涉及 {count} 个不同的构件。",
+  },
   action: "要做什么",
   problem: "问题",
   openItem: "查看这一项：具体对象、要做什么、由谁处理、拿什么复检",
-  openHeading: "{label}，按处理团队（{count} 个事项）",
+  openHeading: { one: "{label}，按处理团队（{count} 个事项）", other: "{label}，按处理团队（{count} 个事项）" },
   team: "处理团队 ",
-  teamCount: "：{count} 个事项",
+  teamCount: { one: "：{count} 个事项", other: "：{count} 个事项" },
   columns: { problem: "问题", work: "哪项工作：结论", count: "事项数" },
-  quietHeading: "{label}（{count} 个事项）",
+  quietHeading: { one: "{label}（{count} 个事项）", other: "{label}（{count} 个事项）" },
   separator: " ｜ ",
   nextHeading: "然后：看这份记录复检之后的变化",
   nextLink: "打开示例“{run}”",
@@ -1295,4 +1298,173 @@ export const COPY = {
   label: "复制 {value}",
   done: "已复制",
   manual: "请手动选择复制",
+};
+
+// The first-check item page.
+export const ITEM = {
+  missing: "记录中没有这一项",
+  back: "← 返回事项列表（回到这一项的位置）",
+  kicker: "首次检查事项 · {count}",
+  conclusion: "一、结论",
+  needs: "这项工作需要什么",
+  actionHeading: "二、要做什么、由谁处理、完成后拿什么复检",
+  followUpHeading: "二、后续",
+  noFollowUp: "记录没有为这一项给出后续处理动作、处理团队或默认处理角色。",
+  whichOne: "三、是哪个构件",
+  whichTwo: "三、是哪两个构件",
+  details: "四、{heading}",
+  nextHeading: "然后：这一项复检后的变化",
+  nextLink: "在示例“{run}”里看这一项",
+  nextAfter: "。那是对这同一份记录的一次复检，同样是模拟示例。",
+  basisSummary: "依据逐条：这个结论引用的证据",
+  context: "背景引用：不是这个结论的依据，逐字显示。",
+  traceSummary: "追溯信息：内部键与记录原码",
+  keys: "内部键",
+  ordinal: "内部分组编号",
+  leaf: "终点 outcome",
+  memberLink: "在明细页查看完整的证据路径",
+};
+
+// What to do, who handles it, what it costs the work, what a recheck must show.
+export const ACTION = {
+  what: "要做什么",
+  whatOriginal: "要做什么（规则原文，英文）",
+  team: "处理团队",
+  consequence: "对这项工作的后果",
+  recheck: "完成后拿什么复检",
+  recheckOriginal: "完成后拿什么复检（规则原文，英文）",
+  original: "规则原文（英文）",
+};
+
+// One element, as the record describes it.
+export const ELEMENT_CARD = {
+  traceKey: "追溯用内部键",
+  class: "类别",
+  storey: "楼层",
+  model: "所属模型",
+  disciplineRow: "专业",
+};
+
+// The old evidence of a recheck, and the pieces around it.
+export const EVIDENCE = {
+  currentCitation: "本次记录引用的对应证据：",
+  reason: "原因：",
+  recordCause: "记录给出的原因（原文）：",
+  trace: "追溯信息（记录原码与内容指纹）",
+  priorDigest: "复检前的内容指纹",
+  currentDigest: "本记录的内容指纹",
+  none: "复检前的证据路径没有引用任何证据。",
+  rows: { one: "（{count} 条）", other: "（{count} 条）" },
+  empty: "（空）",
+  glossaryCode: "记录里的代码",
+  glossarySaid: "本页的说法",
+  meaning: "“{label}”是什么意思",
+  dispositionNow: "这个事项现在",
+  currentMissing: "记录给出了这一项的当前位置（内部编号 #{ordinal}），但在本记录里找不到它；本页不另行对应。",
+  memberLink: "在明细页查看和它一起评估的全部构件与证据",
+  reissueColumns: {
+    side: "交接的哪一侧",
+    role: "角色（取自本次请求的交接）",
+    model: "模型",
+    reissued: "是否重新发布",
+  },
+  unrecognisedSide: "无法识别，见上",
+  reissued: "重新发布了（新版本）",
+  notReissued: "没有变（原版本）",
+};
+
+// A piece of work and what became of its verdict: unchanged, moved, or not
+// given by the record. The placeholders are page pieces, not only text.
+export const WORK = {
+  unchanged: "{work}：{before} （{note}）",
+  changed: "{work}：复检前 {before} → 现在 {now}",
+  missing: "{work}：复检前 {before}；现在：记录没有给出",
+};
+
+// The recheck result.
+export const RECHECK = {
+  title: "复检结果",
+  notRecheck: "这份记录不是复检记录，没有复检前后的对比可以显示。",
+  unknownSuccessor: "这份记录承接了一条已封存的记录，但承接类型不是本页认识的复检：successor.kind = ",
+  unknownSuccessorAfter: "。本页不把它当作复检来呈现。",
+  resultTitle: "复检结果：需要处理的事项",
+  summary: { one: "本次结果：共 {count} 个事项", other: "本次结果：共 {count} 个事项" },
+  groupLine: { one: "{count} 个事项", other: "{count} 个事项" },
+  groupSummary: "：{summary}",
+  models: "模型：{headline}。",
+  moved: { one: "{count} 个事项的结论和复检前不同：", other: "{count} 个事项的结论和复检前不同：" },
+  requirementChanged: "复检前引用的 {count} 条旧证据里，有 {edited} 条的检查要求变了。",
+  groupHeading: { one: "{label}（{count} 个事项）", other: "{label}（{count} 个事项）" },
+  cannotHeading: "本预览做不了的事",
+  cannotNote: "这些动作没有实现，所以页面上没有对应的按钮。",
+  limitsHeading: "读复检结果时",
+  sideModel: "{side}模型",
+  detailsSummary: "复检前后的比较明细：模型、事项、旧证据",
+  modelsHeading: "模型",
+  itemsHeading: { one: "复检前记录里的事项（{count} 个），现在的情况", other: "复检前记录里的事项（{count} 个），现在的情况" },
+  evidenceHeading: {
+    one: "复检前引用的旧证据（{count} 条），和本次记录比较的结果",
+    other: "复检前引用的旧证据（{count} 条），和本次记录比较的结果",
+  },
+  kindsNote: "检查结果和人工判定是两种证据，分开计数，不相加。",
+  traceSummary: "追溯信息：记录标识、模型版本指纹、记录原码对照",
+  priorDigest: "复检前记录的指纹（assessment digest）",
+  currentDigest: "本记录的指纹（assessment digest）",
+  noChange: "（记录中为空列表：没有模型变化）",
+  versionColumns: { side: "", prior: "复检前记录", current: "本记录" },
+  versionNote: "版本以内容指纹表示，不以文件名当版本。哪一侧变了取自记录的 changed_models，本页不比较指纹。",
+  glossaryDispositions: "事项现在的情况：记录原码",
+  glossaryConditions: "复检前留下的条件：状态原码（没有“整句条件已满足”）",
+  glossaryStates: "旧证据比较：状态原码",
+  glossaryReasons: "旧证据比较：原因原码",
+  glossaryAspects: "变化方面：原码",
+};
+
+// One recheck item.
+export const RECHECK_ITEM = {
+  missing: "复检记录中没有这一项",
+  back: "← 返回复检事项列表（回到这一项的位置）",
+  kicker: "复检事项 · {count}",
+  pairNote:
+    "这两个构件已不再被配成一对检查：穿透判定现为“不穿透”（见下方记录给出的原因）。" +
+    "这不等于开洞已建成，也不等于开洞缺陷已修复。",
+  model: "模型",
+  whichOne: "二、是哪个构件",
+  whichTwo: "二、是哪两个构件",
+  actionHeading: "三、要做什么、由谁处理、完成后拿什么复检",
+  noCurrent:
+    "记录没有给出这一项的当前情况，所以本页没有处理动作、处理团队或默认处理角色可以显示。" +
+    "复检前记录里的这些信息也没有随复检记录返回。",
+  conditionHeading: "四、复检前留下的结束条件，这次达到了吗",
+  priorCondition: "复检前留下的结束条件：{text}。",
+  end: "。",
+  conditionNote: "这里只说复检前留下的结束条件被证明到了什么程度，与现在的结论分开读：结论变了，不等于原条件已满足。",
+  originalSummary: "规则原文（英文）与记录原码",
+  conditionBasis: "condition_basis（原文）",
+  evidenceHeading: "五、复检前的证据",
+  evidenceCount: { one: "和这一项放在一起评估的旧证据共 {count} 条", other: "和这一项放在一起评估的旧证据共 {count} 条" },
+  requirementChanged: { one: "，其中 {count} 条的检查要求变了", other: "，其中 {count} 条的检查要求变了" },
+  priorSources: "复检前引用的证据，来源：",
+  currentSources: "本次记录引用的对应证据，来源：",
+  rowsSummary: "逐条查看旧证据和比较结果",
+  shared: {
+    one: "记录把放在一起评估的一组构件的旧证据存在一处，不按构件拆开：这一组的 {count} 个事项共用下面这些行。",
+    other: "记录把放在一起评估的一组构件的旧证据存在一处，不按构件拆开：这一组的 {count} 个事项共用下面这些行。",
+  },
+  noEvidence: "复检前这一组的证据路径没有引用任何证据。",
+  priorOrdinal: "复检前的内部分组编号",
+  currentLine: "现在的内部分组编号、verdict 与终点 outcome",
+};
+
+// The sentences recheck-model.js assembles from the tables above.
+export const RECHECK_MODEL = {
+  producing: "交出方",
+  consuming: "接收方",
+  listSeparator: "、",
+  aspectsChanged: "{list}变了",
+  aspectsSame: "，{list}未变",
+  end: "。",
+  unrecognisedAspect: "“{code}”（{unrecognised}）",
+  unrecognisedKey: "key_changed = “{value}”（{unrecognised}）",
+  onlyRekeyed: "{rekeyed}：证据内容和比较依据都没有变。",
 };

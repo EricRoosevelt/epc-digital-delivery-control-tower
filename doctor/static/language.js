@@ -15,7 +15,7 @@ const WORDS = bilingual(
     current: "当前：中文",
     untranslatedTitle: "这一页还没有翻译",
     untranslatedBody:
-      "这一页的英文还没有写好。下面可以用中文查看同一页：同一个运行、同一份记录、同一个对象，内容不变。",
+      "这一页的英文还没有写好。下面的按钮会用中文打开同一页：同一个运行、同一份记录、同一个对象，内容不变。",
     showIn: "用中文查看这一页",
     home: "返回首页",
   },
@@ -24,7 +24,7 @@ const WORDS = bilingual(
     current: "Current: English",
     untranslatedTitle: "This page has not been translated yet",
     untranslatedBody:
-      "The English for this page has not been written yet. You can see the same page in Chinese below: the same run, the same record and the same element, with nothing changed.",
+      "The English for this page has not been written yet. The button below opens this same page in Chinese: the same run, the same record and the same element, with nothing changed.",
     showIn: "See this page in Chinese",
     home: "Back to the home page",
   },

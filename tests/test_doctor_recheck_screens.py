@@ -110,7 +110,15 @@ def _run_model(documents: dict[str, object]) -> dict[str, object]:
         raise unittest.SkipTest(message)
     with tempfile.TemporaryDirectory() as directory:
         workdir = Path(directory)
-        for name in ("recheck-model.js", "first-check-model.js", "vocabulary.js"):
+        # The model reads its words through words.js, in Chinese here.
+        for name in (
+            "recheck-model.js",
+            "first-check-model.js",
+            "vocabulary.js",
+            "vocabulary-en.js",
+            "words.js",
+            "i18n.js",
+        ):
             shutil.copyfile(STATIC / name, workdir / name)
         (workdir / "package.json").write_text('{"type": "module"}\n', encoding="utf-8")
         (workdir / "driver.js").write_text(_DRIVER, encoding="utf-8")
@@ -539,21 +547,23 @@ class FirstCheckTests(_Modelled):
 
         screens = (STATIC / "screens.js").read_text(encoding="utf-8")
         item = screens[screens.index("function firstItem(") : screens.index("// S4 — recheck")]
-        order = [
-            '"一、结论"',
-            '"二、要做什么、由谁处理、完成后拿什么复检"',
-            '"三、是哪个构件"',
-            "`四、${DETAILS_WORDS.heading}`",
-        ]
+        # The headings are in the wording tables; the screen places them.
+        order = ["ITEM.conclusion", "ITEM.actionHeading", "ITEM.whichOne", "ITEM.details"]
         positions = [item.index(heading) for heading in order]
         self.assertEqual(positions, sorted(positions), order)
-        self.assertLess(item.index('"二、后续"'), item.index('"三、是哪个构件"'))
+        self.assertLess(item.index("ITEM.followUpHeading"), item.index("ITEM.whichOne"))
         self.assertLess(
             item.index("actionBlock(item.subscope"), item.index("elementCard(state, key")
         )
-        for old in ('"二、是哪个构件"', '"三、要做什么', '"三、后续"'):
-            with self.subTest(old=old):
-                self.assertNotIn(old, item)
+        vocabulary = (STATIC / "vocabulary.js").read_text(encoding="utf-8")
+        for said in (
+            'actionHeading: "二、要做什么、由谁处理、完成后拿什么复检"',
+            'followUpHeading: "二、后续"',
+            'whichOne: "三、是哪个构件"',
+            'details: "四、{heading}"',
+        ):
+            with self.subTest(said=said):
+                self.assertIn(said, vocabulary)
 
     def test_a_conclusion_is_never_shown_without_its_work_its_basis_and_its_limits(self):
         screens = (STATIC / "screens.js").read_text(encoding="utf-8")
@@ -1123,7 +1133,9 @@ class ScreenStructureTests(unittest.TestCase):
             "lastRecheckItem = { runId: state.runId, subscopeIndex, memberIndex }", self.recheck
         )
         self.assertIn('"data-return-focus": here ? true : null', self.recheck)
-        self.assertIn("返回复检事项列表", self._function("recheckItem"))
+        self.assertIn("RECHECK_ITEM.back", self._function("recheckItem"))
+        vocabulary = (STATIC / "vocabulary.js").read_text(encoding="utf-8")
+        self.assertIn('back: "← 返回复检事项列表（回到这一项的位置）"', vocabulary)
 
     def test_the_path_screens_use_no_internal_term(self):
         """Home, directory, recheck result, recheck item and the check attempt.
@@ -1238,7 +1250,7 @@ class ScreenStructureTests(unittest.TestCase):
         for key in ('"ifc_class"', '"model_key"', '"global_id"', "storeyOf(facts)"):
             with self.subTest(read=key):
                 self.assertIn(key, card)
-        self.assertIn('["专业", missing(ELEMENT_WORDS.noDiscipline)]', card)
+        self.assertIn("[ELEMENT_CARD.disciplineRow, missing(ELEMENT_WORDS.noDiscipline)]", card)
         self.assertIn("ELEMENT_WORDS.modelIsNotDiscipline", card)
         self.assertNotIn("details", card)
         vocabulary = (STATIC / "vocabulary.js").read_text(encoding="utf-8")
@@ -1444,7 +1456,10 @@ class AdapterScenarioTests(unittest.TestCase):
         )
         self.assertIn("针对旧版本作出的判定同样不能归到新版本。", model["reissue"]["caveats"])
         screens = (STATIC / "screens.js").read_text(encoding="utf-8")
-        self.assertIn("检查结果和人工判定是两种证据，分开计数，不相加。", screens)
+        vocabulary = (STATIC / "vocabulary.js").read_text(encoding="utf-8")
+        self.assertIn("note(RECHECK.kindsNote)", screens)
+        kinds = "检查结果和人工判定是两种证据，分开计数，不相加。"
+        self.assertIn(f'kindsNote: "{kinds}"', vocabulary)
 
     def test_a_relaxed_requirement_and_a_repaired_model_read_differently(self):
         relaxed = self.models["recheck-requirement-relaxed"]
@@ -1727,8 +1742,10 @@ class AdapterScenarioTests(unittest.TestCase):
         for text in (screens, vocabulary):
             self.assertNotIn("检查内容", text)
             self.assertNotIn("检查清单", text)
-        self.assertIn("完成后拿什么复检", screens)
-        self.assertNotIn("可以再次复检", screens)
+        self.assertIn('recheck: "完成后拿什么复检"', vocabulary)
+        self.assertIn("ACTION.recheck", screens)
+        for text in (screens, vocabulary):
+            self.assertNotIn("可以再次复检", text)
 
     def test_a_requirement_edit_is_said_beside_the_verdict_it_bears_on(self):
         """Two recorded facts side by side; the page concludes nothing from them.
