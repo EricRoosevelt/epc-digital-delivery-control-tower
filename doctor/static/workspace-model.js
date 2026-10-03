@@ -65,6 +65,17 @@ export function elementOf(elements, key) {
  * Read off the run's own rule set identifier and version and the requirement's
  * own rule id. Any other rule set, version or rule gets none.
  */
+// IFC4 ADD2 TC1 IfcAirTerminalTypeEnum. A PV-001 reason quoting anything else
+// quotes the free text of a USERDEFINED type, which the checker compared.
+const AIR_TERMINAL_TYPES = new Set(["DIFFUSER", "GRILLE", "LOUVRE", "REGISTER", "USERDEFINED", "NOTDEFINED"]);
+const PREDEFINED_TYPE_REASON = /^The predefined type "(.*)" does not meet the required type$/s;
+
+/** True when a reason quotes free text where an enumeration value would stand. */
+export function quotesFreeText(reason) {
+  const match = typeof reason === "string" ? PREDEFINED_TYPE_REASON.exec(reason) : null;
+  return match !== null && !AIR_TERMINAL_TYPES.has(match[1]);
+}
+
 export function ruleNotes(run, requirement) {
   const written =
     requirement !== null &&

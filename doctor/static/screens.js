@@ -380,7 +380,11 @@ function entry(workspace = { runs: [] }) {
     h(
       "p",
       { class: "demo-notice", role: "note" },
-      workspaceRun ? HOME.statusWithWorkspace : HOME.status,
+      workspaceRun
+        ? HOME.statusWithWorkspace
+        : carries(workspace, "error")
+          ? HOME.statusWorkspaceUnknown
+          : HOME.status,
     ),
     h(
       "section",

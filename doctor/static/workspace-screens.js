@@ -40,6 +40,7 @@ import {
   matches,
   modelChanges,
   modelOf,
+  quotesFreeText,
   requirementOf,
   ruleNotes,
   statusGroups,
@@ -89,6 +90,14 @@ function glossedText(text, glosses) {
   return [
     Object.hasOwn(glosses, text) ? h("div", {}, glosses[text]) : null,
     h("div", { class: "sub prose" }, text),
+  ];
+}
+
+/** A check's reason, glossed by exact match, with a note when it quotes free text. */
+function reasonText(text, notes) {
+  return [
+    glossedText(text, REASON_GLOSSES),
+    notes && quotesFreeText(text) ? h("p", { class: "beside" }, notes.reasonFreeText) : null,
   ];
 }
 
@@ -198,6 +207,7 @@ function locateBlock(element, model) {
       [WORKSPACE.element.globalId, field(element, "global_id", copyable)],
     ]),
     tag.kind === "tag" ? h("p", { class: "beside" }, TAG_WORDS.note) : null,
+    h("p", { class: "beside" }, tag.kind === "tag" ? TAG_WORDS.byIdNotStorey : TAG_WORDS.storeyFromIfc),
     h("p", { class: "sub" }, TAG_WORDS.useGlobalId),
   );
 }
@@ -213,7 +223,6 @@ function passBlock(finding, notes) {
           h("p", {}, h("strong", {}, WORKSPACE.passProves), notes.passProves),
           h("p", {}, h("strong", {}, WORKSPACE.passDoesNotProve)),
           h("ul", { class: "caveats" }, notes.passDoesNotProve.map((text) => h("li", {}, text))),
-          h("p", { class: "beside" }, notes.userDefined),
         ]
       : h("p", {}, WORKSPACE.passUnwritten),
     h(
@@ -227,7 +236,7 @@ function passBlock(finding, notes) {
 }
 
 /** The adapter's comparison as it places this one result, if it does. */
-function findingComparison(state, finding) {
+function findingComparison(state, finding, notes) {
   const comparison = state.envelope.comparison;
   const place = comparisonOf(comparison, finding.finding_key);
   const body =
@@ -237,11 +246,11 @@ function findingComparison(state, finding) {
           [WORKSPACE_COMPARE.detailCurrent, statusWord(place.row.current.status)],
           [
             WORKSPACE_COMPARE.priorReason,
-            field(place.row.prior, "reason", (text) => glossedText(text, REASON_GLOSSES)),
+            field(place.row.prior, "reason", (text) => reasonText(text, notes)),
           ],
           [
             WORKSPACE_COMPARE.currentReason,
-            field(place.row.current, "reason", (text) => glossedText(text, REASON_GLOSSES)),
+            field(place.row.current, "reason", (text) => reasonText(text, notes)),
           ],
         ])
       : place.kind === "newly"
@@ -287,6 +296,9 @@ function findingPanel(state, finding) {
       h("h3", {}, WORKSPACE.resultHeading),
       h("p", { class: "headline" }, ruleHeading(run, requirement), "：", statusWord(status)),
       status === "N/A" ? h("p", { class: "beside" }, WORKSPACE.notApplicable) : null,
+      status === "FAIL" && isProductValidation(requirement)
+        ? h("p", { class: "beside" }, WORKSPACE.failNotDefect)
+        : null,
       status === "PASS" ? passBlock(finding, notes) : null,
     ),
     h(
@@ -306,7 +318,8 @@ function findingPanel(state, finding) {
           ? [
               definitions([
                 [WORKSPACE.actionWhat, h("span", { class: "action" }, notes.action.what)],
-                [WORKSPACE.actionWhere, notes.action.where],
+                [WORKSPACE.actionReads, notes.action.reads],
+                [WORKSPACE.actionRevise, notes.action.revise],
                 [WORKSPACE.actionUndecided, notes.action.undecided],
                 [WORKSPACE.recheckHeading, notes.recheck],
               ]),
@@ -322,7 +335,7 @@ function findingPanel(state, finding) {
       h("h3", {}, WORKSPACE.requirementHeading),
       definitions([
         [WORKSPACE.ruleExpected, field(finding, "expected", (text) => h("span", { class: "prose" }, text))],
-        [WORKSPACE.reason, field(finding, "reason", (text) => glossedText(text, REASON_GLOSSES))],
+        [WORKSPACE.reason, field(finding, "reason", (text) => reasonText(text, notes))],
         [
           WORKSPACE.actual,
           carries(finding, "actual")
@@ -334,7 +347,7 @@ function findingPanel(state, finding) {
       ]),
     ),
   );
-  if (carries(envelope, "comparison")) panel.append(findingComparison(state, finding));
+  if (carries(envelope, "comparison")) panel.append(findingComparison(state, finding, notes));
   panel.append(
     h(
       "details",
