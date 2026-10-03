@@ -150,9 +150,10 @@ never read as an accepted one.
   isolated `product-validation` rule set 1.0 ([`rules/product-validation/`](rules/product-validation/README.md)),
   and the interface is described in [`doctor/README.md`](doctor/README.md).
   It has been exercised privately on one real IFC model under controlled
-  conditions; that model is not in this repository. It is not yet accepted as a
-  product feature: a BIM-domain review of its evidence and wording, and a
-  walk-through of the real path by a person acting as manager, are still to come.
+  conditions; that model is not in this repository. It has had one round of
+  BIM-domain review. It is not yet accepted as a product feature: a
+  walk-through of the real path by a person acting as manager, and product
+  acceptance itself, are still to come.
 
 **4. Not built**
 
