@@ -377,7 +377,11 @@ function entry(workspace = { runs: [] }) {
     h("h1", {}, HOME.title),
     h("p", { class: "lede" }, HOME.lede),
     // What it cannot do is said beside what it is for, not at the foot.
-    h("p", { class: "demo-notice", role: "note" }, HOME.status),
+    h(
+      "p",
+      { class: "demo-notice", role: "note" },
+      workspaceRun ? HOME.statusWithWorkspace : HOME.status,
+    ),
     h(
       "section",
       { class: "block" },
