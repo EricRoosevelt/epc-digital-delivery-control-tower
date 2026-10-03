@@ -534,6 +534,27 @@ class FirstCheckTests(_Modelled):
         # so the tag has to be beside each one and not only at the page's head.
         self.assertTrue(all(entry[4] for entry in said.values() if entry[0] == "READY"))
 
+    def test_on_an_item_page_what_to_do_comes_before_which_element(self):
+        """The action, or the record's word that there is none, before the element's facts."""
+
+        screens = (STATIC / "screens.js").read_text(encoding="utf-8")
+        item = screens[screens.index("function firstItem(") : screens.index("// S4 — recheck")]
+        order = [
+            '"一、结论"',
+            '"二、要做什么、由谁处理、完成后拿什么复检"',
+            '"三、是哪个构件"',
+            "`四、${DETAILS_WORDS.heading}`",
+        ]
+        positions = [item.index(heading) for heading in order]
+        self.assertEqual(positions, sorted(positions), order)
+        self.assertLess(item.index('"二、后续"'), item.index('"三、是哪个构件"'))
+        self.assertLess(
+            item.index("actionBlock(item.subscope"), item.index("elementCard(state, key")
+        )
+        for old in ('"二、是哪个构件"', '"三、要做什么', '"三、后续"'):
+            with self.subTest(old=old):
+                self.assertNotIn(old, item)
+
     def test_a_conclusion_is_never_shown_without_its_work_its_basis_and_its_limits(self):
         screens = (STATIC / "screens.js").read_text(encoding="utf-8")
         first = screens[
@@ -558,17 +579,28 @@ class FirstCheckTests(_Modelled):
             with self.subTest(screen=name):
                 self.assertIn("workVerdict(item.activity, item.verdict)", body)
                 self.assertIn("basisLine(item.basis)", body)
-                self.assertIn("besideVerdict(item.activity, item.verdict)", body)
+                self.assertIn("besideVerdict(item.activity, item.verdict", body)
                 self.assertIn("howToRead()", body)
+        # On the result page every conclusion still gets its basis and its
+        # limits; a block (one team, or the items with no action) says each
+        # general note once, beside the first conclusion it applies to.
+        result = function("first")
+        self.assertEqual(result.count("besideVerdict(item.activity, item.verdict, said)"), 2)
+        self.assertEqual(result.count("})(new Set())") + result.count("))(new Set())"), 2)
+        self.assertEqual(result.count("basisLine(item.basis)"), 2)
+        # The item page has one conclusion: everything beside it, always.
+        self.assertIn("besideVerdict(item.activity, item.verdict),", function("firstItem"))
         # The summary's count line is only ever built from items to do: a "can
         # start" is never counted there, only shown beside its own item.
         result = function("first")
         self.assertIn("model.verdicts", result)
         self.assertNotIn("model.quiet.length} 个事项可以开始", result)
         beside = function("besideVerdict")
-        self.assertIn('if (value === "UNKNOWN") notes.push(BESIDE.unknown);', beside)
-        self.assertIn("notes.push(BESIDE.readyScope);", beside)
-        self.assertIn("READY_NOTES[activity]", beside)
+        self.assertIn('if (value === "UNKNOWN") once(BESIDE.unknown);', beside)
+        self.assertIn("once(BESIDE.readyScope);", beside)
+        # The notes written for one activity are specific limits: never once-only.
+        self.assertIn("notes.push(...READY_NOTES[activity])", beside)
+        self.assertIn("if (said === null || !said.has(text)) notes.push(text);", beside)
         words = self.vocabulary["beside"]
         self.assertIn("不代表整次交接完成", words["readyScope"])
         self.assertIn("不等于这个构件没有问题", words["unknown"])

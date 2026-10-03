@@ -1144,12 +1144,22 @@ function basisLine(basis, shared = false) {
   );
 }
 
-/** What stays beside one verdict of one activity, and only where it applies. */
-function besideVerdict(activity, value) {
+/**
+ * What stays beside one verdict of one activity, and only where it applies.
+ *
+ * `said`, when a caller keeps one per block, holds the general notes that block
+ * has already shown: each is said beside the first verdict it applies to and
+ * not repeated after it. The notes written for one activity are never skipped.
+ */
+function besideVerdict(activity, value, said = null) {
   const notes = [];
-  if (value === "UNKNOWN") notes.push(BESIDE.unknown);
+  const once = (text) => {
+    if (said === null || !said.has(text)) notes.push(text);
+    if (said !== null) said.add(text);
+  };
+  if (value === "UNKNOWN") once(BESIDE.unknown);
   if (value === "READY") {
-    notes.push(BESIDE.readyScope);
+    once(BESIDE.readyScope);
     if (Object.hasOwn(READY_NOTES, activity)) notes.push(...READY_NOTES[activity]);
   }
   return notes.map((text) => h("p", { class: "beside" }, text));
@@ -1395,7 +1405,7 @@ function first(state) {
     ),
   );
 
-  const card = (item) =>
+  const card = (item, said) =>
     h(
       "li",
       { class: "recheck-item" },
@@ -1408,7 +1418,7 @@ function first(state) {
       ),
       h("p", { class: "conclusion" }, workVerdict(item.activity, item.verdict)),
       basisLine(item.basis),
-      besideVerdict(item.activity, item.verdict),
+      besideVerdict(item.activity, item.verdict, said),
       // The action sentence where one was written for this problem type; the
       // problem's name otherwise. The team's table above names the problem.
       definitions([
@@ -1459,7 +1469,13 @@ function first(state) {
             ),
           ),
         ),
-        h("ol", { class: "recheck-items" }, team.rows.flatMap((row) => row.items.map(card))),
+        // One team is one block: its general notes are said once.
+        ((said) =>
+          h(
+            "ol",
+            { class: "recheck-items" },
+            team.rows.flatMap((row) => row.items.map((item) => card(item, said))),
+          ))(new Set()),
       ]),
     ),
     h(
@@ -1467,11 +1483,12 @@ function first(state) {
       { class: "block" },
       h("h2", {}, `${ACTION_GROUPS.none.label}（${model.counts.quiet} 个事项）`),
       h("p", {}, model.quiet.length ? ACTION_GROUPS.none.note : ACTION_GROUPS.none.none),
-      h(
-        "ul",
-        { class: "quiet-items" },
-        model.quiet.map((item) =>
-          h(
+      ((said) =>
+        h(
+          "ul",
+          { class: "quiet-items" },
+          model.quiet.map((item) =>
+            h(
             "li",
             {},
             h(
@@ -1479,13 +1496,13 @@ function first(state) {
               { href: itemHref(item), "data-return-focus": here(item) ? true : null },
               itemTitle(state, item.keys),
             ),
-            " ｜ ",
-            workVerdict(item.activity, item.verdict),
-            basisLine(item.basis),
-            besideVerdict(item.activity, item.verdict),
+              " ｜ ",
+              workVerdict(item.activity, item.verdict),
+              basisLine(item.basis),
+              besideVerdict(item.activity, item.verdict, said),
+            ),
           ),
-        ),
-      ),
+        ))(new Set()),
     ),
   );
 
@@ -1586,10 +1603,34 @@ function firstItem(state, activityIndex, ordinal, memberIndex) {
         ],
       ]),
     ),
+  );
+
+  // What to do comes before which element it is: the action is what the
+  // manager came for, and the element's facts are how to find it in the model.
+  if (item.todo) {
+    content.append(
+      h(
+        "section",
+        { class: "block next-step" },
+        h("h2", {}, "二、要做什么、由谁处理、完成后拿什么复检"),
+        actionBlock(item.subscope, request, envelope.mode),
+      ),
+    );
+  } else {
+    content.append(
+      h(
+        "section",
+        { class: "block" },
+        h("h2", {}, "二、后续"),
+        h("p", {}, "记录没有为这一项给出后续处理动作、处理团队或默认处理角色。"),
+      ),
+    );
+  }
+  content.append(
     h(
       "section",
       { class: "block" },
-      h("h2", {}, item.keys.length === 2 ? "二、是哪两个构件" : "二、是哪个构件"),
+      h("h2", {}, item.keys.length === 2 ? "三、是哪两个构件" : "三、是哪个构件"),
       h(
         "div",
         { class: "locations" },
@@ -1598,15 +1639,8 @@ function firstItem(state, activityIndex, ordinal, memberIndex) {
       note(ELEMENT_WORDS.naming),
     ),
   );
-
   if (item.todo) {
     content.append(
-      h(
-        "section",
-        { class: "block next-step" },
-        h("h2", {}, "三、要做什么、由谁处理、完成后拿什么复检"),
-        actionBlock(item.subscope, request, envelope.mode),
-      ),
       h(
         "section",
         { class: "block" },
@@ -1615,15 +1649,6 @@ function firstItem(state, activityIndex, ordinal, memberIndex) {
         assetIdentity && item.basis.findings.length
           ? h("p", { class: "beside" }, BESIDE.assetIdentity)
           : null,
-      ),
-    );
-  } else {
-    content.append(
-      h(
-        "section",
-        { class: "block" },
-        h("h2", {}, "三、后续"),
-        h("p", {}, "记录没有为这一项给出后续处理动作、处理团队或默认处理角色。"),
       ),
     );
   }
