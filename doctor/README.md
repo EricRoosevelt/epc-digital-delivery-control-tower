@@ -110,6 +110,78 @@ for is read only from the returned data's `finding_details`; the preview reads n
 rule file. The record, activity and member screens were not revised and still
 use internal terms.
 
+## A third entry, with no screen yet: a workspace run
+
+```bash
+python doctor/serve.py --workspace <dir> [--prior <dir>]
+python -m internal.doctor_adapter --workspace <dir> [--prior <dir>]
+```
+
+`<dir>` is a workspace outside this checkout in which `epc-ct run` finished —
+it holds `data/processed/canonical/run.json` and the
+`reports/artifact_manifest.json` that vouches for it. The workspace is named
+when the server is started and at no other time: nothing is uploaded, no
+directory is searched for runs, and without `--workspace` the mode offers none.
+`--prior` names an earlier run of the same scope, laid out the same way.
+
+The adapter answers `GET /api/envelope?mode=workspace&run=workspace` with a
+different envelope from the two above. **No screen reads it yet**; this section
+is the seam the screens will be built against.
+
+| Key | What it holds |
+|---|---|
+| `mode`, `outcome` | `"workspace"`, `"validation"`. No `record` and no `assessment_digest`: no handover assessment was made |
+| `run` | `validation_run_id`, `as_of`, `ruleset` (`id`, `version`, `normalized_digest`), `checkers`, and `models` — each with `model_key`, `project_id`, `model_id`, `discipline`, `filename`, `content_sha256`, `tag_source` |
+| `findings` | every finding of the run: `model_key`, `element_key`, `requirement_key`, `finding_key`, `status`, `expected`, `actual`, `reason`. An empty `element_key` is a model-level finding |
+| `requirements` | `requirement_key` → `rule_id`, `requirement_id`, `specification_label`, `requirement_label`, `checker`, `labels`, `discipline_scope`, `citation`, `semantics_digest`. No `owner_role`, `severity`, `priority` or `stage` |
+| `elements` | `element_key` → `name`, `ifc_class`, `storey`, `global_id`, `model_key`, and `tag` where one could be read |
+| `comparison` | only with `--prior`; below |
+
+`tag` is the element's IFC `Tag` attribute, read from the model file the
+workspace's project manifest names — and only when that file's SHA-256 is the
+content digest the run recorded. It is for finding the element in its authoring
+tool and takes part in no key. An element whose file states no tag has no `tag`
+key; a model whose file is missing or is a different version says so in
+`tag_source` (`model-file`, `model-file-not-located`, `model-file-differs`) and
+none of its elements has one.
+
+`comparison` is made by the adapter, never by a screen:
+
+| Key | What it holds |
+|---|---|
+| `prior_run` | the earlier run, in the shape of `run` |
+| `changed_models` | `model_key`, `prior_content_sha256`, `current_content_sha256` for each model whose content digest differs |
+| `pairs` | one row per element × requirement both runs evaluated: `model_key`, `element_key`, `requirement_key`, and `prior` and `current`, each the finding's `finding_key`, `status`, `expected`, `actual`, `reason` |
+| `not_re_evaluated` | rows only the earlier run has: `prior`, and `element_in_current_run` |
+| `newly_appearing` | rows only the current run has: `current`, and `element_in_prior_run` |
+| `prior_elements` | display rows for elements the current inventory no longer holds |
+
+A row on one side only is never a pass and never a correction. The adapter says
+nothing was fixed, resolved or improved anywhere: it gives two statuses.
+`element_in_…_run` is `null` for a model-level row, which names no element.
+
+Which run is the earlier one is whatever the caller named; the adapter reads no
+clock and has no way to know.
+
+When the two runs did not ask the same question of the same models, the whole
+request is refused — `outcome: "refusal"`, `refusal: {code, text, reasons}`, and
+nothing else: neither run's findings and no comparison. `reasons` lists every
+failed precondition, `code` is the first.
+
+| Code | The two runs differ in |
+|---|---|
+| `ruleset-id-differs`, `ruleset-version-differs`, `ruleset-digest-differs` | the rule set's identifier, version or normalized digest |
+| `requirement-set-differs` | which requirements were evaluated |
+| `requirement-semantics-not-recorded` | nothing provable: a run recorded no predicate digest for a requirement |
+| `requirement-semantics-differs` | a requirement's predicate digest |
+| `checker-differs` | the checkers, their versions or configuration |
+| `as-of-differs` | the run's logical date |
+| `model-set-differs` | the set of models |
+
+A directory that holds no finished run, or a run document that is not the one
+its manifest describes, is a fault and is reported as one — never as a refusal
+and never as a result.
+
 ## Not in this preview
 
 Starting a recheck, marking an item resolved, assigning or notifying anyone and

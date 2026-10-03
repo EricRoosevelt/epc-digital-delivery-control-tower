@@ -33,6 +33,12 @@ by the technical director rather than chosen here:
     another run or another predicate, which includes every finding carrying the
     fixture marker — has no entry at all, never a ``null`` one.
 
+A third entry returns a different envelope, described in :mod:`.workspace`:
+``mode = "workspace"``, ``outcome = "validation"``, for one finished validation
+run read from a workspace outside this checkout, with no ``record`` and no
+``assessment_digest`` because no assessment was made. It is not a scenario and
+is not in the index; the workspace is named by whoever calls it.
+
 **This is not a Framework interface.** It lives outside ``epc_control_tower``, is
 not a ``Checker``, ``GroupingPolicy`` or ``Exporter``, is absent from
 ``default_registry``, and no ``epc-ct`` subcommand reaches it. It is not a public
@@ -62,6 +68,7 @@ from __future__ import annotations
 from .envelope import MODES, build_envelope, display_elements, envelope_bytes
 from .real import real_envelope
 from .scenarios import SCENARIOS, scenario_envelope, scenario_index
+from .workspace import workspace_envelope
 
 __all__ = [
     "MODES",
@@ -72,4 +79,5 @@ __all__ = [
     "real_envelope",
     "scenario_envelope",
     "scenario_index",
+    "workspace_envelope",
 ]
