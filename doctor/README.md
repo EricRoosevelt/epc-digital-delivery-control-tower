@@ -70,7 +70,8 @@ python doctor/serve.py        # then open http://127.0.0.1:8765/
 - **No third-party code.** Python standard library (`http.server`) and plain
   HTML, CSS and ES modules; no build step, no `package.json`.
 - **Loopback only, reads no clock, and writes nothing in this checkout.** The
-  server itself writes no file. The adapter it calls does write, outside the
+  server itself writes no file; a local check (below) writes only under its
+  checks directory. The adapter it calls does write, outside the
   checkout: each validation run copies the rule library into a scratch
   directory under the system temporary directory, puts the run's by-products
   there, and removes the directory when the run ends. The rule-edit recheck
@@ -211,11 +212,118 @@ A directory that holds no finished run, or a run document that is not the one
 its manifest describes, is a fault and is reported as one — never as a refusal
 and never as a result.
 
+## A fourth entry: a local check (no screen yet)
+
+```bash
+python doctor/serve.py [--checks-dir <dir>] [--max-model-bytes <n>]
+```
+
+A user's own IFC files, checked against one of the rule sets this checkout
+carries (`rules/*/`), in a workspace made for that one check. The server has
+the endpoints; the screens come in a later packet and build against the tables
+below. Code: `internal/doctor_adapter/local_check.py`; tests:
+`tests/test_doctor_local_check.py`.
+
+**Where it writes.** Everything — the files a user hands over and every check
+run on them — is kept under the *checks directory*: `--checks-dir`, else
+`$EPC_DOCTOR_CHECKS_DIR`, else `epc-control-tower/doctor-checks` in the user's
+state directory (`%LOCALAPPDATA%`, or `$XDG_STATE_HOME` /
+`~/.local/state`). It is refused inside any checkout, printed when the server
+starts, and returned by `GET /api/local` and with every check. Nothing is
+written in this checkout and nothing anywhere else; the tests count every write
+a check attempts. Nothing is deleted for the user either: a check stays until
+its directory is removed.
+
+```
+<checks dir>/uploads/<sha256>.ifc          a file as it arrived, named by its content
+<checks dir>/checks/<check_id>/
+    check.json                              the scope the check ran with (written last)
+    control-tower.toml, projects/local/     the workspace: the models and their manifest
+    rules/<rule set>/, ids/                 a copy of the rule set, and what it compiled to
+    data/processed/canonical/run.json       the run the workspace entry reads
+    reports/artifact_manifest.json, reports/ids/
+    coverage/                               the run's coverage record, beside it
+```
+
+Why it is laid out like this was measured before it was designed: a model
+dropped into `projects/` re-keyed every published canonical finding; a workspace
+naming the checkout's `rules/` rewrote `ids/` in the checkout; the default
+exporters reach the BCF archive's entry limit on a real model; `epc-ct run`
+kept a coverage record in the state directory without saying so. So the rule set
+is copied (its identity is of parsed content, not of a path — the copy's
+digests are the recorded ones), only the JSON exporter runs, and the coverage
+record is kept in the check's own directory.
+
+**A check is named by what it checked**: its `check_id` digests the rule set
+(identifier, version, normalized digest, definitions digest), the logical date
+and each model's name, discipline and content digest. Asking again for the same
+check runs it again into the same directory and gives the same bytes. A model's
+`model_id` is spelled from its file name (or, for a name with nothing a code can
+be spelled from, from the name's digest), all in project `local`, so two checks
+of one file name have the same model key and can be compared.
+
+| Endpoint | Body | Answer |
+|---|---|---|
+| `GET /api/local` | — | `checks_dir`, `as_of`, `max_model_bytes`, `rulesets` (each `name`, `id`, `version`, `normalized_digest`, `definitions_digest`, `title`, `description`), `disciplines` |
+| `POST /api/local/models?filename=<name>` | the file, `application/octet-stream` | `{outcome: "staged", model: {upload, filename, byte_count, ifc_schema}}` or a refusal |
+| `POST /api/local/plan` | `{ruleset, models: [{upload, filename, discipline}]}`, `application/json` | `{outcome: "plan", plan}` or a refusal |
+| `POST /api/local/checks` | the same request | `{outcome: "finished", check: {check_id, location, scope}}` or a refusal |
+| `GET /api/local/checks` | — | `{checks: [{check_id, location, scope}]}`, every finished check by identifier |
+| `GET /api/local/envelope?run=<check_id>[&prior=<check_id>]` | — | the workspace entry's envelope for that check, unchanged — including its comparison refusals |
+
+`plan` (and a check's `scope`, which is the plan without `location`):
+
+| Key | What it holds |
+|---|---|
+| `check_id`, `location` | the check's name, and the directory its result will be kept in |
+| `ruleset` | as in `GET /api/local` |
+| `requirements` | `requirement_key` → `rule_id`, `requirement_id`, `specification_label`, `requirement_label`, `checker`, `labels`, `discipline_scope`, `citation` — the workspace entry's requirement without its `semantics_digest`; no `owner_role`, `severity`, `priority` or `stage` |
+| `models` | `model_id`, `model_key`, `filename`, `discipline`, `content_sha256`, `byte_count`, `ifc_schema`, by `model_key` |
+| `as_of` | the logical date, from this checkout's configuration |
+| `programme` | the stages the rule set's rules name, each with an empty `due`: a user's model brings no programme, and the pipeline needs one that covers every rule stage |
+| `exporters` | `["json"]` |
+
+The run's own identity in the envelope says what the plan said — rule set,
+models, date — and the tests hold the two equal.
+
+**A refusal is a result** in the workspace entry's shape — `outcome:
+"refusal"`, `refusal: {code, text, reasons}`, every reason listed, `code` the
+first — and each reason's text says what to do next. The screens word it from
+the code.
+
+| Code | When |
+|---|---|
+| `busy` | another check is running; one runs at a time |
+| `no-model` | no file was chosen |
+| `model-too-large`, `model-incomplete` | the file is over `max_model_bytes` (refused unread), or arrived short |
+| `not-an-ifc` | the file does not begin with an IFC-SPF header naming a schema |
+| `model-name-invalid` | the name is not a plain file name ending in `.ifc` |
+| `unknown-model` | the request names a file the server does not hold |
+| `duplicate-model` | the same file, file name or model code chosen twice |
+| `unknown-ruleset` | not a rule set this checkout carries |
+| `discipline-not-declared`, `unknown-discipline` | a file's discipline is missing, or not one any rule set here names |
+| `unsupported-schema` | a checker of the chosen rule set does not read the file's schema — IFC2x3 for the IDS checker — decided from the same registry before any model is opened, and the reason the pipeline would give |
+
+A request of the wrong shape is `400`; a check that fails while it runs is a
+fault (`500`, with the message), and its directory is removed first, so a
+failed check leaves nothing behind and is not listed.
+
+**Nothing applicable is not a pass.** A model with no object a rule applies to
+gets one model-level `N/A` finding per requirement and no `PASS`; the envelope
+carries exactly that.
+
+**Only this machine's own pages may ask.** The server listens on 127.0.0.1.
+Every `/api/` request must name it as its `Host` (`127.0.0.1`, `localhost` or
+`[::1]` with its port), which stops a rebound DNS name; a request that sends
+something must carry the endpoint's JSON or binary type, which a page on another
+site cannot send without a preflight nothing here answers, and an `Origin`, if
+given, must be this server's.
+
 ## Not in this preview
 
 Starting a recheck, marking an item resolved, assigning or notifying anyone and
 exporting a recheck record (the recheck screens say so and carry no button for
 them); model/version, Pack and activity selection catalogues (F2), exhaustive refusal
 diagnostics (F4), Revit navigation and determination originals (F5), condition
-discharge and risk authorisation (F6, E2), arbitrary model intake (F7),
+discharge and risk authorisation (F6, E2), screens for the local check above,
 separated refusal message text (F8), and the Singapore research view.
