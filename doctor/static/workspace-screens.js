@@ -6,6 +6,7 @@
 // lookups are in workspace-model.js.
 
 import { clearResults, go, href } from "./app.js";
+import { plural } from "./i18n.js";
 import { code, copyable, definitions, h, link, missing, note, section, table } from "./dom.js";
 import {
   carried,
@@ -20,6 +21,8 @@ import {
 } from "./screens.js";
 import {
   CITATION_GLOSSES,
+  COMMON,
+  CONTEXT,
   ELEMENT_WORDS,
   FINDING_STATUS,
   NOT_CARRIED,
@@ -30,7 +33,7 @@ import {
   WORKSPACE_COMPARE,
   WORKSPACE_REFUSAL,
   WORKSPACE_REFUSAL_REASONS,
-} from "./vocabulary.js";
+} from "./words.js";
 import {
   comparisonElement,
   comparisonOf,
@@ -104,7 +107,7 @@ function reasonText(text, notes) {
 function modelName(model) {
   return model === null
     ? missing(NOT_CARRIED)
-    : [code(model.model_id), carries(model, "discipline") ? `（${model.discipline}）` : null];
+    : [code(model.model_id), carries(model, "discipline") ? fill(COMMON.aside, { text: model.discipline }) : null];
 }
 
 function ruleHeading(run, requirement) {
@@ -171,7 +174,7 @@ function tagAbsence(reading, brief = false) {
   const words = brief ? TAG_WORDS.short : TAG_WORDS.sources;
   return Object.hasOwn(TAG_WORDS.sources, reading.value)
     ? words[reading.value]
-    : `${UNRECOGNISED}：${reading.value}`;
+    : `${UNRECOGNISED}${COMMON.colon}${reading.value}`;
 }
 
 /** Where to go back to in the authoring tool: the IFC Tag first, then the rest. */
@@ -285,7 +288,7 @@ function findingPanel(state, finding) {
       "h2",
       { tabindex: "-1", "data-return-focus": true },
       element === null
-        ? [WORKSPACE.wholeModel, "：", modelName(model)]
+        ? [WORKSPACE.wholeModel, COMMON.colon, modelName(model)]
         : named(element)
           ? element.name
           : missing(ELEMENT_WORDS.unnamed),
@@ -294,7 +297,7 @@ function findingPanel(state, finding) {
       "section",
       { class: "detail-part" },
       h("h3", {}, WORKSPACE.resultHeading),
-      h("p", { class: "headline" }, ruleHeading(run, requirement), "：", statusWord(status)),
+      h("p", { class: "headline" }, ruleHeading(run, requirement), COMMON.colon, statusWord(status)),
       status === "N/A" ? h("p", { class: "beside" }, WORKSPACE.notApplicable) : null,
       status === "FAIL" && isProductValidation(requirement)
         ? h("p", { class: "beside" }, WORKSPACE.failNotDefect)
@@ -542,12 +545,12 @@ export function workspaceCheck(state, selectedKey) {
     h(
       "section",
       { class: "block result" },
-      h("h2", {}, fill(WORKSPACE.summary, { count: envelope.findings.length })),
+      h("h2", {}, plural(WORKSPACE.summary, envelope.findings.length)),
       h(
         "ul",
         { class: "result-lines" },
         groups.map((group) =>
-          h("li", {}, h("strong", {}, fill(WORKSPACE_COMPARE.rows, { count: group.count })), "：", statusWord(group.status)),
+          h("li", {}, h("strong", {}, plural(WORKSPACE_COMPARE.rows, group.count)), COMMON.colon, statusWord(group.status)),
         ),
       ),
       h("p", { class: "sub" }, WORKSPACE.unit),
@@ -570,7 +573,7 @@ export function workspaceCheck(state, selectedKey) {
               transitionLabel(group),
             ),
           ),
-          h("li", {}, fill(WORKSPACE_COMPARE.unchanged, { count: moved.sameCount })),
+          h("li", {}, plural(WORKSPACE_COMPARE.unchanged, moved.sameCount)),
         ),
         h("p", {}, h("a", { class: "run", href: href(state.mode, state.runId, "compare") }, WORKSPACE.compareLink)),
       ),
@@ -612,8 +615,8 @@ function transitionLabel(group) {
     statusWord(group.prior),
     " → ",
     statusWord(group.current),
-    "：",
-    fill(WORKSPACE_COMPARE.rows, { count: group.pairs.length }),
+    COMMON.colon,
+    plural(WORKSPACE_COMPARE.rows, group.pairs.length),
   ];
 }
 
@@ -683,14 +686,14 @@ export function workspaceCompare(state) {
     ),
     section(
       WORKSPACE_COMPARE.changedHeading,
-      h("h3", {}, fill(WORKSPACE_COMPARE.differs, { count: moved.differingCount })),
+      h("h3", {}, plural(WORKSPACE_COMPARE.differs, moved.differingCount)),
       moved.differing.length
         ? moved.differing.map((group) => [
             h("h4", {}, transitionLabel(group)),
             comparisonRows(state, group.pairs, "current"),
           ])
         : note(WORKSPACE_COMPARE.differsNone),
-      h("h3", {}, fill(WORKSPACE_COMPARE.unchanged, { count: moved.sameCount })),
+      h("h3", {}, plural(WORKSPACE_COMPARE.unchanged, moved.sameCount)),
       moved.same.length
         ? moved.same.map((group) =>
             h(
@@ -701,11 +704,11 @@ export function workspaceCompare(state) {
             ),
           )
         : note(WORKSPACE_COMPARE.unchangedNone),
-      h("h3", {}, fill(WORKSPACE_COMPARE.notReEvaluated.label, { count: moved.notReEvaluatedCount })),
+      h("h3", {}, plural(WORKSPACE_COMPARE.notReEvaluated.label, moved.notReEvaluatedCount)),
       moved.notReEvaluatedCount
         ? [note(WORKSPACE_COMPARE.notReEvaluated.note), comparisonRows(state, comparison.not_re_evaluated, "prior")]
         : null,
-      h("h3", {}, fill(WORKSPACE_COMPARE.newlyAppearing.label, { count: moved.newlyAppearingCount })),
+      h("h3", {}, plural(WORKSPACE_COMPARE.newlyAppearing.label, moved.newlyAppearingCount)),
       moved.newlyAppearingCount
         ? [note(WORKSPACE_COMPARE.newlyAppearing.note), comparisonRows(state, comparison.newly_appearing, "current")]
         : null,
@@ -729,7 +732,7 @@ export function workspaceCompare(state) {
                     "div",
                     { class: "sub" },
                     WORKSPACE.identity.digest,
-                    "：",
+                    COMMON.colon,
                     code(short(row.prior_content_sha256)),
                     " → ",
                     code(short(row.current_content_sha256)),
@@ -843,7 +846,7 @@ export function workspaceRefusal(state) {
             go();
           },
         },
-        "返回首页",
+        CONTEXT.home,
       ),
     ),
   );

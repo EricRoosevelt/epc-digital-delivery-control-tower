@@ -133,7 +133,14 @@ def _node(payload: dict[str, object]) -> dict[str, object]:
         raise unittest.SkipTest(message)
     with tempfile.TemporaryDirectory() as directory:
         workdir = Path(directory)
-        for name in ("workspace-model.js", "vocabulary.js"):
+        # The model reads its words through words.js, in Chinese here.
+        for name in (
+            "workspace-model.js",
+            "vocabulary.js",
+            "vocabulary-en.js",
+            "words.js",
+            "i18n.js",
+        ):
             shutil.copyfile(STATIC / name, workdir / name)
         (workdir / "package.json").write_text('{"type": "module"}\n', encoding="utf-8")
         (workdir / "driver.js").write_text(_DRIVER, encoding="utf-8")
@@ -608,8 +615,10 @@ class WordingTests(_Modelled):
             for line in section.splitlines()
             if not line.lstrip().startswith(("//", "*", "/*"))
         ]
-        written = set(re.findall(r"[一-鿿]+", "\n".join(code_lines)))
-        self.assertEqual(written, {"返回首页"})
+        # Not even the back button: it reads CONTEXT.home now, and no
+        # full-width punctuation is written here either.
+        written = set(re.findall(r"[一-鿿\u3000-\u303f\uff00-\uffef]+", "\n".join(code_lines)))
+        self.assertEqual(written, set())
         app = (STATIC / "app.js").read_text(encoding="utf-8")
         problem = app[
             app.index("function workspaceProblem") : app.index(

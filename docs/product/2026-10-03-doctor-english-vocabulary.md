@@ -1,6 +1,6 @@
-# Doctor 英文词表（主路径：首页、示例目录、首次结果、单项、复检）
+# Doctor 英文词表（主路径与真实工作区）
 
-日期：2026-10-03，第二部分（单项、复检）同日补入。负责：Product/UI Engineer。
+日期：2026-10-03；第二部分（单项、复检）与第三部分（工作区的结果、详情、对比、拒绝、故障）同日补入。负责：Product/UI Engineer。
 状态：**全部未经 BIM 复核**；有领域含义的条目进 10/15 BIM 批次。
 本文件由界面实际注册的词表生成，测试逐条核对英文与这里一致。中文一列是同一键在 `vocabulary.js` 里的原文。
 
@@ -11,6 +11,9 @@
   “要做什么”“完成后拿什么复检”在英文里直接读记录里路由的 `next_action`、`recheck_condition`，词表里没有副本（`ACTION_TEXT`）。
   IFC 类别在英文里只显示类别本身（`IFC_CLASS_NAMES` 英文为空）；检查结果的原因在英文里只显示原文（`REASON_GLOSSES` 英文为空）。
   复检单项里“复检前留下的结束条件”在英文里读记录的 `prior_recheck_condition` 原文。
+  工作区页面里，规则的出处在英文里只显示返回数据的原文（`CITATION_GLOSSES` 英文为空）；检查结果的原因、规则原话（`expected`）同样只显示原文。
+  PV-001 规则说明的英文标题取自 `rules/product-validation/PV-001.toml` 的 `title`，“NOTDEFINED states nothing.”取自同一文件的 `instructions`（测试核对）；其余规则说明是为本界面写的领域文字，待 BIM。
+  拒绝原因旁的短句在两种语言里都是本界面写的说明；适配器给出的完整原文（英文）始终在“系统返回的原文”折叠里。
 - 带计数的说法分单数和复数两种形式（`one`／`other`），中文两种形式相同。
 - 英文模式下，还没有翻译的页面不画出来，显示“This page has not been translated yet”，并给出用中文看同一页的按钮。
 
@@ -19,9 +22,9 @@
 | 类别 | 表 | 条目 |
 | --- | --- | --- |
 | 原文（取自 Pack、记录或产品文档，未翻译） | 3 | 12 |
-| 有领域含义（判断、活动、问题类型、限制、来源），待 BIM | 44 | 337 |
-| 界面用语 | 22 | 160 |
-| 合计 | 69 | 509 |
+| 有领域含义（判断、活动、问题类型、限制、来源），待 BIM | 50 | 517 |
+| 界面用语 | 23 | 161 |
+| 合计 | 76 | 690 |
 
 ## 原文
 
@@ -562,6 +565,29 @@
 | `missing-corresponding-opening` | 它穿过的构件上没有建出对应的洞口 | No corresponding opening is modelled in the element it passes through |
 | `opening-status-not-determined` | 不是已知的缺洞：开洞情况的评审还没有完成 | Not a known missing opening: the review of the opening has not been completed yet |
 
+**`RULE_NOTES`**
+
+| 键 | 中文 | English |
+| --- | --- | --- |
+| `PV-001.title` | 风口要声明四种预定义类型之一 | Air terminals declare one of four predefined types |
+| `PV-001.predicate` | 每个适用的风口（IfcAirTerminal）都要声明预定义类型，取值是 DIFFUSER、GRILLE、LOUVRE、REGISTER 之一。IFC4 还允许 USERDEFINED 和 NOTDEFINED；不接受它们是这条规则自己的决定，用它们的模型仍是有效的 IFC4。 | Every applicable air terminal (IfcAirTerminal) declares a predefined type of DIFFUSER, GRILLE, LOUVRE or REGISTER. IFC4 also admits USERDEFINED and NOTDEFINED; not accepting them is this rule's own decision, and a model using them is still valid IFC4. |
+| `PV-001.passProves` | 检查器按它的读取顺序取到的那一个值（类型上的值优先；类型声明 USERDEFINED 时是它的自由文本；类型什么也没说时才读构件实例），逐字等于 DIFFUSER、GRILLE、LOUVRE、REGISTER 四个值之一。 | The one value the checker took in its reading order (the type's value first; a USERDEFINED type's free text; the element instance only when the type says nothing) is, character for character, one of DIFFUSER, GRILLE, LOUVRE and REGISTER. |
+| `PV-001.passDoesNotProve[0]` | 取值正确：四个值中任何一个都会通过，写成 GRILLE 也会通过。 | That the value is right: any of the four passes; GRILLE passes too. |
+| `PV-001.passDoesNotProve[1]` | 类型和构件实例的取值一致：类型上是四个值之一时，实例上写的值不参与比较；类型是 LOUVRE、实例是 DIFFUSER，也会通过。 | That the type and the element instance agree: when the type carries one of the four, the instance's value is not compared; type LOUVRE with instance DIFFUSER also passes. |
+| `PV-001.passDoesNotProve[2]` | 规则不接受的 USERDEFINED 没有出现：类型声明 USERDEFINED 时，检查器比较的是它的自由文本，逐字、区分大小写；文本恰好是 LOUVRE 会通过，写成 louvre、Louvre 或前后带空格则不通过。 | That no USERDEFINED, which the rule does not accept, is present: when the type declares USERDEFINED, the checker compares its free text, character for character and case-sensitively; text that happens to be LOUVRE passes, while louvre, Louvre or text with leading or trailing spaces does not. |
+| `PV-001.passDoesNotProve[3]` | 墙上有对应的洞口。 | That the wall has a corresponding opening. |
+| `PV-001.passDoesNotProve[4]` | 风口所在的模型与风口所在的墙所属的模型已经对齐。 | That the air terminal's model and the model of the wall it sits in are aligned. |
+| `PV-001.passDoesNotProve[5]` | 任何工作可以开始，包括吊顶和开洞工作。 | That any work can start, including ceiling and opening work. |
+| `PV-001.action.what` | 回到 Revit 源模型，让这个风口导出后的预定义类型是 DIFFUSER、GRILLE、LOUVRE、REGISTER 之一；重新导出 IFC，再检查。NOTDEFINED 等于什么都没说。 | Go back to the Revit source model and make this air terminal's exported predefined type one of DIFFUSER, GRILLE, LOUVRE and REGISTER; re-export the IFC and check again. NOTDEFINED states nothing. |
+| `PV-001.action.reads` | 检查器先看导出的 IFC 里它的类型对象：类型上是四个值之一，比较类型上的值；类型声明 USERDEFINED，比较它的自由文本；类型什么也没说时，才读构件实例本身的值。这说的是检查器读 IFC 的顺序，不是 Revit 里该改的位置。 | The checker looks first at its type object in the exported IFC: if the type carries one of the four, the type's value is compared; if the type declares USERDEFINED, its free text is compared; only when the type says nothing is the element instance's own value read. This is the order in which the checker reads the IFC, not where to make the change in Revit. |
+| `PV-001.action.revise` | 这个值在 Revit 里从哪里写出（类型还是实例、哪个参数、哪项导出设置），返回数据没有记录，本页不指定。改之前先在 Revit 里确认；如果决定在类型上改，会作用于这个类型的全部实例。 | Where this value is written from in Revit (type or instance, which parameter, which export setting), the returned data does not record, and this page does not say. Confirm it in Revit before changing anything; if you decide to change it on the type, the change applies to every instance of that type. |
+| `PV-001.action.undecided` | 取哪一个值、由谁决定和操作，返回数据都没有提供。规则只要求四个值之一，不判断哪一个对。 | Which value to use, and who decides and makes the change, the returned data does not say. The rule asks only for one of the four values and does not judge which is right. |
+| `PV-001.recheck` | 用同一规则集版本、同一组模型和同一导出设置重新检查，看这个构件在这条要求下的结果。 | Check again with the same rule set version, the same set of models and the same export settings, and look at this element's result under this requirement. |
+| `PV-001.gaps[0]` | 风口所在的墙上的洞口：需要对照风口所在的模型和这面墙所属的模型做协调评审判定；这项检查不比较两个模型的构件。 | The opening in the wall the air terminal sits in: a coordination-review determination is needed, made against the air terminal's model and the model of that wall; this check does not compare elements across the two models. |
+| `PV-001.gaps[1]` | 风口所在的模型与风口所在的墙所属的模型是否对齐：需要一份对齐确认记录。 | Whether the air terminal's model and the model of the wall it sits in are aligned: an alignment confirmation record is needed. |
+| `PV-001.gaps[2]` | 取值是否选对：分类判断要另行记录；检查通过不能反过来证明分类判断正确。 | Whether the value chosen is right: the classification decision has to be recorded separately; a pass cannot prove in reverse that the classification is right. |
+| `PV-001.reasonFreeText` | 引号里不是预定义类型的枚举值，而是自由文本：类型声明 USERDEFINED 时，检查器拿它的自由文本来比较。 | What is in the quotation marks is not an enumeration value but free text: when the type declares USERDEFINED, the checker compares its free text. |
+
 **`RUN_LABELS`**
 
 | 键 | 中文 | English |
@@ -579,6 +605,25 @@
 | `recheck-requirement-relaxed` | 模型未改，但交接判断发生变化 | The models did not change, but a handover conclusion did |
 | `recheck-semantics-changed` | 复检记录 10（模拟示例） | Recheck record 10 (simulated example) |
 | `real-refusal` | 对随附样例项目的一次检查尝试 | A check attempt on the bundled sample project |
+
+**`TAG_WORDS`**
+
+| 键 | 中文 | English |
+| --- | --- | --- |
+| `note` | IFC Tag 是导出时写进 IFC 的标记；Revit 导出的通常是构件的 ElementId。核对：在 Revit 里用“按 ID 选择”选中这个 ID，看选中对象的名称和类别是否与本页相同；相同再按它处理，不同就不要按这个 Tag 去改，改用 GlobalId 在 IFC 里定位。 | The IFC Tag is a marker written into the IFC at export; what Revit writes is usually the element's ElementId. To check: in Revit, use "Select by ID" with this ID and see whether the selected object's name and class match this page; if they do, work from it; if they do not, do not change anything by this Tag, and find the element in the IFC by its GlobalId instead. |
+| `byIdNotStorey` | 在 Revit 里按 ID 找对象，不要按楼层找：本页的楼层取自 IFC 文件里的空间归属，不一定能和 Revit 明细表里的标高对上。 | Find the object in Revit by its ID, not by storey: the storey on this page is the IFC file's spatial assignment, which may not match the levels in a Revit schedule. |
+| `storeyFromIfc` | 本页的楼层取自 IFC 文件里的空间归属，不一定能和 Revit 明细表里的标高对上，不要只按楼层去找。 | The storey on this page is the IFC file's spatial assignment, which may not match the levels in a Revit schedule; do not look for the object by storey alone. |
+| `sources.model-file` | 模型文件里这个构件没有写 Tag。 | The model file has no Tag for this element. |
+| `sources.model-file-not-located` | 没有找到这次检查读的那个模型文件，所以读不到 Tag。 | The model file this check read was not found, so the Tag cannot be read. |
+| `sources.model-file-differs` | 工作区里的模型文件已经不是这次检查读的那个版本，所以不读取 Tag。 | The model file in the workspace is no longer the version this check read, so the Tag is not read. |
+| `sourceNotCarried` | 返回数据没有说明这个模型的 Tag 从哪里读，所以没有 Tag。 | The returned data does not say where this model's Tags are read from, so there is no Tag. |
+| `modelLevel` | 这条结果针对整个模型，没有具体构件可找。 | This result is about the whole model; there is no single element to find. |
+| `useGlobalId` | 在 IFC 里定位用 GlobalId。 | To find it in the IFC, use the GlobalId. |
+| `short.model-file` | 文件里没有 Tag | No Tag in the file |
+| `short.model-file-not-located` | 未找到模型文件 | Model file not found |
+| `short.model-file-differs` | 模型文件版本不同 | Model file version differs |
+| `short.notCarried` | 来源未说明 | Source not stated |
+| `short.modelLevel` | 整个模型 | Whole model |
 
 **`VERDICT_GROUPS`**
 
@@ -602,6 +647,144 @@
 | --- | --- | --- |
 | `VERDICT_SCOPE` | 每个判断只针对接收方的一项工作、本次评估范围内的这一项，以及所列的模型版本；它不是“模型好不好”的总评，也不是“某项检查通过了”。 | Each conclusion is about one piece of the receiving side's work, this item within this assessment's scope, and the listed model versions; it is not an overall verdict on whether the model is good, nor a statement that some check passed. |
 
+**`WORKSPACE`**
+
+| 键 | 中文 | English |
+| --- | --- | --- |
+| `directoryNote` | 工作区只能在启动服务器时指定；这里不能选择、上传或更换模型。 | A workspace can only be named when the server is started; you cannot choose, upload or change a model here. |
+| `directoryNone` | 服务器启动时没有指定工作区，所以这里没有可以查看的检查。要查看，用下面的命令重新启动服务器： | The server was started without a workspace, so there is no check to look at here. To look at one, restart the server with this command: |
+| `startCommand` | python doctor/serve.py --workspace <工作区目录> [--prior <前一次运行的目录>] | python doctor/serve.py --workspace <workspace directory> [--prior <earlier run directory>] |
+| `openRun` | 打开这次检查的结果 | Open this check's results |
+| `back` | ← 返回首页 | ← Back to the home page |
+| `backToList` | ← 返回结果列表 | ← Back to the list of results |
+| `contextNoJudgement` | 只有检查结果，没有交接判断 | Check results only, no handover judgement |
+| `contextRun` | 检查运行 | Check run |
+| `resultTitle` | 一次真实检查的结果 | Results of a real check |
+| `noJudgement` | 这是一次检查的结果，不是交接判断：页面只说每个构件在每条要求下通过、不通过还是不适用，不对任何工作能否开始下结论。 | These are the results of a check, not a handover judgement: the page says only whether each element passed, failed or was not applicable under each requirement, and concludes nothing about whether any work can start. |
+| `summary.one` | 本次结果：共 {count} 条检查结果 | This result: {count} check result |
+| `summary.other` | 本次结果：共 {count} 条检查结果 | This result: {count} check results |
+| `unit` | 单位是条：一条是一个构件在一条要求下的结果；模型里没有这条要求适用的构件时，是整个模型的一条。 | The unit is one result: one element under one requirement; where a model has no element the requirement applies to, it is one result for the whole model. |
+| `compareLink` | 看与前一次运行的对比 | See the comparison with the earlier run |
+| `compareTeaser` | 服务器启动时还指定了前一次运行。两次结果的前后对比： | The server was also started with an earlier run. Before and after: |
+| `checkedHeading` | 检查了什么 | What was checked |
+| `ruleTitle` | 要求 | Requirement |
+| `rulePredicate` | 这条规则要求 | What this rule asks |
+| `ruleExpected` | 规则的原话（英文） | The rule's own words |
+| `ruleOrigin` | 出处（返回数据的引文，英文原文） | Source (the returned data's citation, as written) |
+| `ruleLabels` | 返回数据的标签 | Labels in the returned data |
+| `productValidation` | 返回数据的标签（ProductValidation）标明：这是一条产品验证规则。 | The label in the returned data (ProductValidation) says: this is a product validation rule. |
+| `noRuleNotes` | 本界面没有为这条规则写中文说明；规则以返回数据里的英文原话为准。 | This interface has written no notes for this rule; the rule's own words in the returned data are what counts. |
+| `noRequirement` | 返回数据没有这条结果所属要求的说明。 | The returned data has no description of the requirement this result belongs to. |
+| `listHeading` | 逐条结果 | Results, one by one |
+| `filterLabel` | 按 IFC Tag、名称或 GlobalId 查找 | Find by IFC Tag, name or GlobalId |
+| `filterAll` | 全部 | All |
+| `filterNone` | 没有符合筛选条件的结果。 | No result matches the filter. |
+| `filterShown` | 显示 {shown} 条，共 {count} 条 | Showing {shown} of {count} |
+| `columns.status` | 结果 | Result |
+| `columns.tag` | IFC Tag | IFC Tag |
+| `columns.name` | 名称 | Name |
+| `columns.class` | 类别 | Class |
+| `columns.storey` | 楼层（IFC） | Storey (IFC) |
+| `columns.model` | 模型 | Model |
+| `pickOne` | 从结果列表里选一条，在这里看它的详情。 | Choose a result from the list to see its details here. |
+| `detailKicker` | 一条真实检查结果 | One result of a real check |
+| `wholeModel` | 整个模型 | Whole model |
+| `resultHeading` | 结果 | Result |
+| `findHeading` | 回到 Revit 找哪个对象 | Which object to find in Revit |
+| `actionHeading` | 要改什么 | What to change |
+| `actionWhat` | 改成什么 | Change it to |
+| `actionReads` | 检查器读哪里 | Where the checker reads |
+| `actionRevise` | 在 Revit 里改哪里 | Where to change it in Revit |
+| `actionUndecided` | 还没有决定的 | Not decided yet |
+| `requirementHeading` | 具体要求与这次检查的观察 | The requirement, and what this check observed |
+| `reason` | 原因（检查结果的原文） | Reason (as the check result gives it) |
+| `actual` | 观察值一栏 | Observed value |
+| `actualEmpty` | 检查结果中为空。 | Empty in the check result. |
+| `actualHidden` | 检查结果带有观察值；本页不显示取值。 | The check result carries an observed value; this page does not show it. |
+| `recheckHeading` | 复检时看什么 | What to look at in a recheck |
+| `passHeading` | 这条通过证明了什么 | What this pass proves |
+| `passProves` | 它证明： | It proves:  |
+| `passDoesNotProve` | 它不证明： | It does not prove: |
+| `passNoValue` | 通过的检查结果不带它读到的值：只记录了“要求已满足”。 | A passing check result does not carry the value it read: it records only "Requirement satisfied." |
+| `passUnwritten` | 通过只说明这条要求被判为满足；它能证明到哪里，本界面没有为这条规则写说明，请看规则原话。 | A pass says only that this requirement was judged met; how far that goes, this interface has written no notes for this rule — see the rule's own words. |
+| `notApplicable` | 不适用：这个模型里没有这条要求适用的构件。不适用不是通过。 | Not applicable: this model has no element the requirement applies to. Not applicable is not a pass. |
+| `failNotDefect` | 不满足这条产品验证规则，不等于原项目的交付缺陷。这条规则的来源以返回数据的标签（ProductValidation）和出处原文为准。 | Not meeting this product validation rule is not a delivery defect of the original project. Where this rule comes from is what the returned data's label (ProductValidation) and the citation as written say. |
+| `noFinding` | 这次检查里没有这一条结果。 | This check has no such result. |
+| `identityHeading` | 追溯信息：这次检查的运行号、规则集版本与模型文件 | Tracing: this check's run identifier, rule set version and model files |
+| `findingTrace` | 追溯信息：这条结果的内部键 | Tracing: this result's internal keys |
+| `identity.run` | 检查运行号 | Check run identifier |
+| `identity.ruleset` | 规则集 | Rule set |
+| `identity.asOf` | 逻辑日期（运行配置给定，不是运行的时间） | Logical date (given by the run configuration, not when it ran) |
+| `identity.checkers` | 检查程序 | Checkers |
+| `identity.models` | 模型 | Models |
+| `identity.modelId` | 模型 | Model |
+| `identity.declaredDiscipline` | 项目清单声明的专业 | Discipline declared in the project manifest |
+| `identity.filename` | 文件 | File |
+| `identity.digest` | 文件内容摘要（SHA-256） | File content digest (SHA-256) |
+| `identity.tagSource` | IFC Tag 的来源 | Where the IFC Tag comes from |
+| `identity.elementKey` | 追溯用内部键 | Internal key for tracing |
+| `identity.findingKey` | 检查结果键 | Check result key |
+| `identity.requirementKey` | 要求键 | Requirement key |
+| `element.name` | 名称 | Name |
+| `element.class` | 类别 | Class |
+| `element.storey` | 楼层（IFC） | Storey (IFC) |
+| `element.model` | 所属模型 | Model |
+| `element.file` | 模型文件 | Model file |
+| `element.globalId` | GlobalId | GlobalId |
+
+**`WORKSPACE_COMPARE`**
+
+| 键 | 中文 | English |
+| --- | --- | --- |
+| `title` | 复检对比：同一项检查，前后两次运行 | Recheck comparison: the same check, two runs |
+| `lede` | 下面的配对、未再评估和新出现都由返回数据给出，页面只计数和排列。 | The pairs, the rows not re-evaluated and the newly appearing rows below are the returned data's; the page only counts and arranges them. |
+| `runsHeading` | 两次运行 | The two runs |
+| `prior` | 被指定为前一次的运行（启动时用 --prior 指定） | The run named as the earlier one (given with --prior at start-up) |
+| `current` | 本次运行（启动时用 --workspace 指定） | This run (given with --workspace at start-up) |
+| `order` | 哪一次在前，是启动服务器时的指定；返回数据本身不能证明先后。 | Which run came first is what the server was told at start-up; the returned data itself cannot prove the order. |
+| `same` | 两次运行的规则集、各条要求的谓词、检查程序、逻辑日期和模型组都相同；其中任何一项不同，系统都会拒绝对比，不给出任何一侧的结果。 | The two runs have the same rule set, the same predicate for each requirement, the same checkers, the same logical date and the same set of models; were any of them different, the system would refuse the comparison and give neither side's results. |
+| `changedHeading` | 一、什么变了 | 1. What changed |
+| `differs.one` | 两次结果不同的：{count} 条 | Results that differ between the runs: {count} |
+| `differs.other` | 两次结果不同的：{count} 条 | Results that differ between the runs: {count} |
+| `differsNone` | 没有两次结果不同的。 | No result differs between the runs. |
+| `unchanged.one` | 两次结果相同的：{count} 条 | Results that are the same in both runs: {count} |
+| `unchanged.other` | 两次结果相同的：{count} 条 | Results that are the same in both runs: {count} |
+| `unchangedNone` | 没有两次结果相同的。 | No result is the same in both runs. |
+| `transition.one` | {prior} → {current}：{count} 条 | {prior} → {current}: {count} row |
+| `transition.other` | {prior} → {current}：{count} 条 | {prior} → {current}: {count} rows |
+| `rows.one` | {count} 条 | {count} row |
+| `rows.other` | {count} 条 | {count} rows |
+| `notReEvaluated.label.one` | 只在前一次有结果的（本次没有再评估）：{count} 条 | With a result in the earlier run only (not re-evaluated this time): {count} |
+| `notReEvaluated.label.other` | 只在前一次有结果的（本次没有再评估）：{count} 条 | With a result in the earlier run only (not re-evaluated this time): {count} |
+| `notReEvaluated.note` | 这些只有前一次的结果，本次没有再评估。它们不是通过。 | These have a result from the earlier run only and were not re-evaluated this time. They are not passes. |
+| `newlyAppearing.label.one` | 只在本次有结果的（新出现）：{count} 条 | With a result in this run only (newly appearing): {count} |
+| `newlyAppearing.label.other` | 只在本次有结果的（新出现）：{count} 条 | With a result in this run only (newly appearing): {count} |
+| `newlyAppearing.note` | 这些结果前一次没有。 | The earlier run did not have these results. |
+| `inCurrent.true` | 构件还在本次的构件清单里 | The element is still in this run's list of elements |
+| `inCurrent.false` | 构件不在本次的构件清单里 | The element is not in this run's list of elements |
+| `inCurrent.null` | 整个模型的一条结果，不针对构件 | A result for the whole model, not for an element |
+| `inPrior.true` | 构件在前一次的构件清单里 | The element is in the earlier run's list of elements |
+| `inPrior.false` | 构件不在前一次的构件清单里 | The element is not in the earlier run's list of elements |
+| `inPrior.null` | 整个模型的一条结果，不针对构件 | A result for the whole model, not for an element |
+| `whyHeading` | 二、为什么会变：返回数据能说明的部分 | 2. Why it changed: what the returned data can say |
+| `changedModels` | 两次之间内容变了的模型（返回数据列出）： | Models whose content changed between the runs (listed by the returned data): |
+| `noChangedModels` | 返回数据没有列出内容变了的模型：两次读的是同样的模型文件。 | The returned data lists no model whose content changed: both runs read the same model files. |
+| `unchangedModels` | 内容未变的模型： | Models whose content did not change: |
+| `why` | 两次的规则集、要求谓词、检查程序和逻辑日期都相同。在返回数据比较过的这些输入里，两次之间不同的只有上面列出的模型文件内容；模型文件里改了哪些地方，返回数据没有逐项列出。 | The two runs have the same rule set, requirement predicates, checkers and logical date. Of the inputs the returned data compared, the only difference between the runs is the content of the model files listed above; what changed inside those files, the returned data does not list item by item. |
+| `notInData` | 在 Revit 里改了什么、取值由谁决定、由谁操作，返回数据没有记录。 | What was changed in Revit, who decided the value and who made the change, the returned data does not record. |
+| `gapsHeading` | 三、还缺什么证据 | 3. What evidence is still missing |
+| `passLink` | 一条通过证明了什么、没证明什么，见通过那几条的详情。 | What a pass proves and does not prove: see the details of the passing results. |
+| `open` | 查看 | Open |
+| `detailHeading` | 和前一次运行比 | Compared with the earlier run |
+| `detailPrior` | 前一次的结果 | Earlier result |
+| `detailCurrent` | 本次的结果 | This result |
+| `detailNewly` | 前一次运行没有这一条结果：它是新出现的。 | The earlier run has no such result: it is newly appearing. |
+| `detailNone` | 返回数据的对比里没有这一条。 | The returned data's comparison does not include this result. |
+| `priorReason` | 前一次的原因（原文） | Earlier reason (as written) |
+| `currentReason` | 本次的原因（原文） | This reason (as written) |
+| `noComparison` | 服务器启动时没有指定前一次运行，所以没有对比。要对比，启动时加上 --prior。 | The server was started without an earlier run, so there is no comparison. To compare, add --prior at start-up. |
+| `elementMissing` | 返回数据没有这个构件的可读信息 | The returned data has nothing readable about this element |
+
 **`WORKSPACE_HOME`**
 
 | 键 | 中文 | English |
@@ -610,6 +793,36 @@
 | `body` | 启动服务器时指定了一个工作区，里面是一次已经跑完的检查：每个构件在每条要求下的结果。若同时指定了前一次运行，还可以看两次的前后对比。这里只有检查结果，没有交接判断。页面只查看这次已经跑完的检查，不能在页面上选择或更换模型。 | The server was started with a workspace holding a check that has already run: each element's result under each requirement. If an earlier run was named as well, the two can be compared. There are check results only here, no handover judgement. This page only shows the check that has already run; you cannot choose or change a model on it. |
 | `action` | 查看这次检查 | See this check |
 | `unknown` | 未能确认服务器是否指定了工作区（不等于没有工作区）。错误原文： | Could not confirm whether the server was started with a workspace (that does not mean there is none). The error: |
+
+**`WORKSPACE_REFUSAL`**
+
+| 键 | 中文 | English |
+| --- | --- | --- |
+| `title` | 这两次运行不能对比 | These two runs cannot be compared |
+| `lede` | 系统拒绝了这次对比，并列出了全部原因。这是对请求条件的答复，不是程序故障，也不是检查结果：任何一侧的检查结果都没有返回。 | The system refused this comparison and listed every reason. This is an answer about the request's conditions — not a program fault and not a check result: neither side's results were returned. |
+| `reasonsHeading` | 为什么不能对比 | Why they cannot be compared |
+| `actionHeading` | 要能对比，需要什么 | What a comparison needs |
+| `action[0]` | 两次运行要用同一规则集（同一版本、同一内容）、同一组要求、同一检查程序、同一逻辑日期和同一组模型；两次之间只能是模型文件的内容不同。 | Both runs must use the same rule set (the same version and content), the same set of requirements, the same checkers, the same logical date and the same set of models; between the runs only the content of the model files may differ. |
+| `action[1]` | 确认启动时用 --prior 指定的确实是同一项检查的前一次运行；或者去掉 --prior 重新启动服务器，只看本次检查的结果。 | Make sure the run given with --prior at start-up really is the earlier run of the same check; or restart the server without --prior and look at this check's results alone. |
+| `scope` | 处理这些原因之后能否对比，以下一次返回为准。 | Whether they can be compared once these reasons are dealt with is for the next answer to say. |
+| `original` | 系统返回的原文（英文）与拒绝码 | What the system returned (as written) and the refusal code |
+| `code` | 拒绝码 | Refusal code |
+| `unglossed` | 本界面没有这个原因的中文说明，见下面的原文。 | This interface has no English for this reason; see what the system returned below. |
+| `noResult` | 没有任何结果、零问题统计或完成比例：被拒绝不是一次没有问题的检查。 | No result, no zero-problem count and no completion ratio: a refused comparison is not a check without problems. |
+
+**`WORKSPACE_REFUSAL_REASONS`**
+
+| 键 | 中文 | English |
+| --- | --- | --- |
+| `ruleset-id-differs` | 两次用的不是同一个规则集。 | The two runs did not use the same rule set. |
+| `ruleset-version-differs` | 两次用的规则集版本不同。 | The two runs used different rule set versions. |
+| `ruleset-digest-differs` | 两次用的规则集内容不同（内容摘要不同）。 | The two runs used different rule set content (the content digests differ). |
+| `requirement-set-differs` | 两次评估的不是同一组要求。 | The two runs did not evaluate the same set of requirements. |
+| `requirement-semantics-not-recorded` | 有一次运行没有记录某条要求的谓词摘要，无法证明两次是同一个检查。 | One run did not record the predicate digest of a requirement, so it cannot be shown that both are the same check. |
+| `requirement-semantics-differs` | 同一条要求，两次的谓词不同：检查的内容改过。 | The same requirement has a different predicate in the two runs: what is checked was changed. |
+| `checker-differs` | 两次的检查程序、版本或配置不同。 | The two runs used different checkers, versions or configuration. |
+| `as-of-differs` | 两次运行的逻辑日期不同。 | The two runs have different logical dates. |
+| `model-set-differs` | 两次检查的不是同一组模型。 | The two runs did not check the same set of models. |
 
 ## 界面用语
 
@@ -645,11 +858,17 @@
 | `refusalIncomplete` | outcome=refusal 但 refusal 缺少 code 或 text | outcome=refusal but refusal has no code or text |
 | `refusalWithRecord` | outcome=refusal 却同时带有 record 或 assessment_digest | outcome=refusal but it also carries record or assessment_digest |
 
+**`CITATION_GLOSSES`**
+
+| 键 | 中文 | English |
+| --- | --- | --- |
+
 **`COMMON`**
 
 | 键 | 中文 | English |
 | --- | --- | --- |
 | `colon` | ： | :  |
+| `aside` | （{text}） |  ({text}) |
 | `emptyList` | （记录中为空列表） | (an empty list in the record) |
 | `unknownMode` | 未识别的入口（{mode}） | Unrecognised entry ({mode}) |
 | `unnamedElement` | 未命名构件 | Unnamed element |

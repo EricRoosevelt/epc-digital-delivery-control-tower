@@ -901,7 +901,7 @@ export const WORKSPACE = {
   noJudgement:
     "这是一次检查的结果，不是交接判断：页面只说每个构件在每条要求下通过、不通过还是不适用，" +
     "不对任何工作能否开始下结论。",
-  summary: "本次结果：共 {count} 条检查结果",
+  summary: { one: "本次结果：共 {count} 条检查结果", other: "本次结果：共 {count} 条检查结果" },
   unit:
     "单位是条：一条是一个构件在一条要求下的结果；模型里没有这条要求适用的构件时，是整个模型的一条。",
   compareLink: "看与前一次运行的对比",
@@ -1098,18 +1098,21 @@ export const WORKSPACE_COMPARE = {
     "两次运行的规则集、各条要求的谓词、检查程序、逻辑日期和模型组都相同；其中任何一项不同，系统都会拒绝对比，" +
     "不给出任何一侧的结果。",
   changedHeading: "一、什么变了",
-  differs: "两次结果不同的：{count} 条",
+  differs: { one: "两次结果不同的：{count} 条", other: "两次结果不同的：{count} 条" },
   differsNone: "没有两次结果不同的。",
-  unchanged: "两次结果相同的：{count} 条",
+  unchanged: { one: "两次结果相同的：{count} 条", other: "两次结果相同的：{count} 条" },
   unchangedNone: "没有两次结果相同的。",
-  transition: "{prior} → {current}：{count} 条",
-  rows: "{count} 条",
+  transition: { one: "{prior} → {current}：{count} 条", other: "{prior} → {current}：{count} 条" },
+  rows: { one: "{count} 条", other: "{count} 条" },
   notReEvaluated: {
-    label: "只在前一次有结果的（本次没有再评估）：{count} 条",
+    label: {
+      one: "只在前一次有结果的（本次没有再评估）：{count} 条",
+      other: "只在前一次有结果的（本次没有再评估）：{count} 条",
+    },
     note: "这些只有前一次的结果，本次没有再评估。它们不是通过。",
   },
   newlyAppearing: {
-    label: "只在本次有结果的（新出现）：{count} 条",
+    label: { one: "只在本次有结果的（新出现）：{count} 条", other: "只在本次有结果的（新出现）：{count} 条" },
     note: "这些结果前一次没有。",
   },
   inCurrent: {
@@ -1192,6 +1195,7 @@ export const WORKSPACE_REFUSAL_REASONS = {
 // Pieces shared by several screens.
 export const COMMON = {
   colon: "：",
+  aside: "（{text}）",
   emptyList: "（记录中为空列表）",
   unknownMode: "未识别的入口（{mode}）",
   unnamedElement: "未命名构件",

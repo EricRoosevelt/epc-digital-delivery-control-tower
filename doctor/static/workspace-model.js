@@ -8,7 +8,7 @@
 // adapter's (`comparison`). The one thing done to a pair here is to put it with
 // the other pairs that carry the same two statuses, so they can be counted.
 
-import { FINDING_STATUS, PRODUCT_VALIDATION, RULE_NOTES, RULE_NOTES_FOR } from "./vocabulary.js";
+import { FINDING_STATUS, PRODUCT_VALIDATION, RULE_NOTES, RULE_NOTES_FOR } from "./words.js";
 
 function has(object, key) {
   return object !== null && typeof object === "object" && Object.hasOwn(object, key);
