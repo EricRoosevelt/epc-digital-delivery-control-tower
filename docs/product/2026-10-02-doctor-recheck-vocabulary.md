@@ -434,6 +434,7 @@ IFC 类别：`IfcAirTerminal` 风口、`IfcChimney` 烟囱、`IfcDuctSegment` �
 | --- | --- |
 | `note` | IFC Tag 是导出时写进 IFC 的标记；Revit 导出的通常是构件的 ElementId。核对：在 Revit 里用“按 ID 选择”选中这个 ID，看选中对象的名称和类别是否与本页相同；相同再按它处理，不同就不要按这个 Tag 去改，改用 GlobalId 在 IFC 里定位。 |
 | `byIdNotStorey` | 在 Revit 里按 ID 找对象，不要按楼层找：本页的楼层取自 IFC 文件里的空间归属，不一定能和 Revit 明细表里的标高对上。 |
+| `storeyFromIfc` | 本页的楼层取自 IFC 文件里的空间归属，不一定能和 Revit 明细表里的标高对上，不要只按楼层去找。 |
 | `sources.model-file` | 模型文件里这个构件没有写 Tag。 |
 | `sources.model-file-not-located` | 没有找到这次检查读的那个模型文件，所以读不到 Tag。 |
 | `sources.model-file-differs` | 工作区里的模型文件已经不是这次检查读的那个版本，所以不读取 Tag。 |
@@ -458,7 +459,7 @@ IFC 类别：`IfcAirTerminal` 风口、`IfcChimney` 烟囱、`IfcDuctSegment` �
 | --- | --- |
 | `PV-001.title` | 风口要声明四种预定义类型之一 |
 | `PV-001.predicate` | 每个适用的风口（IfcAirTerminal）都要声明预定义类型，取值是 DIFFUSER、GRILLE、LOUVRE、REGISTER 之一。IFC4 还允许 USERDEFINED 和 NOTDEFINED；不接受它们是这条规则自己的决定，用它们的模型仍是有效的 IFC4。 |
-| `PV-001.passProves` | 检查器按它的读取顺序取到的那一个值（见“检查器读哪里”），逐字等于 DIFFUSER、GRILLE、LOUVRE、REGISTER 四个值之一。 |
+| `PV-001.passProves` | 检查器按它的读取顺序取到的那一个值（类型上的值优先；类型声明 USERDEFINED 时是它的自由文本；类型什么也没说时才读构件实例），逐字等于 DIFFUSER、GRILLE、LOUVRE、REGISTER 四个值之一。 |
 | `PV-001.passDoesNotProve[0]` | 取值正确：四个值中任何一个都会通过，写成 GRILLE 也会通过。 |
 | `PV-001.passDoesNotProve[1]` | 类型和构件实例的取值一致：类型上是四个值之一时，实例上写的值不参与比较；类型是 LOUVRE、实例是 DIFFUSER，也会通过。 |
 | `PV-001.passDoesNotProve[2]` | 规则不接受的 USERDEFINED 没有出现：类型声明 USERDEFINED 时，检查器比较的是它的自由文本，逐字、区分大小写；文本恰好是 LOUVRE 会通过，写成 louvre、Louvre 或前后带空格则不通过。 |
@@ -598,9 +599,10 @@ IFC 类别：`IfcAirTerminal` 风口、`IfcChimney` 烟囱、`IfcDuctSegment` �
 | 位置 | 原句 | 现在 |
 | --- | --- | --- |
 | W5：`WORKSPACE.columns.storey`、`WORKSPACE.element.storey` | 楼层 | 楼层（IFC） |
-| W5：`TAG_WORDS.byIdNotStorey`（新增，每个构件的“回到 Revit 找哪个对象”里都出现） | （无） | 在 Revit 里按 ID 找对象，不要按楼层找：本页的楼层取自 IFC 文件里的空间归属，不一定能和 Revit 明细表里的标高对上。 |
+| W5：`TAG_WORDS.byIdNotStorey`（新增，构件带 Tag 时在“回到 Revit 找哪个对象”里出现） | （无） | 在 Revit 里按 ID 找对象，不要按楼层找：本页的楼层取自 IFC 文件里的空间归属，不一定能和 Revit 明细表里的标高对上。 |
 | W2：`WORKSPACE.failNotDefect`（新增，只在不通过、且要求的标签含 ProductValidation 时，紧跟结论出现） | （无） | 不满足这条产品验证规则，不等于原项目的交付缺陷。这条规则的来源以返回数据的标签（ProductValidation）和出处原文为准。 |
-| W3：`RULE_NOTES.PV-001.passProves` | 检查器读到的预定义类型属于 DIFFUSER、GRILLE、LOUVRE、REGISTER 四个值之一。 | 检查器按它的读取顺序取到的那一个值（见“检查器读哪里”），逐字等于 DIFFUSER、GRILLE、LOUVRE、REGISTER 四个值之一。 |
+| W5：`TAG_WORDS.storeyFromIfc`（新增，构件没有 Tag 时代替上一句：页面上没有可按的 ID） | （无） | 本页的楼层取自 IFC 文件里的空间归属，不一定能和 Revit 明细表里的标高对上，不要只按楼层去找。 |
+| W3：`RULE_NOTES.PV-001.passProves` | 检查器读到的预定义类型属于 DIFFUSER、GRILLE、LOUVRE、REGISTER 四个值之一。 | 检查器按它的读取顺序取到的那一个值（类型上的值优先；类型声明 USERDEFINED 时是它的自由文本；类型什么也没说时才读构件实例），逐字等于 DIFFUSER、GRILLE、LOUVRE、REGISTER 四个值之一。 |
 | W3：`RULE_NOTES.PV-001.passDoesNotProve` 新增第 2 条 | （无） | 类型和构件实例的取值一致：类型上是四个值之一时，实例上写的值不参与比较；类型是 LOUVRE、实例是 DIFFUSER，也会通过。 |
 | W3：`RULE_NOTES.PV-001.userDefined` 移入 `passDoesNotProve` 第 3 条 | 检查器会先把 USERDEFINED 换成它的自由文本再比较：类型写的是 USERDEFINED、文本恰好拼成 LOUVRE，也会通过。规则不接受 USERDEFINED，但这项检查分不出这种情况。 | 规则不接受的 USERDEFINED 没有出现：类型声明 USERDEFINED 时，检查器比较的是它的自由文本，逐字、区分大小写；文本恰好是 LOUVRE 会通过，写成 louvre、Louvre 或前后带空格则不通过。 |
 | W6：`RULE_NOTES.PV-001.action.where` 拆成 `reads`、`revise`；标签 `WORKSPACE.actionWhere`（改在哪里）拆成 `actionReads`（检查器读哪里）、`actionRevise`（在 Revit 里改哪里） | 检查器先读它的类型对象：类型上是四个值之一时，比较的是类型上的值；类型什么也没说时，才读构件本身的值。在 Revit 的类型上改值，会作用于这个类型的全部实例。 | 检查器读哪里：检查器先看导出的 IFC 里它的类型对象：类型上是四个值之一，比较类型上的值；类型声明 USERDEFINED，比较它的自由文本；类型什么也没说时，才读构件实例本身的值。这说的是检查器读 IFC 的顺序，不是 Revit 里该改的位置。<br>在 Revit 里改哪里：这个值在 Revit 里从哪里写出（类型还是实例、哪个参数、哪项导出设置），返回数据没有记录，本页不指定。改之前先在 Revit 里确认；如果决定在类型上改，会作用于这个类型的全部实例。 |

@@ -346,6 +346,10 @@ class RuleNotesTests(_Modelled):
         # W3: what a pass proves is the predicate, read where the checker reads.
         self.assertIn("四个值之一", notes["passProves"])
         self.assertIn("逐字等于", notes["passProves"])
+        # A pass shows no "检查器读哪里" row (only a failure does), so the pass
+        # says the reading order itself rather than pointing at that row.
+        self.assertNotIn("检查器读哪里", notes["passProves"])
+        self.assertIn("类型什么也没说时才读构件实例", notes["passProves"])
         # A type and an instance that disagree still pass, as measured with
         # IfcTester: type LOUVRE, instance DIFFUSER -> PASS.
         self.assertIn("类型是 LOUVRE、实例是 DIFFUSER，也会通过", said)
@@ -449,7 +453,13 @@ class TagTests(_Modelled):
         locate = screens[
             screens.index("function locateBlock(") : screens.index("function passBlock(")
         ]
-        self.assertIn("TAG_WORDS.byIdNotStorey", locate)
+        # "Find it by ID" only beside an ID: without a Tag the page has none.
+        self.assertIn(
+            'tag.kind === "tag" ? TAG_WORDS.byIdNotStorey : TAG_WORDS.storeyFromIfc', locate
+        )
+        without = self.tables["TAG_WORDS"]["storeyFromIfc"]
+        self.assertIn("IFC 文件", without)
+        self.assertNotIn("按 ID", without)
         self.assertIn("IFC Tag", self.tables["WORKSPACE"]["columns"]["tag"])
 
 

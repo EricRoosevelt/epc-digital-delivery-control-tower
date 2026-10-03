@@ -207,7 +207,7 @@ function locateBlock(element, model) {
       [WORKSPACE.element.globalId, field(element, "global_id", copyable)],
     ]),
     tag.kind === "tag" ? h("p", { class: "beside" }, TAG_WORDS.note) : null,
-    h("p", { class: "beside" }, TAG_WORDS.byIdNotStorey),
+    h("p", { class: "beside" }, tag.kind === "tag" ? TAG_WORDS.byIdNotStorey : TAG_WORDS.storeyFromIfc),
     h("p", { class: "sub" }, TAG_WORDS.useGlobalId),
   );
 }

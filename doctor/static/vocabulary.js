@@ -984,10 +984,14 @@ export const TAG_WORDS = {
     "IFC Tag 是导出时写进 IFC 的标记；Revit 导出的通常是构件的 ElementId。" +
     "核对：在 Revit 里用“按 ID 选择”选中这个 ID，看选中对象的名称和类别是否与本页相同；" +
     "相同再按它处理，不同就不要按这个 Tag 去改，改用 GlobalId 在 IFC 里定位。",
-  // Beside every element: where the storey on this page comes from.
+  // Beside an element with a Tag: find it by that ID, not by storey.
   byIdNotStorey:
     "在 Revit 里按 ID 找对象，不要按楼层找：本页的楼层取自 IFC 文件里的空间归属，" +
     "不一定能和 Revit 明细表里的标高对上。",
+  // Beside an element without a Tag: there is no ID on this page to find it by,
+  // so only where the storey comes from is said.
+  storeyFromIfc:
+    "本页的楼层取自 IFC 文件里的空间归属，不一定能和 Revit 明细表里的标高对上，不要只按楼层去找。",
   sources: {
     "model-file": "模型文件里这个构件没有写 Tag。",
     "model-file-not-located": "没有找到这次检查读的那个模型文件，所以读不到 Tag。",
@@ -1037,7 +1041,8 @@ export const RULE_NOTES = {
       "每个适用的风口（IfcAirTerminal）都要声明预定义类型，取值是 DIFFUSER、GRILLE、LOUVRE、REGISTER 之一。" +
       "IFC4 还允许 USERDEFINED 和 NOTDEFINED；不接受它们是这条规则自己的决定，用它们的模型仍是有效的 IFC4。",
     passProves:
-      "检查器按它的读取顺序取到的那一个值（见“检查器读哪里”），逐字等于 DIFFUSER、GRILLE、LOUVRE、REGISTER 四个值之一。",
+      "检查器按它的读取顺序取到的那一个值（类型上的值优先；类型声明 USERDEFINED 时是它的自由文本；" +
+      "类型什么也没说时才读构件实例），逐字等于 DIFFUSER、GRILLE、LOUVRE、REGISTER 四个值之一。",
     passDoesNotProve: [
       "取值正确：四个值中任何一个都会通过，写成 GRILLE 也会通过。",
       "类型和构件实例的取值一致：类型上是四个值之一时，实例上写的值不参与比较；类型是 LOUVRE、实例是 DIFFUSER，也会通过。",
