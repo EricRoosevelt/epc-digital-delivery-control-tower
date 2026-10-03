@@ -21,26 +21,26 @@ export const NOT_CARRIED = bilingual("NOT_CARRIED", zh.NOT_CARRIED, en.NOT_CARRI
 export const EMPTY_STRING = bilingual("EMPTY_STRING", zh.EMPTY_STRING, en.EMPTY_STRING);
 export const FIXTURE_MARKER = bilingual("FIXTURE_MARKER", zh.FIXTURE_MARKER, zh.FIXTURE_MARKER);
 export const CITATION_PROVENANCE = bilingual("CITATION_PROVENANCE", zh.CITATION_PROVENANCE, en.CITATION_PROVENANCE);
-export const CITATION_KINDS = bilingual("CITATION_KINDS", zh.CITATION_KINDS);
+export const CITATION_KINDS = bilingual("CITATION_KINDS", zh.CITATION_KINDS, en.CITATION_KINDS);
 export const PROVENANCE_NOTICE = bilingual("PROVENANCE_NOTICE", zh.PROVENANCE_NOTICE, en.PROVENANCE_NOTICE);
 export const POLICY_SOURCE_NOTE = bilingual("POLICY_SOURCE_NOTE", zh.POLICY_SOURCE_NOTE);
 export const DEMO_NOTICE = bilingual("DEMO_NOTICE", zh.DEMO_NOTICE, en.DEMO_NOTICE);
-export const DISPOSITION_ENTRIES = bilingual("DISPOSITION_ENTRIES", zh.DISPOSITION_ENTRIES);
-export const DISPOSITIONS = bilingual("DISPOSITIONS", zh.DISPOSITIONS);
-export const CONDITION_ENTRIES = bilingual("CONDITION_ENTRIES", zh.CONDITION_ENTRIES);
-export const CONDITION_STATES = bilingual("CONDITION_STATES", zh.CONDITION_STATES);
-export const CARRY_OVER_STATES = bilingual("CARRY_OVER_STATES", zh.CARRY_OVER_STATES);
-export const CARRY_OVER_REASONS = bilingual("CARRY_OVER_REASONS", zh.CARRY_OVER_REASONS);
-export const CHANGED_ASPECTS = bilingual("CHANGED_ASPECTS", zh.CHANGED_ASPECTS);
+export const DISPOSITION_ENTRIES = bilingual("DISPOSITION_ENTRIES", zh.DISPOSITION_ENTRIES, en.DISPOSITION_ENTRIES);
+export const DISPOSITIONS = bilingual("DISPOSITIONS", zh.DISPOSITIONS, en.DISPOSITIONS);
+export const CONDITION_ENTRIES = bilingual("CONDITION_ENTRIES", zh.CONDITION_ENTRIES, en.CONDITION_ENTRIES);
+export const CONDITION_STATES = bilingual("CONDITION_STATES", zh.CONDITION_STATES, en.CONDITION_STATES);
+export const CARRY_OVER_STATES = bilingual("CARRY_OVER_STATES", zh.CARRY_OVER_STATES, en.CARRY_OVER_STATES);
+export const CARRY_OVER_REASONS = bilingual("CARRY_OVER_REASONS", zh.CARRY_OVER_REASONS, en.CARRY_OVER_REASONS);
+export const CHANGED_ASPECTS = bilingual("CHANGED_ASPECTS", zh.CHANGED_ASPECTS, en.CHANGED_ASPECTS);
 export const ASPECT_ORDER = bilingual("ASPECT_ORDER", zh.ASPECT_ORDER, zh.ASPECT_ORDER);
-export const ASPECT_NOTES = bilingual("ASPECT_NOTES", zh.ASPECT_NOTES);
-export const KEY_CHANGED = bilingual("KEY_CHANGED", zh.KEY_CHANGED);
-export const ONLY_REKEYED = bilingual("ONLY_REKEYED", zh.ONLY_REKEYED);
-export const REISSUE_CASES = bilingual("REISSUE_CASES", zh.REISSUE_CASES);
-export const REISSUE_NEUTRAL = bilingual("REISSUE_NEUTRAL", zh.REISSUE_NEUTRAL);
-export const RECHECK_LIMITS = bilingual("RECHECK_LIMITS", zh.RECHECK_LIMITS);
-export const RECHECK_CANNOT = bilingual("RECHECK_CANNOT", zh.RECHECK_CANNOT);
-export const VERDICT_GROUPS = bilingual("VERDICT_GROUPS", zh.VERDICT_GROUPS);
+export const ASPECT_NOTES = bilingual("ASPECT_NOTES", zh.ASPECT_NOTES, en.ASPECT_NOTES);
+export const KEY_CHANGED = bilingual("KEY_CHANGED", zh.KEY_CHANGED, en.KEY_CHANGED);
+export const ONLY_REKEYED = bilingual("ONLY_REKEYED", zh.ONLY_REKEYED, en.ONLY_REKEYED);
+export const REISSUE_CASES = bilingual("REISSUE_CASES", zh.REISSUE_CASES, en.REISSUE_CASES);
+export const REISSUE_NEUTRAL = bilingual("REISSUE_NEUTRAL", zh.REISSUE_NEUTRAL, en.REISSUE_NEUTRAL);
+export const RECHECK_LIMITS = bilingual("RECHECK_LIMITS", zh.RECHECK_LIMITS, en.RECHECK_LIMITS);
+export const RECHECK_CANNOT = bilingual("RECHECK_CANNOT", zh.RECHECK_CANNOT, en.RECHECK_CANNOT);
+export const VERDICT_GROUPS = bilingual("VERDICT_GROUPS", zh.VERDICT_GROUPS, en.VERDICT_GROUPS);
 export const ACTION_GROUPS = bilingual("ACTION_GROUPS", zh.ACTION_GROUPS, en.ACTION_GROUPS);
 export const ITEM_UNIT = bilingual("ITEM_UNIT", zh.ITEM_UNIT, en.ITEM_UNIT);
 export const VERDICT_LABELS = bilingual("VERDICT_LABELS", zh.VERDICT_LABELS, en.VERDICT_LABELS);
@@ -50,21 +50,21 @@ export const BASIS_WORDS = bilingual("BASIS_WORDS", zh.BASIS_WORDS, en.BASIS_WOR
 export const ACTION_TEXT = bilingual("ACTION_TEXT", zh.ACTION_TEXT, en.ACTION_TEXT);
 export const ACTION_PACK = bilingual("ACTION_PACK", zh.ACTION_PACK, zh.ACTION_PACK);
 export const ACTIONS = bilingual("ACTIONS", zh.ACTIONS);
-export const DETAILS_WORDS = bilingual("DETAILS_WORDS", zh.DETAILS_WORDS);
+export const DETAILS_WORDS = bilingual("DETAILS_WORDS", zh.DETAILS_WORDS, en.DETAILS_WORDS);
 export const PROJECT_ASSUMPTION = bilingual("PROJECT_ASSUMPTION", zh.PROJECT_ASSUMPTION, zh.PROJECT_ASSUMPTION);
-export const FINDING_STATUS = bilingual("FINDING_STATUS", zh.FINDING_STATUS);
-export const REASON_GLOSSES = bilingual("REASON_GLOSSES", zh.REASON_GLOSSES);
+export const FINDING_STATUS = bilingual("FINDING_STATUS", zh.FINDING_STATUS, en.FINDING_STATUS);
+export const REASON_GLOSSES = bilingual("REASON_GLOSSES", zh.REASON_GLOSSES, en.REASON_GLOSSES);
 export const VERDICT_WORDS = bilingual("VERDICT_WORDS", zh.VERDICT_WORDS, en.VERDICT_WORDS);
 export const VERDICT_SCOPE = bilingual("VERDICT_SCOPE", zh.VERDICT_SCOPE, en.VERDICT_SCOPE);
-export const REQUIREMENT_CHANGED_NOTE = bilingual("REQUIREMENT_CHANGED_NOTE", zh.REQUIREMENT_CHANGED_NOTE);
-export const LEAF_READINGS = bilingual("LEAF_READINGS", zh.LEAF_READINGS);
-export const LEAF_READING_WORDS = bilingual("LEAF_READING_WORDS", zh.LEAF_READING_WORDS);
-export const HANDOVER_SIDES = bilingual("HANDOVER_SIDES", zh.HANDOVER_SIDES);
+export const REQUIREMENT_CHANGED_NOTE = bilingual("REQUIREMENT_CHANGED_NOTE", zh.REQUIREMENT_CHANGED_NOTE, en.REQUIREMENT_CHANGED_NOTE);
+export const LEAF_READINGS = bilingual("LEAF_READINGS", zh.LEAF_READINGS, en.LEAF_READINGS);
+export const LEAF_READING_WORDS = bilingual("LEAF_READING_WORDS", zh.LEAF_READING_WORDS, en.LEAF_READING_WORDS);
+export const HANDOVER_SIDES = bilingual("HANDOVER_SIDES", zh.HANDOVER_SIDES, en.HANDOVER_SIDES);
 export const ELEMENT_WORDS = bilingual("ELEMENT_WORDS", zh.ELEMENT_WORDS, en.ELEMENT_WORDS);
 export const IFC_CLASS_NAMES = bilingual("IFC_CLASS_NAMES", zh.IFC_CLASS_NAMES, en.IFC_CLASS_NAMES);
 export const ACTIVITY_NAMES = bilingual("ACTIVITY_NAMES", zh.ACTIVITY_NAMES, en.ACTIVITY_NAMES);
 export const RESOLUTION_KINDS = bilingual("RESOLUTION_KINDS", zh.RESOLUTION_KINDS, en.RESOLUTION_KINDS);
-export const CONSEQUENCE_KINDS = bilingual("CONSEQUENCE_KINDS", zh.CONSEQUENCE_KINDS);
+export const CONSEQUENCE_KINDS = bilingual("CONSEQUENCE_KINDS", zh.CONSEQUENCE_KINDS, en.CONSEQUENCE_KINDS);
 export const REFUSAL_REASONS = bilingual("REFUSAL_REASONS", zh.REFUSAL_REASONS);
 export const REFUSAL_UNGLOSSED = bilingual("REFUSAL_UNGLOSSED", zh.REFUSAL_UNGLOSSED);
 export const FAULT_WORDS = bilingual("FAULT_WORDS", zh.FAULT_WORDS, en.FAULT_WORDS);
@@ -90,13 +90,27 @@ export const READING_GUIDE = bilingual("READING_GUIDE", zh.READING_GUIDE, en.REA
 export const APP = bilingual("APP", zh.APP, en.APP);
 export const PAGE = bilingual("PAGE", zh.PAGE, en.PAGE);
 export const COPY = bilingual("COPY", zh.COPY, en.COPY);
+export const ITEM = bilingual("ITEM", zh.ITEM, en.ITEM);
+export const ACTION = bilingual("ACTION", zh.ACTION, en.ACTION);
+export const ELEMENT_CARD = bilingual("ELEMENT_CARD", zh.ELEMENT_CARD, en.ELEMENT_CARD);
+export const EVIDENCE = bilingual("EVIDENCE", zh.EVIDENCE, en.EVIDENCE);
+export const WORK = bilingual("WORK", zh.WORK, en.WORK);
+export const RECHECK = bilingual("RECHECK", zh.RECHECK, en.RECHECK);
+export const RECHECK_ITEM = bilingual("RECHECK_ITEM", zh.RECHECK_ITEM, en.RECHECK_ITEM);
+export const RECHECK_MODEL = bilingual("RECHECK_MODEL", zh.RECHECK_MODEL, en.RECHECK_MODEL);
 
-// The glossing functions of vocabulary.js read Chinese tables; their pages are
-// not translated yet, so they are passed through as they are.
+// A code and its words, or that this interface has none, in the chosen language.
+function glossed(table, value) {
+  if (Object.hasOwn(table, value)) return { known: true, text: table[value] };
+  return { known: false, text: UNRECOGNISED };
+}
+
+export const disposition = (value) => glossed(DISPOSITIONS, value);
+export const conditionState = (value) => glossed(CONDITION_STATES, value);
+export const carryOverReason = (value) => glossed(CARRY_OVER_REASONS, value);
+
+// Absences are read by the member screens only, which are not translated.
 export const absence = zh.absence;
-export const disposition = zh.disposition;
-export const conditionState = zh.conditionState;
-export const carryOverReason = zh.carryOverReason;
 
 /** One citation's provenance, decided as vocabulary.js decides it, worded in the chosen language. */
 export function citationProvenance(kind, citation) {

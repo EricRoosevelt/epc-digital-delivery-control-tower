@@ -39,9 +39,31 @@ PRODUCT = (
     / "interdisciplinary-coordination-readiness-mep-to-architecture.md"
 )
 CJK = re.compile(r"[一-鿿]")
+#: Chinese characters and the full-width punctuation that would come with them.
+CJK_TEXT = re.compile(r"[一-鿿\u3000-\u303f\uff00-\uffef]")
 
 #: The screens drawn in English. Everything else says it is not translated yet.
-TRANSLATED = {"entry", "runs/fixture", "runs/real", "first"}
+TRANSLATED = {"entry", "runs/fixture", "runs/real", "first", "item", "recheck"}
+
+#: Where each translated screen starts in screens.js.
+ROOTS = [
+    "renderContext",
+    "entry",
+    "runs",
+    "first",
+    "firstItem",
+    "recheck",
+    "recheckItem",
+    "recheckItemOf",
+]
+
+#: English tables that are empty by design: the English is the thing itself.
+EMPTY_IN_ENGLISH = {
+    # An IFC class is shown by its own English name.
+    "IFC_CLASS_NAMES",
+    # A check's reason is the record's own English.
+    "REASON_GLOSSES",
+}
 
 #: Tables a translated screen may touch without English, and why.
 WITHOUT_ENGLISH = {
@@ -54,7 +76,7 @@ WITHOUT_ENGLISH = {
 }
 
 #: Functions of words.js that word their answer in the chosen language.
-IN_LANGUAGE = {"citationProvenance"}
+IN_LANGUAGE = {"citationProvenance", "disposition", "conditionState", "carryOverReason"}
 
 #: Tables that are data, the same in both languages.
 NEUTRAL = {
@@ -219,8 +241,7 @@ class ParityTests(_Loaded):
         for name, pair in self.english.items():
             zh, en = pair["zh"], pair["en"]
             with self.subTest(table=name):
-                if name == "IFC_CLASS_NAMES":
-                    # An IFC class is shown by its own English name.
+                if name in EMPTY_IN_ENGLISH:
                     self.assertEqual(en, {})
                     continue
                 self.assertEqual(_shape(en), _shape(zh))
@@ -228,7 +249,7 @@ class ParityTests(_Loaded):
             for key, text in _flat(en):
                 with self.subTest(table=name, key=key):
                     self.assertTrue(text.strip())
-                    self.assertFalse(CJK.search(text), text)
+                    self.assertFalse(CJK_TEXT.search(text), text)
                     self.assertEqual(
                         set(re.findall(r"\{(\w+)\}", text)),
                         set(re.findall(r"\{(\w+)\}", zh_strings[key])),
@@ -319,8 +340,7 @@ class ScreenTests(unittest.TestCase):
         found = _functions(screens)
         imported = re.search(r'import \{([^}]*)\} from "\./words\.js"', screens).group(1)
         tables = {name.strip() for name in imported.split(",") if name.strip()}
-        roots = ["renderContext", "entry", "runs", "first"]
-        reached, todo = set(), list(roots)
+        reached, todo = set(), list(ROOTS)
         while todo:
             name = todo.pop()
             if name in reached:
@@ -348,7 +368,7 @@ class ScreenTests(unittest.TestCase):
         for name in sorted(reached):
             code = _code(found[name])
             with self.subTest(function=name):
-                self.assertFalse(CJK.findall(code), name)
+                self.assertFalse(CJK_TEXT.findall(code), name)
             # Identifiers only: a CSS class such as "absence" is not a table.
             bare = re.sub(r'"(?:[^"\\\n]|\\.)*"', '""', code)
             used |= {table for table in tables if re.search(rf"\b{table}\b", bare)}
@@ -363,11 +383,17 @@ class ScreenTests(unittest.TestCase):
         self.assertEqual(users, {"actionSentences"})
 
     def test_no_sentence_is_written_outside_the_tables(self):
-        for name in ("app.js", "dom.js", "i18n.js", "words.js", "vocabulary-en.js"):
+        for name in (
+            "app.js",
+            "dom.js",
+            "i18n.js",
+            "words.js",
+            "vocabulary-en.js",
+            "recheck-model.js",
+        ):
             with self.subTest(file=name):
-                self.assertFalse(
-                    CJK.findall(_code((STATIC / name).read_text(encoding="utf-8")))
-                )
+                code = _code((STATIC / name).read_text(encoding="utf-8"))
+                self.assertFalse(CJK_TEXT.findall(code))
         # The switch module keeps its own two tables and names each language in
         # itself; it writes nothing else.
         language = _code((STATIC / "language.js").read_text(encoding="utf-8"))
@@ -387,6 +413,122 @@ class RecordTests(_Loaded):
             for key, text in _flat(pair["en"]):
                 with self.subTest(table=name, key=key):
                     self.assertIn(text.replace("|", "\\|"), record)
+
+
+_MODEL_DRIVER = """
+import { readFileSync } from "node:fs";
+globalThis.location = { search: process.argv[2] };
+const { firstCheckModel } = await import("./first-check-model.js");
+const { recheckModel } = await import("./recheck-model.js");
+const documents = JSON.parse(readFileSync(0, "utf8"));
+const out = {};
+for (const [name, document] of Object.entries(documents)) {
+  out[name] = {
+    recheck: recheckModel(document),
+    first: document.successor ? null : firstCheckModel(document),
+  };
+}
+process.stdout.write(JSON.stringify(out));
+"""
+
+
+def _models(documents: dict, search: str) -> dict:
+    node = shutil.which("node")
+    if node is None:
+        raise unittest.SkipTest("node is not on PATH")
+    with tempfile.TemporaryDirectory() as directory:
+        workdir = Path(directory)
+        for path in STATIC.glob("*.js"):
+            shutil.copyfile(path, workdir / path.name)
+        (workdir / "package.json").write_text('{"type": "module"}\n', encoding="utf-8")
+        (workdir / "driver.mjs").write_text(_MODEL_DRIVER, encoding="utf-8")
+        completed = subprocess.run(
+            [node, "driver.mjs", search],
+            cwd=workdir,
+            input=json.dumps(documents).encode("utf-8"),
+            capture_output=True,
+            check=False,
+        )
+    if completed.returncode != 0:
+        raise AssertionError(completed.stderr.decode("utf-8", "replace"))
+    return json.loads(completed.stdout.decode("utf-8"))
+
+
+class SameRecordTests(unittest.TestCase):
+    """Every adapter scenario and recheck case, modelled in both languages."""
+
+    @classmethod
+    def setUpClass(cls):
+        import sys
+
+        sys.path.insert(0, str(PROJECT_ROOT / "tests"))
+        from doctor_recheck_cases import recheck_cases
+        from internal.doctor_adapter import scenario_envelope, scenario_index
+
+        documents = {
+            name: envelope["record"] for name, envelope in dict(recheck_cases()).items()
+        }
+        for item in scenario_index():
+            envelope = scenario_envelope(item["name"])
+            if envelope.get("outcome") == "record":
+                documents[f"adapter:{item['name']}"] = envelope["record"]
+        cls.documents = documents
+        cls.zh = _models(documents, "")
+        cls.en = _models(documents, "?lang=en")
+
+    def _compare(self, zh, en, path, record=()):
+        if isinstance(zh, dict):
+            self.assertIsInstance(en, dict, path)
+            self.assertEqual(list(zh), list(en), path)
+            for key in zh:
+                self._compare(zh[key], en[key], f"{path}.{key}", record)
+        elif isinstance(zh, list):
+            self.assertIsInstance(en, list, path)
+            self.assertEqual(len(zh), len(en), path)
+            for index, (left, right) in enumerate(zip(zh, en)):
+                self._compare(left, right, f"{path}[{index}]", record)
+        elif isinstance(zh, str):
+            self.assertIsInstance(en, str, path)
+            # The record's own values are shown as they came, whatever their
+            # language (the test cases name roles in Chinese); the words
+            # around them are not.
+            for value in record:
+                en = en.replace(value, "")
+            self.assertFalse(CJK_TEXT.search(en), f"{path}: {en}")
+        else:
+            # A count, a flag, a missing value: the same in both languages.
+            self.assertEqual(zh, en, path)
+
+    def test_the_same_record_gives_the_same_model_in_both_languages(self):
+        """Counts, codes, groupings and every flag agree; only the words differ."""
+
+        self.assertGreater(len(self.documents), 10)
+        for name, document in self.documents.items():
+            record = sorted(
+                {text for _, text in _flat(document) if CJK_TEXT.search(text)},
+                key=len,
+                reverse=True,
+            )
+            with self.subTest(document=name):
+                self._compare(self.zh[name], self.en[name], name, record)
+
+    def test_codes_are_the_same_codes(self):
+        """A string that is a record code in Chinese is the same code in English."""
+
+        def codes(value, path=""):
+            if isinstance(value, dict):
+                for key, item in value.items():
+                    if key in ("code", "kind", "name", "activity", "verdict", "state"):
+                        if isinstance(item, str):
+                            yield f"{path}.{key}", item
+                    yield from codes(item, f"{path}.{key}")
+            elif isinstance(value, list):
+                for index, item in enumerate(value):
+                    yield from codes(item, f"{path}[{index}]")
+
+        for name in self.documents:
+            with self.subTest(document=name):
+                self.assertEqual(dict(codes(self.zh[name])), dict(codes(self.en[name])))
 
 
 if __name__ == "__main__":

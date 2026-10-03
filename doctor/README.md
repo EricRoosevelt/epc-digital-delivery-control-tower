@@ -230,6 +230,10 @@ English is a second wording table, never a second page:
   it in English — what to do, what a recheck must show, an activity's name, what
   a verdict means — the English page shows that text, not a translation of the
   Chinese gloss. What the record carries is read from the record.
+- A wording that carries a count has a form for one and for more (`one`,
+  `other`) in both tables, read with `plural()`; a wording whose placeholders
+  are page pieces rather than text is filled with `compose()`, so each language
+  keeps its own punctuation. Both are in `static/i18n.js`.
 - A module that adds a page can keep its own two tables and register them with
   `bilingual(name, zh, en)` from `static/i18n.js`, as `static/language.js`
   does; it does not have to add to the central tables. The parity tests in
