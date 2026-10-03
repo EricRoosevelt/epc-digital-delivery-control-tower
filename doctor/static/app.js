@@ -13,8 +13,10 @@
 // …/finding/<finding_key>, and its comparison with the earlier run …/compare.
 
 import { h, note } from "./dom.js";
+import { LANG, LANGUAGES, fill } from "./i18n.js";
+import { languageSwitch, untranslated } from "./language.js";
 import { renderContext, screens } from "./screens.js";
-import { ENVELOPE_WORDS, FAULT_WORDS } from "./vocabulary.js";
+import { APP, ENVELOPE_WORDS, FAULT_WORDS, PAGE } from "./words.js";
 
 const state = {
   mode: null, // the experience the manager chose
@@ -26,6 +28,16 @@ const state = {
 // `workspace` offers a run only when the server was started with one; the home
 // screen asks before showing its card.
 const MODES = ["fixture", "real", "workspace"];
+
+// The screens whose words have English. In English, any other screen says it
+// is not translated yet instead of being drawn half in each language; in
+// Chinese every screen is drawn. Which screen a route shows never depends on
+// the language — only whether its words can be shown in it.
+export const TRANSLATED = new Set(["entry", "runs/fixture", "runs/real", "first"]);
+
+function inLanguage(name) {
+  return LANG !== "en" || TRANSLATED.has(name);
+}
 
 function shapeWords(template, outcome, key) {
   return template.replace("{outcome}", outcome).replace("{key}", key);
@@ -79,7 +91,7 @@ function workspaceProblem(envelope) {
     }
     return null;
   }
-  return `未识别的 outcome ${JSON.stringify(outcome)}`;
+  return fill(APP.unknownOutcome, { outcome: JSON.stringify(outcome) });
 }
 
 export function clearResults(mode) {
@@ -92,31 +104,31 @@ export function clearResults(mode) {
 // What is wrong with an envelope, or null. Only presence and type: the values
 // themselves are the Framework's and are shown as they are.
 function envelopeProblem(envelope, mode) {
-  if (!envelope || typeof envelope !== "object") return "返回的数据不是对象";
+  if (!envelope || typeof envelope !== "object") return APP.notObject;
   if (envelope.mode !== mode) {
-    return `返回数据的 mode 为 ${JSON.stringify(envelope.mode)}，与所选入口 ${JSON.stringify(mode)} 不一致`;
+    return fill(APP.modeMismatch, { got: JSON.stringify(envelope.mode), want: JSON.stringify(mode) });
   }
   if (mode === "workspace") return workspaceProblem(envelope);
-  if (!envelope.elements || typeof envelope.elements !== "object") return "返回的数据缺少 elements";
+  if (!envelope.elements || typeof envelope.elements !== "object") return APP.missingElements;
   if (envelope.outcome === "record") {
-    if (!envelope.record || typeof envelope.record !== "object") return "outcome=record 但缺少 record";
+    if (!envelope.record || typeof envelope.record !== "object") return APP.recordMissing;
     if (typeof envelope.assessment_digest !== "string" || !envelope.assessment_digest) {
-      return "outcome=record 但缺少 assessment_digest";
+      return APP.digestMissing;
     }
-    if ("refusal" in envelope) return "outcome=record 却同时带有 refusal";
+    if ("refusal" in envelope) return APP.recordWithRefusal;
     return null;
   }
   if (envelope.outcome === "refusal") {
     const refusal = envelope.refusal;
     if (!refusal || typeof refusal.code !== "string" || typeof refusal.text !== "string") {
-      return "outcome=refusal 但 refusal 缺少 code 或 text";
+      return APP.refusalIncomplete;
     }
     if ("record" in envelope || "assessment_digest" in envelope) {
-      return "outcome=refusal 却同时带有 record 或 assessment_digest";
+      return APP.refusalWithRecord;
     }
     return null;
   }
-  return `未识别的 outcome ${JSON.stringify(envelope.outcome)}`;
+  return fill(APP.unknownOutcome, { outcome: JSON.stringify(envelope.outcome) });
 }
 
 async function fetchJson(url) {
@@ -148,13 +160,13 @@ async function ensureEnvelope(mode, runId) {
   state.envelope = null;
   await ensureRuns(mode);
   const run = state.runs.find((item) => item.run_id === runId);
-  if (!run) throw new Error(`这个入口下没有 ${JSON.stringify(runId)}`);
+  if (!run) throw new Error(fill(APP.notInMode, { run: JSON.stringify(runId) }));
   const envelope = await fetchJson(
     `/api/envelope?mode=${encodeURIComponent(mode)}&run=${encodeURIComponent(runId)}`,
   );
   if (state.mode !== mode || state.runId !== runId) return;
   const problem = envelopeProblem(envelope, mode);
-  if (problem) throw new Error(`返回的数据不符合约定：${problem}。未显示任何结果。`);
+  if (problem) throw new Error(fill(APP.invalid, { problem }));
   state.envelope = envelope;
 }
 
@@ -181,6 +193,8 @@ async function render() {
   const main = document.getElementById("main");
   const header = document.getElementById("context");
   const [mode, runId, screen, ...rest] = parseRoute();
+  // The language is on every screen, whatever the screen.
+  document.getElementById("language").replaceChildren(languageSwitch());
 
   if (!mode || !MODES.includes(mode)) {
     clearResults(null);
@@ -195,7 +209,7 @@ async function render() {
       workspace = { error: problem.message };
     }
     if (token !== rendering) return;
-    main.replaceChildren(screens.entry(workspace));
+    main.replaceChildren(inLanguage("entry") ? screens.entry(workspace) : untranslated(href()));
     focusMain(main);
     return;
   }
@@ -209,9 +223,9 @@ async function render() {
   try {
     if (!runId) {
       await ensureRuns(mode);
-      content = screens.runs(state);
+      content = inLanguage(`runs/${mode}`) ? screens.runs(state) : untranslated(href());
     } else {
-      main.replaceChildren(h("p", { role: "status" }, "正在读取检查记录…"));
+      main.replaceChildren(h("p", { role: "status" }, APP.loading));
       await ensureEnvelope(mode, runId);
       if (token !== rendering) return;
       const outcome = state.envelope.outcome;
@@ -229,7 +243,9 @@ async function render() {
         go(mode, runId);
         return;
       }
-      if (mode === "workspace") {
+      if (!inLanguage(mode === "workspace" ? `workspace/${wanted}` : wanted)) {
+        content = untranslated(href());
+      } else if (mode === "workspace") {
         switch (wanted) {
           case "check":
             content = screens.workspaceCheck(state, null);
@@ -244,7 +260,7 @@ async function render() {
             content = screens.workspaceRefusal(state);
             break;
           default:
-            content = h("div", {}, note(`没有这个页面：${wanted}`, "problem"));
+            content = h("div", {}, note(fill(APP.noPage, { screen: wanted }), "problem"));
         }
       } else switch (wanted) {
         case "record":
@@ -285,7 +301,7 @@ async function render() {
           content = screens.refusal(state);
           break;
         default:
-          content = h("div", {}, note(`没有这个页面：${wanted}`, "problem"));
+          content = h("div", {}, note(fill(APP.noPage, { screen: wanted }), "problem"));
       }
     }
   } catch (failure) {
@@ -301,9 +317,9 @@ async function render() {
       { class: "fault" },
       h("h1", {}, failure.unavailable ? FAULT_WORDS.unavailable : FAULT_WORDS.fault),
       note(FAULT_WORDS.note, "problem"),
-      h("p", {}, "技术信息（原文）："),
+      h("p", {}, APP.technical),
       h("pre", { class: "refusal-text" }, failure.message),
-      h("p", {}, h("a", { href: href(mode) }, "返回上一级")),
+      h("p", {}, h("a", { href: href(mode) }, APP.up)),
     );
   }
   if (token !== rendering || state.mode !== mode) return;
@@ -328,5 +344,16 @@ function focusMain(main) {
   }
 }
 
+// The page's own words, once: they do not change with the route.
+function framePage() {
+  document.documentElement.lang = LANGUAGES[LANG];
+  document.title = PAGE.title;
+  document.querySelector("a.skip").textContent = PAGE.skip;
+  document.getElementById("context").setAttribute("aria-label", PAGE.contextLabel);
+}
+
 window.addEventListener("hashchange", render);
-window.addEventListener("DOMContentLoaded", render);
+window.addEventListener("DOMContentLoaded", () => {
+  framePage();
+  render();
+});

@@ -119,6 +119,9 @@ export const HOME = {
     "给出整体合规、可施工或“可以交付”的结论",
     "写回模型、上传到云端，或在 Revit 里打开构件",
   ],
+  canHeading: "现在可以做什么",
+  cannotHeading: "现在还不能做什么",
+  cannotNote: "这些功能没有实现，所以页面上没有对应的入口。",
 };
 
 // A key the record does not carry, and a key it carries as an empty string, are
@@ -552,6 +555,10 @@ export const BASIS_WORDS = {
 // under any other Pack id or version is shown the Pack's own English instead.
 // No sentence names a Revit parameter or an export mapping — the Pack says
 // those are project-specific and does not name them either.
+// Where the action and recheck wording on a page comes from: here, the Chinese
+// sentences below, for the one Pack version they were written for.
+export const ACTION_TEXT = { source: "gloss" };
+
 export const ACTION_PACK = { id: "interdisciplinary-coordination-readiness", version: "0.1.0" };
 
 export const ACTIONS = {
@@ -1175,4 +1182,117 @@ export const WORKSPACE_REFUSAL_REASONS = {
   "checker-differs": "两次的检查程序、版本或配置不同。",
   "as-of-differs": "两次运行的逻辑日期不同。",
   "model-set-differs": "两次检查的不是同一组模型。",
+};
+
+// ---------------------------------------------------------------------------
+// Words that were written inline in the screens, moved here so that a second
+// language is a second table and nothing else. Their text is unchanged.
+// ---------------------------------------------------------------------------
+
+// Pieces shared by several screens.
+export const COMMON = {
+  colon: "：",
+  emptyList: "（记录中为空列表）",
+  unknownMode: "未识别的入口（{mode}）",
+  unnamedElement: "未命名构件",
+  and: " 与 ",
+  oneElement: "一个构件",
+  twoElements: "一对构件",
+  nElements: "{count} 个构件",
+  inModel: " · 模型 ",
+};
+
+// The context bar at the head of every screen but the home.
+export const CONTEXT = {
+  project: "项目 {project}",
+  handover: "交接：{from} → {to} · {milestone}",
+  workspaceRun: WORKSPACE.contextRun,
+  noJudgement: WORKSPACE.contextNoJudgement,
+  noResult: "本次没有检查结果",
+  home: "返回首页",
+};
+
+// The example directory and the shipped project's entry.
+export const DIRECTORY = {
+  realNote: "仓库随附一个样例项目，下面是对它的一次检查尝试。目前不能选择别的模型，也不能导入自己的模型。",
+  exampleTitle: "选择一个模拟示例",
+  empty: "这个入口下目前没有可以查看的内容。",
+  exampleTag: "示例说明",
+  open: "打开这个示例的结果",
+  othersHeading: "其他模拟示例",
+  othersNote: "这些示例还没有写说明，复检记录暂时只有编号；本轮没有改到它们。",
+};
+
+// The first-check result page.
+export const FIRST = {
+  back: "← 返回示例目录",
+  title: "首次检查结果：需要处理的事项",
+  runLine: "{mode}：{run}",
+  summary: "本次结果：共 {items} 个事项，其中 {todo} 个需要处理",
+  items: "{count} 个事项",
+  verdictLine: "：对应的那项工作 ",
+  quietLine: "：{summary}（列在本页下方）",
+  elementsLine: "{unit}这份记录共涉及 {count} 个不同的构件。",
+  action: "要做什么",
+  problem: "问题",
+  openItem: "查看这一项：具体对象、要做什么、由谁处理、拿什么复检",
+  openHeading: "{label}，按处理团队（{count} 个事项）",
+  team: "处理团队 ",
+  teamCount: "：{count} 个事项",
+  columns: { problem: "问题", work: "哪项工作：结论", count: "事项数" },
+  quietHeading: "{label}（{count} 个事项）",
+  separator: " ｜ ",
+  nextHeading: "然后：看这份记录复检之后的变化",
+  nextLink: "打开示例“{run}”",
+  nextAfter: "。每个事项的页面里也有直达它复检变化的链接。",
+  traceSummary: "追溯信息：记录标识、规则版本、记录原码",
+  recordLink: "这份记录的请求范围、版本与来源",
+  notRevised: "（该页尚未改版，仍是内部用语）",
+  traceItem: "事项",
+  traceOrdinal: "内部分组编号",
+};
+
+// "How to read this page", folded at the foot of the result and item pages.
+export const READING_GUIDE = {
+  verdictWords: "三个判断词",
+  verdictLine: "{label}：{meaning}。",
+  provenance: "证据来源的标注",
+  teams: "处理团队与默认处理角色",
+  teamsBody:
+    "处理团队取自记录里的人员安排；默认处理角色是规则给出的默认，是安排的输入，不是指派。两者分开显示。",
+};
+
+// What the router and the envelope check say. A fault is the program's, never
+// a statement about a project or a model.
+export const APP = {
+  loading: "正在读取检查记录…",
+  noPage: "没有这个页面：{screen}",
+  technical: "技术信息（原文）：",
+  up: "返回上一级",
+  notInMode: "这个入口下没有 {run}",
+  invalid: "返回的数据不符合约定：{problem}。未显示任何结果。",
+  unknownOutcome: "未识别的 outcome {outcome}",
+  notObject: "返回的数据不是对象",
+  modeMismatch: "返回数据的 mode 为 {got}，与所选入口 {want} 不一致",
+  missingElements: "返回的数据缺少 elements",
+  recordMissing: "outcome=record 但缺少 record",
+  digestMissing: "outcome=record 但缺少 assessment_digest",
+  recordWithRefusal: "outcome=record 却同时带有 refusal",
+  refusalIncomplete: "outcome=refusal 但 refusal 缺少 code 或 text",
+  refusalWithRecord: "outcome=refusal 却同时带有 record 或 assessment_digest",
+};
+
+// The page itself: its title, the skip link and the context bar's label.
+export const PAGE = {
+  title: "BIM Doctor 预览",
+  skip: "跳到正文",
+  contextLabel: "当前模式与上下文",
+};
+
+// The copy button beside an identifier.
+export const COPY = {
+  button: "复制",
+  label: "复制 {value}",
+  done: "已复制",
+  manual: "请手动选择复制",
 };
