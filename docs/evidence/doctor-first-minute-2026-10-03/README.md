@@ -1,19 +1,44 @@
 # BIM Doctor screenshots used by the root README
 
-Six captures of the BIM Doctor local preview, three screens in each interface
-language, taken for the "BIM Doctor today" section of the root
-[`README.md`](../../../README.md). They are illustrations of what the interface
-looks like. They are not acceptance evidence for the preview, and nothing
-validates them: unlike [`../stage_3b/`](../stage_3b/README.md), no manifest or
-test pins this directory.
+Three captures of the BIM Doctor local preview, in the Chinese interface, taken
+for the "BIM Doctor today" section of the root [`README.md`](../../../README.md).
+They are illustrations of what the interface looks like. They are not
+acceptance evidence for the preview, and nothing validates them: unlike
+[`../stage_3b/`](../stage_3b/README.md), no manifest or test pins this
+directory.
 
 | File | Route | Shows |
 |---|---|---|
-| `en-01-home.png`, `zh-01-home.png` | `#/` | The home screen: the two entries offered when the server starts without a workspace, and what it cannot do |
-| `en-02-first-check-result.png`, `zh-02-first-check-result.png` | `#/fixture/member-evidence` | The first-check result of the simulated example: counts, then the items that need handling grouped by team |
-| `en-03-one-item.png`, `zh-03-one-item.png` | `#/fixture/member-evidence/item/2/2/0` | One item: the conclusion, then what to do, who handles it and what a recheck must show |
+| `zh-01-home.png` | `#/` | The home screen: the two entries offered when the server starts without a workspace, and what it cannot do |
+| `zh-02-first-check-result.png` | `#/fixture/member-evidence` | The first-check result of the simulated example: counts, then the items that need handling grouped by team |
+| `zh-03-one-item.png` | `#/fixture/member-evidence/item/2/2/0` | One item: the conclusion, then what to do, who handles it and what a recheck must show |
 
-The language is chosen with `?lang=en` or `?lang=zh` in front of the route.
+## Withdrawn: the English screenshots
+
+Three English captures were added in commit `505e2da` (PR #35) and **withdrawn
+on 2026-10-04**. They are no longer in the tree, and no page in this repository
+shows them.
+
+| Withdrawn file | SHA-256 |
+|---|---|
+| `en-01-home.png` | `8177e79d02a6b77b135089736c9e4ca8dcb147744bf8d248f3ee2b9781c4662f` |
+| `en-02-first-check-result.png` | `c0f295ba39ad0f26e4c2ea34777358a77a330dfbd6adb3fde004f5548531088c` |
+| `en-03-one-item.png` | `64b1fdfacd9be0631107d3952dd1b28d3240e1b297f5e523cc851bb1da6a5e65` |
+
+Why: the root README is public display. The English wording has not been
+reviewed by a BIM domain specialist (status line of
+[`docs/product/2026-10-03-doctor-english-vocabulary.md`](../../product/2026-10-03-doctor-english-vocabulary.md)),
+and one next-step sentence on the example's first-check path is known to differ
+in meaning from the Chinese and is being corrected. A note beside a picture that
+the wording is unreviewed does not make the picture safe to display.
+
+They are not restored by default. To show English screenshots again: have the
+wording that would appear in them reviewed and any meaning error cleared, then
+take new captures from the commit that carries the reviewed wording, and record
+that commit, the routes, the heights and the hashes here. The old files are not
+the ones to reuse: they show wording as it was at `872f76f`. They remain in Git
+history for trace (`git show 505e2da:docs/evidence/doctor-first-minute-2026-10-03/en-01-home.png`),
+and history is not rewritten.
 
 ## What is in the pixels
 
@@ -21,16 +46,6 @@ The language is chosen with `?lang=en` or `?lang=zh` in front of the route.
   PCERT sample models of the `pcert-sample` project (see *Data Source and
   Attribution* in the root README). No other model, workspace or run was open
   when the server was started, and the server offered no workspace entry.
-- **The two languages are two wordings of the same screens.** The English
-  screens are drawn from the English wording table and the Chinese from the
-  Chinese one, so a sentence can differ in more than language. The item page's
-  "what to do" is an example: in English it is the assessment record's own
-  English text, not a translation of the Chinese sentence. The root README
-  captions each set on its own screen.
-- **The English wording has not been reviewed by a BIM domain specialist yet**
-  (status line of
-  [`docs/product/2026-10-03-doctor-english-vocabulary.md`](../../product/2026-10-03-doctor-english-vocabulary.md)).
-  These captures show what the interface says, not that it has been checked.
 - **Simulated content is marked on the screen.** Every page carries the
   "simulated example" strip. The team arrangement, accepted evidence methods
   and human determinations are the example's own settings. In the first-check
@@ -58,19 +73,14 @@ a virtual-time budget long enough for the page to render:
 msedge.exe --headless=new --disable-gpu --hide-scrollbars --no-first-run
   --window-size=880,<height> --force-device-scale-factor=2
   --virtual-time-budget=60000 --user-data-dir=<scratch>
-  --screenshot=<file>.png "http://127.0.0.1:8791/?lang=<en|zh><route>"
+  --screenshot=<file>.png "http://127.0.0.1:8791/?lang=zh<route>"
 ```
 
 Heights in CSS pixels, chosen so each image ends at the edge of a block rather
-than in the middle of one; nothing is scrolled:
+than in the middle of one; nothing is scrolled: home 880, first-check result
+985, one item 925.
 
-| Screen | `en` | `zh` |
-|---|---|---|
-| Home | 880 | 880 |
-| First-check result | 1160 | 985 |
-| One item | 1360 | 925 |
-
-At this commit the server was also run from a clean environment holding only
+At that commit the server was also run from a clean environment holding only
 `requirements.txt`, to confirm the visitor path in the README: the home page,
 the language script and the first-check data all answered, and nothing was
 written into the checkout (`git status` unchanged).
@@ -80,9 +90,6 @@ rendering depends on the browser and the system fonts. Their SHA-256 values
 identify the files as committed:
 
 ```text
-8177e79d02a6b77b135089736c9e4ca8dcb147744bf8d248f3ee2b9781c4662f  en-01-home.png
-c0f295ba39ad0f26e4c2ea34777358a77a330dfbd6adb3fde004f5548531088c  en-02-first-check-result.png
-64b1fdfacd9be0631107d3952dd1b28d3240e1b297f5e523cc851bb1da6a5e65  en-03-one-item.png
 48fec5ec8aa96ba5aabd3969fe2605f4ea5e347080bfc7fb114dd328942dbd8e  zh-01-home.png
 c3789641b237acc64b3369e627314858d41bdb9c640129765a48daba6ce48f67  zh-02-first-check-result.png
 045305448be03e78b3b04a3b22baaae62ee28d43dc7e997d07309d18e9674f95  zh-03-one-item.png
