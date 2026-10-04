@@ -565,6 +565,43 @@ class FirstCheckTests(_Modelled):
             with self.subTest(said=said):
                 self.assertIn(said, vocabulary)
 
+    def test_a_first_check_card_folds_only_the_particulars_and_the_full_action(self):
+        """D1: closed by default, and what changes how a conclusion reads stays out."""
+
+        screens = (STATIC / "screens.js").read_text(encoding="utf-8")
+        first = screens[screens.index("function first(") : screens.index("function leafName(")]
+        card = first[first.index("const card = (item, said) => {") : first.index("\n  };\n")]
+        fold = card.index('"details"')
+        link = card.index('{ class: "run", href: itemHref(item)')
+        # Outside the fold: the element, the work and its verdict, the basis
+        # (simulated or not), the notes, the problem in a few words, the link.
+        for shown in (
+            "itemTitle(state, item.keys)",
+            "workVerdict(item.activity, item.verdict)",
+            "basisLine(item.basis)",
+            "besideVerdict(item.activity, item.verdict, said)",
+            "FIRST.problem),",
+        ):
+            with self.subTest(shown=shown):
+                self.assertLess(card.index(shown), fold)
+        self.assertGreater(link, card.index("FIRST.cardElements"))
+        # Inside the fold: the element's particulars and the full action.
+        inside = card[fold:link]
+        self.assertIn("elementBrief(state, element", inside)
+        self.assertIn("definitions([[FIRST.action, sentences.action]])", inside)
+        self.assertNotIn("elementBrief(", card[:fold])
+        self.assertNotIn("sentences.action", card[:fold])
+        # Closed unless the viewer opened it; which ones are open survives a
+        # visit to an item and back, for the same run only.
+        self.assertIn("open: opened.has(key)", inside)
+        self.assertIn("openFirstCards.runId === state.runId", first)
+        # The way back to the item is the link, never inside the fold.
+        self.assertIn('"data-return-focus": here(item) ? true : null', card[link:])
+        self.assertIn("FIRST.openCard", card[link:])
+        # The item page is untouched: what to do still comes first there.
+        item = screens[screens.index("function firstItem(") : screens.index("// S4 — recheck")]
+        self.assertNotIn("card-details", item)
+
     def test_a_conclusion_is_never_shown_without_its_work_its_basis_and_its_limits(self):
         screens = (STATIC / "screens.js").read_text(encoding="utf-8")
         first = screens[

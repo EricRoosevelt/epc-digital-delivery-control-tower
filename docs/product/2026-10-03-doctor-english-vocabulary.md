@@ -1,6 +1,6 @@
 # Doctor 英文词表（主路径与真实工作区）
 
-日期：2026-10-03；第二部分（单项、复检）与第三部分（工作区的结果、详情、对比、拒绝、故障）同日补入；2026-10-04 补入行动与复检句（`ACTIONS`）。负责：Product/UI Engineer。
+日期：2026-10-03；第二部分（单项、复检）与第三部分（工作区的结果、详情、对比、拒绝、故障）同日补入；2026-10-04 补入行动与复检句（`ACTIONS`）；2026-10-05 补入首次结果卡片的三个标签（`FIRST.cardDetails`、`FIRST.cardElements`、`FIRST.openCard`）。负责：Product/UI Engineer。
 状态：**全部未经 BIM 复核**；有领域含义的条目进 10/15 BIM 批次。
 本文件由界面实际注册的词表生成，测试逐条核对英文与这里一致。中文一列是同一键在 `vocabulary.js` 里的原文。
 
@@ -24,8 +24,8 @@
 | --- | --- | --- |
 | 原文（取自 Pack、记录或产品文档，未翻译） | 3 | 12 |
 | 有领域含义（判断、活动、问题类型、限制、来源），待 BIM | 51 | 537 |
-| 界面用语 | 23 | 160 |
-| 合计 | 77 | 709 |
+| 界面用语 | 23 | 163 |
+| 合计 | 77 | 712 |
 
 ## 原文
 
@@ -1012,6 +1012,9 @@
 | `action` | 要做什么 | What to do |
 | `problem` | 问题 | Problem |
 | `openItem` | 查看这一项：具体对象、要做什么、由谁处理、拿什么复检 | See this item: the element, what to do, who deals with it, what a recheck must show |
+| `cardDetails` | 构件信息和要做什么 | Element details and what to do |
+| `cardElements` | 构件信息 | Element details |
+| `openCard` | 查看这一项 | See this item |
 | `openHeading.one` | {label}，按处理团队（{count} 个事项） | {label}, by handling team ({count} item) |
 | `openHeading.other` | {label}，按处理团队（{count} 个事项） | {label}, by handling team ({count} items) |
 | `team` | 处理团队  | Handling team  |
