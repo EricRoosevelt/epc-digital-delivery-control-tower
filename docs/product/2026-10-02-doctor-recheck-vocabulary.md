@@ -625,3 +625,34 @@ IFC 类别：`IfcAirTerminal` 风口、`IfcChimney` 烟囱、`IfcDuctSegment` �
 - **W7 的注释怎样触发。** 原因形如 `The predefined type "…" does not meet the required type`，引号里不是 IFC4 ADD2 TC1
   `IfcAirTerminalTypeEnum` 的六个值之一时，才在原因旁加这句；只在规则说明适用（product-validation 1.0 / PV-001）时判断。
 - **W2 只跟着标签出现。** 不通过、且这条要求的 `labels` 含 `ProductValidation` 时出现一次，不是每屏的通用警告；其他页面没有这句（测试检查）。
+
+## 17. 2026-10-04 中英文行动义务一致（P0）与 10/8 批次的两处
+
+依据：产品经理 [98601fc 复走](2026-10-04-pm-revisit-and-product-potential.md)“最重要的双语证据”、
+[公开展示与审计说明](2026-10-04-pm-public-display-audit-release-update.md)第 1 节、
+[D1–D6 决定](2026-10-04-pm-six-decisions.md)的 D6，以及技术总监的 P0 任务包。
+
+**行动和复检句只有一张表。** 第 12 节的动作句和复检说法（BIM 约束第 3 节的表；烟囱资产标识一句是第 13 节的产品裁定）
+现在在英文里也用：`vocabulary-en.js` 的 `ACTIONS` 是同一组义务的英文，进 10/8 BIM 批次。
+英文不再把记录路由里的 `next_action`、`recheck_condition` 当作“要做什么”显示；它们留在单项页和复检单项页的折叠里，
+标明是来源原文，不是操作指令。不改 Pack。
+
+记录所用的 Pack 不是 `interdisciplinary-coordination-readiness` 0.1.0 时（随附样例里没有这种记录），两种语言都不再把 Pack 原文
+放在“要做什么”里，而是说本界面没有为这个版本写行动句，原文在折叠里。
+
+| 位置 | 原句 | 现在 |
+| --- | --- | --- |
+| `ACTION.whatOriginal`、`ACTION.recheckOriginal` | 要做什么（规则原文，英文）；完成后拿什么复检（规则原文，英文） | （删去：原文不再出现在这两行） |
+| `ACTION.noSentence`（新增，只在记录不属于上面那个版本时出现） | （无） | 本界面没有为这条记录所用的版本写要做什么。记录所带的来源原文在下面的折叠里，它不是操作指令。 |
+| `ACTION.original`（单项页、复检单项页“要做什么”下的折叠标题） | 规则原文（英文） | 来源原文（英文，记录所带）：供追溯，不是操作指令 |
+| `RECHECK_ITEM.originalSummary`（复检单项页“结束条件”下的折叠标题） | 规则原文（英文）与记录原码 | 来源原文（英文）与记录原码：供追溯，不是操作指令 |
+
+**10/8 批次点名的两处（只改这两处，会改动中文工作区页面）**：
+
+| 位置 | 原句 | 现在 |
+| --- | --- | --- |
+| W6：`RULE_NOTES.PV-001.action.revise` | 这个值在 Revit 里从哪里写出（类型还是实例、哪个参数、哪项导出设置），返回数据没有记录，本页不指定。改之前先在 Revit 里确认；如果决定在类型上改，会作用于这个类型的全部实例。 | 这个值在 Revit 里从哪里写出（类型还是实例、哪个参数、哪项导出设置），返回数据没有记录，本页不指定。改之前先在 Revit 里确认；如果决定在类型上改，会作用于这个类型的全部实例。一个 Revit 类型可能对应不止一个 IFC 类型对象，实例数按 Revit 类型算。 |
+| Tag：`TAG_WORDS.note` | IFC Tag 是导出时写进 IFC 的标记；Revit 导出的通常是构件的 ElementId。核对：在 Revit 里用“按 ID 选择”选中这个 ID，看选中对象的名称和类别是否与本页相同；相同再按它处理，不同就不要按这个 Tag 去改，改用 GlobalId 在 IFC 里定位。 | IFC Tag 是导出时写进 IFC 的标记；Revit 导出的通常是构件的 ElementId。核对：在 Revit 里用“按 ID 选择”选中这个 ID，看选中对象的名称和类别是否与本页相同；相同再按它处理，不同就不要按这个 Tag 去改：用 GlobalId 确认是哪个对象，再回到 Revit 源模型修改。 |
+
+- 两句新增的半句取自产品经理 D6 列出的原话，未改写。
+- `TAG_WORDS.useGlobalId`（“在 IFC 里定位用 GlobalId。”）是每个构件下的通用一句，不是 Tag 不一致时的行动，没有改。

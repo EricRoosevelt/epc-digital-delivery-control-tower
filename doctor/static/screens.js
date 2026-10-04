@@ -37,7 +37,6 @@ import {
   ACTION,
   ACTION_GROUPS,
   ACTION_PACK,
-  ACTION_TEXT,
   ACTIONS,
   ACTIVITY_NAMES,
   BASIS_WORDS,
@@ -1200,12 +1199,12 @@ function problemName(kind) {
 /**
  * The action and recheck sentences, for the one Pack they were written for.
  *
- * Whether there are any is the same in both languages: the Chinese glosses
- * exist for one Pack version. Which words fill them is the language's: the
- * gloss, or — where the wording says so — the record's own English, read from
- * the subscope's route as it came.
+ * One table, one obligation, in either language: the reviewed sentences for
+ * this problem type, worded in the viewer's language. The record's own route
+ * words are a source and are never returned here — the item pages keep them in
+ * a fold labelled as such.
  */
-function actionSentences(kind, request, subscope = null) {
+function actionSentences(kind, request) {
   const written =
     carries(request, "pack_id") &&
     request.pack_id === ACTION_PACK.id &&
@@ -1213,11 +1212,6 @@ function actionSentences(kind, request, subscope = null) {
     request.pack_version === ACTION_PACK.version &&
     Object.hasOwn(ACTIONS, kind);
   if (!written) return null;
-  if (ACTION_TEXT.source === "record" && subscope !== null) {
-    const original = (key) =>
-      field(subscope, "route", (value) => field(value, key, (text) => h("span", { class: "prose" }, text)));
-    return { action: original("next_action"), recheck: original("recheck_condition") };
-  }
   return ACTIONS[kind];
 }
 
@@ -1229,12 +1223,13 @@ function consequences(kinds) {
 
 /** What to do, who handles it, what it costs the work, what a recheck must show.
  *
- * The Chinese sentences are used only under the Pack version they were written
- * for; otherwise the Pack's own English is shown in their place. The English
- * original is always one fold away.
+ * The sentences are used only under the Pack version they were written for;
+ * otherwise there is no action sentence, and the page says so rather than
+ * putting the record's route words in its place. Those words are always one
+ * fold away, labelled as the source, not as an instruction.
  */
 function actionBlock(subscope, request, mode) {
-  const sentences = actionSentences(carried(subscope, "resolution_kind"), request, subscope);
+  const sentences = actionSentences(carried(subscope, "resolution_kind"), request);
   const original = (key) =>
     field(subscope, "route", (value) => field(value, key, (text) => h("span", { class: "prose" }, text)));
   return h(
@@ -1242,8 +1237,8 @@ function actionBlock(subscope, request, mode) {
     { class: "action-block" },
     definitions([
       [
-        sentences ? ACTION.what : ACTION.whatOriginal,
-        sentences ? h("span", { class: "action" }, sentences.action) : original("next_action"),
+        ACTION.what,
+        sentences ? h("span", { class: "action" }, sentences.action) : missing(ACTION.noSentence),
       ],
       [
         ACTION.team,
@@ -1259,22 +1254,17 @@ function actionBlock(subscope, request, mode) {
         ACTION.consequence,
         field(subscope, "route", (value) => field(value, "consequence_kinds", consequences)),
       ],
-      [
-        sentences ? ACTION.recheck : ACTION.recheckOriginal,
-        sentences ? sentences.recheck : original("recheck_condition"),
-      ],
+      sentences ? [ACTION.recheck, sentences.recheck] : null,
     ]),
-    sentences
-      ? h(
-          "details",
-          {},
-          h("summary", {}, ACTION.original),
-          definitions([
-            ["next_action", original("next_action")],
-            ["recheck_condition", original("recheck_condition")],
-          ]),
-        )
-      : null,
+    h(
+      "details",
+      {},
+      h("summary", {}, ACTION.original),
+      definitions([
+        ["next_action", original("next_action")],
+        ["recheck_condition", original("recheck_condition")],
+      ]),
+    ),
   );
 }
 
@@ -1447,8 +1437,8 @@ function first(state) {
       // The action sentence where one was written for this problem type; the
       // problem's name otherwise. The team's table above names the problem.
       definitions([
-        actionSentences(item.kind, request, item.subscope)
-          ? [FIRST.action, actionSentences(item.kind, request, item.subscope).action]
+        actionSentences(item.kind, request)
+          ? [FIRST.action, actionSentences(item.kind, request).action]
           : [FIRST.problem, item.kind === undefined ? missing(NOT_CARRIED) : problemName(item.kind)],
       ]),
       h(
@@ -2071,7 +2061,7 @@ function actionRow(item, request) {
     ? item.current
         .filter((current) => current.located)
         .map((current) =>
-          actionSentences(carried(current.located.subscope, "resolution_kind"), request, current.located.subscope),
+          actionSentences(carried(current.located.subscope, "resolution_kind"), request),
         )
         .filter((entry) => entry !== null)
     : [];
@@ -2478,12 +2468,9 @@ function recheckItem(state, subscopeIndex, memberIndex) {
       rows.filter((row) => row.citation_kind === "determination" && carries(row, key)).map((row) => row[key]),
     ),
   ];
-  // The recheck condition left before carries its own words in the record.
-  const priorSentences = actionSentences(carried(outcome, "prior_resolution_kind"), request, {
-    route: carries(outcome, "prior_recheck_condition")
-      ? { recheck_condition: carried(outcome, "prior_recheck_condition") }
-      : {},
-  });
+  // The recheck condition left before, as the reviewed sentence for the prior
+  // problem type; the record's own words for it stay in the source fold below.
+  const priorSentences = actionSentences(carried(outcome, "prior_resolution_kind"), request);
 
   content.replaceChildren(
     backToList(),

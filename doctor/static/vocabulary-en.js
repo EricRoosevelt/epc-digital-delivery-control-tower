@@ -40,11 +40,70 @@ export const ACTIVITY_NAMES = {
   },
 };
 
-// What to do and what a recheck must show come from the record itself: each
-// subscope's route carries the Pack's own `next_action` and
-// `recheck_condition`, in English. The Chinese sentences in vocabulary.js
-// gloss them for one Pack version; in English the record's words are shown.
-export const ACTION_TEXT = { source: "record" };
+// What to do and what a recheck must show, one pair per problem type: the
+// English of the Chinese sentences in vocabulary.js, which are the BIM
+// reviewer's table and, for the uncovered asset identity, the product's ruling.
+// They carry the same obligation in both languages. The record's own route
+// words (`next_action`, `recheck_condition`) are a source, not an instruction:
+// they stay one fold away on the item pages, labelled as such, and are never
+// shown as what to do. No sentence names a Revit parameter or an export
+// mapping, or uses the record's internal words.
+export const ACTIONS = {
+  "missing-project-asset-identity": {
+    action:
+      "In the source model, add to this element the asset-identity properties the project's convention requires (see the property sets and property names listed), then re-export the model",
+    recheck:
+      "On the reissued model, this element passes every requirement listed, and no element in the scope is left unevaluated",
+  },
+  "asset-identity-not-evaluated": {
+    action:
+      "The existing asset-identity rules do not reach this element, so whether it has an asset identity has not been evaluated, and it cannot be judged to be missing one; " +
+      "for the same reason, whether this work can start cannot be decided. First confirm whether the project's convention requires this element to have an asset identity, " +
+      "and whether the rules should reach it. Until that is confirmed, this does not mean it must have one.",
+    recheck: "Every element in the scope has an evaluation result under the requirements bound to it",
+  },
+  "in-model-position-not-evaluated": {
+    action:
+      "This is not a known model defect, and the model does not need changing. The spatial-assignment check rules do not reach this element; the rules' scope of application needs to be extended",
+    recheck: "Every element in the scope has a check result under the requirements bound to it",
+  },
+  "penetration-not-determined": {
+    action:
+      "This is not a known model defect. No coordination review has yet determined whether it passes through the receiving side's elements; " +
+      "hold a review and record either “no penetration” or which elements it passes through",
+    recheck: "A recorded review determination exists for the model versions listed",
+  },
+  "missing-corresponding-opening": {
+    action:
+      "In the receiving side's model, model an opening or shaft in the element it passes through, not a void in the handing-over side's model. One opening for each element it passes through",
+    recheck:
+      "The opening check for this pair reports “opening modelled and cross-referenced”. Modelling the opening alone is not enough",
+  },
+  "cross-model-alignment-not-confirmed": {
+    action:
+      "This is not a known misalignment. No one has yet confirmed, by the method the project accepts, that the two models are aligned; do this once against the model versions listed, and record it",
+    recheck: "The alignment confirmation has been done and reports the models aligned, naming the model versions",
+  },
+  "mep-element-not-spatially-assigned": {
+    action: "In the source model, place the element on its correct level and in its correct space, then re-export",
+    recheck: "On the reissued model, this element passes its spatial-assignment requirement",
+  },
+  "cross-model-misalignment": {
+    action:
+      "Re-acquire the project's shared coordinate datum, re-export against the shared origin (not by moving geometry), then redo the alignment confirmation by the method the project accepts",
+    recheck: "The alignment confirmation is redone against the new versions and reports the models aligned",
+  },
+  "opening-not-verifiably-linked": {
+    action:
+      "In the receiving side's model, add to the opening a cross-reference back to the element that passes through it. Where several elements pass through one opening, each needs its own",
+    recheck: "The cross-reference check for this pair reports the opening cross-referenced",
+  },
+  "opening-status-not-determined": {
+    action:
+      "This is not a known missing opening. The review of the opening is not complete: whether it is modelled, and whether it is cross-referenced",
+    recheck: "The check gives a definite result (cross-referenced / modelled but not cross-referenced / not modelled)",
+  },
+};
 
 // The three verdicts, named by the record's own words, and what each means:
 // the product document's definitions, as written there.
@@ -443,12 +502,12 @@ export const ITEM = {
 
 export const ACTION = {
   what: "What to do",
-  whatOriginal: "What to do (the rule's own words)",
   team: "Handling team",
   consequence: "What it means for this work",
   recheck: "What a recheck must show",
-  recheckOriginal: "What a recheck must show (the rule's own words)",
-  original: "The rule's own words",
+  noSentence:
+    "This interface has written no action for the version this record uses. The source wording the record carries is in the fold below; it is not an instruction.",
+  original: "Source wording (as the record carries it): for tracing, not an instruction",
 };
 
 export const ELEMENT_CARD = {
@@ -621,7 +680,7 @@ export const RECHECK_ITEM = {
   end: ".",
   conditionNote:
     "This says only how far the exit condition left before the recheck has been shown to be reached; read it apart from the conclusion now. A changed conclusion does not mean the original condition is met.",
-  originalSummary: "The rule's own words and record codes",
+  originalSummary: "Source wording and record codes: for tracing, not an instruction",
   conditionBasis: "condition_basis (as written)",
   evidenceHeading: "5. The evidence before the recheck",
   evidenceCount: {
@@ -995,7 +1054,7 @@ export const WORKSPACE = {
 
 export const TAG_WORDS = {
   note:
-    "The IFC Tag is a marker written into the IFC at export; what Revit writes is usually the element's ElementId. To check: in Revit, use \"Select by ID\" with this ID and see whether the selected object's name and class match this page; if they do, work from it; if they do not, do not change anything by this Tag, and find the element in the IFC by its GlobalId instead.",
+    "The IFC Tag is a marker written into the IFC at export; what Revit writes is usually the element's ElementId. To check: in Revit, use \"Select by ID\" with this ID and see whether the selected object's name and class match this page; if they do, work from it; if they do not, do not change anything by this Tag: use the GlobalId to confirm which object it is, then make the change in the Revit source model.",
   byIdNotStorey:
     "Find the object in Revit by its ID, not by storey: the storey on this page is the IFC file's spatial assignment, which may not match the levels in a Revit schedule.",
   storeyFromIfc:
@@ -1039,7 +1098,7 @@ export const RULE_NOTES = {
       reads:
         "The checker looks first at its type object in the exported IFC: if the type carries one of the four, the type's value is compared; if the type declares USERDEFINED, its free text is compared; only when the type says nothing is the element instance's own value read. This is the order in which the checker reads the IFC, not where to make the change in Revit.",
       revise:
-        "Where this value is written from in Revit (type or instance, which parameter, which export setting), the returned data does not record, and this page does not say. Confirm it in Revit before changing anything; if you decide to change it on the type, the change applies to every instance of that type.",
+        "Where this value is written from in Revit (type or instance, which parameter, which export setting), the returned data does not record, and this page does not say. Confirm it in Revit before changing anything; if you decide to change it on the type, the change applies to every instance of that type. One Revit type may correspond to more than one IFC type object; count instances by the Revit type.",
       undecided:
         "Which value to use, and who decides and makes the change, the returned data does not say. The rule asks only for one of the four values and does not judge which is right.",
     },

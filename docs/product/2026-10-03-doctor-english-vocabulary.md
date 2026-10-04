@@ -1,6 +1,6 @@
 # Doctor 英文词表（主路径与真实工作区）
 
-日期：2026-10-03；第二部分（单项、复检）与第三部分（工作区的结果、详情、对比、拒绝、故障）同日补入。负责：Product/UI Engineer。
+日期：2026-10-03；第二部分（单项、复检）与第三部分（工作区的结果、详情、对比、拒绝、故障）同日补入；2026-10-04 补入行动与复检句（`ACTIONS`）。负责：Product/UI Engineer。
 状态：**全部未经 BIM 复核**；有领域含义的条目进 10/15 BIM 批次。
 本文件由界面实际注册的词表生成，测试逐条核对英文与这里一致。中文一列是同一键在 `vocabulary.js` 里的原文。
 
@@ -8,9 +8,10 @@
 
 - 英文是第二张词表，不是第二套页面：判断、计数、来源标签、限制在两种语言里完全相同（测试逐键核对结构与占位符）。
 - 记录、Pack 或本仓库产品文档已有英文原文的地方，英文界面显示原文，不把中文释义译回英文。
-  “要做什么”“完成后拿什么复检”在英文里直接读记录里路由的 `next_action`、`recheck_condition`，词表里没有副本（`ACTION_TEXT`）。
+  例外：“要做什么”“完成后拿什么复检”不显示原文。两种语言用同一张表（`ACTIONS`：BIM 约束第 3 节的表，烟囱资产标识一句是产品裁定），
+  义务相同；记录路由里的 `next_action`、`recheck_condition` 只在折叠里，标明是来源原文，不是操作指令（2026-10-04 起，见 P0 修正）。
   IFC 类别在英文里只显示类别本身（`IFC_CLASS_NAMES` 英文为空）；检查结果的原因在英文里只显示原文（`REASON_GLOSSES` 英文为空）。
-  复检单项里“复检前留下的结束条件”在英文里读记录的 `prior_recheck_condition` 原文。
+  复检单项里“复检前留下的结束条件”同样用 `ACTIONS` 的复检句；记录的 `prior_recheck_condition` 原文在折叠里。
   工作区页面里，规则的出处在英文里只显示返回数据的原文（`CITATION_GLOSSES` 英文为空）；检查结果的原因、规则原话（`expected`）同样只显示原文。
   PV-001 规则说明的英文标题取自 `rules/product-validation/PV-001.toml` 的 `title`，“NOTDEFINED states nothing.”取自同一文件的 `instructions`（测试核对）；其余规则说明是为本界面写的领域文字，待 BIM。
   拒绝原因旁的短句在两种语言里都是本界面写的说明；适配器给出的完整原文（英文）始终在“系统返回的原文”折叠里。
@@ -22,9 +23,9 @@
 | 类别 | 表 | 条目 |
 | --- | --- | --- |
 | 原文（取自 Pack、记录或产品文档，未翻译） | 3 | 12 |
-| 有领域含义（判断、活动、问题类型、限制、来源），待 BIM | 50 | 517 |
-| 界面用语 | 23 | 161 |
-| 合计 | 76 | 690 |
+| 有领域含义（判断、活动、问题类型、限制、来源），待 BIM | 51 | 537 |
+| 界面用语 | 23 | 160 |
+| 合计 | 77 | 709 |
 
 ## 原文
 
@@ -56,6 +57,31 @@
 | `UNKNOWN` | 回答这个问题所需的证据没有产生，这项工作能否开始无法决定：既不能放行，也不能拒绝 | An evidence gap makes the activity undecidable — the evidence needed to answer the question was never produced, so neither release nor refusal can be justified |
 
 ## 有领域含义，待 BIM 复核（10/15 批次）
+
+**`ACTIONS`**
+
+| 键 | 中文 | English |
+| --- | --- | --- |
+| `missing-project-asset-identity.action` | 在源模型里给这个构件补上本项目约定的资产标识属性（见所列属性集和属性名），重新导出 | In the source model, add to this element the asset-identity properties the project's convention requires (see the property sets and property names listed), then re-export the model |
+| `missing-project-asset-identity.recheck` | 重新发布的模型上，这个构件在所列每条要求下都通过，范围内没有构件漏评 | On the reissued model, this element passes every requirement listed, and no element in the scope is left unevaluated |
+| `asset-identity-not-evaluated.action` | 现有资产标识规则没有覆盖到这个构件，所以它有没有资产标识还没有被评估，不能判断是否缺少；这项工作能否开始也因此无法判断。先确认项目约定是否要求它具备资产标识，以及规则该不该覆盖到它。在确认之前，这不表示它必须具备资产标识。 | The existing asset-identity rules do not reach this element, so whether it has an asset identity has not been evaluated, and it cannot be judged to be missing one; for the same reason, whether this work can start cannot be decided. First confirm whether the project's convention requires this element to have an asset identity, and whether the rules should reach it. Until that is confirmed, this does not mean it must have one. |
+| `asset-identity-not-evaluated.recheck` | 范围内每个构件在所绑定的要求下都有评估结果 | Every element in the scope has an evaluation result under the requirements bound to it |
+| `in-model-position-not-evaluated.action` | 这不是已知的模型缺陷，也不需要改模型。空间归属的检查规则没有覆盖到这个构件，需要扩展规则的适用范围 | This is not a known model defect, and the model does not need changing. The spatial-assignment check rules do not reach this element; the rules' scope of application needs to be extended |
+| `in-model-position-not-evaluated.recheck` | 范围内每个构件在所绑定的要求下都有检查结果 | Every element in the scope has a check result under the requirements bound to it |
+| `penetration-not-determined.action` | 这不是已知的模型缺陷。还没有协调评审判定它是否穿过接收方的构件；需要开一次评审，记录“不穿过”或写明穿过哪些构件 | This is not a known model defect. No coordination review has yet determined whether it passes through the receiving side's elements; hold a review and record either “no penetration” or which elements it passes through |
+| `penetration-not-determined.recheck` | 针对所列模型版本，有一份评审判定记录 | A recorded review determination exists for the model versions listed |
+| `missing-corresponding-opening.action` | 在接收方模型里、被穿过的构件上建出洞口或竖井，不要做成交出方模型里的空洞。穿过几个构件就要几个洞口 | In the receiving side's model, model an opening or shaft in the element it passes through, not a void in the handing-over side's model. One opening for each element it passes through |
+| `missing-corresponding-opening.recheck` | 这一对的开洞核查结果为“洞口已建且已关联”。只建洞不够 | The opening check for this pair reports “opening modelled and cross-referenced”. Modelling the opening alone is not enough |
+| `cross-model-alignment-not-confirmed.action` | 这不是已知的错位。还没有人按项目接受的方法确认两侧模型对齐；需要针对所列模型版本做一次并记录 | This is not a known misalignment. No one has yet confirmed, by the method the project accepts, that the two models are aligned; do this once against the model versions listed, and record it |
+| `cross-model-alignment-not-confirmed.recheck` | 对齐确认已做，结果为已对齐，写明模型版本 | The alignment confirmation has been done and reports the models aligned, naming the model versions |
+| `mep-element-not-spatially-assigned.action` | 在源模型里把构件放到正确的标高和空间上，重新导出 | In the source model, place the element on its correct level and in its correct space, then re-export |
+| `mep-element-not-spatially-assigned.recheck` | 重新发布的模型上，这个构件的空间归属要求通过 | On the reissued model, this element passes its spatial-assignment requirement |
+| `cross-model-misalignment.action` | 重新获取项目共用的坐标基准，按共用原点重新导出（不靠移动几何），再按项目接受的方法重做对齐确认 | Re-acquire the project's shared coordinate datum, re-export against the shared origin (not by moving geometry), then redo the alignment confirmation by the method the project accepts |
+| `cross-model-misalignment.recheck` | 针对新版本重做对齐确认，结果为已对齐 | The alignment confirmation is redone against the new versions and reports the models aligned |
+| `opening-not-verifiably-linked.action` | 在接收方模型里，给洞口补上指回穿过它的那个构件的关联。一个洞口供几个构件穿过，每个各要一条 | In the receiving side's model, add to the opening a cross-reference back to the element that passes through it. Where several elements pass through one opening, each needs its own |
+| `opening-not-verifiably-linked.recheck` | 这一对的关联核查结果为已关联 | The cross-reference check for this pair reports the opening cross-referenced |
+| `opening-status-not-determined.action` | 这不是已知的缺洞。开洞情况的评审没完成：洞口是否已建、是否已关联 | This is not a known missing opening. The review of the opening is not complete: whether it is modelled, and whether it is cross-referenced |
+| `opening-status-not-determined.recheck` | 核查给出明确结果（已关联／已建未关联／未建） | The check gives a definite result (cross-referenced / modelled but not cross-referenced / not modelled) |
 
 **`ACTION_GROUPS`**
 
@@ -491,7 +517,7 @@
 | `priorCondition` | 复检前留下的结束条件：{text}。 | The exit condition left before the recheck: {text} |
 | `end` | 。 | . |
 | `conditionNote` | 这里只说复检前留下的结束条件被证明到了什么程度，与现在的结论分开读：结论变了，不等于原条件已满足。 | This says only how far the exit condition left before the recheck has been shown to be reached; read it apart from the conclusion now. A changed conclusion does not mean the original condition is met. |
-| `originalSummary` | 规则原文（英文）与记录原码 | The rule's own words and record codes |
+| `originalSummary` | 来源原文（英文）与记录原码：供追溯，不是操作指令 | Source wording and record codes: for tracing, not an instruction |
 | `conditionBasis` | condition_basis（原文） | condition_basis (as written) |
 | `evidenceHeading` | 五、复检前的证据 | 5. The evidence before the recheck |
 | `evidenceCount.one` | 和这一项放在一起评估的旧证据共 {count} 条 | {count} piece of old evidence was assessed together with this item |
@@ -580,7 +606,7 @@
 | `PV-001.passDoesNotProve[5]` | 任何工作可以开始，包括吊顶和开洞工作。 | That any work can start, including ceiling and opening work. |
 | `PV-001.action.what` | 回到 Revit 源模型，让这个风口导出后的预定义类型是 DIFFUSER、GRILLE、LOUVRE、REGISTER 之一；重新导出 IFC，再检查。NOTDEFINED 等于什么都没说。 | Go back to the Revit source model and make this air terminal's exported predefined type one of DIFFUSER, GRILLE, LOUVRE and REGISTER; re-export the IFC and check again. NOTDEFINED states nothing. |
 | `PV-001.action.reads` | 检查器先看导出的 IFC 里它的类型对象：类型上是四个值之一，比较类型上的值；类型声明 USERDEFINED，比较它的自由文本；类型什么也没说时，才读构件实例本身的值。这说的是检查器读 IFC 的顺序，不是 Revit 里该改的位置。 | The checker looks first at its type object in the exported IFC: if the type carries one of the four, the type's value is compared; if the type declares USERDEFINED, its free text is compared; only when the type says nothing is the element instance's own value read. This is the order in which the checker reads the IFC, not where to make the change in Revit. |
-| `PV-001.action.revise` | 这个值在 Revit 里从哪里写出（类型还是实例、哪个参数、哪项导出设置），返回数据没有记录，本页不指定。改之前先在 Revit 里确认；如果决定在类型上改，会作用于这个类型的全部实例。 | Where this value is written from in Revit (type or instance, which parameter, which export setting), the returned data does not record, and this page does not say. Confirm it in Revit before changing anything; if you decide to change it on the type, the change applies to every instance of that type. |
+| `PV-001.action.revise` | 这个值在 Revit 里从哪里写出（类型还是实例、哪个参数、哪项导出设置），返回数据没有记录，本页不指定。改之前先在 Revit 里确认；如果决定在类型上改，会作用于这个类型的全部实例。一个 Revit 类型可能对应不止一个 IFC 类型对象，实例数按 Revit 类型算。 | Where this value is written from in Revit (type or instance, which parameter, which export setting), the returned data does not record, and this page does not say. Confirm it in Revit before changing anything; if you decide to change it on the type, the change applies to every instance of that type. One Revit type may correspond to more than one IFC type object; count instances by the Revit type. |
 | `PV-001.action.undecided` | 取哪一个值、由谁决定和操作，返回数据都没有提供。规则只要求四个值之一，不判断哪一个对。 | Which value to use, and who decides and makes the change, the returned data does not say. The rule asks only for one of the four values and does not judge which is right. |
 | `PV-001.recheck` | 用同一规则集版本、同一组模型和同一导出设置重新检查，看这个构件在这条要求下的结果。 | Check again with the same rule set version, the same set of models and the same export settings, and look at this element's result under this requirement. |
 | `PV-001.gaps[0]` | 风口所在的墙上的洞口：需要对照风口所在的模型和这面墙所属的模型做协调评审判定；这项检查不比较两个模型的构件。 | The opening in the wall the air terminal sits in: a coordination-review determination is needed, made against the air terminal's model and the model of that wall; this check does not compare elements across the two models. |
@@ -610,7 +636,7 @@
 
 | 键 | 中文 | English |
 | --- | --- | --- |
-| `note` | IFC Tag 是导出时写进 IFC 的标记；Revit 导出的通常是构件的 ElementId。核对：在 Revit 里用“按 ID 选择”选中这个 ID，看选中对象的名称和类别是否与本页相同；相同再按它处理，不同就不要按这个 Tag 去改，改用 GlobalId 在 IFC 里定位。 | The IFC Tag is a marker written into the IFC at export; what Revit writes is usually the element's ElementId. To check: in Revit, use "Select by ID" with this ID and see whether the selected object's name and class match this page; if they do, work from it; if they do not, do not change anything by this Tag, and find the element in the IFC by its GlobalId instead. |
+| `note` | IFC Tag 是导出时写进 IFC 的标记；Revit 导出的通常是构件的 ElementId。核对：在 Revit 里用“按 ID 选择”选中这个 ID，看选中对象的名称和类别是否与本页相同；相同再按它处理，不同就不要按这个 Tag 去改：用 GlobalId 确认是哪个对象，再回到 Revit 源模型修改。 | The IFC Tag is a marker written into the IFC at export; what Revit writes is usually the element's ElementId. To check: in Revit, use "Select by ID" with this ID and see whether the selected object's name and class match this page; if they do, work from it; if they do not, do not change anything by this Tag: use the GlobalId to confirm which object it is, then make the change in the Revit source model. |
 | `byIdNotStorey` | 在 Revit 里按 ID 找对象，不要按楼层找：本页的楼层取自 IFC 文件里的空间归属，不一定能和 Revit 明细表里的标高对上。 | Find the object in Revit by its ID, not by storey: the storey on this page is the IFC file's spatial assignment, which may not match the levels in a Revit schedule. |
 | `storeyFromIfc` | 本页的楼层取自 IFC 文件里的空间归属，不一定能和 Revit 明细表里的标高对上，不要只按楼层去找。 | The storey on this page is the IFC file's spatial assignment, which may not match the levels in a Revit schedule; do not look for the object by storey alone. |
 | `sources.model-file` | 模型文件里这个构件没有写 Tag。 | The model file has no Tag for this element. |
@@ -831,12 +857,11 @@
 | 键 | 中文 | English |
 | --- | --- | --- |
 | `what` | 要做什么 | What to do |
-| `whatOriginal` | 要做什么（规则原文，英文） | What to do (the rule's own words) |
 | `team` | 处理团队 | Handling team |
 | `consequence` | 对这项工作的后果 | What it means for this work |
 | `recheck` | 完成后拿什么复检 | What a recheck must show |
-| `recheckOriginal` | 完成后拿什么复检（规则原文，英文） | What a recheck must show (the rule's own words) |
-| `original` | 规则原文（英文） | The rule's own words |
+| `noSentence` | 本界面没有为这条记录所用的版本写要做什么。记录所带的来源原文在下面的折叠里，它不是操作指令。 | This interface has written no action for the version this record uses. The source wording the record carries is in the fold below; it is not an instruction. |
+| `original` | 来源原文（英文，记录所带）：供追溯，不是操作指令 | Source wording (as the record carries it): for tracing, not an instruction |
 
 **`APP`**
 
