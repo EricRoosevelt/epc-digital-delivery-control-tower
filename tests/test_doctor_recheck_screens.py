@@ -629,7 +629,7 @@ class FirstCheckTests(_Modelled):
             },
         )
 
-    def test_the_chinese_sentences_hold_for_one_pack_version_and_english_otherwise(self):
+    def test_the_sentences_hold_for_one_pack_version_and_say_so_otherwise(self):
         screens = (STATIC / "screens.js").read_text(encoding="utf-8")
         guard = screens[screens.index("function actionSentences(") :]
         guard = guard[: guard.index("\n}\n")]
@@ -642,19 +642,16 @@ class FirstCheckTests(_Modelled):
         ):
             with self.subTest(guard=said):
                 self.assertIn(said, guard)
-        # Whether there are sentences is decided before the language is: in
-        # English the record's own route words fill them, read as they came.
-        self.assertLess(
-            guard.index("if (!written) return null;"),
-            guard.index('ACTION_TEXT.source === "record"'),
-        )
-        self.assertIn('field(value, key,', guard)
+        # Under any other version there is no sentence, and the page says so;
+        # the record's route words are never put in its place.
         block = screens[screens.index("function actionBlock(") :]
         block = block[: block.index("\n}\n")]
         self.assertIn(
-            'h("span", { class: "action" }, sentences.action) : original("next_action")', block
+            'sentences ? h("span", { class: "action" }, sentences.action)'
+            " : missing(ACTION.noSentence)",
+            block,
         )
-        self.assertIn('sentences ? sentences.recheck : original("recheck_condition")', block)
+        self.assertIn("sentences ? [ACTION.recheck, sentences.recheck] : null", block)
         self.assertEqual(
             self.record["request"]["pack_version"], self.vocabulary["actionPack"]["version"]
         )

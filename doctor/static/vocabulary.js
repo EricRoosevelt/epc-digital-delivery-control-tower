@@ -550,14 +550,14 @@ export const BASIS_WORDS = {
   },
 };
 
-// The Chinese action and recheck sentences, one pair per problem type. They
-// were written for one Pack at one version and hold for nothing else: a record
-// under any other Pack id or version is shown the Pack's own English instead.
+// The action and recheck sentences, one pair per problem type: the BIM
+// reviewer's table and, for the uncovered asset identity, the product's ruling.
+// They were written for one Pack at one version and hold for nothing else: a
+// record under any other Pack id or version has no sentence, says so, and keeps
+// the Pack's own words in the source fold. vocabulary-en.js holds the same
+// obligations in English; the record's route words are never shown as what to do.
 // No sentence names a Revit parameter or an export mapping — the Pack says
 // those are project-specific and does not name them either.
-// Where the action and recheck wording on a page comes from: here, the Chinese
-// sentences below, for the one Pack version they were written for.
-export const ACTION_TEXT = { source: "gloss" };
 
 export const ACTION_PACK = { id: "interdisciplinary-coordination-readiness", version: "0.1.0" };
 
@@ -990,7 +990,7 @@ export const TAG_WORDS = {
   note:
     "IFC Tag 是导出时写进 IFC 的标记；Revit 导出的通常是构件的 ElementId。" +
     "核对：在 Revit 里用“按 ID 选择”选中这个 ID，看选中对象的名称和类别是否与本页相同；" +
-    "相同再按它处理，不同就不要按这个 Tag 去改，改用 GlobalId 在 IFC 里定位。",
+    "相同再按它处理，不同就不要按这个 Tag 去改：用 GlobalId 确认是哪个对象，再回到 Revit 源模型修改。",
   // Beside an element with a Tag: find it by that ID, not by storey.
   byIdNotStorey:
     "在 Revit 里按 ID 找对象，不要按楼层找：本页的楼层取自 IFC 文件里的空间归属，" +
@@ -1068,7 +1068,8 @@ export const RULE_NOTES = {
         "类型什么也没说时，才读构件实例本身的值。这说的是检查器读 IFC 的顺序，不是 Revit 里该改的位置。",
       revise:
         "这个值在 Revit 里从哪里写出（类型还是实例、哪个参数、哪项导出设置），返回数据没有记录，本页不指定。" +
-        "改之前先在 Revit 里确认；如果决定在类型上改，会作用于这个类型的全部实例。",
+        "改之前先在 Revit 里确认；如果决定在类型上改，会作用于这个类型的全部实例。" +
+        "一个 Revit 类型可能对应不止一个 IFC 类型对象，实例数按 Revit 类型算。",
       undecided:
         "取哪一个值、由谁决定和操作，返回数据都没有提供。规则只要求四个值之一，不判断哪一个对。",
     },
@@ -1332,12 +1333,11 @@ export const ITEM = {
 // What to do, who handles it, what it costs the work, what a recheck must show.
 export const ACTION = {
   what: "要做什么",
-  whatOriginal: "要做什么（规则原文，英文）",
   team: "处理团队",
   consequence: "对这项工作的后果",
   recheck: "完成后拿什么复检",
-  recheckOriginal: "完成后拿什么复检（规则原文，英文）",
-  original: "规则原文（英文）",
+  noSentence: "本界面没有为这条记录所用的版本写要做什么。记录所带的来源原文在下面的折叠里，它不是操作指令。",
+  original: "来源原文（英文，记录所带）：供追溯，不是操作指令",
 };
 
 // One element, as the record describes it.
@@ -1443,7 +1443,7 @@ export const RECHECK_ITEM = {
   priorCondition: "复检前留下的结束条件：{text}。",
   end: "。",
   conditionNote: "这里只说复检前留下的结束条件被证明到了什么程度，与现在的结论分开读：结论变了，不等于原条件已满足。",
-  originalSummary: "规则原文（英文）与记录原码",
+  originalSummary: "来源原文（英文）与记录原码：供追溯，不是操作指令",
   conditionBasis: "condition_basis（原文）",
   evidenceHeading: "五、复检前的证据",
   evidenceCount: { one: "和这一项放在一起评估的旧证据共 {count} 条", other: "和这一项放在一起评估的旧证据共 {count} 条" },

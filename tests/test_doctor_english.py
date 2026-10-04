@@ -8,8 +8,10 @@ What these tests hold, in the order the user requirement states it:
   the Chinese one, and no Chinese in it;
 * where the Pack, the record or this repository's product documents already
   say it in English, the English shown is that text — quoted, not a
-  translation of the Chinese gloss; and what the record carries is read from
-  the record, with no copy in the static files;
+  translation of the Chinese gloss — except what to do and what a recheck must
+  show: those are reviewed sentences, one obligation per problem type in both
+  languages, and the record's route words stay a labelled source, never the
+  instruction;
 * a screen drawn in English uses only tables that have English, and writes no
   sentence of its own; any other screen is not drawn in English but says that
   it has not been translated yet;
@@ -79,12 +81,15 @@ EMPTY_IN_ENGLISH = {
     "CITATION_GLOSSES",
 }
 
-#: Tables a translated screen may touch without English, and why.
-WITHOUT_ENGLISH = {
-    # Read only to decide whether action sentences exist for this Pack
-    # version; in English their words are the record's own route text.
-    "ACTIONS",
-}
+#: Tables a translated screen may touch without English, and why. None now:
+#: the action sentences have English, so the two languages say the same thing.
+WITHOUT_ENGLISH: set[str] = set()
+
+#: Words of the record and the Pack that are not a user's words. None may be
+#: in a sentence that tells someone what to do.
+INTERNAL_WORDS = re.compile(
+    r"Overlay|requirement_key|\bPack\b|\bR-0\d\d|IFCREL|binding|Not a model defect"
+)
 
 #: Functions of words.js that word their answer in the chosen language.
 IN_LANGUAGE = {"citationProvenance", "disposition", "conditionState", "carryOverReason"}
@@ -314,19 +319,92 @@ class OriginalTests(_Loaded):
             {word: word for word in self.registry["VERDICT_LABELS"]["en"]},
         )
 
-    def test_english_reads_the_records_own_action_words(self):
-        """No copy of the Pack's next_action in a static file: the record carries it."""
 
-        self.assertNotIn("ACTIONS", _exports(STATIC / "vocabulary-en.js"))
-        self.assertEqual(self.registry["ACTION_TEXT"]["en"], {"source": "record"})
-        self.assertEqual(self.registry["ACTION_TEXT"]["zh"], {"source": "gloss"})
+
+class ActionTests(_Loaded):
+    """What to do and what a recheck must show: one obligation, two languages.
+
+    The Chinese sentences are the BIM reviewer's table and, for the uncovered
+    asset identity, the product's ruling. The Pack's route words say something
+    else for some problem types — for the uncovered chimney, re-run the
+    evaluation where the ruling says first confirm whether an asset identity is
+    required at all — so English shows the reviewed sentence too, and the route
+    words stay in the source fold.
+    """
+
+    def _pack_routes(self) -> dict[str, dict]:
+        pack = tomllib.loads(PACK.read_text(encoding="utf-8"))
+        return {route["resolution_kind"]: route for route in pack["resolution_routes"]}
+
+    def test_every_problem_type_has_a_sentence_pair_in_both_languages(self):
+        zh = self.registry["ACTIONS"]["zh"]
+        en = self.registry["ACTIONS"]["en"]
+        self.assertIsNotNone(en)
+        self.assertEqual(set(zh), set(self._pack_routes()))
+        self.assertEqual(set(en), set(zh))
+        for kind in zh:
+            for part in ("action", "recheck"):
+                with self.subTest(kind=kind, part=part):
+                    self.assertTrue(zh[kind][part].strip())
+                    self.assertTrue(en[kind][part].strip())
+        self.assertNotIn("ACTION_TEXT", self.registry)
+
+    def test_the_english_action_is_not_the_records_route_words(self):
+        routes = self._pack_routes()
+        for kind, pair in self.registry["ACTIONS"]["en"].items():
+            for part, field in (("action", "next_action"), ("recheck", "recheck_condition")):
+                with self.subTest(kind=kind, part=part):
+                    self.assertNotEqual(pair[part], routes[kind][field])
+                    self.assertNotIn(routes[kind][field][:40], pair[part])
+                    self.assertIsNone(INTERNAL_WORDS.search(pair[part]), pair[part])
+
+    def test_the_uncovered_asset_identity_asks_first_whether_it_is_required(self):
+        """The case the product owner walked: confirm the obligation, do not re-run."""
+
+        sentence = self.registry["ACTIONS"]["en"]["asset-identity-not-evaluated"]["action"]
+        self.assertIn("First confirm whether the project's convention requires", sentence)
+        self.assertIn("this does not mean it must have one", sentence)
+        self.assertNotIn("re-run", sentence)
+
+    def test_the_screens_read_the_route_words_only_into_the_source_fold(self):
         screens = (STATIC / "screens.js").read_text(encoding="utf-8")
-        sentences = _functions(screens)["actionSentences"]
-        self.assertIn('original("next_action")', sentences)
-        self.assertIn('original("recheck_condition")', sentences)
-        self.assertIn(
-            "actionSentences(item.kind, request, item.subscope)", _functions(screens)["first"]
+        found = _functions(screens)
+        sentences = _code(found["actionSentences"])
+        for word in ("route", "next_action", "recheck_condition", "LANG"):
+            with self.subTest(word=word):
+                self.assertNotIn(word, sentences)
+        self.assertIn("return ACTIONS[kind];", sentences)
+        # The item pages: the route words appear below the fold's summary only.
+        block = _code(found["actionBlock"])
+        fold = block.index("h(\"summary\", {}, ACTION.original)")
+        self.assertNotIn('original("next_action")', block[:fold])
+        self.assertNotIn('original("recheck_condition")', block[:fold])
+        self.assertIn('["next_action", original("next_action")]', block[fold:])
+        self.assertIn("missing(ACTION.noSentence)", block[:fold])
+        item = _code(found["recheckItem"])
+        summary = item.index("RECHECK_ITEM.originalSummary")
+        for match in re.finditer("prior_recheck_condition", item):
+            with self.subTest(at=match.start()):
+                self.assertGreater(match.start(), summary)
+        # Of the screens, only these read a route's words; `member` is drawn in
+        # Chinese only.
+        readers = {
+            name
+            for name, body in found.items()
+            if re.search(r'"(?:prior_)?(?:next_action|recheck_condition)"', _code(body))
+        }
+        self.assertEqual(readers, {"actionBlock", "recheckItem", "member"})
+
+    def test_the_source_fold_says_it_is_not_an_instruction(self):
+        labels = (
+            ("ACTION", "original"),
+            ("ACTION", "noSentence"),
+            ("RECHECK_ITEM", "originalSummary"),
         )
+        for language, words in (("en", "not an instruction"), ("zh", "不是操作指令")):
+            for table, key in labels:
+                with self.subTest(language=language, table=table, key=key):
+                    self.assertIn(words, self.registry[table][language][key])
 
 
 class ScreenTests(unittest.TestCase):
@@ -419,8 +497,6 @@ class RecordTests(_Loaded):
         record = RECORD.read_text(encoding="utf-8")
         self.assertIn("全部未经 BIM 复核", record)
         for name, pair in self.english.items():
-            if name == "ACTION_TEXT":
-                continue
             for key, text in _flat(pair["en"]):
                 with self.subTest(table=name, key=key):
                     self.assertIn(text.replace("|", "\\|"), record)
