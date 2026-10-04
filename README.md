@@ -30,8 +30,8 @@ changed, and what is still open.
 
 BIM Doctor lays those answers out for a check of IFC models against
 project-authored requirements. It is careful about what it does not say. It gives
-no overall compliance or constructability conclusion, an "Unknown" result is not a
-clean bill, and a change between two runs is never called a fix.
+no overall compliance or constructability conclusion, a result that "cannot be
+decided" is not a clean bill, and a change between two runs is never called a fix.
 Underneath is the deterministic validation framework, `epc-ct`, described
 [below](#two-layers-and-which-numbers-belong-to-which).
 
@@ -42,61 +42,51 @@ and is not a release or a public interface. By default it shows a simulated
 example and the bundled sample project; it cannot import your own models through
 the interface.
 
-**Language.** The interface is in Chinese or English, and every screen has a
-switch at the top. You can also open any address with `?lang=en` or `?lang=zh`;
-without either, the browser's earlier choice is used, then Chinese. The main path
-(home, example catalogue, first-check result, one item and a recheck) and the
-workspace screens (result, detail, comparison, refusal and fault) are available in
-English. Two kinds of page are not: the result of the check attempt on the bundled
-project, and the record, activity and member pages. In English they say "This page
-has not been translated yet" and offer the same page in Chinese. **The English
-wording has not been reviewed by a BIM domain specialist yet**; read it as the
-interface's current text, not as a checked one.
+**Language.** The interface opens in Chinese, and the Chinese interface is what the
+screenshots below show and what this README recommends you try. An English wording
+exists as a development trial and **has not been accepted**: it has not been
+reviewed by a BIM domain specialist, and one next-step sentence on the example's
+first-check path is known to differ in meaning from the Chinese and is being
+corrected. Until it has been reviewed and corrected, do not rely on it, and do not
+take it as a demonstration of the product. If you want to see it anyway, open any
+address with `?lang=en`, or use the switch at the top of every screen. In English
+the result of the check attempt on the bundled project, and the record, activity
+and member pages, say "This page has not been translated yet".
 
-![BIM Doctor home, in English: two entries, and a strip saying you cannot import your own Revit model yet and it gives no overall compliance or ready-to-build conclusion](docs/evidence/doctor-first-minute-2026-10-03/en-01-home.png)
+![BIM Doctor home, Chinese interface: two entries, and a strip saying you cannot import your own Revit model and it gives no overall compliance conclusion](docs/evidence/doctor-first-minute-2026-10-03/zh-01-home.png)
 
-*Home.* Two entries: **Choose a simulated example**, and **See this check attempt**
-(the check attempt on the bundled sample project, which did not start an
-assessment and says why). The strip and the list at the foot say what you cannot
-do yet: import, choose or change a model on the page, including your own Revit or
-IFC model; give an overall compliance, ready-to-build or "ready to hand over"
+*Home.* Two entries: **选择模拟示例** (choose a simulated example) and **查看这次检查尝试**
+(view the check attempt on the bundled sample project, which did not start an
+assessment and says why). The strip and the list at the foot say what it cannot do
+yet: import, choose or change a model on the page, including your own Revit or IFC
+model; give an overall compliance, constructability or "can be delivered"
 conclusion; write back to a model, upload to the cloud, or open an element in
 Revit.
 
-![First-check result of the simulated example, in English: 13 items in all, 8 to deal with, grouped by handling team](docs/evidence/doctor-first-minute-2026-10-03/en-02-first-check-result.png)
+![First-check result of the simulated example, Chinese interface: 13 items, 8 to handle, grouped by handling team](docs/evidence/doctor-first-minute-2026-10-03/zh-02-first-check-result.png)
 
-*First-check result of the simulated example.* 13 items in all, 8 to deal with:
-4 are **Blocked** and 4 are **Unknown**, involving 6 different elements. An item is
-the conclusion for one element, or a pair assessed together, on one piece of the
-receiving side's work, so the number of items is not a number of defects.
-"Unknown" means whether the work can start cannot be decided; the page says it
-does not mean the element has no problem. Items are grouped by handling team.
+*First-check result of the simulated example.* 13 items, 8 of which need handling:
+4 **受阻** (blocked) and 4 **无法判断** (cannot be decided), involving 6 different
+elements. An item is the conclusion for one element, or a pair assessed together,
+on one piece of the receiving side's work, so the number of items is not a number
+of defects. "Cannot be decided" means whether the work can start cannot be decided;
+the page says it does not mean the element has no problem. Items are grouped by
+handling team.
 
-![One item, in English: an air terminal named "chimney cover" is Blocked because the project's required asset identity is missing](docs/evidence/doctor-first-minute-2026-10-03/en-03-one-item.png)
+![One item, Chinese interface: an air terminal named "chimney cover", blocked because the project's required asset identity is missing](docs/evidence/doctor-first-minute-2026-10-03/zh-03-one-item.png)
 
 *One item.* An air terminal named "chimney cover" in the `hvac` sample model is
-**Blocked** for "Room data sheets and equipment schedules": the project's
-required asset identity is missing (rule R-005B). Under the conclusion the page
-gives what to do, the handling team, what it means for the work ("This work cannot
-start") and what a recheck must show. The element's class, storey, model and
-GlobalId, and exactly which requirement is not met, follow further down. The
-failing check is a real run of the shipped rule; the handling team is the
-example's own setting and is marked as such. R-005 is a project-specific
-assumption, not a defect of the public sample.
-
-The same three screens in Chinese (**受阻** is Blocked, **无法判断** is Unknown,
-**模拟示例** is a simulated example):
-
-![BIM Doctor home, in Chinese](docs/evidence/doctor-first-minute-2026-10-03/zh-01-home.png)
-
-![First-check result, in Chinese](docs/evidence/doctor-first-minute-2026-10-03/zh-02-first-check-result.png)
-
-![One item, in Chinese](docs/evidence/doctor-first-minute-2026-10-03/zh-03-one-item.png)
+**受阻** (blocked) for the work 房间数据表与设备明细表 (room data sheets and equipment
+schedules): the project's required asset identity is missing (rule R-005B). Under
+the conclusion the page gives what to do, the handling team, what it means for the
+work (the work cannot start) and what a recheck must show. The element's class,
+storey, model and GlobalId, and exactly which requirement is not met, follow
+further down. The failing check is a real run of the shipped rule; the handling
+team is the example's own setting and is marked as such. R-005 is a
+project-specific assumption, not a defect of the public sample.
 
 The screenshots use the bundled public sample only and were captured at commit
 `872f76f`; see [their provenance](docs/evidence/doctor-first-minute-2026-10-03/README.md).
-The two languages are two wordings of the same screens, so a sentence can differ
-in more than language.
 
 ## Try it
 
@@ -116,18 +106,18 @@ On macOS or Linux, create and activate the environment with
 `python3 -m venv .venv` and `source .venv/bin/activate`; the other lines are the
 same.
 
-1. Open <http://127.0.0.1:8765/?lang=en>.
-2. Click **Choose a simulated example**, then **Open this example's result** under
-   Step 1, "A first check: the model was handed over, and these items were found".
-3. Under any item, click **See this item: the element, what to do, who deals with
-   it, what a recheck must show**.
-4. Click **← Back to the examples**, then open **Open this example's result**
-   under Step 2, "The models did not change, but a handover conclusion did", to
-   see the same record after a recheck.
+1. Open <http://127.0.0.1:8765/>. The interface opens in Chinese.
+2. Click **选择模拟示例** (choose a simulated example), then **打开这个示例的结果**
+   (open this example's result) under step one, the first check.
+3. Under any item, click **查看这一项：具体对象、要做什么、由谁处理、拿什么复检**
+   (view this item: the element, what to do, who handles it, what a recheck must
+   show).
+4. Back in the catalogue, open step two, **模型未改，但交接判断发生变化** (models
+   unchanged, but the handover judgement changed), to see the same record after a
+   recheck.
 
-In Chinese the same path is **选择模拟示例**, **打开这个示例的结果**, **查看这一项：
-具体对象、要做什么、由谁处理、拿什么复检**, and step two, **模型未改，但交接判断发生变化**.
-Open <http://127.0.0.1:8765/?lang=zh> or press **中文** at the top of any screen.
+The English interface (`?lang=en`) is an unaccepted development trial and is not
+part of this walk; see *Language* above.
 
 Stop the server with Ctrl+C; `--port` changes the port. The first result you open
 in a session runs the shipped rules on the sample models once, in a scratch copy
@@ -152,8 +142,8 @@ never read as an accepted one.
   ([below](#purpose-packs-and-project-overlays)). A library: there is no
   `epc-ct` command for it.
 * The BIM Doctor preview software shown above: a local server and screens for the
-  first check, one item and a recheck, in Chinese and English (the English not yet
-  reviewed by a BIM domain specialist).
+  first check, one item and a recheck, in Chinese. An English wording exists as an
+  unaccepted development trial.
 * The frozen Power BI / Speckle showcase (below, under *Other entry points*).
 
 **2. Shown only in simulation**
@@ -180,8 +170,8 @@ never read as an accepted one.
   assessment, names no team and never says anything was fixed. It is built on the
   isolated `product-validation` rule set 1.0 ([`rules/product-validation/`](rules/product-validation/README.md)),
   and the interface is described in [`doctor/README.md`](doctor/README.md). Its
-  screens are available in English and in Chinese; the English has not yet been
-  reviewed by a BIM domain specialist.
+  screens are in Chinese; an English wording exists as an unaccepted development
+  trial.
   It has been exercised privately on one real IFC model under controlled
   conditions; that model is not in this repository. It has had one round of
   BIM-domain review. It is not yet accepted as a product feature: a
