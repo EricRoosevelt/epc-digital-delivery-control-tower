@@ -323,6 +323,15 @@ a.run {
 .open-items { border-width: 2px; }
 .element-briefs { margin: 2px 0 6px; font-size: 0.92rem; }
 .recheck-item .member-name { font-size: 1.05rem; }
+/* A first-check card's fold: the element's particulars and the full action. */
+.first-card .card-problem { margin: 4px 0; }
+.first-card .card-problem .label { color: var(--muted); }
+/* The fold's summary and the link to the item share a row; an open fold takes
+   the whole row and the link moves under it. */
+.first-card .card-foot { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 16px; margin-top: 6px; }
+.first-card .card-details[open] { flex-basis: 100%; }
+.first-card .card-details > summary { color: var(--muted); }
+.first-card .card-details[open] > summary { margin-bottom: 4px; }
 .next-step { border-width: 2px; }
 .fault pre { margin-top: 4px; }
 

@@ -1094,6 +1094,8 @@ function member(state, activityIndex, ordinal, memberIndex) {
 // decided" is not a clean bill, and that a team is an entry in the record.
 
 let lastFirstItem = null;
+// The first-check cards whose fold is open, for one run: `{ runId, keys }`.
+let openFirstCards = null;
 
 /** A verdict as a manager says it. Never rendered alone: see `workVerdict`. */
 function verdictLabel(value) {
@@ -1420,33 +1422,61 @@ function first(state) {
     ),
   );
 
-  const card = (item, said) =>
-    h(
+  // A card shows, without opening anything: the element, the work and its
+  // verdict, where the verdict's evidence came from (simulated or not), the
+  // notes that change how it reads, the problem in a few words, and the way to
+  // the item. The element's particulars and the full action sentence are one
+  // fold away; the item's own page still puts what to do first. Which folds are
+  // open survives a visit to an item and back.
+  const opened = openFirstCards && openFirstCards.runId === state.runId ? openFirstCards.keys : new Set();
+  openFirstCards = { runId: state.runId, keys: opened };
+  const card = (item, said) => {
+    const sentences = actionSentences(item.kind, request);
+    const key = `${item.activityIndex}/${item.ordinal}/${item.memberIndex}`;
+    return h(
       "li",
-      { class: "recheck-item" },
+      { class: "recheck-item first-card" },
       h("div", { class: "kicker" }, countWord(item.keys)),
       h("div", { class: "member-name" }, itemTitle(state, item.keys)),
-      h(
-        "ul",
-        { class: "plain element-briefs" },
-        item.keys.map((key) => elementBrief(state, key, item.keys.length > 1)),
-      ),
       h("p", { class: "conclusion" }, workVerdict(item.activity, item.verdict)),
       basisLine(item.basis),
       besideVerdict(item.activity, item.verdict, said),
-      // The action sentence where one was written for this problem type; the
-      // problem's name otherwise. The team's table above names the problem.
-      definitions([
-        actionSentences(item.kind, request)
-          ? [FIRST.action, actionSentences(item.kind, request).action]
-          : [FIRST.problem, item.kind === undefined ? missing(NOT_CARRIED) : problemName(item.kind)],
-      ]),
       h(
-        "a",
-        { class: "run", href: itemHref(item), "data-return-focus": here(item) ? true : null },
-        FIRST.openItem,
+        "p",
+        { class: "card-problem" },
+        h("span", { class: "label" }, FIRST.problem),
+        COMMON.colon,
+        item.kind === undefined ? missing(NOT_CARRIED) : problemName(item.kind),
+      ),
+      h(
+        "div",
+        { class: "card-foot" },
+        h(
+          "details",
+          {
+            class: "card-details",
+            open: opened.has(key),
+            ontoggle: (event) => {
+              if (event.target.open) opened.add(key);
+              else opened.delete(key);
+            },
+          },
+          h("summary", {}, sentences ? FIRST.cardDetails : FIRST.cardElements),
+          h(
+            "ul",
+            { class: "plain element-briefs" },
+            item.keys.map((element) => elementBrief(state, element, item.keys.length > 1)),
+          ),
+          sentences ? definitions([[FIRST.action, sentences.action]]) : null,
+        ),
+        h(
+          "a",
+          { class: "run", href: itemHref(item), "data-return-focus": here(item) ? true : null },
+          FIRST.openCard,
+        ),
       ),
     );
+  };
 
   content.append(
     h(

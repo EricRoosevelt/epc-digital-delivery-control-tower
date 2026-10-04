@@ -1244,6 +1244,13 @@ export const FIRST = {
   action: "要做什么",
   problem: "问题",
   openItem: "查看这一项：具体对象、要做什么、由谁处理、拿什么复检",
+  // The fold on a first-check card. Closed by default; what it holds is also on
+  // the item's own page, where what to do comes first.
+  cardDetails: "构件信息和要做什么",
+  cardElements: "构件信息",
+  // The card's link to the item. The long `openItem` above lists what the item
+  // page holds; on a first-check card that list would repeat on every card.
+  openCard: "查看这一项",
   openHeading: { one: "{label}，按处理团队（{count} 个事项）", other: "{label}，按处理团队（{count} 个事项）" },
   team: "处理团队 ",
   teamCount: { one: "：{count} 个事项", other: "：{count} 个事项" },
