@@ -135,8 +135,17 @@ code.ident, code {
 .gloss { color: var(--muted); }
 .gloss.unknown { color: var(--problem-ink); font-weight: 600; }
 
-dl.facts { display: grid; grid-template-columns: minmax(8rem, max-content) 1fr; gap: 4px 16px; margin: 8px 0; }
-dl.facts dt { color: var(--muted); }
+/* Labels on the left, values on the right — and the value gets the room. The
+   label column is at most 30% of the table and never wider than 14rem: a long
+   label wraps instead of squeezing a long value (a record's action text, say)
+   into a narrow column. Below 640px the label sits above its value. */
+dl.facts {
+  display: grid;
+  grid-template-columns: fit-content(min(30%, 14rem)) minmax(0, 1fr);
+  gap: 4px 16px;
+  margin: 8px 0;
+}
+dl.facts dt { color: var(--muted); overflow-wrap: anywhere; }
 dl.facts dd { margin: 0; overflow-wrap: anywhere; }
 @media (max-width: 640px) {
   dl.facts { grid-template-columns: 1fr; }
