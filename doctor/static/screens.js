@@ -38,6 +38,7 @@ import {
   ACTION_GROUPS,
   ACTION_PACK,
   ACTIONS,
+  APP,
   ACTIVITY_NAMES,
   BASIS_WORDS,
   BESIDE,
@@ -84,6 +85,7 @@ import {
   RECHECK_CANNOT,
   RECHECK_ITEM,
   RECHECK_LIMITS,
+  REFUSAL_PAGE,
   REFUSAL_REASONS,
   REFUSAL_SCOPE_NOTE,
   REFUSAL_UNGLOSSED,
@@ -2694,32 +2696,28 @@ function refusal(state) {
   const content = h(
     "div",
     { class: "refusal" },
-    h("h1", {}, "这次检查尝试没有开始评估"),
-    h(
-      "p",
-      { class: "lede" },
-      "系统在评估开始前拒绝了这次请求，并给出了原因。这是对请求条件的答复：不是程序故障，也不是检查结果。",
-    ),
-    section("为什么没有开始", h("p", { class: "headline" }, reason.title), h("p", {}, reason.text)),
+    h("h1", {}, REFUSAL_PAGE.title),
+    h("p", { class: "lede" }, REFUSAL_PAGE.lede),
+    section(REFUSAL_PAGE.whyHeading, h("p", { class: "headline" }, reason.title), h("p", {}, reason.text)),
     section(
-      "要让检查能够开始，需要什么",
+      REFUSAL_PAGE.needHeading,
       reason.action.map((text) => h("p", {}, text)),
       // Shown for every refusal, whatever its code. It is the sentence that
       // stops "one gate is cleared" being read as "the next run will succeed",
       // so it cannot live inside a condition that may not hold.
       h("p", { class: "callout" }, REFUSAL_SCOPE_NOTE),
-      note("本次只返回这一个原因，没有其他环节的诊断。"),
+      note(REFUSAL_PAGE.onlyOne),
     ),
-    note("没有任何事项的结论、零问题统计或完成百分比；被拒绝不是“无法判断”，也不是一次没有问题的检查。"),
+    note(REFUSAL_PAGE.noConclusion),
     h(
       "details",
       { class: "block evidence-details" },
-      h("summary", {}, "系统返回的原文（英文）与拒绝码"),
+      h("summary", {}, REFUSAL_PAGE.original),
       definitions([
-        ["检查尝试", runLabel(state.runId)],
-        ["拒绝码", copyable(envelope.refusal.code)],
+        [REFUSAL_PAGE.attempt, runLabel(state.runId)],
+        [REFUSAL_PAGE.code, copyable(envelope.refusal.code)],
       ]),
-      note("所提交的请求上下文尚未随拒绝返回。"),
+      note(REFUSAL_PAGE.contextMissing),
       h("pre", { class: "refusal-text" }, envelope.refusal.text),
     ),
   );
@@ -2743,7 +2741,7 @@ function refusal(state) {
     h(
       "p",
       { class: "actions" },
-      h("a", { class: "run", href: href(state.mode) }, "返回上一级"),
+      h("a", { class: "run", href: href(state.mode) }, APP.up),
       " ",
       h(
         "button",
@@ -2755,7 +2753,7 @@ function refusal(state) {
             go();
           },
         },
-        "返回首页",
+        CONTEXT.home,
       ),
     ),
   );

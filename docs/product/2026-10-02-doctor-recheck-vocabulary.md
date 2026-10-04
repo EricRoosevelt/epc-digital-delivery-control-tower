@@ -671,3 +671,17 @@ IFC 类别：`IfcAirTerminal` 风口、`IfcChimney` 烟囱、`IfcDuctSegment` �
 | `FIRST.openCard`（新增，首次结果卡片上打开单项的链接） | 查看这一项：具体对象、要做什么、由谁处理、拿什么复检（`FIRST.openItem`，复检页卡片仍用它） | 查看这一项 |
 
 卡片上原来显示“要做什么”的那一行，收起后改为显示“问题”（`FIRST.problem`，原有标签），行动句进折叠。长链接文字把单项页有什么在每张卡片上重复一遍，所以首次结果卡片改用短链接；`FIRST.openItem` 本身未改。没有删改任何已有句子。
+
+## 19. 2026-10-05 首页第二入口的英文（D2）
+
+依据：产品经理 [D1–D6 决定](2026-10-04-pm-six-decisions.md)的 D2 与技术总监的任务包。**中文页面一个字都没有改。**
+
+- 随附项目检查尝试的拒绝页（`#/real/real-refusal`）原来把 10 句话直接写在页面代码里，现在原样移进词表 `REFUSAL_PAGE`，中文逐字相同：
+  `title` 这次检查尝试没有开始评估；`lede` 系统在评估开始前拒绝了这次请求，并给出了原因。这是对请求条件的答复：不是程序故障，也不是检查结果。；
+  `whyHeading` 为什么没有开始；`needHeading` 要让检查能够开始，需要什么；`onlyOne` 本次只返回这一个原因，没有其他环节的诊断。；
+  `noConclusion` 没有任何事项的结论、零问题统计或完成百分比；被拒绝不是“无法判断”，也不是一次没有问题的检查。；
+  `original` 系统返回的原文（英文）与拒绝码；`attempt` 检查尝试；`code` 拒绝码；`contextMissing` 所提交的请求上下文尚未随拒绝返回。
+  页面上的“返回上一级”“返回首页”改取已有的 `APP.up`、`CONTEXT.home`，中文值与原来的字面量相同。
+- `REFUSAL_REASONS`、`REFUSAL_UNGLOSSED`、`REFUSAL_SCOPE_NOTE` 的中文不变，补上英文（见英文词表与 [中英义务对照](2026-10-05-doctor-second-entry-bilingual-parity.md)）。
+- `LANGUAGE.back`（新增）：返回上一页。只出现在英文的“这一页还没有翻译”页上；中文界面不会画出这一页。
+- `FIRST.notRevised` 的中文不变（该页尚未改版，仍是内部用语）；英文改为同时写明 “Chinese only”。

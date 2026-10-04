@@ -41,6 +41,7 @@ export const TRANSLATED = new Set([
   "first",
   "item",
   "recheck",
+  "refusal",
   "workspace/check",
   "workspace/finding",
   "workspace/compare",

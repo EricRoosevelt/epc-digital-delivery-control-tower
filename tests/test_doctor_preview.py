@@ -216,7 +216,8 @@ class StaticTreeTests(unittest.TestCase):
         # Rendered unconditionally: the refusal screen branches on nothing.
         self.assertIn("REFUSAL_SCOPE_NOTE", refusal)
         self.assertNotIn("if (", refusal)
-        self.assertIn("所提交的请求上下文尚未随拒绝返回", refusal)
+        self.assertIn("REFUSAL_PAGE.contextMissing", refusal)
+        self.assertIn("所提交的请求上下文尚未随拒绝返回", vocabulary)
         # No basis is reconstructed from anything the envelope happens to carry.
         # Comments may name those inputs; the code must not read them.
         rendered = "\n".join(
