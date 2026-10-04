@@ -45,13 +45,13 @@ the interface.
 **Language.** The interface is in Chinese or English, and every screen has a
 switch at the top. You can also open any address with `?lang=en` or `?lang=zh`;
 without either, the browser's earlier choice is used, then Chinese. The main path
-(home, example catalogue, first-check result, one item and a recheck) is available
-in English. Every other page says "This page has not been translated yet" in
-English and offers the same page in Chinese. Those pages include the result of
-the check attempt on the bundled project, the record, activity and member pages,
-and the workspace screens. **The English wording has not been reviewed by a BIM
-domain specialist yet**; read it as the interface's current text, not as a checked
-one.
+(home, example catalogue, first-check result, one item and a recheck) and the
+workspace screens (result, detail, comparison, refusal and fault) are available in
+English. Two kinds of page are not: the result of the check attempt on the bundled
+project, and the record, activity and member pages. In English they say "This page
+has not been translated yet" and offer the same page in Chinese. **The English
+wording has not been reviewed by a BIM domain specialist yet**; read it as the
+interface's current text, not as a checked one.
 
 ![BIM Doctor home, in English: two entries, and a strip saying you cannot import your own Revit model yet and it gives no overall compliance or ready-to-build conclusion](docs/evidence/doctor-first-minute-2026-10-03/en-01-home.png)
 
@@ -180,8 +180,8 @@ never read as an accepted one.
   assessment, names no team and never says anything was fixed. It is built on the
   isolated `product-validation` rule set 1.0 ([`rules/product-validation/`](rules/product-validation/README.md)),
   and the interface is described in [`doctor/README.md`](doctor/README.md). Its
-  screens are not translated: in English they say "This page has not been
-  translated yet" and offer the same page in Chinese.
+  screens are available in English and in Chinese; the English has not yet been
+  reviewed by a BIM domain specialist.
   It has been exercised privately on one real IFC model under controlled
   conditions; that model is not in this repository. It has had one round of
   BIM-domain review. It is not yet accepted as a product feature: a
