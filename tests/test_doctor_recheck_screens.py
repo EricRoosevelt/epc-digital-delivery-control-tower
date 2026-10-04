@@ -1328,7 +1328,8 @@ class ScreenStructureTests(unittest.TestCase):
         self.assertNotIn("refusal", fault.replace("refusal-text", ""))
         refusal = screens[screens.index("function refusal(") :]
         self.assertNotIn("FAULT_WORDS", refusal)
-        self.assertIn("不是程序故障", refusal)
+        self.assertIn("REFUSAL_PAGE.lede", refusal)
+        self.assertIn("不是程序故障，也不是检查结果", vocabulary)
         self.assertIn('"team-mapping-decision-basis-illustrative": {', vocabulary)
         self.assertIn("项目条件未满足", vocabulary)
         self.assertIn("不是对任何项目或模型的判断", vocabulary)

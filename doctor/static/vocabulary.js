@@ -860,6 +860,21 @@ export const carryOverReason = (value) => glossed(CARRY_OVER_REASONS, value);
 // refused is not a promise that the next one is assessable.
 export const REFUSAL_SCOPE_NOTE = "处理当前拒绝原因不保证随后可评估；其余限制尚未由本次运行验证。";
 
+// The rest of the bundled project's refusal screen. The reason itself is in
+// REFUSAL_REASONS; the system's own text is shown as it came, in its fold.
+export const REFUSAL_PAGE = {
+  title: "这次检查尝试没有开始评估",
+  lede: "系统在评估开始前拒绝了这次请求，并给出了原因。这是对请求条件的答复：不是程序故障，也不是检查结果。",
+  whyHeading: "为什么没有开始",
+  needHeading: "要让检查能够开始，需要什么",
+  onlyOne: "本次只返回这一个原因，没有其他环节的诊断。",
+  noConclusion: "没有任何事项的结论、零问题统计或完成百分比；被拒绝不是“无法判断”，也不是一次没有问题的检查。",
+  original: "系统返回的原文（英文）与拒绝码",
+  attempt: "检查尝试",
+  code: "拒绝码",
+  contextMissing: "所提交的请求上下文尚未随拒绝返回。",
+};
+
 // ---------------------------------------------------------------------------
 // The workspace entry: one real check, and its comparison with an earlier run
 // ---------------------------------------------------------------------------

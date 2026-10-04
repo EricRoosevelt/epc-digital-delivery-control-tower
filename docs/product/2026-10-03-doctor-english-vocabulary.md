@@ -1,6 +1,6 @@
 # Doctor 英文词表（主路径与真实工作区）
 
-日期：2026-10-03；第二部分（单项、复检）与第三部分（工作区的结果、详情、对比、拒绝、故障）同日补入；2026-10-04 补入行动与复检句（`ACTIONS`）；2026-10-05 补入首次结果卡片的三个标签（`FIRST.cardDetails`、`FIRST.cardElements`、`FIRST.openCard`）。负责：Product/UI Engineer。
+日期：2026-10-03；第二部分（单项、复检）与第三部分（工作区的结果、详情、对比、拒绝、故障）同日补入；2026-10-04 补入行动与复检句（`ACTIONS`）；2026-10-05 补入首次结果卡片的三个标签（`FIRST.cardDetails`、`FIRST.cardElements`、`FIRST.openCard`），以及随附项目检查尝试的拒绝页（`REFUSAL_REASONS`、`REFUSAL_SCOPE_NOTE`、`REFUSAL_PAGE`、`REFUSAL_UNGLOSSED`）。负责：Product/UI Engineer。
 状态：**全部未经 BIM 复核**；有领域含义的条目进 10/15 BIM 批次。
 本文件由界面实际注册的词表生成，测试逐条核对英文与这里一致。中文一列是同一键在 `vocabulary.js` 里的原文。
 
@@ -15,6 +15,8 @@
   工作区页面里，规则的出处在英文里只显示返回数据的原文（`CITATION_GLOSSES` 英文为空）；检查结果的原因、规则原话（`expected`）同样只显示原文。
   PV-001 规则说明的英文标题取自 `rules/product-validation/PV-001.toml` 的 `title`，“NOTDEFINED states nothing.”取自同一文件的 `instructions`（测试核对）；其余规则说明是为本界面写的领域文字，待 BIM。
   拒绝原因旁的短句在两种语言里都是本界面写的说明；适配器给出的完整原文（英文）始终在“系统返回的原文”折叠里。
+  随附项目检查尝试的拒绝页同样如此：拒绝原因、说明和“要让检查能够开始，需要什么”是本界面写的句子（中文词表第 12 节），英文与中文义务相同；系统返回的原文（英文）始终在折叠里，不当作说明或指令。
+- 记录、活动、成员页还没有英文。英文界面里指向它们的链接旁写明“Chinese only”（`FIRST.notRevised` 的英文），中文没有这一句，因为中文页面本来就是中文；未翻译页加了“返回上一页”。
 - 带计数的说法分单数和复数两种形式（`one`／`other`），中文两种形式相同。
 - 英文模式下，还没有翻译的页面不画出来，显示“This page has not been translated yet”，并给出用中文看同一页的按钮。
 
@@ -23,9 +25,9 @@
 | 类别 | 表 | 条目 |
 | --- | --- | --- |
 | 原文（取自 Pack、记录或产品文档，未翻译） | 3 | 12 |
-| 有领域含义（判断、活动、问题类型、限制、来源），待 BIM | 51 | 537 |
-| 界面用语 | 23 | 163 |
-| 合计 | 77 | 712 |
+| 有领域含义（判断、活动、问题类型、限制、来源），待 BIM | 54 | 552 |
+| 界面用语 | 24 | 166 |
+| 合计 | 81 | 730 |
 
 ## 原文
 
@@ -543,6 +545,36 @@
 | `[3]` | “只有模型版本变了”不等于检查结果的内容变了。 | "Only the model version changed" does not mean the check result's content changed. |
 | `[4]` | “无法比较”不是“证据缺失”：旧记录没保存比较依据时，本页如实显示无法比较。 | "Cannot be compared" is not "evidence missing": where the old record kept no comparison basis, this page says honestly that it cannot compare. |
 
+**`REFUSAL_PAGE`**
+
+| 键 | 中文 | English |
+| --- | --- | --- |
+| `title` | 这次检查尝试没有开始评估 | This check attempt did not start an assessment |
+| `lede` | 系统在评估开始前拒绝了这次请求，并给出了原因。这是对请求条件的答复：不是程序故障，也不是检查结果。 | The system refused this request before the assessment started, and gave its reason. This is an answer about the request's conditions: not a program fault, and not a check result. |
+| `whyHeading` | 为什么没有开始 | Why it did not start |
+| `needHeading` | 要让检查能够开始，需要什么 | What is needed for the check to start |
+| `onlyOne` | 本次只返回这一个原因，没有其他环节的诊断。 | Only this one reason was returned; there is no diagnosis of any other stage. |
+| `noConclusion` | 没有任何事项的结论、零问题统计或完成百分比；被拒绝不是“无法判断”，也不是一次没有问题的检查。 | No conclusion on any item, no zero-problem count and no completion ratio: a refusal is not "Unknown", and not a check without problems. |
+| `original` | 系统返回的原文（英文）与拒绝码 | What the system returned (as written) and the refusal code |
+| `attempt` | 检查尝试 | Check attempt |
+| `code` | 拒绝码 | Refusal code |
+| `contextMissing` | 所提交的请求上下文尚未随拒绝返回。 | The context of the request that was submitted has not been returned with the refusal yet. |
+
+**`REFUSAL_REASONS`**
+
+| 键 | 中文 | English |
+| --- | --- | --- |
+| `team-mapping-decision-basis-illustrative.title` | 项目条件未满足：由谁处理的安排不是项目作出的决定 | Project condition not met: who deals with what is not a decision the project has made |
+| `team-mapping-decision-basis-illustrative.text` | 这次请求所用的项目设定里，“哪个角色由哪个团队担任”的安排只是演示用的占位内容，不是项目作出的决定。系统因此不生成评估结果：否则结果里的处理团队会被当成项目的真实安排。 | In the project settings this request used, the arrangement of which team fills which role is demonstration placeholder content, not a decision the project has made. The system therefore produces no assessment: otherwise the handling teams in the result would be taken for the project's real arrangement. |
+| `team-mapping-decision-basis-illustrative.action[0]` | 在一个真实项目上，要让检查能够开始：需要项目负责人实际决定系统原文（折叠在下面）点名的每个角色由谁担任，然后如实记录。这是一个人员决定，不是改一个标签。 | On a real project, for the check to be able to start: the project lead has to actually decide who fills each role that the system's own text (folded below) names, and record it as decided. This is a staffing decision, not a change of label. |
+| `team-mapping-decision-basis-illustrative.action[1]` | 如果这次请求用的是随附的公开样例：它没有项目负责人。对它而言，这次拒绝就是正确的结果，不需要、也不应该去改它的设定。 | If this request used the bundled public sample: it has no project lead. For it, this refusal is the correct result; its settings do not need to be changed, and should not be. |
+
+**`REFUSAL_SCOPE_NOTE`**
+
+| 键 | 中文 | English |
+| --- | --- | --- |
+| `REFUSAL_SCOPE_NOTE` | 处理当前拒绝原因不保证随后可评估；其余限制尚未由本次运行验证。 | Dealing with the current reason for refusal does not guarantee that an assessment can follow; the other limitations have not been verified by this run. |
+
 **`REISSUE_CASES`**
 
 | 键 | 中文 | English |
@@ -1031,7 +1063,7 @@
 | `nextAfter` | 。每个事项的页面里也有直达它复检变化的链接。 | . Each item's page also links straight to how that item changed in the recheck. |
 | `traceSummary` | 追溯信息：记录标识、规则版本、记录原码 | Tracing: record identity, rule version, record codes |
 | `recordLink` | 这份记录的请求范围、版本与来源 | This record's requested scope, versions and sources |
-| `notRevised` | （该页尚未改版，仍是内部用语） |  (that page has not been revised yet and still uses internal terms) |
+| `notRevised` | （该页尚未改版，仍是内部用语） |  (Chinese only: that page has not been translated or revised yet, and still uses internal terms) |
 | `traceItem` | 事项 | Item |
 | `traceOrdinal` | 内部分组编号 | Internal group number |
 
@@ -1081,6 +1113,7 @@
 | `untranslatedTitle` | 这一页还没有翻译 | This page has not been translated yet |
 | `untranslatedBody` | 这一页的英文还没有写好。下面的按钮会用中文打开同一页：同一个运行、同一份记录、同一个对象，内容不变。 | The English for this page has not been written yet. The button below opens this same page in Chinese: the same run, the same record and the same element, with nothing changed. |
 | `showIn` | 用中文查看这一页 | See this page in Chinese |
+| `back` | ← 返回上一页 | ← Back to the previous page |
 | `home` | 返回首页 | Back to the home page |
 
 **`NOT_CARRIED`**
@@ -1115,6 +1148,13 @@
 | `unrecognisedAspect` | “{code}”（{unrecognised}） | "{code}" ({unrecognised}) |
 | `unrecognisedKey` | key_changed = “{value}”（{unrecognised}） | key_changed = "{value}" ({unrecognised}) |
 | `onlyRekeyed` | {rekeyed}：证据内容和比较依据都没有变。 | {rekeyed}: neither the evidence content nor the comparison basis changed. |
+
+**`REFUSAL_UNGLOSSED`**
+
+| 键 | 中文 | English |
+| --- | --- | --- |
+| `title` | 系统拒绝了这次请求 | The system refused this request |
+| `text` | 本界面没有这个原因的中文说明，请展开下面系统返回的原文。 | This interface has no English explanation for this reason; open what the system returned below. |
 
 **`UNRECOGNISED`**
 
