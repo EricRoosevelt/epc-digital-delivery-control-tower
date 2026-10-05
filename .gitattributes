@@ -36,6 +36,9 @@ third_party/buildingsmart/ids/1.0/*/** -text
 # different things.
 third_party/buildingsmart/ids/1.0/SHA256SUMS text eol=lf
 third_party/speckle/powerbi-visual/2026.6.0/LICENSE -text
+third_party/three/0.186.1/LICENSE -text
+third_party/three/0.186.1/build/** -text
+third_party/three/0.186.1/examples/** -text
 
 # Legacy compatibility for data contract 0.1 only.
 #

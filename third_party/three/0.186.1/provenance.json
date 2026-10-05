@@ -1,0 +1,47 @@
+{
+  "schema_version": "1.0",
+  "component": "three",
+  "version": "0.186.1",
+  "distribution_boundary": "vendored_unmodified_when_integrated",
+  "upstream": {
+    "repository": "https://github.com/mrdoob/three.js",
+    "registry": "https://registry.npmjs.org/",
+    "tarball": "https://registry.npmjs.org/three/-/three-0.186.1.tgz",
+    "tarball_sha256": "8cd068708ea44f2c73c944b1cead2ba2f0d5c15c8fc194e5700f4e4f4a033fe7",
+    "tarball_integrity": "sha512-blFeqb49wRCSGUGj7gtpfnSGHy2lwDk94RhUmS1c/hTby70kvChbWpkJ4Pm1390LqzzvTmzgXKHPEafJwCb8jA==",
+    "npm_git_head": "9b4a2ac29c63ccb43fd51c5661f2f873ac2c39b8",
+    "audited_on": "2026-10-05"
+  },
+  "license": {
+    "source": "package/LICENSE in the tarball above",
+    "spdx": "MIT",
+    "copyright": "Copyright © 2010-2026 three.js authors",
+    "sha256": "8b378ebe60e2fe500158cb0ac71cb5e8b7d92953c2abcc63a0eb90499653b5bc"
+  },
+  "files": [
+    {
+      "tarball_path": "package/build/three.module.js",
+      "vendored_path": "build/three.module.js",
+      "size_bytes": 662772,
+      "sha256": "9052042d676cb0fdc1ddfefe193053f34b7ac0513a616fdac4535d49987812ea"
+    },
+    {
+      "tarball_path": "package/build/three.core.js",
+      "vendored_path": "build/three.core.js",
+      "size_bytes": 1458113,
+      "sha256": "9edde002b066a9a05676a6127f67735b62baf399bdea529f2f7e31657da769e6"
+    },
+    {
+      "tarball_path": "package/examples/jsm/controls/OrbitControls.js",
+      "vendored_path": "examples/jsm/controls/OrbitControls.js",
+      "size_bytes": 40755,
+      "sha256": "3d79d07ecb686b4e5d93232eedab255331c1beef711e13164eaa1f68655a5f2b"
+    }
+  ],
+  "repository_policy": {
+    "build_files_committed": false,
+    "vendored_location": "third_party/three/0.186.1/",
+    "git_text_normalization": "disabled for vendored files",
+    "bundler": "none; loaded as ES modules through an import map"
+  }
+}
