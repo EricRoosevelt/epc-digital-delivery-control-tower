@@ -34,6 +34,19 @@ and each model's name, discipline and content digest. The same request is the
 same check: it is run again, into the same directory, and gives the same
 bytes. Nothing reads a clock.
 
+**One rule set is offered: ``product-validation`` 1.0.** A product decision
+(``docs/product/2026-10-03-pm-local-ifc-scope-decision.md``, §1): the shipped
+``epc-delivery`` rule set, run on a real MEP model, failed mostly on the sample
+project's own conventions, and a first-time user would be left to judge which
+failures apply. It stays in the checkout and in the bundled example; this entry
+does not offer it, nor another version of the offered one, until somebody
+decides it should — :data:`OFFERED_RULESETS` is that decision, in one place.
+
+**No geometry is computed.** The check writes only the JSON document, which
+carries none, and an element IFC allows to have no shape failed the whole check
+when the pipeline tessellated it for a viewpoint nobody would draw. The run asks
+for none (``execute(..., with_geometry=False)``), and the plan says so.
+
 **The plan is the scope.** Before anything runs, :meth:`LocalChecks.plan` says
 which rule set at which version, which requirements, which models under which
 model key and discipline, which logical date, and where the result will be
@@ -93,6 +106,7 @@ __all__ = [
     "CHECK_RECORD",
     "LocalChecks",
     "MalformedRequest",
+    "OFFERED_RULESETS",
     "REFUSAL_CODES",
     "resolve_checks_root",
 ]
@@ -107,6 +121,10 @@ PROJECT_ID = "local"
 #: What a check writes: the JSON document the workspace entry reads, and the
 #: manifest that vouches for it. Nothing else.
 EXPORTERS = ("json",)
+
+#: The rule sets a local check offers, by directory name, at exactly this
+#: version. Any other rule set this checkout carries is not offered.
+OFFERED_RULESETS = {"product-validation": "1.0"}
 
 #: The scope a check was run with, kept beside its run. Written last, so a
 #: directory without it is not a finished check.
@@ -200,9 +218,14 @@ def _outside_checkouts(root: Path, repository_root: Path) -> Path:
     return root
 
 
-def _refused(reasons: list[tuple[str, str]]) -> dict[str, object]:
+def _refused(reasons: list[tuple[str, ...]]) -> dict[str, object]:
+    """A refusal naming every reason; a reason about one file names it as ``filename``."""
+
     ordered = sorted(reasons, key=lambda reason: REFUSAL_CODES.index(reason[0]))
-    listed = [{"code": code, "text": f"[{code}] {text}"} for code, text in ordered]
+    listed = [
+        {"code": code, "text": f"[{code}] {text}", **({"filename": about[0]} if about else {})}
+        for code, text, *about in ordered
+    ]
     return {
         "outcome": "refusal",
         "refusal": {
@@ -283,6 +306,24 @@ class _RuleSet:
         }
 
 
+def _requirements(chosen: _RuleSet) -> dict[str, dict[str, object]]:
+    """A rule set's requirements as the workspace entry describes them, by key."""
+
+    return {
+        requirement.requirement_key: {
+            field: (
+                list(getattr(requirement, field))
+                if isinstance(getattr(requirement, field), tuple)
+                else getattr(requirement, field)
+            )
+            for field in _REQUIREMENT_FIELDS
+        }
+        for requirement in sorted(
+            chosen.ruleset.requirements, key=lambda item: item.requirement_key
+        )
+    }
+
+
 class LocalChecks:
     """Staging, planning, running and reading local checks under one directory."""
 
@@ -325,6 +366,13 @@ class LocalChecks:
             )
         return found
 
+    def _offered(self, rulesets: Mapping[str, _RuleSet]) -> dict[str, _RuleSet]:
+        return {
+            name: item
+            for name, item in rulesets.items()
+            if OFFERED_RULESETS.get(name) == item.ruleset.version
+        }
+
     @staticmethod
     def _disciplines(rulesets: Mapping[str, _RuleSet]) -> list[str]:
         return sorted(
@@ -337,15 +385,39 @@ class LocalChecks:
         )
 
     def describe(self) -> dict[str, object]:
-        """What a user may choose, and where the checks will be kept."""
+        """What a user may choose, and where the checks are kept.
+
+        ``checks_dir`` is the directory as named; ``checks_dir_on_disk`` is
+        where the system really keeps it, once it exists, and ``None`` before
+        anything has been kept. They differ when the server runs inside a
+        packaged (MSIX) app, which redirects writes under ``%LOCALAPPDATA%``
+        into the package's own folder: only the second is the one a file
+        manager will find. ``kept`` counts what is there now.
+        """
 
         rulesets = self._rulesets()
         return {
             "checks_dir": str(self.root),
+            "checks_dir_on_disk": os.path.realpath(self.root) if self.root.is_dir() else None,
+            "kept": self._kept(),
             "as_of": self._as_of(),
             "max_model_bytes": self.max_model_bytes,
-            "rulesets": [item.summary() for item in rulesets.values()],
+            # Each with its requirements, as the plan will describe them, so
+            # what a check would ask is visible before a file is chosen.
+            "rulesets": [
+                {**item.summary(), "requirements": _requirements(item)}
+                for item in self._offered(rulesets).values()
+            ],
+            # Every discipline any rule set here names, so that a model can be
+            # declared as what it is, whether or not the offered rule names it.
             "disciplines": self._disciplines(rulesets),
+        }
+
+    def _kept(self) -> dict[str, int]:
+        uploads = self._uploads()
+        return {
+            "uploads": len(list(uploads.glob("*.ifc"))) if uploads.is_dir() else 0,
+            "checks": len(self.checks()),
         }
 
     def _as_of(self) -> str:
@@ -366,7 +438,7 @@ class LocalChecks:
 
         problem = _name_problem(filename)
         if problem is not None:
-            return _refused([("model-name-invalid", problem)])
+            return _refused([("model-name-invalid", problem, filename)])
         if length > self.max_model_bytes:
             return _refused(
                 [
@@ -375,6 +447,7 @@ class LocalChecks:
                         f"{filename} is {length} bytes and this server accepts at "
                         f"most {self.max_model_bytes}. Start the server with a "
                         "larger --max-model-bytes, or check a smaller export.",
+                        filename,
                     )
                 ]
             )
@@ -403,6 +476,7 @@ class LocalChecks:
                             "model-incomplete",
                             f"only {received} of {length} bytes of {filename} "
                             "arrived. Choose the file again.",
+                            filename,
                         )
                     ]
                 )
@@ -416,6 +490,7 @@ class LocalChecks:
                             "an ISO-10303-21 header naming a schema. Choose the .ifc "
                             "file the authoring tool exported (IFC-SPF text, not "
                             ".ifczip or .ifcxml).",
+                            filename,
                         )
                     ]
                 )
@@ -450,13 +525,14 @@ class LocalChecks:
         reasons: list[tuple[str, str]] = []
         rulesets = self._rulesets()
         vocabulary = self._disciplines(rulesets)
-        chosen = rulesets.get(name)
+        chosen = self._offered(rulesets).get(name)
         if chosen is None:
+            offered = ", ".join(f"{key} {value}" for key, value in OFFERED_RULESETS.items())
             reasons.append(
                 (
                     "unknown-ruleset",
-                    f"{name!r} is not a rule set this checkout carries; choose one "
-                    f"of {sorted(rulesets)}.",
+                    f"{name!r} is not a rule set the local check offers. It offers "
+                    f"{offered} only, as this checkout carries it.",
                 )
             )
         if not models:
@@ -477,12 +553,14 @@ class LocalChecks:
                     (
                         "unknown-model",
                         f"{filename!r} is not a file this server holds; choose the file again.",
+                        *([filename] if isinstance(filename, str) else []),
                     )
                 )
                 continue
             problem = _name_problem(filename)
             if problem is not None:
-                reasons.append(("model-name-invalid", problem))
+                named = [filename] if isinstance(filename, str) else []
+                reasons.append(("model-name-invalid", problem, *named))
                 continue
             model_id = _model_id(filename)
             keys = {"upload": upload, "filename": filename.casefold(), "model_id": model_id}
@@ -493,6 +571,7 @@ class LocalChecks:
                         "duplicate-model",
                         f"{filename} is chosen twice, or shares its file name or "
                         "content with another chosen file; choose each model once.",
+                        filename,
                     )
                 )
             for kind, key in keys.items():
@@ -502,6 +581,7 @@ class LocalChecks:
                     (
                         "discipline-not-declared",
                         f"say which discipline {filename} is: one of {vocabulary}.",
+                        filename,
                     )
                 )
             elif discipline not in vocabulary:
@@ -510,6 +590,7 @@ class LocalChecks:
                         "unknown-discipline",
                         f"{discipline!r} is not a discipline any rule set here "
                         f"names; choose one of {vocabulary}.",
+                        filename,
                     )
                 )
             if duplicate:
@@ -562,6 +643,7 @@ class LocalChecks:
                             f"{list(supported)} only. Export the model again as "
                             "IFC4 (in Revit: IFC4 Reference View) and choose that "
                             "file.",
+                            model["filename"],
                         )
                     )
         return reasons
@@ -585,19 +667,7 @@ class LocalChecks:
             ],
         }
         check_id = sha256_bytes(json_bytes(identity))[:16]
-        requirements = {
-            requirement.requirement_key: {
-                field: (
-                    list(getattr(requirement, field))
-                    if isinstance(getattr(requirement, field), tuple)
-                    else getattr(requirement, field)
-                )
-                for field in _REQUIREMENT_FIELDS
-            }
-            for requirement in sorted(
-                chosen.ruleset.requirements, key=lambda item: item.requirement_key
-            )
-        }
+        requirements = _requirements(chosen)
         stages = sorted({r.stage for r in chosen.ruleset.requirements if r.stage})
         return {
             "check_id": check_id,
@@ -607,6 +677,7 @@ class LocalChecks:
             "as_of": as_of,
             "programme": [{"stage": stage, "due": ""} for stage in stages],
             "exporters": list(EXPORTERS),
+            "geometry": False,
             "location": str(self.root / "checks" / check_id),
         }
 
@@ -679,7 +750,11 @@ class LocalChecks:
                 ("\n".join(config) + "\n").encode("utf-8")
             )
 
-            result = execute(load_run_config(directory), coverage_root=directory / "coverage")
+            result = execute(
+                load_run_config(directory),
+                coverage_root=directory / "coverage",
+                with_geometry=scope["geometry"],
+            )
             run = result.pipeline.bundle.run
             if (run.ruleset_id, run.ruleset_version, run.ruleset_normalized_digest) != (
                 ruleset["id"],

@@ -582,10 +582,14 @@ class WordingTests(_Modelled):
         self.assertIn("不能在页面上选择或更换模型", self.tables["WORKSPACE_HOME"]["body"])
         screens = (STATIC / "screens.js").read_text(encoding="utf-8")
         entry = screens[screens.index("function entry(") : screens.index("function runLink(")]
+        # The central sentences are the home's when the server offers no local
+        # check; when it does, the local check's own say the same three things
+        # and what it adds (tests/test_doctor_english.py, LocalCheckWordsTests).
+        self.assertIn("const said = local ? local.words : HOME;", entry)
         self.assertIn(
-            "workspaceRun\n        ? HOME.statusWithWorkspace\n"
-            '        : carries(workspace, "error")\n          ? HOME.statusWorkspaceUnknown\n'
-            "          : HOME.status",
+            "workspaceRun\n        ? said.statusWithWorkspace\n"
+            '        : carries(workspace, "error")\n          ? said.statusWorkspaceUnknown\n'
+            "          : said.status",
             entry,
         )
 

@@ -150,6 +150,9 @@ class CsvExporter:
     id = "csv"
     version = "1.0.0"
     output_root_key = "processed"
+    #: Nothing here is geometry, so a run that writes only canonical documents
+    #: may skip computing it (``execute(..., with_geometry=False)``).
+    reads_geometry = False
 
     def config_sha256(self) -> str:
         return ""
@@ -206,6 +209,9 @@ class JsonExporter:
     id = "json"
     version = "1.0.0"
     output_root_key = "processed"
+    #: Nothing here is geometry, so a run that writes only canonical documents
+    #: may skip computing it (``execute(..., with_geometry=False)``).
+    reads_geometry = False
 
     def config_sha256(self) -> str:
         return ""

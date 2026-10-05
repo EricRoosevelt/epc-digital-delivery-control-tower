@@ -158,21 +158,18 @@ class ScopeTests(unittest.TestCase):
         cls.check_id = cls.finished["check"]["check_id"]
         cls.envelope = cls.checks.envelope(cls.check_id)
 
-    def test_the_rule_sets_offered_are_the_ones_this_checkout_carries(self):
-        offered = {item["name"]: item for item in self.checks.describe()["rulesets"]}
-        carried = sorted(path.parent.name for path in RULES.glob("*/ruleset.toml"))
-        self.assertEqual(sorted(offered), carried)
-        for name in carried:
-            ruleset = load_ruleset(RULES / name)
-            with self.subTest(ruleset=name):
-                self.assertEqual(
-                    (
-                        offered[name]["id"],
-                        offered[name]["version"],
-                        offered[name]["normalized_digest"],
-                    ),
-                    (ruleset.ruleset_id, ruleset.version, ruleset.normalized_digest),
-                )
+    def test_only_product_validation_1_0_is_offered(self):
+        offered = self.checks.describe()["rulesets"]
+        ruleset = load_ruleset(RULES / "product-validation")
+        self.assertEqual(
+            [
+                (item["name"], item["id"], item["version"], item["normalized_digest"])
+                for item in offered
+            ],
+            [("product-validation", "product-validation", "1.0", ruleset.normalized_digest)],
+        )
+        self.assertEqual(ruleset.version, "1.0")
+        self.assertEqual(offered[0]["requirements"], self.plan["plan"]["requirements"])
 
     def test_the_plan_is_what_the_run_then_says_it_checked(self):
         self.assertEqual(self.plan["outcome"], "plan")
@@ -251,6 +248,126 @@ class NothingApplicableTests(unittest.TestCase):
             len(envelope["findings"]),
             len(envelope["requirements"]) * len(envelope["run"]["models"]),
         )
+
+
+class OfferTests(unittest.TestCase):
+    """The local check offers ``product-validation`` 1.0 and nothing else.
+
+    The product decision of 2026-10-03 (docs/product/2026-10-03-pm-local-ifc-
+    scope-decision.md, §1): the shipped ``epc-delivery`` rule set, run on a real
+    MEP model, gave 444 FAIL, 222 PASS and 8 N/A, most of them from the sample
+    project's own conventions. It stays in the checkout and in the bundled
+    example path; this entry does not offer it.
+    """
+
+    @classmethod
+    def setUpClass(cls):
+        cls.checks = LocalChecks(_scratch("local-offer"))
+        cls.hvac = _stage(cls.checks, HVAC)
+
+    def test_the_shipped_rule_set_is_refused_and_stays_where_it_is(self):
+        answer = self.checks.plan(_request("epc-delivery", (self.hvac, "HVAC")))
+        self.assertEqual(_codes(answer), ["unknown-ruleset"])
+        self.assertIn("product-validation 1.0", answer["refusal"]["text"])
+        self.assertTrue((RULES / "epc-delivery" / "ruleset.toml").is_file())
+
+    def test_another_version_of_the_offered_rule_set_is_not_offered(self):
+        checkout = _scratch("local-offer-checkout")
+        shutil.copyfile(PROJECT_ROOT / "control-tower.toml", checkout / "control-tower.toml")
+        rules = checkout / "rules" / "product-validation"
+        shutil.copytree(RULES / "product-validation", rules)
+        marker = rules / "ruleset.toml"
+        marker.write_bytes(
+            marker.read_bytes().replace(b'version = "1.0"', b'version = "1.1"')
+        )
+        self.assertEqual(load_ruleset(rules).version, "1.1")
+        checks = LocalChecks(_scratch("local-offer-other"), repository_root=checkout)
+        self.assertEqual(checks.describe()["rulesets"], [])
+        staged = _stage(checks, HVAC)
+        answer = checks.plan(_request("product-validation", (staged, "HVAC")))
+        self.assertEqual(_codes(answer), ["unknown-ruleset"])
+
+
+#: An air terminal whose predefined type fails PV-001, and which has no shape.
+NO_SHAPE_GLOBAL_ID = "23uPJWDfXEcwHH3kdFgV9c"
+
+
+class NoGeometryTests(unittest.TestCase):
+    """A failing element with no geometry keeps its result.
+
+    IFC lets an element have no representation. Before, the pipeline computed a
+    bounding box for every failing element whichever exporters ran, and such an
+    element ended the check with ``RuntimeError: Representation is NULL`` and no
+    result at all. The check writes only the JSON document, which carries no
+    geometry, so it now asks for none.
+    """
+
+    @classmethod
+    def setUpClass(cls):
+        import ifcopenshell
+
+        source = ifcopenshell.open(str(HVAC))
+        source.by_guid(NO_SHAPE_GLOBAL_ID).Representation = None
+        cls.model = _scratch("local-no-shape") / "no-shape.ifc"
+        source.write(str(cls.model))
+        cls.checks = LocalChecks(_scratch("local-no-shape-checks"))
+        staged = _stage(cls.checks, cls.model)
+        cls.answer = cls.checks.run(_request("product-validation", (staged, "HVAC")))
+
+    def test_the_check_finishes_and_names_the_element(self):
+        self.assertEqual(self.answer["outcome"], "finished")
+        envelope = self.checks.envelope(self.answer["check"]["check_id"])
+        key = f"local.no-shape::{NO_SHAPE_GLOBAL_ID}"
+        [finding] = [f for f in envelope["findings"] if f["element_key"] == key]
+        self.assertEqual(finding["status"], "FAIL")
+        self.assertEqual(envelope["elements"][key]["global_id"], NO_SHAPE_GLOBAL_ID)
+        self.assertEqual(
+            sorted(f["status"] for f in envelope["findings"]), ["FAIL", "FAIL"]
+        )
+
+    def test_the_scope_says_no_geometry_is_computed(self):
+        self.assertIs(self.answer["check"]["scope"]["geometry"], False)
+
+    def test_without_it_the_same_workspace_fails_on_geometry_nothing_reads(self):
+        from epc_control_tower.config import load_run_config
+        from epc_control_tower.pipeline import build_bundle
+
+        workspace = _scratch("local-no-shape-counterfactual") / "check"
+        shutil.copytree(
+            self.checks.root / "checks" / self.answer["check"]["check_id"], workspace
+        )
+        with self.assertRaisesRegex(RuntimeError, "Representation is NULL"):
+            build_bundle(load_run_config(workspace))
+
+
+class PlaceTests(unittest.TestCase):
+    """Where the checks are kept, as a file manager will find them."""
+
+    def test_nothing_is_on_disk_until_a_file_is_chosen(self):
+        checks = LocalChecks(_scratch("local-place") / "not-yet")
+        described = checks.describe()
+        self.assertIsNone(described["checks_dir_on_disk"])
+        self.assertEqual(described["kept"], {"uploads": 0, "checks": 0})
+        self.assertFalse(checks.root.exists())
+
+    def test_once_kept_it_is_where_the_system_put_it(self):
+        checks = LocalChecks(_scratch("local-place-kept"))
+        _stage(checks, HVAC)
+        described = checks.describe()
+        self.assertEqual(described["checks_dir_on_disk"], os.path.realpath(checks.root))
+        self.assertEqual(described["kept"], {"uploads": 1, "checks": 0})
+
+    def test_a_redirected_directory_is_reported_where_it_really_is(self):
+        # A server started inside a packaged (MSIX) app writes under
+        # %LOCALAPPDATA% into the package's own folder instead; Python sees
+        # the given path, and only realpath tells where the files really are.
+        checks = LocalChecks(_scratch("local-place-redirected"))
+        _stage(checks, HVAC)
+        elsewhere = str(Path(tempfile.gettempdir()) / "Packages" / "app" / "LocalCache")
+        with mock.patch.object(local_check.os.path, "realpath", return_value=elsewhere):
+            described = checks.describe()
+        self.assertEqual(described["checks_dir"], str(checks.root))
+        self.assertEqual(described["checks_dir_on_disk"], elsewhere)
 
 
 class SecondModelTests(unittest.TestCase):
@@ -394,6 +511,11 @@ class RefusalTests(unittest.TestCase):
             ),
         )
         self.assertEqual(answer["refusal"]["code"], codes[0])
+        # A reason about one file names it; one about the request names none.
+        self.assertEqual(
+            [reason.get("filename") for reason in answer["refusal"]["reasons"]],
+            ["gone.ifc", "other.ifc", None, "Building-Hvac.ifc", "other.ifc"],
+        )
         self._nothing_was_kept()
 
     def test_no_model_is_a_refusal(self):

@@ -1298,8 +1298,8 @@ class ScreenStructureTests(unittest.TestCase):
         entry = screens[
             screens.index("function entry(") : screens.index("function runLink(")
         ]
-        self.assertLess(entry.index("HOME.lede"), entry.index("HOME.status"))
-        self.assertLess(entry.index("HOME.status"), entry.index("entry-grid"))
+        self.assertLess(entry.index("HOME.lede"), entry.index("said.status"))
+        self.assertLess(entry.index("said.status"), entry.index("entry-grid"))
         self.assertNotIn("details", entry)
 
     def test_an_element_is_described_from_what_was_handed_over_and_nothing_else(self):
