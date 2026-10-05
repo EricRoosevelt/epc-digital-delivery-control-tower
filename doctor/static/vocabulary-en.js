@@ -219,10 +219,6 @@ export const EXAMPLE_NOTE =
   "An example's description is written by whoever built the example and says only what the example was given; it is not a conclusion of any check. " +
   "What the check concluded is on the result page only.";
 
-export const DIRECTORY_NOTE =
-  "Each example is one check record. The evidence for a conclusion may be a real check result, a simulated check result or a simulated human determination; " +
-  "which one it is, the \"Basis\" line beside each conclusion on the result and item pages says, citation by citation. " +
-  "The project settings in the examples, including the handling teams and the acceptance of evidence methods, are demonstration settings, not real project decisions.";
 
 export const DEMO_NOTICE =
   "Simulated example: the project settings in the example, including the handling teams and the acceptance of evidence methods, are demonstration settings, not real project decisions; " +
@@ -407,6 +403,9 @@ export const FIRST = {
   action: "What to do",
   problem: "Problem",
   openItem: "See this item: the element, what to do, who deals with it, what a recheck must show",
+  cardDetails: "Element details and what to do",
+  cardElements: "Element details",
+  openCard: "See this item",
   openHeading: { one: "{label}, by handling team ({count} item)", other: "{label}, by handling team ({count} items)" },
   team: "Handling team ",
   teamCount: { one: ": {count} item", other: ": {count} items" },
@@ -418,7 +417,9 @@ export const FIRST = {
   nextAfter: ". Each item's page also links straight to how that item changed in the recheck.",
   traceSummary: "Tracing: record identity, rule version, record codes",
   recordLink: "This record's requested scope, versions and sources",
-  notRevised: " (that page has not been revised yet and still uses internal terms)",
+  // In English the page behind these links is Chinese only: said before the
+  // click, beside the link, not after it.
+  notRevised: " (Chinese only: that page has not been translated or revised yet, and still uses internal terms)",
   traceItem: "Item",
   traceOrdinal: "Internal group number",
 };
@@ -669,9 +670,9 @@ export const RECHECK_ITEM = {
     "These two elements are no longer paired for checking: the penetration determination is now \"no penetration\" (see the reason the record gives below). " +
     "This does not mean the opening has been built, nor that the opening defect has been fixed.",
   model: "Models",
-  whichOne: "2. Which element",
-  whichTwo: "2. Which two elements",
-  actionHeading: "3. What to do, who deals with it, what a recheck must show",
+  actionHeading: "2. What to do, who deals with it, what a recheck must show",
+  whichOne: "3. Which element",
+  whichTwo: "3. Which two elements",
   noCurrent:
     "The record does not give this item's current place, so this page has no action, handling team or default handling role to show. " +
     "Those details from the record before the recheck did not come back with the recheck record either.",
@@ -1174,6 +1175,47 @@ export const WORKSPACE_COMPARE = {
   noComparison:
     "The server was started without an earlier run, so there is no comparison. To compare, add --prior at start-up.",
   elementMissing: "The returned data has nothing readable about this element",
+};
+
+// The bundled project's check attempt, refused before any assessment. What the
+// reason means and what is needed are this interface's sentences, the same
+// obligations as the Chinese; the system's own text stays in the fold as it came.
+export const REFUSAL_REASONS = {
+  "team-mapping-decision-basis-illustrative": {
+    title: "Project condition not met: who deals with what is not a decision the project has made",
+    text:
+      "In the project settings this request used, the arrangement of which team fills which role is demonstration placeholder content, not a decision the project has made. " +
+      "The system therefore produces no assessment: otherwise the handling teams in the result would be taken for the project's real arrangement.",
+    action: [
+      "On a real project, for the check to be able to start: the project lead has to actually decide who fills each role that the system's own text (folded below) names, and record it as decided. " +
+        "This is a staffing decision, not a change of label.",
+      "If this request used the bundled public sample: it has no project lead. For it, this refusal is the correct result; its settings do not need to be changed, and should not be.",
+    ],
+  },
+};
+
+export const REFUSAL_UNGLOSSED = {
+  title: "The system refused this request",
+  text: "This interface has no English explanation for this reason; open what the system returned below.",
+  action: [],
+};
+
+export const REFUSAL_SCOPE_NOTE =
+  "Dealing with the current reason for refusal does not guarantee that an assessment can follow; the other limitations have not been verified by this run.";
+
+export const REFUSAL_PAGE = {
+  title: "This check attempt did not start an assessment",
+  lede:
+    "The system refused this request before the assessment started, and gave its reason. This is an answer about the request's conditions: not a program fault, and not a check result.",
+  whyHeading: "Why it did not start",
+  needHeading: "What is needed for the check to start",
+  onlyOne: "Only this one reason was returned; there is no diagnosis of any other stage.",
+  noConclusion:
+    "No conclusion on any item, no zero-problem count and no completion ratio: a refusal is not \"Unknown\", and not a check without problems.",
+  original: "What the system returned (as written) and the refusal code",
+  attempt: "Check attempt",
+  code: "Refusal code",
+  contextMissing: "The context of the request that was submitted has not been returned with the refusal yet.",
 };
 
 export const WORKSPACE_REFUSAL = {

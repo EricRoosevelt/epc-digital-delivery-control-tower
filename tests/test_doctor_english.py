@@ -53,6 +53,7 @@ TRANSLATED = {
     "first",
     "item",
     "recheck",
+    "refusal",
     "workspace/check",
     "workspace/finding",
     "workspace/compare",
@@ -69,6 +70,7 @@ ROOTS = [
     "recheck",
     "recheckItem",
     "recheckItemOf",
+    "refusal",
 ]
 
 #: English tables that are empty by design: the English is the thing itself.
@@ -414,10 +416,13 @@ class ScreenTests(unittest.TestCase):
         self.assertEqual(set(re.findall(r'"([^"]+)"', declared)), TRANSLATED)
         render = _functions(app)["render"]
         self.assertIn(
-            'inLanguage("entry") ? screens.entry(workspace) : untranslated(href())', render
+            'inLanguage("entry") ? screens.entry(workspace) : untranslated(href(), token > 1)',
+            render,
         )
         self.assertIn(
-            "inLanguage(`runs/${mode}`) ? screens.runs(state) : untranslated(href())", render
+            "inLanguage(`runs/${mode}`) ? screens.runs(state)"
+            " : untranslated(href(), token > 1)",
+            render,
         )
         guard = render.index("if (!inLanguage(")
         for call in re.findall(r"screens\.(?!entry|runs)\w+\(", render):
@@ -470,6 +475,40 @@ class ScreenTests(unittest.TestCase):
         self.assertEqual(runs.count("WORKSPACE."), workspace_branch.count("WORKSPACE."))
         users = {name for name in reached if re.search(r"\bACTIONS\b", _code(found[name]))}
         self.assertEqual(users, {"actionSentences"})
+
+    def test_a_link_to_an_untranslated_page_says_so_before_the_click(self):
+        """Record, activity and member pages are Chinese only; the way there says it."""
+
+        screens = (STATIC / "screens.js").read_text(encoding="utf-8")
+        found = _functions(screens)
+        untranslated = re.compile(
+            r'href\(state\.mode, state\.runId, "(?:record|member|activity)"'
+        )
+        sites = 0
+        for name in found:
+            # The untranslated pages themselves, and the helper only they call.
+            if name in ("record", "activity", "member", "locate"):
+                continue
+            body = _code(found[name])
+            for match in untranslated.finditer(body):
+                sites += 1
+                # The note follows the link inside the same paragraph.
+                with self.subTest(screen=name, at=match.start()):
+                    self.assertIn("FIRST.notRevised", body[match.start() : match.start() + 200])
+        self.assertEqual(sites, 4)
+        english = _load("?lang=en")["registry"]
+        self.assertIn("Chinese only", english["FIRST"]["en"]["notRevised"])
+        # And the page they reach offers the way back, not only the way home.
+        language = (STATIC / "language.js").read_text(encoding="utf-8")
+        page = language[language.index("export function untranslated(") :]
+        self.assertIn("history.back()", page)
+        self.assertIn("WORDS.back", page)
+        # Only when there is a page inside the preview to go back to: one opened
+        # directly has none, and going back would leave the preview.
+        self.assertIn("canGoBack\n        ? [", page)
+        app = (STATIC / "app.js").read_text(encoding="utf-8")
+        self.assertEqual(app.count("untranslated(href(), token > 1)"), 3)
+        self.assertNotIn("untranslated(href())", app)
 
     def test_no_sentence_is_written_outside_the_tables(self):
         for name in (

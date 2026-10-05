@@ -565,6 +565,73 @@ class FirstCheckTests(_Modelled):
             with self.subTest(said=said):
                 self.assertIn(said, vocabulary)
 
+    def test_a_first_check_card_folds_only_the_particulars_and_the_full_action(self):
+        """D1: closed by default, and what changes how a conclusion reads stays out."""
+
+        screens = (STATIC / "screens.js").read_text(encoding="utf-8")
+        first = screens[screens.index("function first(") : screens.index("function leafName(")]
+        card = first[first.index("const card = (item, said) => {") : first.index("\n  };\n")]
+        fold = card.index('"details"')
+        link = card.index('{ class: "run", href: itemHref(item)')
+        # Outside the fold: the element, the work and its verdict, the basis
+        # (simulated or not), the notes, the problem in a few words, the link.
+        for shown in (
+            "itemTitle(state, item.keys)",
+            "workVerdict(item.activity, item.verdict)",
+            "basisLine(item.basis)",
+            "besideVerdict(item.activity, item.verdict, said)",
+            "FIRST.problem),",
+        ):
+            with self.subTest(shown=shown):
+                self.assertLess(card.index(shown), fold)
+        self.assertGreater(link, card.index("FIRST.cardElements"))
+        # Inside the fold: the element's particulars and the full action.
+        inside = card[fold:link]
+        self.assertIn("elementBrief(state, element", inside)
+        self.assertIn("definitions([[FIRST.action, sentences.action]])", inside)
+        self.assertNotIn("elementBrief(", card[:fold])
+        self.assertNotIn("sentences.action", card[:fold])
+        # Closed unless the viewer opened it; which ones are open survives a
+        # visit to an item and back, for the same run only.
+        self.assertIn("open: opened.has(key)", inside)
+        self.assertIn("openFirstCards.runId === state.runId", first)
+        # The way back to the item is the link, never inside the fold.
+        self.assertIn('"data-return-focus": here(item) ? true : null', card[link:])
+        self.assertIn("FIRST.openCard", card[link:])
+        # The item page is untouched: what to do still comes first there.
+        item = screens[screens.index("function firstItem(") : screens.index("// S4 — recheck")]
+        self.assertNotIn("card-details", item)
+
+    def test_on_a_recheck_item_page_what_to_do_comes_before_which_element(self):
+        """The same order as the first check's item page, numbered to match."""
+
+        screens = (STATIC / "screens.js").read_text(encoding="utf-8")
+        item = screens[screens.index("function recheckItem(") :]
+        item = item[: item.index("\n}\n")]
+        order = [
+            "ITEM.conclusion",
+            "RECHECK_ITEM.actionHeading",
+            "RECHECK_ITEM.whichTwo : RECHECK_ITEM.whichOne",
+            "RECHECK_ITEM.conditionHeading",
+        ]
+        positions = [item.index(heading) for heading in order]
+        self.assertEqual(positions, sorted(positions), order)
+        self.assertLess(
+            item.index("currentSubscopeBlock(state, item, current)"),
+            item.index("elementCard(state, key"),
+        )
+        vocabulary = (STATIC / "vocabulary.js").read_text(encoding="utf-8")
+        recheck = vocabulary[vocabulary.index("export const RECHECK_ITEM = {") :]
+        recheck = recheck[: recheck.index("\n};\n")]
+        for said in (
+            'actionHeading: "二、要做什么、由谁处理、完成后拿什么复检"',
+            'whichOne: "三、是哪个构件"',
+            'whichTwo: "三、是哪两个构件"',
+            'conditionHeading: "四、复检前留下的结束条件，这次达到了吗"',
+        ):
+            with self.subTest(said=said):
+                self.assertIn(said, recheck)
+
     def test_a_conclusion_is_never_shown_without_its_work_its_basis_and_its_limits(self):
         screens = (STATIC / "screens.js").read_text(encoding="utf-8")
         first = screens[
@@ -1291,7 +1358,8 @@ class ScreenStructureTests(unittest.TestCase):
         self.assertNotIn("refusal", fault.replace("refusal-text", ""))
         refusal = screens[screens.index("function refusal(") :]
         self.assertNotIn("FAULT_WORDS", refusal)
-        self.assertIn("不是程序故障", refusal)
+        self.assertIn("REFUSAL_PAGE.lede", refusal)
+        self.assertIn("不是程序故障，也不是检查结果", vocabulary)
         self.assertIn('"team-mapping-decision-basis-illustrative": {', vocabulary)
         self.assertIn("项目条件未满足", vocabulary)
         self.assertIn("不是对任何项目或模型的判断", vocabulary)
@@ -1684,12 +1752,13 @@ class AdapterScenarioTests(unittest.TestCase):
             "重新发布", words["consequenceKinds"]["re-identification-and-reissue-risk"]
         )
         self.assertIn("文件", words["consequenceKinds"]["re-identification-and-reissue-risk"])
-        # The head-of-page and directory notices say which kinds a conclusion's
-        # evidence *may* be and where each citation's source is shown. Neither
-        # says a page holds all of them: no record does, and a sentence about a
-        # whole page cannot assert what that page contains.
+        # The head-of-page notice says which kinds a conclusion's evidence *may*
+        # be and where each citation's source is shown. It does not say a page
+        # holds all of them: no record does, and a sentence about a whole page
+        # cannot assert what that page contains. The directory no longer says it
+        # a second time under its heading.
         vocabulary_source = (STATIC / "vocabulary.js").read_text(encoding="utf-8")
-        for name in ("DEMO_NOTICE", "DIRECTORY_NOTE"):
+        for name in ("DEMO_NOTICE",):
             notice = vocabulary_source[vocabulary_source.index(f"export const {name} =") :]
             notice = notice[: notice.index(";\n")]
             with self.subTest(notice=name):
@@ -1705,9 +1774,8 @@ class AdapterScenarioTests(unittest.TestCase):
                     self.assertIn(said, notice)
                 for asserted in ("既有", "也有", "都有", "记录里的证据"):
                     self.assertNotIn(asserted, notice)
-        self.assertIn(
-            "note(DIRECTORY_NOTE)", (STATIC / "screens.js").read_text(encoding="utf-8")
-        )
+        self.assertNotIn("DIRECTORY_NOTE", (STATIC / "screens.js").read_text(encoding="utf-8"))
+        self.assertNotIn("DIRECTORY_NOTE", vocabulary_source)
         self.assertEqual(
             words["verdictLabels"],
             {"READY": "可以开始", "BLOCKED": "受阻", "UNKNOWN": "无法判断"},

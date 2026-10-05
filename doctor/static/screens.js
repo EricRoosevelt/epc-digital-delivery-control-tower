@@ -38,6 +38,7 @@ import {
   ACTION_GROUPS,
   ACTION_PACK,
   ACTIONS,
+  APP,
   ACTIVITY_NAMES,
   BASIS_WORDS,
   BESIDE,
@@ -53,7 +54,6 @@ import {
   DEMO_NOTICE,
   DETAILS_WORDS,
   DIRECTORY,
-  DIRECTORY_NOTE,
   DISPOSITIONS,
   ELEMENT_CARD,
   ELEMENT_WORDS,
@@ -84,6 +84,7 @@ import {
   RECHECK_CANNOT,
   RECHECK_ITEM,
   RECHECK_LIMITS,
+  REFUSAL_PAGE,
   REFUSAL_REASONS,
   REFUSAL_SCOPE_NOTE,
   REFUSAL_UNGLOSSED,
@@ -476,8 +477,10 @@ function runs(state) {
     );
   } else {
     container.append(
+      // What a simulated example's evidence may be, and where each citation's
+      // source is shown, is the notice at the head of the page; it is not said
+      // again here.
       h("h1", {}, DIRECTORY.exampleTitle),
-      note(DIRECTORY_NOTE),
     );
   }
   if (!state.runs.length) {
@@ -1094,6 +1097,8 @@ function member(state, activityIndex, ordinal, memberIndex) {
 // decided" is not a clean bill, and that a team is an entry in the record.
 
 let lastFirstItem = null;
+// The first-check cards whose fold is open, for one run: `{ runId, keys }`.
+let openFirstCards = null;
 
 /** A verdict as a manager says it. Never rendered alone: see `workVerdict`. */
 function verdictLabel(value) {
@@ -1420,33 +1425,61 @@ function first(state) {
     ),
   );
 
-  const card = (item, said) =>
-    h(
+  // A card shows, without opening anything: the element, the work and its
+  // verdict, where the verdict's evidence came from (simulated or not), the
+  // notes that change how it reads, the problem in a few words, and the way to
+  // the item. The element's particulars and the full action sentence are one
+  // fold away; the item's own page still puts what to do first. Which folds are
+  // open survives a visit to an item and back.
+  const opened = openFirstCards && openFirstCards.runId === state.runId ? openFirstCards.keys : new Set();
+  openFirstCards = { runId: state.runId, keys: opened };
+  const card = (item, said) => {
+    const sentences = actionSentences(item.kind, request);
+    const key = `${item.activityIndex}/${item.ordinal}/${item.memberIndex}`;
+    return h(
       "li",
-      { class: "recheck-item" },
+      { class: "recheck-item first-card" },
       h("div", { class: "kicker" }, countWord(item.keys)),
       h("div", { class: "member-name" }, itemTitle(state, item.keys)),
-      h(
-        "ul",
-        { class: "plain element-briefs" },
-        item.keys.map((key) => elementBrief(state, key, item.keys.length > 1)),
-      ),
       h("p", { class: "conclusion" }, workVerdict(item.activity, item.verdict)),
       basisLine(item.basis),
       besideVerdict(item.activity, item.verdict, said),
-      // The action sentence where one was written for this problem type; the
-      // problem's name otherwise. The team's table above names the problem.
-      definitions([
-        actionSentences(item.kind, request)
-          ? [FIRST.action, actionSentences(item.kind, request).action]
-          : [FIRST.problem, item.kind === undefined ? missing(NOT_CARRIED) : problemName(item.kind)],
-      ]),
       h(
-        "a",
-        { class: "run", href: itemHref(item), "data-return-focus": here(item) ? true : null },
-        FIRST.openItem,
+        "p",
+        { class: "card-problem" },
+        h("span", { class: "label" }, FIRST.problem),
+        COMMON.colon,
+        item.kind === undefined ? missing(NOT_CARRIED) : problemName(item.kind),
+      ),
+      h(
+        "div",
+        { class: "card-foot" },
+        h(
+          "details",
+          {
+            class: "card-details",
+            open: opened.has(key),
+            ontoggle: (event) => {
+              if (event.target.open) opened.add(key);
+              else opened.delete(key);
+            },
+          },
+          h("summary", {}, sentences ? FIRST.cardDetails : FIRST.cardElements),
+          h(
+            "ul",
+            { class: "plain element-briefs" },
+            item.keys.map((element) => elementBrief(state, element, item.keys.length > 1)),
+          ),
+          sentences ? definitions([[FIRST.action, sentences.action]]) : null,
+        ),
+        h(
+          "a",
+          { class: "run", href: itemHref(item), "data-return-focus": here(item) ? true : null },
+          FIRST.openCard,
+        ),
       ),
     );
+  };
 
   content.append(
     h(
@@ -2512,13 +2545,8 @@ function recheckItem(state, subscopeIndex, memberIndex) {
           )
         : null,
     ),
-    h(
-      "section",
-      { class: "block" },
-      h("h2", {}, keys.length === 2 ? RECHECK_ITEM.whichTwo : RECHECK_ITEM.whichOne),
-      h("div", { class: "locations" }, keys.map((key) => elementCard(state, key, model.reissue.comparison))),
-      note(ELEMENT_WORDS.naming),
-    ),
+    // What is left to do comes before the element's particulars, as on the
+    // first check's item page: the action is what this page is for.
     h(
       "section",
       { class: "block next-step" },
@@ -2529,6 +2557,13 @@ function recheckItem(state, subscopeIndex, memberIndex) {
       item.current
         ? item.current.map((current) => currentSubscopeBlock(state, item, current))
         : note(RECHECK_ITEM.noCurrent),
+    ),
+    h(
+      "section",
+      { class: "block" },
+      h("h2", {}, keys.length === 2 ? RECHECK_ITEM.whichTwo : RECHECK_ITEM.whichOne),
+      h("div", { class: "locations" }, keys.map((key) => elementCard(state, key, model.reissue.comparison))),
+      note(ELEMENT_WORDS.naming),
     ),
     h(
       "section",
@@ -2664,32 +2699,28 @@ function refusal(state) {
   const content = h(
     "div",
     { class: "refusal" },
-    h("h1", {}, "这次检查尝试没有开始评估"),
-    h(
-      "p",
-      { class: "lede" },
-      "系统在评估开始前拒绝了这次请求，并给出了原因。这是对请求条件的答复：不是程序故障，也不是检查结果。",
-    ),
-    section("为什么没有开始", h("p", { class: "headline" }, reason.title), h("p", {}, reason.text)),
+    h("h1", {}, REFUSAL_PAGE.title),
+    h("p", { class: "lede" }, REFUSAL_PAGE.lede),
+    section(REFUSAL_PAGE.whyHeading, h("p", { class: "headline" }, reason.title), h("p", {}, reason.text)),
     section(
-      "要让检查能够开始，需要什么",
+      REFUSAL_PAGE.needHeading,
       reason.action.map((text) => h("p", {}, text)),
       // Shown for every refusal, whatever its code. It is the sentence that
       // stops "one gate is cleared" being read as "the next run will succeed",
       // so it cannot live inside a condition that may not hold.
       h("p", { class: "callout" }, REFUSAL_SCOPE_NOTE),
-      note("本次只返回这一个原因，没有其他环节的诊断。"),
+      note(REFUSAL_PAGE.onlyOne),
     ),
-    note("没有任何事项的结论、零问题统计或完成百分比；被拒绝不是“无法判断”，也不是一次没有问题的检查。"),
+    note(REFUSAL_PAGE.noConclusion),
     h(
       "details",
       { class: "block evidence-details" },
-      h("summary", {}, "系统返回的原文（英文）与拒绝码"),
+      h("summary", {}, REFUSAL_PAGE.original),
       definitions([
-        ["检查尝试", runLabel(state.runId)],
-        ["拒绝码", copyable(envelope.refusal.code)],
+        [REFUSAL_PAGE.attempt, runLabel(state.runId)],
+        [REFUSAL_PAGE.code, copyable(envelope.refusal.code)],
       ]),
-      note("所提交的请求上下文尚未随拒绝返回。"),
+      note(REFUSAL_PAGE.contextMissing),
       h("pre", { class: "refusal-text" }, envelope.refusal.text),
     ),
   );
@@ -2713,7 +2744,7 @@ function refusal(state) {
     h(
       "p",
       { class: "actions" },
-      h("a", { class: "run", href: href(state.mode) }, "返回上一级"),
+      h("a", { class: "run", href: href(state.mode) }, APP.up),
       " ",
       h(
         "button",
@@ -2725,7 +2756,7 @@ function refusal(state) {
             go();
           },
         },
-        "返回首页",
+        CONTEXT.home,
       ),
     ),
   );

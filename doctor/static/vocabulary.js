@@ -69,15 +69,6 @@ export const FOLLOW_UP = {
   "member-evidence": "recheck-requirement-relaxed",
 };
 
-// Said at the head of the example directory: which kinds of evidence a
-// conclusion may rest on, and where on the pages each citation's source is
-// actually shown. It says "may": no one record holds all three kinds, and a
-// sentence about a whole page cannot assert what that page contains.
-export const DIRECTORY_NOTE =
-  "每个示例是一份检查记录。一个结论的证据可能是真实检查的结果，可能是模拟的检查结果，也可能是模拟的人工判定；" +
-  "具体是哪一种，看结果页和事项页每个结论旁的“依据”一行，按逐条引用标明。" +
-  "示例中的项目设定，包括处理团队安排、证据方法的接受等，是演示用设定，不代表真实项目决定。";
-
 export const EXAMPLE_NOTE =
   "示例说明由搭建示例的人提供，只说这个示例被给了什么；它不是检查得出的结论。" +
   "检查得出了什么，只看结果页。";
@@ -860,6 +851,21 @@ export const carryOverReason = (value) => glossed(CARRY_OVER_REASONS, value);
 // refused is not a promise that the next one is assessable.
 export const REFUSAL_SCOPE_NOTE = "处理当前拒绝原因不保证随后可评估；其余限制尚未由本次运行验证。";
 
+// The rest of the bundled project's refusal screen. The reason itself is in
+// REFUSAL_REASONS; the system's own text is shown as it came, in its fold.
+export const REFUSAL_PAGE = {
+  title: "这次检查尝试没有开始评估",
+  lede: "系统在评估开始前拒绝了这次请求，并给出了原因。这是对请求条件的答复：不是程序故障，也不是检查结果。",
+  whyHeading: "为什么没有开始",
+  needHeading: "要让检查能够开始，需要什么",
+  onlyOne: "本次只返回这一个原因，没有其他环节的诊断。",
+  noConclusion: "没有任何事项的结论、零问题统计或完成百分比；被拒绝不是“无法判断”，也不是一次没有问题的检查。",
+  original: "系统返回的原文（英文）与拒绝码",
+  attempt: "检查尝试",
+  code: "拒绝码",
+  contextMissing: "所提交的请求上下文尚未随拒绝返回。",
+};
+
 // ---------------------------------------------------------------------------
 // The workspace entry: one real check, and its comparison with an earlier run
 // ---------------------------------------------------------------------------
@@ -1244,6 +1250,13 @@ export const FIRST = {
   action: "要做什么",
   problem: "问题",
   openItem: "查看这一项：具体对象、要做什么、由谁处理、拿什么复检",
+  // The fold on a first-check card. Closed by default; what it holds is also on
+  // the item's own page, where what to do comes first.
+  cardDetails: "构件信息和要做什么",
+  cardElements: "构件信息",
+  // The card's link to the item. The long `openItem` above lists what the item
+  // page holds; on a first-check card that list would repeat on every card.
+  openCard: "查看这一项",
   openHeading: { one: "{label}，按处理团队（{count} 个事项）", other: "{label}，按处理团队（{count} 个事项）" },
   team: "处理团队 ",
   teamCount: { one: "：{count} 个事项", other: "：{count} 个事项" },
@@ -1433,9 +1446,9 @@ export const RECHECK_ITEM = {
     "这两个构件已不再被配成一对检查：穿透判定现为“不穿透”（见下方记录给出的原因）。" +
     "这不等于开洞已建成，也不等于开洞缺陷已修复。",
   model: "模型",
-  whichOne: "二、是哪个构件",
-  whichTwo: "二、是哪两个构件",
-  actionHeading: "三、要做什么、由谁处理、完成后拿什么复检",
+  actionHeading: "二、要做什么、由谁处理、完成后拿什么复检",
+  whichOne: "三、是哪个构件",
+  whichTwo: "三、是哪两个构件",
   noCurrent:
     "记录没有给出这一项的当前情况，所以本页没有处理动作、处理团队或默认处理角色可以显示。" +
     "复检前记录里的这些信息也没有随复检记录返回。",
