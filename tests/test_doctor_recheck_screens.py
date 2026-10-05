@@ -602,6 +602,36 @@ class FirstCheckTests(_Modelled):
         item = screens[screens.index("function firstItem(") : screens.index("// S4 — recheck")]
         self.assertNotIn("card-details", item)
 
+    def test_on_a_recheck_item_page_what_to_do_comes_before_which_element(self):
+        """The same order as the first check's item page, numbered to match."""
+
+        screens = (STATIC / "screens.js").read_text(encoding="utf-8")
+        item = screens[screens.index("function recheckItem(") :]
+        item = item[: item.index("\n}\n")]
+        order = [
+            "ITEM.conclusion",
+            "RECHECK_ITEM.actionHeading",
+            "RECHECK_ITEM.whichTwo : RECHECK_ITEM.whichOne",
+            "RECHECK_ITEM.conditionHeading",
+        ]
+        positions = [item.index(heading) for heading in order]
+        self.assertEqual(positions, sorted(positions), order)
+        self.assertLess(
+            item.index("currentSubscopeBlock(state, item, current)"),
+            item.index("elementCard(state, key"),
+        )
+        vocabulary = (STATIC / "vocabulary.js").read_text(encoding="utf-8")
+        recheck = vocabulary[vocabulary.index("export const RECHECK_ITEM = {") :]
+        recheck = recheck[: recheck.index("\n};\n")]
+        for said in (
+            'actionHeading: "二、要做什么、由谁处理、完成后拿什么复检"',
+            'whichOne: "三、是哪个构件"',
+            'whichTwo: "三、是哪两个构件"',
+            'conditionHeading: "四、复检前留下的结束条件，这次达到了吗"',
+        ):
+            with self.subTest(said=said):
+                self.assertIn(said, recheck)
+
     def test_a_conclusion_is_never_shown_without_its_work_its_basis_and_its_limits(self):
         screens = (STATIC / "screens.js").read_text(encoding="utf-8")
         first = screens[
@@ -1722,12 +1752,13 @@ class AdapterScenarioTests(unittest.TestCase):
             "重新发布", words["consequenceKinds"]["re-identification-and-reissue-risk"]
         )
         self.assertIn("文件", words["consequenceKinds"]["re-identification-and-reissue-risk"])
-        # The head-of-page and directory notices say which kinds a conclusion's
-        # evidence *may* be and where each citation's source is shown. Neither
-        # says a page holds all of them: no record does, and a sentence about a
-        # whole page cannot assert what that page contains.
+        # The head-of-page notice says which kinds a conclusion's evidence *may*
+        # be and where each citation's source is shown. It does not say a page
+        # holds all of them: no record does, and a sentence about a whole page
+        # cannot assert what that page contains. The directory no longer says it
+        # a second time under its heading.
         vocabulary_source = (STATIC / "vocabulary.js").read_text(encoding="utf-8")
-        for name in ("DEMO_NOTICE", "DIRECTORY_NOTE"):
+        for name in ("DEMO_NOTICE",):
             notice = vocabulary_source[vocabulary_source.index(f"export const {name} =") :]
             notice = notice[: notice.index(";\n")]
             with self.subTest(notice=name):
@@ -1743,9 +1774,8 @@ class AdapterScenarioTests(unittest.TestCase):
                     self.assertIn(said, notice)
                 for asserted in ("既有", "也有", "都有", "记录里的证据"):
                     self.assertNotIn(asserted, notice)
-        self.assertIn(
-            "note(DIRECTORY_NOTE)", (STATIC / "screens.js").read_text(encoding="utf-8")
-        )
+        self.assertNotIn("DIRECTORY_NOTE", (STATIC / "screens.js").read_text(encoding="utf-8"))
+        self.assertNotIn("DIRECTORY_NOTE", vocabulary_source)
         self.assertEqual(
             words["verdictLabels"],
             {"READY": "可以开始", "BLOCKED": "受阻", "UNKNOWN": "无法判断"},

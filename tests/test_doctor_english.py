@@ -416,10 +416,13 @@ class ScreenTests(unittest.TestCase):
         self.assertEqual(set(re.findall(r'"([^"]+)"', declared)), TRANSLATED)
         render = _functions(app)["render"]
         self.assertIn(
-            'inLanguage("entry") ? screens.entry(workspace) : untranslated(href())', render
+            'inLanguage("entry") ? screens.entry(workspace) : untranslated(href(), token > 1)',
+            render,
         )
         self.assertIn(
-            "inLanguage(`runs/${mode}`) ? screens.runs(state) : untranslated(href())", render
+            "inLanguage(`runs/${mode}`) ? screens.runs(state)"
+            " : untranslated(href(), token > 1)",
+            render,
         )
         guard = render.index("if (!inLanguage(")
         for call in re.findall(r"screens\.(?!entry|runs)\w+\(", render):
@@ -500,6 +503,12 @@ class ScreenTests(unittest.TestCase):
         page = language[language.index("export function untranslated(") :]
         self.assertIn("history.back()", page)
         self.assertIn("WORDS.back", page)
+        # Only when there is a page inside the preview to go back to: one opened
+        # directly has none, and going back would leave the preview.
+        self.assertIn("canGoBack\n        ? [", page)
+        app = (STATIC / "app.js").read_text(encoding="utf-8")
+        self.assertEqual(app.count("untranslated(href(), token > 1)"), 3)
+        self.assertNotIn("untranslated(href())", app)
 
     def test_no_sentence_is_written_outside_the_tables(self):
         for name in (

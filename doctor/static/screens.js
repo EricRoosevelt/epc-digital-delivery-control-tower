@@ -54,7 +54,6 @@ import {
   DEMO_NOTICE,
   DETAILS_WORDS,
   DIRECTORY,
-  DIRECTORY_NOTE,
   DISPOSITIONS,
   ELEMENT_CARD,
   ELEMENT_WORDS,
@@ -478,8 +477,10 @@ function runs(state) {
     );
   } else {
     container.append(
+      // What a simulated example's evidence may be, and where each citation's
+      // source is shown, is the notice at the head of the page; it is not said
+      // again here.
       h("h1", {}, DIRECTORY.exampleTitle),
-      note(DIRECTORY_NOTE),
     );
   }
   if (!state.runs.length) {
@@ -2544,13 +2545,8 @@ function recheckItem(state, subscopeIndex, memberIndex) {
           )
         : null,
     ),
-    h(
-      "section",
-      { class: "block" },
-      h("h2", {}, keys.length === 2 ? RECHECK_ITEM.whichTwo : RECHECK_ITEM.whichOne),
-      h("div", { class: "locations" }, keys.map((key) => elementCard(state, key, model.reissue.comparison))),
-      note(ELEMENT_WORDS.naming),
-    ),
+    // What is left to do comes before the element's particulars, as on the
+    // first check's item page: the action is what this page is for.
     h(
       "section",
       { class: "block next-step" },
@@ -2561,6 +2557,13 @@ function recheckItem(state, subscopeIndex, memberIndex) {
       item.current
         ? item.current.map((current) => currentSubscopeBlock(state, item, current))
         : note(RECHECK_ITEM.noCurrent),
+    ),
+    h(
+      "section",
+      { class: "block" },
+      h("h2", {}, keys.length === 2 ? RECHECK_ITEM.whichTwo : RECHECK_ITEM.whichOne),
+      h("div", { class: "locations" }, keys.map((key) => elementCard(state, key, model.reissue.comparison))),
+      note(ELEMENT_WORDS.naming),
     ),
     h(
       "section",

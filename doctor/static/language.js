@@ -60,9 +60,11 @@ export function languageSwitch() {
 /** In English, a page whose words are not translated yet: said, never mixed.
  *
  * The links that lead here say beforehand that the page is Chinese only; this
- * page offers the way back to where the viewer came from, as well as home.
+ * page offers the way back to where the viewer came from, as well as home. The
+ * way back is offered only when there is such a page inside the preview: a
+ * page opened directly has none, and going back would leave the preview.
  */
-export function untranslated(homeHref) {
+export function untranslated(homeHref, canGoBack = false) {
   return h(
     "div",
     { class: "untranslated" },
@@ -73,8 +75,9 @@ export function untranslated(homeHref) {
       { class: "actions" },
       h("button", { type: "button", onclick: () => chooseLanguage("zh") }, WORDS.showIn),
       " ",
-      h("button", { type: "button", class: "quiet", onclick: () => history.back() }, WORDS.back),
-      " ",
+      canGoBack
+        ? [h("button", { type: "button", class: "quiet", onclick: () => history.back() }, WORDS.back), " "]
+        : null,
       h("a", { href: homeHref }, WORDS.home),
     ),
   );

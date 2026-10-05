@@ -1,6 +1,6 @@
 # Doctor 英文词表（主路径与真实工作区）
 
-日期：2026-10-03；第二部分（单项、复检）与第三部分（工作区的结果、详情、对比、拒绝、故障）同日补入；2026-10-04 补入行动与复检句（`ACTIONS`）；2026-10-05 补入首次结果卡片的三个标签（`FIRST.cardDetails`、`FIRST.cardElements`、`FIRST.openCard`），以及随附项目检查尝试的拒绝页（`REFUSAL_REASONS`、`REFUSAL_SCOPE_NOTE`、`REFUSAL_PAGE`、`REFUSAL_UNGLOSSED`）。负责：Product/UI Engineer。
+日期：2026-10-03；第二部分（单项、复检）与第三部分（工作区的结果、详情、对比、拒绝、故障）同日补入；2026-10-04 补入行动与复检句（`ACTIONS`）；2026-10-05 补入首次结果卡片的三个标签（`FIRST.cardDetails`、`FIRST.cardElements`、`FIRST.openCard`），以及随附项目检查尝试的拒绝页（`REFUSAL_REASONS`、`REFUSAL_SCOPE_NOTE`、`REFUSAL_PAGE`、`REFUSAL_UNGLOSSED`）；同日删去与页首来源提示重复的 `DIRECTORY_NOTE`，复检单项页的标题序号随区块顺序调整。负责：Product/UI Engineer。
 状态：**全部未经 BIM 复核**；有领域含义的条目进 10/15 BIM 批次。
 本文件由界面实际注册的词表生成，测试逐条核对英文与这里一致。中文一列是同一键在 `vocabulary.js` 里的原文。
 
@@ -25,9 +25,9 @@
 | 类别 | 表 | 条目 |
 | --- | --- | --- |
 | 原文（取自 Pack、记录或产品文档，未翻译） | 3 | 12 |
-| 有领域含义（判断、活动、问题类型、限制、来源），待 BIM | 54 | 552 |
+| 有领域含义（判断、活动、问题类型、限制、来源），待 BIM | 53 | 551 |
 | 界面用语 | 24 | 166 |
-| 合计 | 81 | 730 |
+| 合计 | 80 | 729 |
 
 ## 原文
 
@@ -271,12 +271,6 @@
 | `prior` | 复检前那次评估时，这条证据的要求和结果如下。有这段说明不等于这一行可以比较；这一行的状态以上面写的为准。 | At the assessment before the recheck, this evidence's requirement and result were as follows. Having this description does not make the row comparable; the row's state is what is written above. |
 | `currentAbsent` | 本次记录引用的对应证据：要求明细记录未提供。 | The corresponding evidence this record cites: its requirement details are not given in the record. |
 
-**`DIRECTORY_NOTE`**
-
-| 键 | 中文 | English |
-| --- | --- | --- |
-| `DIRECTORY_NOTE` | 每个示例是一份检查记录。一个结论的证据可能是真实检查的结果，可能是模拟的检查结果，也可能是模拟的人工判定；具体是哪一种，看结果页和事项页每个结论旁的“依据”一行，按逐条引用标明。示例中的项目设定，包括处理团队安排、证据方法的接受等，是演示用设定，不代表真实项目决定。 | Each example is one check record. The evidence for a conclusion may be a real check result, a simulated check result or a simulated human determination; which one it is, the "Basis" line beside each conclusion on the result and item pages says, citation by citation. The project settings in the examples, including the handling teams and the acceptance of evidence methods, are demonstration settings, not real project decisions. |
-
 **`DISPOSITIONS`**
 
 | 键 | 中文 | English |
@@ -511,9 +505,9 @@
 | `kicker` | 复检事项 · {count} | Recheck item · {count} |
 | `pairNote` | 这两个构件已不再被配成一对检查：穿透判定现为“不穿透”（见下方记录给出的原因）。这不等于开洞已建成，也不等于开洞缺陷已修复。 | These two elements are no longer paired for checking: the penetration determination is now "no penetration" (see the reason the record gives below). This does not mean the opening has been built, nor that the opening defect has been fixed. |
 | `model` | 模型 | Models |
-| `whichOne` | 二、是哪个构件 | 2. Which element |
-| `whichTwo` | 二、是哪两个构件 | 2. Which two elements |
-| `actionHeading` | 三、要做什么、由谁处理、完成后拿什么复检 | 3. What to do, who deals with it, what a recheck must show |
+| `actionHeading` | 二、要做什么、由谁处理、完成后拿什么复检 | 2. What to do, who deals with it, what a recheck must show |
+| `whichOne` | 三、是哪个构件 | 3. Which element |
+| `whichTwo` | 三、是哪两个构件 | 3. Which two elements |
 | `noCurrent` | 记录没有给出这一项的当前情况，所以本页没有处理动作、处理团队或默认处理角色可以显示。复检前记录里的这些信息也没有随复检记录返回。 | The record does not give this item's current place, so this page has no action, handling team or default handling role to show. Those details from the record before the recheck did not come back with the recheck record either. |
 | `conditionHeading` | 四、复检前留下的结束条件，这次达到了吗 | 4. Was the exit condition left before the recheck reached this time? |
 | `priorCondition` | 复检前留下的结束条件：{text}。 | The exit condition left before the recheck: {text} |
