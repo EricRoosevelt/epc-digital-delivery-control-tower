@@ -69,15 +69,6 @@ export const FOLLOW_UP = {
   "member-evidence": "recheck-requirement-relaxed",
 };
 
-// Said at the head of the example directory: which kinds of evidence a
-// conclusion may rest on, and where on the pages each citation's source is
-// actually shown. It says "may": no one record holds all three kinds, and a
-// sentence about a whole page cannot assert what that page contains.
-export const DIRECTORY_NOTE =
-  "每个示例是一份检查记录。一个结论的证据可能是真实检查的结果，可能是模拟的检查结果，也可能是模拟的人工判定；" +
-  "具体是哪一种，看结果页和事项页每个结论旁的“依据”一行，按逐条引用标明。" +
-  "示例中的项目设定，包括处理团队安排、证据方法的接受等，是演示用设定，不代表真实项目决定。";
-
 export const EXAMPLE_NOTE =
   "示例说明由搭建示例的人提供，只说这个示例被给了什么；它不是检查得出的结论。" +
   "检查得出了什么，只看结果页。";
@@ -1455,9 +1446,9 @@ export const RECHECK_ITEM = {
     "这两个构件已不再被配成一对检查：穿透判定现为“不穿透”（见下方记录给出的原因）。" +
     "这不等于开洞已建成，也不等于开洞缺陷已修复。",
   model: "模型",
-  whichOne: "二、是哪个构件",
-  whichTwo: "二、是哪两个构件",
-  actionHeading: "三、要做什么、由谁处理、完成后拿什么复检",
+  actionHeading: "二、要做什么、由谁处理、完成后拿什么复检",
+  whichOne: "三、是哪个构件",
+  whichTwo: "三、是哪两个构件",
   noCurrent:
     "记录没有给出这一项的当前情况，所以本页没有处理动作、处理团队或默认处理角色可以显示。" +
     "复检前记录里的这些信息也没有随复检记录返回。",

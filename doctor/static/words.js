@@ -14,7 +14,6 @@ export const MODE_LABELS = bilingual("MODE_LABELS", zh.MODE_LABELS, en.MODE_LABE
 export const RUN_LABELS = bilingual("RUN_LABELS", zh.RUN_LABELS, en.RUN_LABELS);
 export const EXAMPLES = bilingual("EXAMPLES", zh.EXAMPLES, en.EXAMPLES);
 export const FOLLOW_UP = bilingual("FOLLOW_UP", zh.FOLLOW_UP, zh.FOLLOW_UP);
-export const DIRECTORY_NOTE = bilingual("DIRECTORY_NOTE", zh.DIRECTORY_NOTE, en.DIRECTORY_NOTE);
 export const EXAMPLE_NOTE = bilingual("EXAMPLE_NOTE", zh.EXAMPLE_NOTE, en.EXAMPLE_NOTE);
 export const HOME = bilingual("HOME", zh.HOME, en.HOME);
 export const NOT_CARRIED = bilingual("NOT_CARRIED", zh.NOT_CARRIED, en.NOT_CARRIED);

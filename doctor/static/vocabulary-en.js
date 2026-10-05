@@ -219,10 +219,6 @@ export const EXAMPLE_NOTE =
   "An example's description is written by whoever built the example and says only what the example was given; it is not a conclusion of any check. " +
   "What the check concluded is on the result page only.";
 
-export const DIRECTORY_NOTE =
-  "Each example is one check record. The evidence for a conclusion may be a real check result, a simulated check result or a simulated human determination; " +
-  "which one it is, the \"Basis\" line beside each conclusion on the result and item pages says, citation by citation. " +
-  "The project settings in the examples, including the handling teams and the acceptance of evidence methods, are demonstration settings, not real project decisions.";
 
 export const DEMO_NOTICE =
   "Simulated example: the project settings in the example, including the handling teams and the acceptance of evidence methods, are demonstration settings, not real project decisions; " +
@@ -674,9 +670,9 @@ export const RECHECK_ITEM = {
     "These two elements are no longer paired for checking: the penetration determination is now \"no penetration\" (see the reason the record gives below). " +
     "This does not mean the opening has been built, nor that the opening defect has been fixed.",
   model: "Models",
-  whichOne: "2. Which element",
-  whichTwo: "2. Which two elements",
-  actionHeading: "3. What to do, who deals with it, what a recheck must show",
+  actionHeading: "2. What to do, who deals with it, what a recheck must show",
+  whichOne: "3. Which element",
+  whichTwo: "3. Which two elements",
   noCurrent:
     "The record does not give this item's current place, so this page has no action, handling team or default handling role to show. " +
     "Those details from the record before the recheck did not come back with the recheck record either.",

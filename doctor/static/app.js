@@ -202,6 +202,8 @@ export function go(...parts) {
 let rendering = 0;
 
 async function render() {
+  // Also the count of routes shown since this page loaded: past the first, there
+  // is a page inside the preview to go back to.
   const token = ++rendering;
   const main = document.getElementById("main");
   const header = document.getElementById("context");
@@ -222,7 +224,7 @@ async function render() {
       workspace = { error: problem.message };
     }
     if (token !== rendering) return;
-    main.replaceChildren(inLanguage("entry") ? screens.entry(workspace) : untranslated(href()));
+    main.replaceChildren(inLanguage("entry") ? screens.entry(workspace) : untranslated(href(), token > 1));
     focusMain(main);
     return;
   }
@@ -236,7 +238,7 @@ async function render() {
   try {
     if (!runId) {
       await ensureRuns(mode);
-      content = inLanguage(`runs/${mode}`) ? screens.runs(state) : untranslated(href());
+      content = inLanguage(`runs/${mode}`) ? screens.runs(state) : untranslated(href(), token > 1);
     } else {
       main.replaceChildren(h("p", { role: "status" }, APP.loading));
       await ensureEnvelope(mode, runId);
@@ -257,7 +259,7 @@ async function render() {
         return;
       }
       if (!inLanguage(mode === "workspace" ? `workspace/${wanted}` : wanted)) {
-        content = untranslated(href());
+        content = untranslated(href(), token > 1);
       } else if (mode === "workspace") {
         switch (wanted) {
           case "check":

@@ -104,7 +104,6 @@ process.stdout.write(
     reasonGlosses: vocabulary.REASON_GLOSSES,
     ruleNotesFor: vocabulary.RULE_NOTES_FOR,
     demoNotice: vocabulary.DEMO_NOTICE,
-    directoryNote: vocabulary.DIRECTORY_NOTE,
     consequenceKinds: vocabulary.CONSEQUENCE_KINDS,
     modeLabels: vocabulary.MODE_LABELS,
   }),
@@ -596,7 +595,7 @@ class WordingTests(_Modelled):
         self.assertTrue(reasons)
 
     def test_the_two_wordings_product_left_for_the_next_change(self):
-        for notice in (self.output["demoNotice"], self.output["directoryNote"]):
+        for notice in (self.output["demoNotice"],):
             with self.subTest(notice=notice):
                 self.assertIn(
                     "包括处理团队安排、证据方法的接受等，是演示用设定，不代表真实项目决定",
