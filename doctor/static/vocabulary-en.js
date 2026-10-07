@@ -225,6 +225,22 @@ export const DEMO_NOTICE =
   "the evidence for a conclusion may be a real check result, a simulated check result or a simulated human determination — which one, the \"Basis\" line beside each conclusion says (citation by citation). " +
   "Not for formal project decisions, and no formal check record can be exported.";
 
+export const SOURCE_SUMMARY = {
+  lead: "A simulated example shipped with the tool, not your model; project settings such as teams are for demonstration, not for formal project decisions.",
+  cites: "This record's conclusions cite {kinds}, labelled citation by citation on the \"Basis\" line beside each conclusion.",
+  citesNone: "This record's conclusions cite no evidence.",
+  noRecord: "Whether the evidence a conclusion cites is real or simulated is labelled citation by citation on the \"Basis\" line beside it.",
+  kinds: {
+    "finding-real": "real check output",
+    "finding-fixture": "simulated check results",
+    "determination-fixture": "simulated human determinations",
+    "determination-unmarked": "determinations of unstated source",
+  },
+  join: ", ",
+  lastJoin: " and ",
+  more: "About the sources",
+};
+
 export const PROVENANCE_NOTICE =
   "Each citation's source label on this page is decided from that citation alone (whether it carries the simulation marker), never inferred for the whole page or record:";
 
@@ -381,6 +397,7 @@ export const DIRECTORY = {
   realNote:
     "The repository comes with a sample project; below is a check attempt on it. This entry shows only that sample and cannot be switched to another model; to check your own IFC4 files, use \"Check your own IFC model\" on the home page. A Revit file itself cannot be imported.",
   exampleTitle: "Choose a simulated example",
+  exampleIntro: "Each example is one check record.",
   empty: "There is nothing to look at under this entry yet.",
   exampleTag: "About this example",
   open: "Open this example's result",

@@ -63,6 +63,41 @@ export function basisOf(subscope, keys = null) {
   return basis;
 }
 
+/** Every citation a record's conclusions rest on, anywhere in the document.
+ *
+ * What the head of an example page summarises: which sources this one record
+ * cites, so the summary names the kinds it actually has. The whole document is
+ * walked, so a first check's readings, a recheck's earlier and current readings
+ * and both sides of each carry-over row are all in it. Context citations are
+ * consulted at a node and are never a reading (`PathStep.context_citations`), so
+ * they are not a conclusion's basis and are left out. Whether a citation is
+ * simulated is still read off the citation itself, by the caller.
+ */
+export function recordCitations(document) {
+  const found = { findings: [], determinations: [] };
+  const strings = (values) => values.filter((value) => typeof value === "string" && value !== "");
+  const walk = (value) => {
+    if (Array.isArray(value)) {
+      value.forEach(walk);
+      return;
+    }
+    if (value === null || typeof value !== "object") return;
+    if (Array.isArray(value.finding_keys)) found.findings.push(...strings(value.finding_keys));
+    if (Array.isArray(value.cited_determinations)) {
+      found.determinations.push(...strings(value.cited_determinations.map((cited) => carried(cited, "reference"))));
+    }
+    if (value.citation_kind === "finding" || value.citation_kind === "determination") {
+      const sides = strings([carried(value, "citation"), carried(value, "current_citation")]);
+      (value.citation_kind === "finding" ? found.findings : found.determinations).push(...sides);
+    }
+    for (const [key, inner] of Object.entries(value)) {
+      if (key !== "context_citations") walk(inner);
+    }
+  };
+  walk(document);
+  return found;
+}
+
 /** The reading at the end of the path: which evidence requirement, which outcome. */
 export function leafOf(subscope) {
   const path = carries(subscope, "path") ? subscope.path : [];

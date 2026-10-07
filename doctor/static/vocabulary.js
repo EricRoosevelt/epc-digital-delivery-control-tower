@@ -197,6 +197,28 @@ export const DEMO_NOTICE =
   "一个结论的证据可能是真实检查的结果、模拟的检查结果或模拟的人工判定，" +
   "具体是哪一种，看每个结论旁的“依据”一行（按逐条引用标明）。不能用于正式项目决定，也不能导出正式检查记录。";
 
+// The short line at the head of every example page; DEMO_NOTICE above is what
+// it opens to. `lead` is true of every example. `cites` names the kinds of
+// evidence **this record** cites, one per kind actually found among its
+// citations (each decided from that citation alone), so it never says "all
+// real" or "all simulated" of a record that mixes them. Which kind one
+// conclusion rests on stays on the "依据" line beside that conclusion.
+export const SOURCE_SUMMARY = {
+  lead: "随附的模拟示例，不是你的模型；团队等项目设定为演示用，不能用于正式项目决定。",
+  cites: "这份记录的结论引用了：{kinds}，逐条标在结论旁的“依据”一行。",
+  citesNone: "这份记录的结论没有引用证据。",
+  noRecord: "结论引用的证据是真实的还是模拟的，逐条标在结论旁的“依据”一行。",
+  kinds: {
+    "finding-real": "真实检查输出",
+    "finding-fixture": "模拟的检查结果",
+    "determination-fixture": "模拟的人工判定",
+    "determination-unmarked": "来源未标注的判定",
+  },
+  join: "、",
+  lastJoin: "、",
+  more: "来源说明",
+};
+
 const ABSENCES = {
   "no-finding": "本绑定下尚未评估：没有 finding",
   "no-determination": "尚无判定",
@@ -1227,6 +1249,7 @@ export const CONTEXT = {
 export const DIRECTORY = {
   realNote: "仓库随附一个样例项目，下面是对它的一次检查尝试。这个入口只看这个样例，不能换成别的模型；检查自己的 IFC4 文件，用首页的“检查自己的 IFC 模型”。Revit 文件本身不能导入。",
   exampleTitle: "选择一个模拟示例",
+  exampleIntro: "每个示例是一份检查记录。",
   empty: "这个入口下目前没有可以查看的内容。",
   exampleTag: "示例说明",
   open: "打开这个示例的结果",

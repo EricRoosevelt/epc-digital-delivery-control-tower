@@ -29,7 +29,7 @@ import {
   table,
   verdict,
 } from "./dom.js";
-import { basisOf, firstCheckItem, firstCheckModel, leafOf } from "./first-check-model.js";
+import { basisOf, firstCheckItem, firstCheckModel, leafOf, recordCitations } from "./first-check-model.js";
 import { handoverSide, recheckModel, sealedGroupIndex } from "./recheck-model.js";
 import { compose, fill, plural } from "./i18n.js";
 import { workspaceCheck, workspaceCompare, workspaceRefusal } from "./workspace-screens.js";
@@ -91,6 +91,7 @@ import {
   REQUIREMENT_CHANGED_NOTE,
   RESOLUTION_KINDS,
   RUN_LABELS,
+  SOURCE_SUMMARY,
   UNRECOGNISED,
   VERDICT_LABELS,
   VERDICT_SCOPE,
@@ -247,10 +248,51 @@ export function renderContext(state) {
     ),
   );
   parts.push(bar);
-  if (mode === "fixture") {
-    parts.push(h("p", { class: "demo-notice", role: "note" }, DEMO_NOTICE));
-  }
+  if (mode === "fixture") parts.push(sourceNotice(state.envelope));
   return parts;
+}
+
+function listOf(words) {
+  if (words.length < 2) return words.join("");
+  return words.slice(0, -1).join(SOURCE_SUMMARY.join) + SOURCE_SUMMARY.lastJoin + words[words.length - 1];
+}
+
+/** The head of an example page: one short line that stays, the full notice one fold away.
+ *
+ * The line says what the page is, and which kinds of evidence this record's
+ * conclusions cite: one name per kind actually found, each citation's kind read
+ * off that citation alone. So a record that mixes them is never called all
+ * real or all simulated, and a kind it does not cite is never named. What
+ * changes how one conclusion reads is not here but beside that conclusion: its
+ * "Basis" line, the example-team tag, the scope notes.
+ */
+function sourceNotice(envelope) {
+  let cites = SOURCE_SUMMARY.noRecord;
+  if (envelope && envelope.record) {
+    const citations = recordCitations(envelope.record);
+    const found = new Set([
+      ...citations.findings.map((citation) => citationProvenance("finding", citation)),
+      ...citations.determinations.map((citation) => citationProvenance("determination", citation)),
+    ]);
+    const kinds = Object.keys(CITATION_PROVENANCE)
+      .filter((name) => found.has(CITATION_PROVENANCE[name]))
+      .map((name) => SOURCE_SUMMARY.kinds[name]);
+    cites = kinds.length ? fill(SOURCE_SUMMARY.cites, { kinds: listOf(kinds) }) : SOURCE_SUMMARY.citesNone;
+  }
+  return h(
+    "details",
+    { class: "demo-notice source-notice" },
+    h(
+      "summary",
+      {},
+      h("strong", {}, SOURCE_SUMMARY.lead),
+      " ",
+      cites,
+      " ",
+      h("span", { class: "more" }, SOURCE_SUMMARY.more),
+    ),
+    h("p", {}, DEMO_NOTICE),
+  );
 }
 
 function elementFacts(state, key) {
@@ -483,8 +525,9 @@ function runs(state) {
     container.append(
       // What a simulated example's evidence may be, and where each citation's
       // source is shown, is the notice at the head of the page; it is not said
-      // again here.
+      // again here. Only what an example is: one check record.
       h("h1", {}, DIRECTORY.exampleTitle),
+      note(DIRECTORY.exampleIntro),
     );
   }
   if (!state.runs.length) {
