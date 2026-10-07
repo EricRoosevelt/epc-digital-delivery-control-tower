@@ -18,11 +18,13 @@ from __future__ import annotations
 
 import ast
 import importlib
+import shutil
 import subprocess
 import sys
 import unittest
+from pathlib import Path
 
-from helpers import PROJECT_ROOT
+from helpers import PROJECT_ROOT, outside_repository_directory
 
 SRC = PROJECT_ROOT / "src"
 
@@ -146,6 +148,111 @@ class ShimFidelityTests(unittest.TestCase):
             .findall(".//ids:specification", IDS_NAMESPACE)
         ]
         self.assertEqual(declared_identifiers(build_document()), shipped)
+
+
+#: What a copy of the checkout needs for ``src/extract_inventory.py`` to run in it
+#: exactly as it runs here: the script, the package it shims, the configuration,
+#: both projects with their models, and the two published registers it writes.
+_EXTRACT_TREE = (
+    "src/extract_inventory.py",
+    "epc_control_tower",
+    "control-tower.toml",
+    "rules",
+    "projects",
+    "data/raw",
+    "data/processed/models.csv",
+    "data/processed/model_inventory.csv",
+)
+_REGISTERS = ("data/processed/models.csv", "data/processed/model_inventory.csv")
+
+
+def _copy_checkout(destination: Path, *, legacy_project_id: bool) -> Path:
+    for name in _EXTRACT_TREE:
+        source = PROJECT_ROOT / name
+        target = destination / name
+        target.parent.mkdir(parents=True, exist_ok=True)
+        if source.is_dir():
+            shutil.copytree(source, target, ignore=shutil.ignore_patterns("__pycache__"))
+        else:
+            shutil.copyfile(source, target)
+    if not legacy_project_id:
+        config = destination / "control-tower.toml"
+        text = config.read_bytes()
+        line = b'legacy_project_id = "pcert-sample"\n'
+        assert text.count(line) == 1
+        config.write_bytes(text.replace(line, b""))
+    return destination
+
+
+def _tree(root: Path) -> dict[str, tuple[int, int, bytes]]:
+    """Every file under ``root``: size, modification time and content digest."""
+
+    import hashlib
+
+    return {
+        path.relative_to(root).as_posix(): (
+            path.stat().st_size,
+            path.stat().st_mtime_ns,
+            hashlib.sha256(path.read_bytes()).digest(),
+        )
+        for path in sorted(root.rglob("*"))
+        if path.is_file() and "__pycache__" not in path.parts
+    }
+
+
+def _run_extract(checkout: Path) -> subprocess.CompletedProcess:
+    # The legacy entry point exactly as a user runs it, with no arguments, from
+    # the copied checkout: the script puts its own checkout first on the path.
+    return subprocess.run(
+        [sys.executable, "src/extract_inventory.py"],
+        cwd=checkout,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+
+
+class ExtractInventoryScopeTests(unittest.TestCase):
+    """``src/extract_inventory.py`` publishes the frozen project, or nothing.
+
+    Measured on ``d59dee0`` before this was written (AGENTS.md rule 6): with a
+    second project in the checkout, the script exited 0 and rewrote both
+    published registers with every project's models — ``models.csv`` went from
+    three rows to six, with a second ``architecture`` and a second
+    ``structural``. ``epc-ct snapshot``, ``validate_dashboard.py --mode core``
+    and the contract tests all still passed on the rewritten files; a later
+    ``epc-ct run`` silently wrote the published bytes back. These two tests are
+    that measurement, kept.
+    """
+
+    def test_with_the_legacy_project_named_it_writes_the_published_bytes(self):
+        with outside_repository_directory("extract-scoped") as scratch:
+            checkout = _copy_checkout(scratch / "checkout", legacy_project_id=True)
+            # The copy is the real configuration: two projects, one named.
+            self.assertEqual(
+                sorted(path.name for path in (checkout / "projects").iterdir()),
+                ["iso-reference-view", "pcert-sample"],
+            )
+            for name in _REGISTERS:
+                (checkout / name).unlink()
+            completed = _run_extract(checkout)
+            self.assertEqual(completed.returncode, 0, completed.stderr)
+            for name in _REGISTERS:
+                with self.subTest(register=name):
+                    self.assertEqual(
+                        (checkout / name).read_bytes(), (PROJECT_ROOT / name).read_bytes()
+                    )
+
+    def test_with_several_projects_and_none_named_it_refuses_and_writes_nothing(self):
+        with outside_repository_directory("extract-unscoped") as scratch:
+            checkout = _copy_checkout(scratch / "checkout", legacy_project_id=False)
+            before = _tree(checkout)
+            completed = _run_extract(checkout)
+            self.assertNotEqual(completed.returncode, 0)
+            self.assertIn("legacy_project_id", completed.stderr)
+            self.assertIn("['iso-reference-view', 'pcert-sample']", completed.stderr)
+            self.assertNotIn("Wrote", completed.stdout)
+            self.assertEqual(_tree(checkout), before)
 
 
 if __name__ == "__main__":
