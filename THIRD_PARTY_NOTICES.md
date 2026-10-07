@@ -28,6 +28,20 @@ identify LGPL terms. This project does not resolve that upstream metadata
 conflict or redistribute the package. The normative Stage 3 BCF implementation
 uses Python XML/ZIP facilities and the vendored official schemas instead.
 
+## three.js
+
+[three.js](https://github.com/mrdoob/three.js) 0.186.1, from the npm package
+`three` (tarball SHA-256
+`8cd068708ea44f2c73c944b1cead2ba2f0d5c15c8fc194e5700f4e4f4a033fe7`), is
+admitted as the browser 3D runtime for the Doctor preview.
+
+Copyright © 2010-2026 three.js authors. Licensed under the MIT License, whose
+text is retained verbatim in `third_party/three/0.186.1/LICENSE`.
+
+No three.js code is redistributed yet. When it is, only the three files listed
+in `third_party/three/0.186.1/provenance.json` are copied, unmodified, into that
+directory, and each is checked against the SHA-256 recorded there.
+
 ## buildingSMART Sample IFC Files
 
 The following files are unmodified public samples from the buildingSMART
