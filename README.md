@@ -4,9 +4,15 @@
 
 [![CI](https://github.com/EricRoosevelt/epc-digital-delivery-control-tower/actions/workflows/ci.yml/badge.svg)](https://github.com/EricRoosevelt/epc-digital-delivery-control-tower/actions/workflows/ci.yml)
 
-This portfolio prototype converts multidisciplinary IFC model data and
-project-authored information requirements into traceable digital-delivery
-findings and future management KPIs.
+**[Try it](#try-it)** · **[中文快速开始](#中文快速开始)** ·
+[BIM Doctor today](#bim-doctor-today) · [Build on the framework](#other-entry-points)
+
+This portfolio prototype lays out, for a BIM manager about to hand a model from
+one discipline to the next, what a check of the IFC models found and what a
+recheck must show. **BIM Doctor**, the local preview in [`doctor/`](doctor/),
+shows it in Chinese; underneath is `epc-ct`, a deterministic framework that turns
+multidisciplinary IFC model data and project-authored information requirements
+into traceable findings, issues and BCF.
 
 It uses public buildingSMART sample models and clearly identifies
 project-specific assumptions. It is not presented as a production deployment.
@@ -45,13 +51,15 @@ the interface.
 **Language.** The interface opens in Chinese, and the Chinese interface is what the
 screenshots below show and what this README recommends you try. An English wording
 exists as a development trial and **has not been accepted**: it has not been
-reviewed by a BIM domain specialist, and one next-step sentence on the example's
-first-check path is known to differ in meaning from the Chinese and is being
-corrected. Until it has been reviewed and corrected, do not rely on it, and do not
-take it as a demonstration of the product. If you want to see it anyway, open any
-address with `?lang=en`, or use the switch at the top of every screen. In English
-the result of the check attempt on the bundled project, and the record, activity
-and member pages, say "This page has not been translated yet".
+reviewed by a BIM domain specialist (see the status line of the
+[English vocabulary](docs/product/2026-10-03-doctor-english-vocabulary.md)). The
+English "what to do" and "what a recheck must show" sentences now line up with the
+Chinese ones problem type for problem type, so the next step on the example's
+first-check path means the same in both languages. That alignment is not a review:
+the English wording as a whole is still unreviewed, so **it is not recommended for
+demonstrations**. If you want to see it anyway, open any address with `?lang=en`,
+or use the switch at the top of every screen. In English the record, activity and
+member pages say "This page has not been translated yet".
 
 ![BIM Doctor home, Chinese interface: two entries, and a strip saying you cannot import your own Revit model and it gives no overall compliance conclusion](docs/evidence/doctor-first-minute-2026-10-03/zh-01-home.png)
 
@@ -86,7 +94,7 @@ team is the example's own setting and is marked as such. R-005 is a
 project-specific assumption, not a defect of the public sample.
 
 The screenshots use the bundled public sample only and were captured at commit
-`872f76f`; see [their provenance](docs/evidence/doctor-first-minute-2026-10-03/README.md).
+`577620e`; see [their provenance](docs/evidence/doctor-first-minute-2026-10-03/README.md).
 
 ## Try it
 
@@ -107,22 +115,62 @@ On macOS or Linux, create and activate the environment with
 same.
 
 1. Open <http://127.0.0.1:8765/>. The interface opens in Chinese.
-2. Click **选择模拟示例** (choose a simulated example), then **打开这个示例的结果**
-   (open this example's result) under step one, the first check.
-3. Under any item, click **查看这一项：具体对象、要做什么、由谁处理、拿什么复检**
-   (view this item: the element, what to do, who handles it, what a recheck must
-   show).
-4. Back in the catalogue, open step two, **模型未改，但交接判断发生变化** (models
-   unchanged, but the handover judgement changed), to see the same record after a
-   recheck.
+2. Click **选择模拟示例** (choose a simulated example). In the catalogue, under
+   **第一步** (step one), **一次首次检查：交了模型，发现这些事项** (a first check:
+   models handed over, these items found), click **打开这个示例的结果** (open this
+   example's result). You land on the first-check result: 13 items, 8 to handle.
+3. Each item is a card. On one of them, click **查看这一项** (see this item); the
+   screenshot above is the fourth card, *chimney cover*, **房间数据表与设备明细表：受阻**.
+   The item page gives the conclusion, what to do, the handling team, and what a
+   recheck must show.
+4. The item page links back to the list, not to the catalogue (its other exit is
+   **返回首页**, back to the home page). So go back in two hops:
+   **← 返回事项列表（回到这一项的位置）** (back to the list of items), then, on the
+   list, **← 返回示例目录** (back to the example catalogue). Under **第二步** (step
+   two), **模型未改，但交接判断发生变化** (models unchanged, but the handover
+   judgement changed), click **打开这个示例的结果**. This is the same record after
+   a recheck, in a simulated scenario: neither model is republished, and one item
+   (*building element*, 房间数据表与设备明细表) moves from **受阻** (blocked) to
+   **可以开始** (can start) because a requirement it was judged against changed.
 
-The English interface (`?lang=en`) is an unaccepted development trial and is not
-part of this walk; see *Language* above.
+   A shortcut from step 3: lower on the item page, under **然后：这一项复检后的变化**
+   (then: what changed for this item after the recheck), the link
+   **在示例“模型未改，但交接判断发生变化”里看这一项** opens that same item in the
+   recheck example directly.
+
+The English interface (`?lang=en`) is an unaccepted development trial, not
+recommended for demonstrations, and is not part of this walk; see *Language* above.
 
 Stop the server with Ctrl+C; `--port` changes the port. The first result you open
 in a session runs the shipped rules on the sample models once, in a scratch copy
 under the system temporary directory that is removed afterwards; nothing is
 written into the checkout.
+
+## 中文快速开始
+
+BIM Doctor 是本机预览：只监听 `127.0.0.1`，不是正式发布，也不能导入你自己的
+Revit 或 IFC 模型。界面默认是中文，看的是模拟示例；页面上逐处标明哪些内容是
+模拟的、哪些来自真实运行的检查。
+
+1. 安装并启动：需要 Python 3.11 或更新。克隆、建虚拟环境、
+   `pip install -r requirements.txt`、`python doctor/serve.py`，命令见上面的
+   [Try it](#try-it)（Windows 用 PowerShell 那一段，macOS 或 Linux 见紧随其后的说明）。
+   `--port` 可改端口，Ctrl+C 停止。
+2. 浏览器打开 <http://127.0.0.1:8765/>。
+3. 点 **选择模拟示例**，在 **第一步** 的 **一次首次检查：交了模型，发现这些事项**
+   下点 **打开这个示例的结果**：共 13 个事项，其中 8 个需要处理。
+4. 在任一卡片上点 **查看这一项**，看这个构件的结论、要做什么、处理团队、完成后拿
+   什么复检。
+5. 想看复检之后的变化：在单项页点 **← 返回事项列表（回到这一项的位置）**，在列表页
+   点 **← 返回示例目录**，再在 **第二步** 的 **模型未改，但交接判断发生变化** 下点
+   **打开这个示例的结果**。单项页下方也有直达链接：**在示例“模型未改，但交接判断发生变化”里看这一项**。
+
+读结果时记住三点，页面上都有对应的说明：事项数不是缺陷数；“无法判断”不等于这个构件没有
+问题；处理团队是示例里的安排，不代表已经派发。英文界面（`?lang=en`）还没有经过
+BIM 复核，不推荐用来演示，详见上面的 *Language*。
+
+三张中文截图在 [BIM Doctor today](#bim-doctor-today)，出处和哈希在
+[截图说明](docs/evidence/doctor-first-minute-2026-10-03/README.md)。
 
 ## What works today
 
