@@ -564,7 +564,7 @@ class WordingTests(_Modelled):
 
     def test_the_home_says_what_it_offers_when_a_workspace_is_named(self):
         home = self.tables["HOME"]
-        self.assertIn("尚不能导入自己的 Revit 模型", home["status"])
+        self.assertIn("Revit 文件本身（.rvt）不能导入", home["status"])
         with_workspace = home["statusWithWorkspace"]
         for said in ("同时提供", "真实检查", "模拟示例", "整体合规或可施工结论"):
             with self.subTest(said=said):
@@ -578,14 +578,18 @@ class WordingTests(_Modelled):
         self.assertNotIn("示例预览", unknown)
         self.assertIn("不等于没有工作区", self.tables["WORKSPACE_HOME"]["unknown"])
         # Viewing a finished workspace is not choosing a model on the page.
-        self.assertIn("在页面上导入、选择或更换模型", home["cannot"][0])
+        self.assertIn("在示例和工作区入口里选择、更换模型", home["cannot"][0])
         self.assertIn("不能在页面上选择或更换模型", self.tables["WORKSPACE_HOME"]["body"])
         screens = (STATIC / "screens.js").read_text(encoding="utf-8")
         entry = screens[screens.index("function entry(") : screens.index("function runLink(")]
+        # The central sentences are the home's when the server offers no local
+        # check; when it does, the local check's own say the same three things
+        # and what it adds (tests/test_doctor_english.py, LocalCheckWordsTests).
+        self.assertIn("const said = local ? local.words : HOME;", entry)
         self.assertIn(
-            "workspaceRun\n        ? HOME.statusWithWorkspace\n"
-            '        : carries(workspace, "error")\n          ? HOME.statusWorkspaceUnknown\n'
-            "          : HOME.status",
+            "workspaceRun\n        ? said.statusWithWorkspace\n"
+            '        : carries(workspace, "error")\n          ? said.statusWorkspaceUnknown\n'
+            "          : said.status",
             entry,
         )
 

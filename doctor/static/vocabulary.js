@@ -80,17 +80,17 @@ export const HOME = {
   lede:
     "帮助 BIM 经理了解：一次交接前检查发现了什么；复检之后，哪些判断变了、" +
     "哪些事项仍需处理、每一项涉及哪些构件、依据是什么、下一步做什么。",
-  status: "当前为示例预览：尚不能导入自己的 Revit 模型，也不提供整体合规或可施工结论。",
+  status: "当前为示例预览：Revit 文件本身（.rvt）不能导入，也不提供整体合规或可施工结论。",
   // Said instead of `status` when the server was started with a workspace:
   // the home then offers a real check beside the examples.
   statusWithWorkspace:
     "当前同时提供两样：启动服务器时指定的工作区里一次已经跑完的真实检查，以及模拟示例。" +
-    "页面上不能导入、选择或更换模型，也不提供整体合规或可施工结论。",
+    "工作区里的检查不能在页面上选择或更换模型；Revit 文件本身不能导入，也不提供整体合规或可施工结论。",
   // Said instead of `status` when the server could not be asked whether it was
   // started with a workspace: neither "examples only" nor "a real check" is known.
   statusWorkspaceUnknown:
     "未能确认服务器是否指定了工作区，所以这里没有真实检查的入口；这不等于没有工作区，错误原文在下面。" +
-    "模拟示例照常可看。页面上不能导入、选择或更换模型，也不提供整体合规或可施工结论。",
+    "模拟示例照常可看。Revit 文件本身不能导入，也不提供整体合规或可施工结论。",
   example: {
     title: "看一个模拟示例",
     body:
@@ -102,11 +102,11 @@ export const HOME = {
     title: "查看随附项目的检查尝试",
     body:
       "仓库随附一个样例项目。对它的检查尝试没有开始评估；这里说明原因。" +
-      "这不是导入入口，不能换成自己的模型。",
+      "这个入口不是导入入口：只看这个样例项目，不能换成别的模型。",
     action: "查看这次检查尝试",
   },
   cannot: [
-    "在页面上导入、选择或更换模型，包括自己的 Revit 或 IFC 模型",
+    "导入 Revit 文件本身（.rvt），或在示例和工作区入口里选择、更换模型",
     "给出整体合规、可施工或“可以交付”的结论",
     "写回模型、上传到云端，或在 Revit 里打开构件",
   ],
@@ -1225,7 +1225,7 @@ export const CONTEXT = {
 
 // The example directory and the shipped project's entry.
 export const DIRECTORY = {
-  realNote: "仓库随附一个样例项目，下面是对它的一次检查尝试。目前不能选择别的模型，也不能导入自己的模型。",
+  realNote: "仓库随附一个样例项目，下面是对它的一次检查尝试。这个入口只看这个样例，不能换成别的模型；检查自己的 IFC4 文件，用首页的“检查自己的 IFC 模型”。Revit 文件本身不能导入。",
   exampleTitle: "选择一个模拟示例",
   empty: "这个入口下目前没有可以查看的内容。",
   exampleTag: "示例说明",

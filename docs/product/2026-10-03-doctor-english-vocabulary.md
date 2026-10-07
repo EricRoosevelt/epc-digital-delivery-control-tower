@@ -1,6 +1,6 @@
 # Doctor 英文词表（主路径与真实工作区）
 
-日期：2026-10-03；第二部分（单项、复检）与第三部分（工作区的结果、详情、对比、拒绝、故障）同日补入；2026-10-04 补入行动与复检句（`ACTIONS`）；2026-10-05 补入首次结果卡片的三个标签（`FIRST.cardDetails`、`FIRST.cardElements`、`FIRST.openCard`），以及随附项目检查尝试的拒绝页（`REFUSAL_REASONS`、`REFUSAL_SCOPE_NOTE`、`REFUSAL_PAGE`、`REFUSAL_UNGLOSSED`）；同日删去与页首来源提示重复的 `DIRECTORY_NOTE`，复检单项页的标题序号随区块顺序调整。负责：Product/UI Engineer。
+日期：2026-10-03；第二部分（单项、复检）与第三部分（工作区的结果、详情、对比、拒绝、故障）同日补入；2026-10-04 补入行动与复检句（`ACTIONS`）；2026-10-05 补入首次结果卡片的三个标签（`FIRST.cardDetails`、`FIRST.cardElements`、`FIRST.openCard`），以及随附项目检查尝试的拒绝页（`REFUSAL_REASONS`、`REFUSAL_SCOPE_NOTE`、`REFUSAL_PAGE`、`REFUSAL_UNGLOSSED`）；同日删去与页首来源提示重复的 `DIRECTORY_NOTE`，复检单项页的标题序号随区块顺序调整。同日补入本地 IFC 检查的 `LOCAL_CHECK`（146 条，#29）。负责：Product/UI Engineer。
 状态：**全部未经 BIM 复核**；有领域含义的条目进 10/15 BIM 批次。
 本文件由界面实际注册的词表生成，测试逐条核对英文与这里一致。中文一列是同一键在 `vocabulary.js` 里的原文。
 
@@ -25,9 +25,9 @@
 | 类别 | 表 | 条目 |
 | --- | --- | --- |
 | 原文（取自 Pack、记录或产品文档，未翻译） | 3 | 12 |
-| 有领域含义（判断、活动、问题类型、限制、来源），待 BIM | 53 | 551 |
+| 有领域含义（判断、活动、问题类型、限制、来源），待 BIM | 54 | 697 |
 | 界面用语 | 24 | 166 |
-| 合计 | 80 | 729 |
+| 合计 | 81 | 875 |
 
 ## 原文
 
@@ -346,16 +346,16 @@
 | --- | --- | --- |
 | `title` | 查看模型交接中仍需处理的事项 | Items still to be dealt with in a model handover |
 | `lede` | 帮助 BIM 经理了解：一次交接前检查发现了什么；复检之后，哪些判断变了、哪些事项仍需处理、每一项涉及哪些构件、依据是什么、下一步做什么。 | For a BIM manager: what a pre-handover check found; after a recheck, which conclusions changed, which items still need dealing with, which elements each one involves, what it rests on, and what to do next. |
-| `status` | 当前为示例预览：尚不能导入自己的 Revit 模型，也不提供整体合规或可施工结论。 | This is an example preview: you cannot import your own Revit model yet, and it gives no overall compliance or ready-to-build conclusion. |
-| `statusWithWorkspace` | 当前同时提供两样：启动服务器时指定的工作区里一次已经跑完的真实检查，以及模拟示例。页面上不能导入、选择或更换模型，也不提供整体合规或可施工结论。 | Two things are offered here: a real check already run in the workspace named when the server was started, and simulated examples. You cannot import, choose or change a model on this page, and it gives no overall compliance or ready-to-build conclusion. |
-| `statusWorkspaceUnknown` | 未能确认服务器是否指定了工作区，所以这里没有真实检查的入口；这不等于没有工作区，错误原文在下面。模拟示例照常可看。页面上不能导入、选择或更换模型，也不提供整体合规或可施工结论。 | Could not confirm whether the server was started with a workspace, so there is no entry to a real check here; that does not mean there is no workspace — the error is below. The simulated examples are available as usual. You cannot import, choose or change a model on this page, and it gives no overall compliance or ready-to-build conclusion. |
+| `status` | 当前为示例预览：Revit 文件本身（.rvt）不能导入，也不提供整体合规或可施工结论。 | This is an example preview: a Revit file itself (.rvt) cannot be imported, and it gives no overall compliance or ready-to-build conclusion. |
+| `statusWithWorkspace` | 当前同时提供两样：启动服务器时指定的工作区里一次已经跑完的真实检查，以及模拟示例。工作区里的检查不能在页面上选择或更换模型；Revit 文件本身不能导入，也不提供整体合规或可施工结论。 | Two things are offered here: a real check already run in the workspace named when the server was started, and simulated examples. The workspace check cannot have its model chosen or changed on this page; a Revit file itself cannot be imported, and it gives no overall compliance or ready-to-build conclusion. |
+| `statusWorkspaceUnknown` | 未能确认服务器是否指定了工作区，所以这里没有真实检查的入口；这不等于没有工作区，错误原文在下面。模拟示例照常可看。Revit 文件本身不能导入，也不提供整体合规或可施工结论。 | Could not confirm whether the server was started with a workspace, so there is no entry to a real check here; that does not mean there is no workspace — the error is below. The simulated examples are available as usual. A Revit file itself cannot be imported, and it gives no overall compliance or ready-to-build conclusion. |
 | `example.title` | 看一个模拟示例 | Look at a simulated example |
 | `example.body` | 从一次首次检查出发：找到需要处理的事项，看清涉及的构件、要做什么、由谁处理、完成后拿什么复检；然后再看同一事项复检后的变化。示例里模拟的内容，页面上逐处标明。 | Start from a first check: find the items that need dealing with, and see which elements they involve, what to do, who deals with it and what a recheck must show; then see how the same item changed after a recheck. What is simulated in the example is marked where it appears. |
 | `example.action` | 选择模拟示例 | Choose a simulated example |
 | `attempt.title` | 查看随附项目的检查尝试 | See the check attempt on the bundled project |
-| `attempt.body` | 仓库随附一个样例项目。对它的检查尝试没有开始评估；这里说明原因。这不是导入入口，不能换成自己的模型。 | The repository comes with a sample project. The check attempt on it did not start an assessment; this explains why. It is not an import, and you cannot swap in your own model. |
+| `attempt.body` | 仓库随附一个样例项目。对它的检查尝试没有开始评估；这里说明原因。这个入口不是导入入口：只看这个样例项目，不能换成别的模型。 | The repository comes with a sample project. The check attempt on it did not start an assessment; this explains why. This entry is not an import: it shows only this sample project, and you cannot swap in another model. |
 | `attempt.action` | 查看这次检查尝试 | See this check attempt |
-| `cannot[0]` | 在页面上导入、选择或更换模型，包括自己的 Revit 或 IFC 模型 | Import, choose or change a model on the page, including your own Revit or IFC model |
+| `cannot[0]` | 导入 Revit 文件本身（.rvt），或在示例和工作区入口里选择、更换模型 | Import a Revit file itself (.rvt), or choose or change the model in the example and workspace entries |
 | `cannot[1]` | 给出整体合规、可施工或“可以交付”的结论 | Give an overall compliance, ready-to-build or "ready to hand over" conclusion |
 | `cannot[2]` | 写回模型、上传到云端，或在 Revit 里打开构件 | Write back to a model, upload to the cloud, or open an element in Revit |
 | `canHeading` | 现在可以做什么 | What you can do now |
@@ -876,6 +876,157 @@
 | `as-of-differs` | 两次运行的逻辑日期不同。 | The two runs have different logical dates. |
 | `model-set-differs` | 两次检查的不是同一组模型。 | The two runs did not check the same set of models. |
 
+**`LOCAL_CHECK`** —— 本地 IFC 检查（#29，Framework Engineer，2026-10-05）。模块自己的两张表，在 `doctor/static/local-words.js` 里用 `bilingual()` 登记；含产品验证练习的范围、FAIL／PASS／没有适用对象的读法、本机记录与清理、拒绝原因与恢复指引、故障说明。界面用语（按钮、列名、大小单位）与领域文字同表，整表进 10/15 批次。“它目前不缩小检查范围”一句是实测（声明的专业不改变 PV-001 检查哪些风口），不是设计。
+
+| 键 | 中文 | English |
+| --- | --- | --- |
+| `mode` | 本地检查 · 产品验证练习 | Local check · product validation exercise |
+| `home.title` | 检查自己的 IFC 模型（产品验证练习） | Check your own IFC model (product validation exercise) |
+| `home.body` | 选择自己导出的 IFC4 文件，只用一条产品验证规则检查风口的预定义类型。运行前会说明检查什么、要求从哪里来、结果不能说明什么，以及本机会留下哪些记录。 | Choose an IFC4 file you exported and check the predefined type of its air terminals against one product validation rule. Before it runs, the page says what is checked, where the requirement comes from, what the result cannot tell you, and what this computer keeps. |
+| `home.action` | 开始本地检查 | Start a local check |
+| `home.unknown` | 未能确认本地检查是否可用，错误原文： | Could not tell whether the local check is available. The error as given: |
+| `home.status` | 当前提供模拟示例，以及对自己 IFC4 文件的一项有限产品验证练习；不能导入 Revit 文件本身，也不提供整体合规或可施工结论。 | Available now: simulated examples, and one limited product validation exercise on your own IFC4 files. A Revit file itself cannot be imported, and there is no overall compliance or ready-to-build conclusion. |
+| `home.statusWithWorkspace` | 当前提供：启动服务器时指定的工作区里一次已经跑完的真实检查、模拟示例，以及对自己 IFC4 文件的一项有限产品验证练习；不能导入 Revit 文件本身，也不提供整体合规或可施工结论。 | Available now: a real check already run in the workspace named when the server was started, simulated examples, and one limited product validation exercise on your own IFC4 files. A Revit file itself cannot be imported, and there is no overall compliance or ready-to-build conclusion. |
+| `home.statusWorkspaceUnknown` | 未能确认服务器是否指定了工作区，所以这里没有工作区检查的入口；这不等于没有工作区，错误原文在下面。模拟示例和本地 IFC 产品验证练习照常可用；不能导入 Revit 文件本身，也不提供整体合规或可施工结论。 | Could not tell whether the server was started with a workspace, so there is no entry for a workspace check here; that does not mean there is none, and the error is below. The simulated examples and the local IFC product validation exercise work as usual. A Revit file itself cannot be imported, and there is no overall compliance or ready-to-build conclusion. |
+| `home.cannot[0]` | 导入 Revit 文件本身（.rvt），或用产品验证练习以外的规则检查自己的模型 | Import a Revit file itself (.rvt), or check your own model against rules other than the product validation exercise |
+| `home.cannot[1]` | 给出整体合规、可施工或“可以交付”的结论 | Give an overall compliance, ready-to-build or "can be handed over" conclusion |
+| `home.cannot[2]` | 写回模型、上传到云端，或在 Revit 里打开构件 | Write back to a model, upload to the cloud, or open an element in Revit |
+| `start.back` | ← 返回首页 | ← Back to the home page |
+| `start.title` | 检查自己的 IFC 模型 | Check your own IFC model |
+| `start.lede` | 四步：先看清这次只检查什么和本机会留下的记录；选择文件；声明专业并确认规则；看清范围后运行。 | Four steps: first see what this checks and what this computer keeps; choose files; declare disciplines and confirm the rule set; look at the scope, then run. |
+| `start.unavailable` | 本地检查现在不能用： | The local check cannot be used now: |
+| `start.noRuleset` | 这个检出没有提供 product-validation 1.0 规则集，所以本地检查不能运行。其他规则集不在本地检查里提供。 | This checkout does not carry the product-validation 1.0 rule set, so the local check cannot run. No other rule set is offered here. |
+| `exercise.heading` | 这次只检查什么 | What this checks, and only this |
+| `exercise.what` | 这是一项产品验证练习：只用本仓库的产品验证规则集检查一件事——IFC4 模型里适用的风口（IfcAirTerminal）是否声明了 DIFFUSER、GRILLE、LOUVRE、REGISTER 四种预定义类型之一。它不是通用 BIM 质量检查、IFC 合规检查，也不是任何项目的交付要求。 | This is a product validation exercise. It checks one thing with this repository's product validation rule set: whether each applicable air terminal (IfcAirTerminal) in an IFC4 model declares one of the four predefined types DIFFUSER, GRILLE, LOUVRE or REGISTER. It is not a general BIM quality check, not an IFC compliance check, and not a delivery requirement of any project. |
+| `exercise.sourceHeading` | 要求从哪里来 | Where the requirement comes from |
+| `exercise.source` | 本仓库自己写的产品验证规则，不是项目、业主、法规或 buildingSMART 的要求；四个取值来自 IFC4 ADD2 TC1 的 IfcAirTerminalTypeEnum，只接受这四个是这条规则自己的决定。规则集的说明原文（英文）： | A product validation rule written for this repository; not a project, owner, statutory or buildingSMART requirement. The four values are from IFC4 ADD2 TC1 IfcAirTerminalTypeEnum; accepting only these four is this rule's own decision. The rule set's description, as written: |
+| `exercise.readHeading` | 结果怎么读 | How to read the result |
+| `exercise.read[0]` | 不通过（FAIL）：不满足这条练习规则，不等于原项目有缺陷。 | FAIL: the model does not meet this exercise rule. It does not mean the original project has a defect. |
+| `exercise.read[1]` | 通过（PASS）：只说明检查器读到的值是四个之一；不证明分类正确、洞口存在、模型已对齐，也不说明任何工作可以开始。 | PASS: only that the value the checker read is one of the four. It does not prove the classification is right, that openings exist or that models are aligned, and it does not say any work can start. |
+| `exercise.read[2]` | 所选模型里没有风口：显示“没有适用对象”。这不是通过，此次也没有得到任何适用检查的通过结果。 | No air terminal in the chosen model: shown as "nothing applicable". That is not a pass, and this check produced no passing result for anything applicable. |
+| `exercise.notes` | 检查器从类型还是实例读取取值、自由文本怎样比较，写在结果页这条规则的说明里。 | Whether the checker reads the value from the type or the occurrence, and how free text is compared, is in this rule's notes on the result page. |
+| `records.heading` | 本机会留下哪些记录 | What this computer keeps |
+| `records.lede` | 检查在这台电脑上运行，不上传到任何地方。下面这个目录保存所有记录，运行前就定好： | The check runs on this computer and uploads nothing anywhere. Everything is kept in this directory, fixed before anything runs: |
+| `records.named` | 目录 | Directory |
+| `records.onDisk` | 资源管理器里的实际位置 | Where File Explorer finds it |
+| `records.redirected` | 服务器运行在打包应用（MSIX）里，Windows 把写到 %LOCALAPPDATA% 下的文件转到了应用自己的文件夹。在资源管理器里要找上面这个“实际位置”；按目录名去找会找不到。想避免这种转移，用下面的命令在 AppData 以外的文件夹启动服务器。 | The server is running inside a packaged (MSIX) app, and Windows has moved what is written under %LOCALAPPDATA% into the app's own folder. In File Explorer, look in the location above; the directory name alone will not find it. To avoid this, start the server with a folder outside AppData, as in the command below. |
+| `records.notYet` | 目前还没有任何记录：选择第一个文件时才会创建这个目录。 | Nothing is kept yet: the directory is created when the first file is chosen. |
+| `records.kept` | 目前保留：{uploads} 个模型副本，{checks} 次检查。 | Kept now: {uploads} model copies, {checks} checks. |
+| `records.whatHeading` | 会留下什么 | What is kept |
+| `records.what[0]` | 你选择的每个文件的副本：uploads\<内容摘要>.ifc。选择文件时就会保留，即使最后没有运行检查。 | A copy of every file you choose: uploads\<content digest>.ifc. It is kept as soon as the file is chosen, even if no check is run. |
+| `records.what[1]` | 每次检查一个目录：checks\<检查号>\，里面有模型副本、规则集副本、检查结果（data\processed\canonical\run.json）、产物清单、本次检查的范围（check.json）和覆盖记录（coverage\）。 | One directory per check: checks\<check id>\, holding the model copies, a copy of the rule set, the result (data\processed\canonical\run.json), the artifact manifest, the scope of the check (check.json) and the coverage record (coverage\). |
+| `records.what[2]` | 3D 几何缓存：现在不生成。以后加入 3D 查看时，它的缓存也放在这个目录里，按下面同样的步骤清理。 | 3D geometry cache: none is made now. When a 3D view is added, its cache will be kept in this directory too and cleaned up the same way. |
+| `records.what[3]` | 这个目录以外不写任何文件：仓库检出不变，命令行 epc-ct run 使用的共享覆盖记录目录也不增加。 | Nothing is written outside this directory: the repository checkout does not change, and the shared coverage record directory used by the epc-ct run command gains nothing. |
+| `records.what[4]` | 关闭页面或停止服务器都不会删除记录。 | Closing the page or stopping the server deletes nothing. |
+| `records.cleanHeading` | 怎样清理 | How to clean up |
+| `records.clean[0]` | 停止服务器：在运行它的终端里按 Ctrl+C。 | Stop the server: press Ctrl+C in the terminal running it. |
+| `records.clean[1]` | 在资源管理器里打开上面的位置（实际位置与目录名不同时，用实际位置）。 | Open the location above in File Explorer (where the location differs from the directory name, use the location). |
+| `records.clean[2]` | 删除整个目录，就清除了全部记录；只想删一次检查，删除 checks\<检查号>\。它用过的模型副本在 uploads\ 里，按内容摘要命名；摘要写在检查结果页的追溯信息里。 | Delete the whole directory to remove every record; to remove one check, delete checks\<check id>\. The model copies it used are in uploads\, named by content digest; the digest is in the trace details on the check's result page. |
+| `records.afterHeading` | 清理之后不能再依赖什么 | What you can no longer rely on after cleaning up |
+| `records.after[0]` | 已删除检查的结果页链接打不开，页面会说没有这次检查。 | A deleted check's result link stops opening; the page says there is no such check. |
+| `records.after[1]` | 不能再拿它和以后的检查对比。 | It can no longer be compared with a later check. |
+| `records.after[2]` | 它的覆盖记录一起删除，之后无法再说明那次检查覆盖了哪些构件和要求。 | Its coverage record goes with it, so nothing can say afterwards which elements and requirements that check covered. |
+| `records.after[3]` | 删除模型副本后，要再检查就得重新选择文件。 | Once a model copy is deleted, the file has to be chosen again to check it. |
+| `records.again` | 用同一个文件、同样声明的专业、同一规则集版本和同一逻辑日期重新检查，会得到同一个检查号和逐字节相同的结果。 | Checking the same file again, declared as the same discipline, with the same rule set version and the same logical date, gives the same check id and byte-identical results. |
+| `records.startHeading` | 怎样把记录放在别的文件夹 | How to keep the records in another folder |
+| `records.start` | 在仓库目录里，用自己的终端启动服务器，并指定 AppData 以外的文件夹，例如： | From the repository directory, start the server in your own terminal with a folder outside AppData, for example: |
+| `records.command` | python doctor/serve.py --checks-dir "%USERPROFILE%\Documents\BIM Doctor checks" | python doctor/serve.py --checks-dir "%USERPROFILE%\Documents\BIM Doctor checks" |
+| `records.startNote` | 服务器启动时会打印目录。第一次选择文件后目录才存在；如果 Windows 把它放到了别处，这一页会显示实际位置。 | The server prints the directory when it starts. It exists once the first file is chosen; if Windows keeps it somewhere else, this page shows where. |
+| `choose.heading` | 1. 选择 IFC 文件 | 1. Choose IFC files |
+| `choose.label` | 选择一个或多个 .ifc 文件 | Choose one or more .ifc files |
+| `choose.note` | 只接受 IFC-SPF 文本（.ifc），不接受 .ifczip、.ifcxml 或 Revit 文件；单个文件最大 {max}。规则集只读取 IFC4，IFC2x3 文件会被拒绝，并告诉你怎样重新导出。 | Only IFC-SPF text (.ifc) is accepted, not .ifczip, .ifcxml or Revit files; at most {max} per file. The rule set reads IFC4 only; an IFC2x3 file is refused, with how to export it again. |
+| `choose.copying` | 正在复制 {file}…… | Copying {file}… |
+| `choose.chosenHeading` | 已选择的文件 | Chosen files |
+| `choose.none` | 还没有选择文件。 | No file chosen yet. |
+| `choose.remove` | 不检查这个文件 | Do not check this file |
+| `choose.removed` | 已从本次选择中去掉；它的副本仍在 uploads\ 里，按上面的清理步骤删除。 | Taken out of this selection; its copy is still in uploads\. Delete it with the clean-up steps above. |
+| `choose.columns.file` | 文件 | File |
+| `choose.columns.size` | 大小 | Size |
+| `choose.columns.schema` | IFC 版本（文件头） | IFC version (file header) |
+| `choose.columns.discipline` | 你声明的专业 | Discipline you declare |
+| `choose.columns.remove` | 不检查 | Leave out |
+| `choose.size` | {mb} MB | {mb} MB |
+| `choose.sizeGb` | {gb} GB | {gb} GB |
+| `choose.sizeKb` | {kb} KB | {kb} KB |
+| `choose.refusedHeading` | 这个文件没有被接受：{file} | This file was not accepted: {file} |
+| `declare.heading` | 2. 声明专业并确认规则集 | 2. Declare disciplines and confirm the rule set |
+| `declare.rulesetLegend` | 规则集（本地检查只提供这一个） | Rule set (the only one the local check offers) |
+| `declare.ruleset` | {id} {version}：{title} | {id} {version}: {title} |
+| `declare.disciplineLabel` | {file} 的专业 | Discipline of {file} |
+| `declare.choose` | 请选择 | Choose |
+| `declare.disciplineNote` | 专业由你声明，不从文件名猜测，写进本次检查的记录。它目前不缩小检查范围：规则会检查所选文件里的全部风口，不论声明的是哪个专业（规则自己声明适用于 {scope} 模型）。 | You declare the discipline; it is not guessed from the file name, and it is written into the check's record. It does not narrow the check now: the rule checks every air terminal in the chosen files, whichever discipline is declared (the rule itself declares it applies to {scope} models). |
+| `declare.plan` | 查看检查范围 | See the scope of the check |
+| `declare.planning` | 正在确定范围…… | Working out the scope… |
+| `scope.heading` | 3. 运行前确认范围 | 3. Confirm the scope before running |
+| `scope.ready` | 服务器按下面的范围运行这次检查；确认后再运行。 | The server will run this check with the scope below; confirm it, then run. |
+| `scope.checkId` | 检查号（由规则集、逻辑日期和每个文件的名称、专业、内容决定） | Check id (decided by the rule set, the logical date, and each file's name, discipline and content) |
+| `scope.ruleset` | 规则集 | Rule set |
+| `scope.digest` | 规则集摘要（规范化） | Rule set digest (normalized) |
+| `scope.requirement` | 要求 | Requirement |
+| `scope.citation` | 出处（规则原文，英文） | Citation (the rule's own words) |
+| `scope.models` | 模型 | Models |
+| `scope.modelColumns.file` | 文件 | File |
+| `scope.modelColumns.code` | 模型代码 | Model code |
+| `scope.modelColumns.discipline` | 你声明的专业 | Discipline you declare |
+| `scope.modelColumns.schema` | IFC 版本 | IFC version |
+| `scope.modelColumns.size` | 大小 | Size |
+| `scope.modelColumns.digest` | 内容摘要 | Content digest |
+| `scope.asOf` | 逻辑日期 | Logical date |
+| `scope.asOfNote` | （运行配置给定，不是今天的日期） | (set by the run configuration, not today's date) |
+| `scope.programme` | 进度计划 | Programme |
+| `scope.programmeText` | 你的模型不带进度计划。规则集的规则写了阶段 {stages}，所以本次检查代填了这些阶段，没有到期日；结果页不显示到期、逾期或优先级。 | Your model brings no programme. The rule set's rules name the stages {stages}, so this check fills those stages in, with no due date; the result page shows no due date, overdue state or priority. |
+| `scope.geometry` | 几何 | Geometry |
+| `scope.geometryText` | 不计算几何。没有形体的构件不会让整次检查中断，它的检查结果、标识和下一步照常显示；本次结果也没有 3D 视图。 | No geometry is computed. An element without a shape does not stop the check from finishing; its check result, identity and next step are shown as usual. There is no 3D view of this result. |
+| `scope.location` | 结果保存在 | Results kept in |
+| `scope.run` | 运行检查 | Run the check |
+| `scope.running` | 正在检查，可能需要几十秒到几分钟。完成后会打开结果。 | Checking. This may take from tens of seconds to a few minutes; the result opens when it is done. |
+| `scope.changed` | 选择或声明有变化，请重新查看检查范围。 | The selection or a declaration changed. See the scope of the check again. |
+| `refusal.heading` | 这次检查不能开始 | This check cannot start |
+| `refusal.lede` | 没有运行任何检查，也没有产生结果。每个原因和要做的事： | No check was run and there is no result. Each reason, and what to do: |
+| `refusal.original` | 系统返回的原文（英文） | What the system returned (English original) |
+| `refusal.unglossed` | 本界面没有为这个原因写说明，请看下面的原文。 | This interface has no note for this reason; see the original below. |
+| `refusal.reasons.busy` | 另一次检查正在运行，一次只运行一个。等它完成后再运行这一次。 | Another check is running; one runs at a time. Wait for it to finish, then run this one. |
+| `refusal.reasons.no-model` | 还没有选择文件。至少选择一个 .ifc 文件。 | No file has been chosen. Choose at least one .ifc file. |
+| `refusal.reasons.model-too-large` | 文件超过这台服务器接受的上限，没有读取。可以导出范围更小的模型，或用更大的 --max-model-bytes 重新启动服务器。 | The file is over this server's limit and was not read. Export a smaller model, or restart the server with a larger --max-model-bytes. |
+| `refusal.reasons.model-incomplete` | 文件没有完整传到服务器，没有保留。请重新选择这个文件。 | The file did not reach the server in full and was not kept. Choose the file again. |
+| `refusal.reasons.not-an-ifc` | 这不是 IFC-SPF 文本文件：开头没有 ISO-10303-21 文件头。请选择 Revit 导出的 .ifc 文件，不是 .ifczip、.ifcxml 或 .rvt。 | This is not an IFC-SPF text file: it does not begin with an ISO-10303-21 header. Choose the .ifc file Revit exported, not an .ifczip, .ifcxml or .rvt. |
+| `refusal.reasons.model-name-invalid` | 文件名不能用作模型名：要以 .ifc 结尾，不以“.”开头，不含路径或 < > : " / \ \| ? *。请改名后重新选择。 | The file name cannot name a model: it must end in .ifc, not start with ".", and have no path or any of < > : " / \ \| ? *. Rename it and choose it again. |
+| `refusal.reasons.unknown-model` | 服务器上没有这个文件的副本（可能已被清理）。请重新选择这个文件。 | The server holds no copy of this file (it may have been cleaned up). Choose the file again. |
+| `refusal.reasons.duplicate-model` | 同一个文件、同名文件或内容相同的文件选了两次。每个模型只选一次。 | The same file, a file of the same name, or one with the same content was chosen twice. Choose each model once. |
+| `refusal.reasons.unknown-ruleset` | 本地检查只提供 product-validation 1.0。请选择它。 | The local check offers product-validation 1.0 only. Choose it. |
+| `refusal.reasons.discipline-not-declared` | 还没有声明专业。为这个文件选择一个专业。 | No discipline is declared. Choose one for this file. |
+| `refusal.reasons.unknown-discipline` | 声明的专业不在这里的专业列表里。请从列表里选择。 | The declared discipline is not in the list here. Choose one from the list. |
+| `refusal.reasons.unsupported-schema` | 规则集的检查程序只读取 IFC4，这个文件不是 IFC4（例如 IFC2x3）。恢复办法：在 Revit 的 IFC 导出对话框里，把 IFC 版本选为 IFC4 Reference View，重新导出后选择新文件。原文件不用修改，也不用删除。 | The rule set's checker reads IFC4 only, and this file is not IFC4 (IFC2x3, for example). To recover: in Revit's IFC export dialog, set the IFC version to IFC4 Reference View, export again and choose the new file. The original file needs no change and need not be deleted. |
+| `fault.heading` | 检查没有完成 | The check did not finish |
+| `fault.lede` | 这是程序故障，不是对模型的结论。这次检查的目录已经删除，没有留下半份结果；之前选择的模型副本仍在 uploads\ 里。 | This is a fault of the program, not a conclusion about the model. The check's directory has been removed and no partial result is left; the model copies chosen before are still in uploads\. |
+| `fault.todoHeading` | 可以怎么做 | What you can do |
+| `fault.todo[0]` | 确认文件是从 Revit 导出的 IFC4 文件，再运行一次。 | Make sure the file is an IFC4 file exported from Revit, and run again. |
+| `fault.todo[1]` | 如果同一个文件每次都在这里失败，重新导出后再选择新文件。 | If the same file fails here every time, export it again and choose the new file. |
+| `fault.todo[2]` | 把下面的原文发给维护者；原文只描述程序在哪里停下，不说明模型的质量。 | Send the original text below to the maintainer; it only says where the program stopped, not anything about the model's quality. |
+| `fault.original` | 故障原文 | The fault as given |
+| `fault.network` | 没有收到服务器的回答：服务器可能已经停止。启动服务器后，刷新这一页。 | No answer came from the server: it may have stopped. Start the server, then reload this page. |
+| `earlier.heading` | 以前的检查 | Earlier checks |
+| `earlier.note` | 保存在上面的目录里，直到你删除它们。 | Kept in the directory above until you delete them. |
+| `earlier.none` | 还没有完成的检查。 | No finished check yet. |
+| `earlier.item` | {files} · {ruleset} · 检查号 {id} | {files} · {ruleset} · check {id} |
+| `result.exercise` | 这是产品验证练习的结果：只检查风口是否声明了四种预定义类型之一。不通过不等于原项目有缺陷；通过不证明分类正确、洞口存在、模型已对齐或任何工作可以开始。 | This is the result of a product validation exercise: it only checks whether air terminals declare one of four predefined types. A FAIL does not mean the original project has a defect; a PASS does not prove the classification is right, that openings exist, that models are aligned or that any work can start. |
+| `result.nothingHeading` | 没有适用对象 | Nothing applicable |
+| `result.nothing` | {file}：这条规则在这个模型里没有适用对象。这不是通过——此次没有得到任何适用检查的通过结果，也不说明模型质量。 | {file}: this rule has nothing to apply to in this model. That is not a pass — this check produced no passing result for anything applicable, and it says nothing about the model's quality. |
+| `result.scopeHeading` | 这次检查的范围 | The scope of this check |
+| `result.declared` | {file}（你声明的专业：{discipline}） | {file} (discipline you declared: {discipline}) |
+| `result.programme` | 进度计划：规则集的阶段 {stages} 由本次检查代填，没有到期日；本页不显示到期、逾期或优先级。 | Programme: the rule set's stages {stages} were filled in by this check, with no due date; this page shows no due date, overdue state or priority. |
+| `result.recordsHeading` | 这次检查的记录在哪里，怎样清理 | Where this check's records are, and how to clean up |
+| `result.location` | 这次检查的目录 | This check's directory |
+| `result.another` | 检查另一个模型 | Check another model |
+| `result.missing` | 没有这次检查：它可能已被清理（目录被删除），或者链接不对。清理之后，结果页链接就打不开了。 | There is no such check: it may have been cleaned up (its directory deleted), or the link is wrong. After cleaning up, result links stop opening. |
+| `disciplines.Architecture` | 建筑（Architecture） | Architecture |
+| `disciplines.HVAC` | 暖通（HVAC） | HVAC |
+| `disciplines.MEP` | 机电（MEP） | MEP |
+| `disciplines.Plumbing` | 给排水（Plumbing） | Plumbing |
+| `disciplines.Structural` | 结构（Structural） | Structural |
+| `listSeparator` | 、 | ,  |
+| `colon` | ： | :  |
+
 ## 界面用语
 
 **`ACTION`**
@@ -954,7 +1105,7 @@
 
 | 键 | 中文 | English |
 | --- | --- | --- |
-| `realNote` | 仓库随附一个样例项目，下面是对它的一次检查尝试。目前不能选择别的模型，也不能导入自己的模型。 | The repository comes with a sample project; below is a check attempt on it. You cannot choose another model yet, nor import your own. |
+| `realNote` | 仓库随附一个样例项目，下面是对它的一次检查尝试。这个入口只看这个样例，不能换成别的模型；检查自己的 IFC4 文件，用首页的“检查自己的 IFC 模型”。Revit 文件本身不能导入。 | The repository comes with a sample project; below is a check attempt on it. This entry shows only that sample and cannot be switched to another model; to check your own IFC4 files, use "Check your own IFC model" on the home page. A Revit file itself cannot be imported. |
 | `exampleTitle` | 选择一个模拟示例 | Choose a simulated example |
 | `empty` | 这个入口下目前没有可以查看的内容。 | There is nothing to look at under this entry yet. |
 | `exampleTag` | 示例说明 | About this example |

@@ -368,7 +368,9 @@ function locate(state, subscopeMembers, activity, memberIndex) {
 
 // `workspace` is what the server answered when asked for workspace runs: the
 // runs it offers, or the error it gave. The card is there only for a run.
-function entry(workspace = { runs: [] }) {
+// `local` is the local check's card and the home sentences that are true when
+// it is offered (local-check.js), or null when this server has no local check.
+function entry(workspace = { runs: [] }, local = null) {
   const card = (mode, words, primary, runId = null) =>
     h(
       "article",
@@ -389,6 +391,7 @@ function entry(workspace = { runs: [] }) {
       ),
     );
   const workspaceRun = carries(workspace, "runs") && workspace.runs.length ? workspace.runs[0] : null;
+  const said = local ? local.words : HOME;
   return h(
     "div",
     { class: "home" },
@@ -399,10 +402,10 @@ function entry(workspace = { runs: [] }) {
       "p",
       { class: "demo-notice", role: "note" },
       workspaceRun
-        ? HOME.statusWithWorkspace
+        ? said.statusWithWorkspace
         : carries(workspace, "error")
-          ? HOME.statusWorkspaceUnknown
-          : HOME.status,
+          ? said.statusWorkspaceUnknown
+          : said.status,
     ),
     h(
       "section",
@@ -413,6 +416,7 @@ function entry(workspace = { runs: [] }) {
         { class: "entry-grid" },
         workspaceRun ? card("workspace", WORKSPACE_HOME, true, workspaceRun.run_id) : null,
         card("fixture", HOME.example, !workspaceRun),
+        local ? local.card : null,
         card("real", HOME.attempt, false),
       ),
       carries(workspace, "error")
@@ -423,7 +427,7 @@ function entry(workspace = { runs: [] }) {
       "section",
       { class: "block" },
       h("h2", {}, HOME.cannotHeading),
-      h("ul", {}, HOME.cannot.map((text) => h("li", {}, text))),
+      h("ul", {}, said.cannot.map((text) => h("li", {}, text))),
       note(HOME.cannotNote),
     ),
   );
