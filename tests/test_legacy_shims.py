@@ -18,6 +18,7 @@ from __future__ import annotations
 
 import ast
 import importlib
+import re
 import shutil
 import subprocess
 import sys
@@ -166,7 +167,18 @@ _EXTRACT_TREE = (
 _REGISTERS = ("data/processed/models.csv", "data/processed/model_inventory.csv")
 
 
-def _copy_checkout(destination: Path, *, legacy_project_id: bool) -> Path:
+#: The configuration line that names the legacy project, whatever the line
+#: ending: ``*.toml`` has no ``eol`` rule in .gitattributes, so a Windows
+#: checkout has it with CRLF.
+_LEGACY_PROJECT_LINE = re.compile(rb'^legacy_project_id = "pcert-sample"\r?\n', re.M)
+
+
+def _copy_checkout(
+    destination: Path, *, legacy_project_id: bool, newline: bytes | None = None
+) -> Path:
+    """Copy what the script needs; ``newline`` rewrites the configuration's line
+    endings first, so a test can hold for both kinds of checkout."""
+
     for name in _EXTRACT_TREE:
         source = PROJECT_ROOT / name
         target = destination / name
@@ -175,12 +187,14 @@ def _copy_checkout(destination: Path, *, legacy_project_id: bool) -> Path:
             shutil.copytree(source, target, ignore=shutil.ignore_patterns("__pycache__"))
         else:
             shutil.copyfile(source, target)
+    config = destination / "control-tower.toml"
+    if newline is not None:
+        lines = config.read_bytes().replace(b"\r\n", b"\n")
+        config.write_bytes(lines.replace(b"\n", newline))
     if not legacy_project_id:
-        config = destination / "control-tower.toml"
-        text = config.read_bytes()
-        line = b'legacy_project_id = "pcert-sample"\n'
-        assert text.count(line) == 1
-        config.write_bytes(text.replace(line, b""))
+        text, removed = _LEGACY_PROJECT_LINE.subn(b"", config.read_bytes())
+        assert removed == 1, removed
+        config.write_bytes(text)
     return destination
 
 
@@ -244,15 +258,26 @@ class ExtractInventoryScopeTests(unittest.TestCase):
                     )
 
     def test_with_several_projects_and_none_named_it_refuses_and_writes_nothing(self):
-        with outside_repository_directory("extract-unscoped") as scratch:
-            checkout = _copy_checkout(scratch / "checkout", legacy_project_id=False)
-            before = _tree(checkout)
-            completed = _run_extract(checkout)
-            self.assertNotEqual(completed.returncode, 0)
-            self.assertIn("legacy_project_id", completed.stderr)
-            self.assertIn("['iso-reference-view', 'pcert-sample']", completed.stderr)
-            self.assertNotIn("Wrote", completed.stdout)
-            self.assertEqual(_tree(checkout), before)
+        # Both line endings on every platform: a Windows checkout has the
+        # configuration with CRLF, and the refusal must not depend on that.
+        for name, newline in (("lf", b"\n"), ("crlf", b"\r\n")):
+            with (
+                self.subTest(config=name),
+                outside_repository_directory(f"extract-unscoped-{name}") as scratch,
+            ):
+                checkout = _copy_checkout(
+                    scratch / "checkout", legacy_project_id=False, newline=newline
+                )
+                config = (checkout / "control-tower.toml").read_bytes()
+                self.assertEqual(config.count(b"\r\n") > 0, newline == b"\r\n")
+                self.assertNotIn(b"legacy_project_id", config)
+                before = _tree(checkout)
+                completed = _run_extract(checkout)
+                self.assertNotEqual(completed.returncode, 0)
+                self.assertIn("legacy_project_id", completed.stderr)
+                self.assertIn("['iso-reference-view', 'pcert-sample']", completed.stderr)
+                self.assertNotIn("Wrote", completed.stdout)
+                self.assertEqual(_tree(checkout), before)
 
 
 if __name__ == "__main__":
