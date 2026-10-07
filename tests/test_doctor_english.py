@@ -596,6 +596,23 @@ class LocalCheckWordsTests(_Loaded):
         reasons = self.pair["zh"]["refusal"]["reasons"]
         self.assertIn("IFC4 Reference View", reasons["unsupported-schema"])
 
+    def test_no_table_says_your_own_model_cannot_be_checked(self):
+        # With the local check, "you cannot import your own model" is no
+        # longer true anywhere; what stays true is that a Revit file itself
+        # cannot be imported. Every registered table, both languages.
+        absolute = re.compile(
+            r"导入自己的|不能导入自己|导入、选择或更换模型|import your own|"
+            r"nor import|import, choose or change",
+            re.I,
+        )
+        for name, pair in self.registry.items():
+            for language in ("zh", "en"):
+                if pair[language] is None:
+                    continue
+                for key, text in _flat(pair[language]):
+                    with self.subTest(table=name, language=language, key=key):
+                        self.assertIsNone(absolute.search(text), text)
+
     def test_the_local_screens_read_their_words_from_their_own_table(self):
         source = (STATIC / "local-check.js").read_text(encoding="utf-8")
         self.assertIn('import { LOCAL } from "./local-words.js";', source)

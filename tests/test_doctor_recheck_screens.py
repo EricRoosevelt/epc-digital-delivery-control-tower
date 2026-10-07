@@ -1286,14 +1286,14 @@ class ScreenStructureTests(unittest.TestCase):
         for said in (
             "BIM 经理",
             "仍需处理",
-            "尚不能导入自己的 Revit 模型",
+            "Revit 文件本身（.rvt）不能导入",
             "整体合规或可施工结论",
         ):
             with self.subTest(said=said):
                 self.assertIn(said, home)
         # The shipped project's entry promises an attempt, not an input.
         self.assertIn('real: "随附项目的检查尝试"', vocabulary)
-        self.assertIn("这不是导入入口", home)
+        self.assertIn("这个入口不是导入入口", home)
         screens = (STATIC / "screens.js").read_text(encoding="utf-8")
         entry = screens[
             screens.index("function entry(") : screens.index("function runLink(")

@@ -100,7 +100,7 @@ export const LOCAL = bilingual(
         "删除模型副本后，要再检查就得重新选择文件。",
       ],
       again:
-        "用同一个文件、同一规则集版本和同一逻辑日期重新检查，会得到同一个检查号和逐字节相同的结果。",
+        "用同一个文件、同样声明的专业、同一规则集版本和同一逻辑日期重新检查，会得到同一个检查号和逐字节相同的结果。",
       startHeading: "怎样把记录放在别的文件夹",
       start: "在仓库目录里，用自己的终端启动服务器，并指定 AppData 以外的文件夹，例如：",
       command: 'python doctor/serve.py --checks-dir "%USERPROFILE%\\Documents\\BIM Doctor checks"',
@@ -168,7 +168,7 @@ export const LOCAL = bilingual(
         "结果页不显示到期、逾期或优先级。",
       geometry: "几何",
       geometryText:
-        "不计算几何。没有形体的构件不会让检查失败，它的结果、标识和下一步照常显示；本次结果也没有 3D 视图。",
+        "不计算几何。没有形体的构件不会让整次检查中断，它的检查结果、标识和下一步照常显示；本次结果也没有 3D 视图。",
       location: "结果保存在",
       run: "运行检查",
       running: "正在检查，可能需要几十秒到几分钟。完成后会打开结果。",
@@ -329,7 +329,7 @@ export const LOCAL = bilingual(
         "Once a model copy is deleted, the file has to be chosen again to check it.",
       ],
       again:
-        "Checking the same file again, with the same rule set version and the same logical date, gives the same check id and byte-identical results.",
+        "Checking the same file again, declared as the same discipline, with the same rule set version and the same logical date, gives the same check id and byte-identical results.",
       startHeading: "How to keep the records in another folder",
       start: "From the repository directory, start the server in your own terminal with a folder outside AppData, for example:",
       command: 'python doctor/serve.py --checks-dir "%USERPROFILE%\\Documents\\BIM Doctor checks"',
@@ -397,7 +397,7 @@ export const LOCAL = bilingual(
         "the result page shows no due date, overdue state or priority.",
       geometry: "Geometry",
       geometryText:
-        "No geometry is computed. An element without a shape does not fail the check; its result, identity and next step are shown as usual. There is no 3D view of this result.",
+        "No geometry is computed. An element without a shape does not stop the check from finishing; its check result, identity and next step are shown as usual. There is no 3D view of this result.",
       location: "Results kept in",
       run: "Run the check",
       running: "Checking. This may take from tens of seconds to a few minutes; the result opens when it is done.",

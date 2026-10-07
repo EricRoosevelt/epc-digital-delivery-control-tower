@@ -346,16 +346,16 @@
 | --- | --- | --- |
 | `title` | 查看模型交接中仍需处理的事项 | Items still to be dealt with in a model handover |
 | `lede` | 帮助 BIM 经理了解：一次交接前检查发现了什么；复检之后，哪些判断变了、哪些事项仍需处理、每一项涉及哪些构件、依据是什么、下一步做什么。 | For a BIM manager: what a pre-handover check found; after a recheck, which conclusions changed, which items still need dealing with, which elements each one involves, what it rests on, and what to do next. |
-| `status` | 当前为示例预览：尚不能导入自己的 Revit 模型，也不提供整体合规或可施工结论。 | This is an example preview: you cannot import your own Revit model yet, and it gives no overall compliance or ready-to-build conclusion. |
-| `statusWithWorkspace` | 当前同时提供两样：启动服务器时指定的工作区里一次已经跑完的真实检查，以及模拟示例。页面上不能导入、选择或更换模型，也不提供整体合规或可施工结论。 | Two things are offered here: a real check already run in the workspace named when the server was started, and simulated examples. You cannot import, choose or change a model on this page, and it gives no overall compliance or ready-to-build conclusion. |
-| `statusWorkspaceUnknown` | 未能确认服务器是否指定了工作区，所以这里没有真实检查的入口；这不等于没有工作区，错误原文在下面。模拟示例照常可看。页面上不能导入、选择或更换模型，也不提供整体合规或可施工结论。 | Could not confirm whether the server was started with a workspace, so there is no entry to a real check here; that does not mean there is no workspace — the error is below. The simulated examples are available as usual. You cannot import, choose or change a model on this page, and it gives no overall compliance or ready-to-build conclusion. |
+| `status` | 当前为示例预览：Revit 文件本身（.rvt）不能导入，也不提供整体合规或可施工结论。 | This is an example preview: a Revit file itself (.rvt) cannot be imported, and it gives no overall compliance or ready-to-build conclusion. |
+| `statusWithWorkspace` | 当前同时提供两样：启动服务器时指定的工作区里一次已经跑完的真实检查，以及模拟示例。工作区里的检查不能在页面上选择或更换模型；Revit 文件本身不能导入，也不提供整体合规或可施工结论。 | Two things are offered here: a real check already run in the workspace named when the server was started, and simulated examples. The workspace check cannot have its model chosen or changed on this page; a Revit file itself cannot be imported, and it gives no overall compliance or ready-to-build conclusion. |
+| `statusWorkspaceUnknown` | 未能确认服务器是否指定了工作区，所以这里没有真实检查的入口；这不等于没有工作区，错误原文在下面。模拟示例照常可看。Revit 文件本身不能导入，也不提供整体合规或可施工结论。 | Could not confirm whether the server was started with a workspace, so there is no entry to a real check here; that does not mean there is no workspace — the error is below. The simulated examples are available as usual. A Revit file itself cannot be imported, and it gives no overall compliance or ready-to-build conclusion. |
 | `example.title` | 看一个模拟示例 | Look at a simulated example |
 | `example.body` | 从一次首次检查出发：找到需要处理的事项，看清涉及的构件、要做什么、由谁处理、完成后拿什么复检；然后再看同一事项复检后的变化。示例里模拟的内容，页面上逐处标明。 | Start from a first check: find the items that need dealing with, and see which elements they involve, what to do, who deals with it and what a recheck must show; then see how the same item changed after a recheck. What is simulated in the example is marked where it appears. |
 | `example.action` | 选择模拟示例 | Choose a simulated example |
 | `attempt.title` | 查看随附项目的检查尝试 | See the check attempt on the bundled project |
-| `attempt.body` | 仓库随附一个样例项目。对它的检查尝试没有开始评估；这里说明原因。这不是导入入口，不能换成自己的模型。 | The repository comes with a sample project. The check attempt on it did not start an assessment; this explains why. It is not an import, and you cannot swap in your own model. |
+| `attempt.body` | 仓库随附一个样例项目。对它的检查尝试没有开始评估；这里说明原因。这个入口不是导入入口：只看这个样例项目，不能换成别的模型。 | The repository comes with a sample project. The check attempt on it did not start an assessment; this explains why. This entry is not an import: it shows only this sample project, and you cannot swap in another model. |
 | `attempt.action` | 查看这次检查尝试 | See this check attempt |
-| `cannot[0]` | 在页面上导入、选择或更换模型，包括自己的 Revit 或 IFC 模型 | Import, choose or change a model on the page, including your own Revit or IFC model |
+| `cannot[0]` | 导入 Revit 文件本身（.rvt），或在示例和工作区入口里选择、更换模型 | Import a Revit file itself (.rvt), or choose or change the model in the example and workspace entries |
 | `cannot[1]` | 给出整体合规、可施工或“可以交付”的结论 | Give an overall compliance, ready-to-build or "ready to hand over" conclusion |
 | `cannot[2]` | 写回模型、上传到云端，或在 Revit 里打开构件 | Write back to a model, upload to the cloud, or open an element in Revit |
 | `canHeading` | 现在可以做什么 | What you can do now |
@@ -927,7 +927,7 @@
 | `records.after[1]` | 不能再拿它和以后的检查对比。 | It can no longer be compared with a later check. |
 | `records.after[2]` | 它的覆盖记录一起删除，之后无法再说明那次检查覆盖了哪些构件和要求。 | Its coverage record goes with it, so nothing can say afterwards which elements and requirements that check covered. |
 | `records.after[3]` | 删除模型副本后，要再检查就得重新选择文件。 | Once a model copy is deleted, the file has to be chosen again to check it. |
-| `records.again` | 用同一个文件、同一规则集版本和同一逻辑日期重新检查，会得到同一个检查号和逐字节相同的结果。 | Checking the same file again, with the same rule set version and the same logical date, gives the same check id and byte-identical results. |
+| `records.again` | 用同一个文件、同样声明的专业、同一规则集版本和同一逻辑日期重新检查，会得到同一个检查号和逐字节相同的结果。 | Checking the same file again, declared as the same discipline, with the same rule set version and the same logical date, gives the same check id and byte-identical results. |
 | `records.startHeading` | 怎样把记录放在别的文件夹 | How to keep the records in another folder |
 | `records.start` | 在仓库目录里，用自己的终端启动服务器，并指定 AppData 以外的文件夹，例如： | From the repository directory, start the server in your own terminal with a folder outside AppData, for example: |
 | `records.command` | python doctor/serve.py --checks-dir "%USERPROFILE%\Documents\BIM Doctor checks" | python doctor/serve.py --checks-dir "%USERPROFILE%\Documents\BIM Doctor checks" |
@@ -976,7 +976,7 @@
 | `scope.programme` | 进度计划 | Programme |
 | `scope.programmeText` | 你的模型不带进度计划。规则集的规则写了阶段 {stages}，所以本次检查代填了这些阶段，没有到期日；结果页不显示到期、逾期或优先级。 | Your model brings no programme. The rule set's rules name the stages {stages}, so this check fills those stages in, with no due date; the result page shows no due date, overdue state or priority. |
 | `scope.geometry` | 几何 | Geometry |
-| `scope.geometryText` | 不计算几何。没有形体的构件不会让检查失败，它的结果、标识和下一步照常显示；本次结果也没有 3D 视图。 | No geometry is computed. An element without a shape does not fail the check; its result, identity and next step are shown as usual. There is no 3D view of this result. |
+| `scope.geometryText` | 不计算几何。没有形体的构件不会让整次检查中断，它的检查结果、标识和下一步照常显示；本次结果也没有 3D 视图。 | No geometry is computed. An element without a shape does not stop the check from finishing; its check result, identity and next step are shown as usual. There is no 3D view of this result. |
 | `scope.location` | 结果保存在 | Results kept in |
 | `scope.run` | 运行检查 | Run the check |
 | `scope.running` | 正在检查，可能需要几十秒到几分钟。完成后会打开结果。 | Checking. This may take from tens of seconds to a few minutes; the result opens when it is done. |
@@ -1105,7 +1105,7 @@
 
 | 键 | 中文 | English |
 | --- | --- | --- |
-| `realNote` | 仓库随附一个样例项目，下面是对它的一次检查尝试。目前不能选择别的模型，也不能导入自己的模型。 | The repository comes with a sample project; below is a check attempt on it. You cannot choose another model yet, nor import your own. |
+| `realNote` | 仓库随附一个样例项目，下面是对它的一次检查尝试。这个入口只看这个样例，不能换成别的模型；检查自己的 IFC4 文件，用首页的“检查自己的 IFC 模型”。Revit 文件本身不能导入。 | The repository comes with a sample project; below is a check attempt on it. This entry shows only that sample and cannot be switched to another model; to check your own IFC4 files, use "Check your own IFC model" on the home page. A Revit file itself cannot be imported. |
 | `exampleTitle` | 选择一个模拟示例 | Choose a simulated example |
 | `empty` | 这个入口下目前没有可以查看的内容。 | There is nothing to look at under this entry yet. |
 | `exampleTag` | 示例说明 | About this example |
