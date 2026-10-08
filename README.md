@@ -117,11 +117,12 @@ The page explains how to clean the records up. More in
   delivered" conclusion, writing back to a model, uploading, opening an element in
   Revit, starting a recheck from the page, marking an item resolved, and assigning or
   notifying anyone.
-* **Language.** The interface opens in Chinese. An English wording exists
-  (`?lang=en` on any address) and its next-step sentences line up with the Chinese
-  ones, but it has not been reviewed by a BIM domain specialist, so it is not
-  recommended for demonstrations. Some pages (record, activity, member) are not
-  translated and say so.
+* **Status of the wording.** The interface opens in Chinese, and an English wording
+  is available (`?lang=en` on any address). The wording of the main path, in both
+  languages, has been through this project's own domain-wording review; the
+  corrections that review asked for are still being applied. So this is a preview,
+  not a reviewed release. The record, activity and member pages are not translated
+  and say so.
 
 ## 中文快速开始
 
@@ -157,8 +158,9 @@ BIM Doctor 是个人开源项目，讲的是 IFC 模型从一个专业交给下�
    文件只复制到本机，不上传；记录所在的文件夹在服务器启动时会打印出来。
 
 读结果时记住三点，页面上都有对应的说明：事项数不是缺陷数；“无法判断”不等于这个构件
-没有问题；处理团队是示例里的安排，不代表已经派发。英文界面（`?lang=en`）还没有经过
-BIM 复核，不推荐用来演示。
+没有问题；处理团队是示例里的安排，不代表已经派发。主路径的中英措辞经过本项目自己的领域
+措辞复核，复核提出的修正还在落实，所以这仍是预览，不是已复核的发布版；记录、活动、成员
+等明细页没有翻译。英文界面在任一地址后加 `?lang=en` 即可。
 
 ## For engineers: the framework
 
@@ -206,8 +208,9 @@ never read as an accepted one.
   ([below](#purpose-packs-and-project-overlays)). A library: there is no
   `epc-ct` command for it.
 * The BIM Doctor preview ([Quick start](#quick-start)): a local server and screens
-  for the first check, one item and a recheck, in Chinese, and the limited check of
-  your own IFC4 file. An English wording exists as an unaccepted development trial.
+  for the first check, one item and a recheck, and the limited check of your own
+  IFC4 file, in Chinese and English (status of the wording: see
+  [What is real and what is simulated](#what-is-real-and-what-is-simulated)).
 * The frozen Power BI / Speckle showcase (below, under *Other entry points*; it is separate from BIM Doctor).
 
 **2. Shown only in simulation**
@@ -234,8 +237,8 @@ never read as an accepted one.
   assessment, names no team and never says anything was fixed. It is built on the
   isolated `product-validation` rule set 1.0 ([`rules/product-validation/`](rules/product-validation/README.md)),
   and the interface is described in [`doctor/README.md`](doctor/README.md). Its
-  screens are in Chinese; an English wording exists as an unaccepted development
-  trial.
+  screens are in Chinese and English (status of the wording: see
+  [What is real and what is simulated](#what-is-real-and-what-is-simulated)).
   It has been exercised privately on one real IFC model under controlled
   conditions; that model is not in this repository. It has had one round of
   BIM-domain review. It is not yet accepted as a product feature: a
