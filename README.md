@@ -45,8 +45,12 @@ Underneath is the deterministic validation framework, `epc-ct`, described
 
 An internal, local preview: it runs on your machine, listens on `127.0.0.1` only,
 and is not a release or a public interface. By default it shows a simulated
-example and the bundled sample project; it cannot import your own models through
-the interface.
+example and the bundled sample project, and its home page has a "check your own
+IFC model" entry: IFC4 files only, one product validation exercise on one rule
+(PV-001, `product-validation` 1.0), not a general quality check. A Revit file
+itself cannot be imported, and the wording of this part has not been reviewed by a
+BIM domain specialist; see [the local check](doctor/README.md#a-fourth-entry-a-local-check-of-your-own-ifc)
+in `doctor/README.md`.
 
 **Language.** The interface opens in Chinese, and the Chinese interface is what the
 screenshots below show and what this README recommends you try. An English wording
@@ -148,9 +152,12 @@ written into the checkout.
 
 ## 中文快速开始
 
-BIM Doctor 是本机预览：只监听 `127.0.0.1`，不是正式发布，也不能导入你自己的
-Revit 或 IFC 模型。界面默认是中文，看的是模拟示例；页面上逐处标明哪些内容是
-模拟的、哪些来自真实运行的检查。
+BIM Doctor 是本机预览：只监听 `127.0.0.1`，不是正式发布。首页有“检查自己的 IFC
+模型”入口，只接受 IFC4 文件，只做 `product-validation` 1.0 一条规则（PV-001）的
+产品验证练习，不是通用质量检查；Revit 文件本身不能导入；这部分界面文字还没有经过
+BIM 复核，详见 [doctor/README.md 的本地检查一节](doctor/README.md#a-fourth-entry-a-local-check-of-your-own-ifc)。
+下面的步骤走的是模拟示例：界面默认是中文，页面上逐处标明哪些内容是模拟的、哪些来自
+真实运行的检查。
 
 1. 安装并启动：需要 Python 3.11 或更新。克隆、建虚拟环境、
    `pip install -r requirements.txt`、`python doctor/serve.py`，命令见上面的
@@ -228,7 +235,9 @@ never read as an accepted one.
 
 **4. Not built**
 
-* Importing your own Revit or IFC model through the interface.
+* Importing a Revit file itself (`.rvt`), and checking your own model against
+  anything but the one product validation exercise
+  ([the local check](doctor/README.md#a-fourth-entry-a-local-check-of-your-own-ifc)).
 * An overall compliance, constructability or "can be delivered" conclusion.
 * Writing back to the model, uploading, and opening an element in Revit.
 * Starting a recheck, marking an item resolved, assigning or notifying anyone,
