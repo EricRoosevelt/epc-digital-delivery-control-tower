@@ -68,6 +68,43 @@ POSTED_TYPES = {
 #: A plan or check request is a few model choices, not a model.
 MAX_REQUEST_BYTES = 1 << 20
 
+#: How much of a refused upload is read and thrown away before the answer.
+#:
+#: A browser still sending when the server closes the connection reports the
+#: connection as dropped and never reads the refusal: measured with a
+#: 179,727-byte model against a 100,000-byte limit, Chrome and Edge both got
+#: ``net::ERR_CONNECTION_ABORTED``. Reading the rest first lets the refusal
+#: through. Past this bound the connection is closed unread, as before; the page
+#: itself does not send a file over the limit.
+REFUSED_UPLOAD_DRAIN_BYTES = 64 << 20
+
+
+class _Counted:
+    """A request body that counts what has been read from it."""
+
+    def __init__(self, stream) -> None:
+        self.stream = stream
+        self.consumed = 0
+
+    def read(self, size: int = -1) -> bytes:
+        block = self.stream.read(size)
+        self.consumed += len(block)
+        return block
+
+
+def _drain(stream, remaining: int, bound: int = REFUSED_UPLOAD_DRAIN_BYTES) -> int:
+    """Read and discard what is left of a body, if no more than ``bound``."""
+
+    if remaining <= 0 or remaining > bound:
+        return 0
+    drained = 0
+    while drained < remaining:
+        block = stream.read(min(1 << 16, remaining - drained))
+        if not block:
+            break
+        drained += len(block)
+    return drained
+
 #: Extensions served, with explicit types. Not ``mimetypes``: on Windows it reads
 #: the registry and can hand ES modules to the browser as ``text/plain``.
 CONTENT_TYPES = {
@@ -278,10 +315,14 @@ def make_handler(
                 local = self._local()
                 if path == "/api/local/models":
                     filename = (query.get("filename") or [""])[0]
-                    answer = local.stage_model(filename, self.rfile, length)
+                    body = _Counted(self.rfile)
+                    answer = local.stage_model(filename, body, length)
                     if answer["outcome"] != "staged":
-                        # Refused before or while reading: what is left of the
-                        # body is not read.
+                        # Refused before or while reading. What is left of the
+                        # body is read first, within a bound, so a browser that
+                        # is still sending gets this answer; the connection is
+                        # not reused either way.
+                        _drain(self.rfile, length - body.consumed)
                         self.close_connection = True
                     _json(self, HTTPStatus.OK, answer)
                     return

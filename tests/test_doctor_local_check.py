@@ -840,5 +840,116 @@ class ServerTests(unittest.TestCase):
         self.assertEqual(hosts, {"127.0.0.1"})
 
 
+
+class TooLargeUploadTests(unittest.TestCase):
+    """A model over the server's limit is refused as such, not as a dropped connection.
+
+    Measured 2026-10-09, a 179,727-byte model against a 100,000-byte limit:
+    uploaded from a file, Chrome and Edge reported ``net::ERR_CONNECTION_ABORTED``
+    for most attempts (9 of 12) because the server closed the connection with
+    the body unread, and the page said the server might have stopped. The page
+    now refuses such a file itself and sends nothing; the server, the last line
+    of defence, reads what is left of a refused upload (within a bound) before
+    it answers.
+    """
+
+    #: The smallest body the staging step takes as IFC-SPF text.
+    MODEL = (
+        b"ISO-10303-21;\nHEADER;\nFILE_DESCRIPTION((''),'2;1');\n"
+        b"FILE_NAME('','',(''),(''),'','','');\nFILE_SCHEMA(('IFC4'));\nENDSEC;\n"
+        b"DATA;\nENDSEC;\nEND-ISO-10303-21;\n"
+    )
+
+    def upload(self, limit, body):
+        checks = LocalChecks(_scratch(f"local-limit-{limit}"), max_model_bytes=limit)
+        real = serve._drain
+        returned = []
+
+        def recorded(*args, **kwargs):
+            returned.append(real(*args, **kwargs))
+            return returned[-1]
+
+        with mock.patch.object(serve, "_drain", side_effect=recorded) as drain:
+            drain.returned = returned
+            with _Server(checks) as base:
+                status, answer = _call(
+                    f"{base}/api/local/models?filename=limit.ifc",
+                    body,
+                    {"Content-Type": "application/octet-stream"},
+                )
+        return status, answer, drain
+
+    def test_one_byte_over_the_limit_is_refused_and_the_body_read_first(self):
+        status, answer, drain = self.upload(len(self.MODEL) - 1, self.MODEL)
+        self.assertEqual((status, _codes(answer)), (200, ["model-too-large"]))
+        # Nothing was read by the refusal itself, so all of it is left to read.
+        drain.assert_called_once()
+        self.assertEqual(drain.call_args.args[1], len(self.MODEL))
+        self.assertEqual(drain.returned, [len(self.MODEL)])
+
+    def test_exactly_the_limit_is_staged(self):
+        status, answer, drain = self.upload(len(self.MODEL), self.MODEL)
+        self.assertEqual((status, answer["outcome"]), (200, "staged"))
+        drain.assert_not_called()
+
+    def test_the_drain_reads_no_more_than_is_left_and_nothing_past_its_bound(self):
+        stream = io.BytesIO(b"x" * 100)
+        self.assertEqual(serve._drain(stream, 40, bound=64), 40)
+        self.assertEqual(stream.tell(), 40)
+        # Past the bound nothing is read; the connection is closed unread.
+        self.assertEqual(serve._drain(stream, 65, bound=64), 0)
+        self.assertEqual(stream.tell(), 40)
+        # A body that ends early stops the drain instead of waiting.
+        self.assertEqual(serve._drain(stream, 64, bound=64), 60)
+        self.assertEqual(serve._drain(stream, 0), 0)
+
+    def test_the_count_is_what_was_read(self):
+        counted = serve._Counted(io.BytesIO(b"abcdef"))
+        self.assertEqual(counted.read(4), b"abcd")
+        self.assertEqual(counted.read(10), b"ef")
+        self.assertEqual(counted.consumed, 6)
+
+    def test_the_page_refuses_over_the_limit_before_sending(self):
+        source = (PROJECT_ROOT / "doctor" / "static" / "local-check.js").read_text(
+            encoding="utf-8"
+        )
+        start = source.index("export function overLimit(")
+        function = source[start : source.index("\n}\n", start) + 2].replace("export ", "", 1)
+        stage = source[source.index("async function stage(") :]
+        stage = stage[: stage.index("\n}\n")]
+        # Checked before anything is asked of the server, against its own limit,
+        # and refused with the code the server would give.
+        self.assertLess(stage.index("overLimit("), stage.index("ask("))
+        self.assertIn("session.described.max_model_bytes", stage)
+        self.assertIn('code: "model-too-large"', stage)
+        node = shutil.which("node")
+        if node is None:
+            if os.environ.get("CI"):
+                raise AssertionError("node is not on PATH")
+            raise unittest.SkipTest("node is not on PATH")
+        script = function + (
+            "\nconsole.log(JSON.stringify(["
+            "overLimit(100000, 100000), overLimit(100001, 100000), overLimit(99999, 100000),"
+            "overLimit(5, undefined), overLimit(5, null)]));"
+        )
+        completed = subprocess.run(
+            [node, "-e", script], capture_output=True, text=True, check=True
+        )
+        # Exactly the limit is sent, one byte more is not, as on the server; no
+        # known limit refuses nothing.
+        self.assertEqual(json.loads(completed.stdout), [False, True, False, False, False])
+
+    def test_a_refusal_the_page_made_shows_no_system_original(self):
+        source = (PROJECT_ROOT / "doctor" / "static" / "local-check.js").read_text(
+            encoding="utf-8"
+        )
+        block = source[source.index("function refusalBlock(") :]
+        block = block[: block.index("\n}\n")]
+        self.assertIn('typeof refusal.text === "string"', block)
+        self.assertLess(
+            block.index('typeof refusal.text === "string"'), block.index("words.original")
+        )
+
+
 if __name__ == "__main__":
     unittest.main()
