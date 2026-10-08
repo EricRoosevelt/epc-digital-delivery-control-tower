@@ -291,6 +291,9 @@ export const CONDITION_ENTRIES = {
   "no-recheck-condition": {
     text: "原记录没有复检条件",
     plain: "原记录没有复检条件：原来的判断没有留下待办。",
+    // Any prior verdict but READY: the record gives no condition, and that
+    // is all it says. Nothing is left outstanding only after a READY.
+    plainNotReady: "原记录没有给出复检条件。",
   },
 };
 
@@ -577,7 +580,7 @@ export const ACTION_PACK = { id: "interdisciplinary-coordination-readiness", ver
 export const ACTIONS = {
   "missing-project-asset-identity": {
     action: "在源模型里给这个构件补上本项目约定的资产标识属性（见所列属性集和属性名），重新导出",
-    recheck: "重新发布的模型上，这个构件在所列每条要求下都通过，范围内没有构件漏评",
+    recheck: "重新发布的模型上，这个构件在所列每条要求下都通过",
   },
   "asset-identity-not-evaluated": {
     action:
@@ -588,7 +591,8 @@ export const ACTIONS = {
   },
   "in-model-position-not-evaluated": {
     action:
-      "这不是已知的模型缺陷，也不需要改模型。空间归属的检查规则没有覆盖到这个构件，需要扩展规则的适用范围",
+      "这不是已知的模型缺陷。它的空间归属目前还没有评估：空间归属的检查规则没有覆盖到这个构件。" +
+      "这一步是扩展规则的适用范围，让检查覆盖到它，而不是改模型；覆盖并运行之后，才知道要不要改模型",
     recheck: "范围内每个构件在所绑定的要求下都有检查结果",
   },
   "penetration-not-determined": {
@@ -607,7 +611,7 @@ export const ACTIONS = {
     recheck: "对齐确认已做，结果为已对齐，写明模型版本",
   },
   "mep-element-not-spatially-assigned": {
-    action: "在源模型里把构件放到正确的标高和空间上，重新导出",
+    action: "在源模型里把构件放到正确的标高上（项目要求空间归属时，再放进对应的空间），重新导出",
     recheck: "重新发布的模型上，这个构件的空间归属要求通过",
   },
   "cross-model-misalignment": {
@@ -650,7 +654,7 @@ export const DETAILS_WORDS = {
   hasActual: "那次检查观察到了值；本页不显示取值",
   expected: "规则的原话（英文）",
   source: "规则给出的出处（英文原文）：",
-  projectAssumption: "这是本项目约定的要求，不是通用要求。",
+  projectAssumption: "这是本项目假定的要求（ProjectAssumption），不是通用要求。",
   gap: "要填什么值、对应哪个 Revit 参数，记录未提供。",
   // On a recheck row: whose words these are, and what they do not establish.
   prior:
@@ -672,7 +676,7 @@ export const FINDING_STATUS = {
 
 export const REASON_GLOSSES = {
   "The required property set does not exist":
-    "所要求的属性集不存在（要补的是整个属性集，不是给已有属性填值）",
+    "所要求的属性集不存在（要让导出写出这个属性集以及其中所要求的属性，不是给已有属性填值）",
   "Requirement satisfied.": "要求已满足",
   'The predefined type "NOTDEFINED" does not meet the required type':
     "预定义类型“NOTDEFINED”不属于要求的取值",
@@ -810,7 +814,7 @@ export const RESOLUTION_KINDS = {
 // names it. Shown beside the code; one not listed is shown as it came.
 export const CONSEQUENCE_KINDS = {
   "work-cannot-start": "这项工作不能开始",
-  "work-suspended": "这项工作暂停",
+  "work-suspended": "这项工作暂缓，等有结论再定",
   "rework-risk": "有返工风险",
   // Not a re-issue of the model: Checkpoint B's consequence is that rows keyed
   // to a placeholder have to be re-identified and the documents quoting them
@@ -1018,7 +1022,8 @@ export const TAG_WORDS = {
   note:
     "IFC Tag 是导出时写进 IFC 的标记；Revit 导出的通常是构件的 ElementId。" +
     "核对：在 Revit 里用“按 ID 选择”选中这个 ID，看选中对象的名称和类别是否与本页相同；" +
-    "相同再按它处理，不同就不要按这个 Tag 去改：用 GlobalId 确认是哪个对象，再回到 Revit 源模型修改。",
+    "相同再按它处理，不同就不要按这个 Tag 去改：在 IFC 查看器里按 GlobalId 定位，读出名称、类型和位置，" +
+    "再在 Revit 里按这些找到对象并核对，然后在源模型里修改。",
   // Beside an element with a Tag: find it by that ID, not by storey.
   byIdNotStorey:
     "在 Revit 里按 ID 找对象，不要按楼层找：本页的楼层取自 IFC 文件里的空间归属，" +
@@ -1077,11 +1082,12 @@ export const RULE_NOTES = {
       "IFC4 还允许 USERDEFINED 和 NOTDEFINED；不接受它们是这条规则自己的决定，用它们的模型仍是有效的 IFC4。",
     passProves:
       "检查器按它的读取顺序取到的那一个值（类型上的值优先；类型声明 USERDEFINED 时是它的自由文本；" +
-      "类型什么也没说时才读构件实例），逐字等于 DIFFUSER、GRILLE、LOUVRE、REGISTER 四个值之一。",
+      "类型什么也没说时才读构件实例；没有类型时，实例声明 USERDEFINED 也是它的自由文本），逐字等于 DIFFUSER、GRILLE、LOUVRE、REGISTER 四个值之一。",
     passDoesNotProve: [
       "取值正确：四个值中任何一个都会通过，写成 GRILLE 也会通过。",
       "类型和构件实例的取值一致：类型上是四个值之一时，实例上写的值不参与比较；类型是 LOUVRE、实例是 DIFFUSER，也会通过。",
-      "规则不接受的 USERDEFINED 没有出现：类型声明 USERDEFINED 时，检查器比较的是它的自由文本，逐字、区分大小写；" +
+      "规则不接受的 USERDEFINED 没有出现：类型声明 USERDEFINED 时，检查器比较的是它的自由文本；" +
+        "没有类型时，构件实例声明 USERDEFINED 也按它的自由文本比较。比较逐字、区分大小写；" +
         "文本恰好是 LOUVRE 会通过，写成 louvre、Louvre 或前后带空格则不通过。",
       "墙上有对应的洞口。",
       "风口所在的模型与风口所在的墙所属的模型已经对齐。",
@@ -1110,7 +1116,8 @@ export const RULE_NOTES = {
     // Beside a reason whose quoted value is free text rather than one of the
     // enumeration's values: the checker compared a USERDEFINED type's text.
     reasonFreeText:
-      "引号里不是预定义类型的枚举值，而是自由文本：类型声明 USERDEFINED 时，检查器拿它的自由文本来比较。",
+      "引号里不是预定义类型的枚举值，而是自由文本：类型声明 USERDEFINED 时，检查器拿它的自由文本来比较；" +
+      "没有类型时，构件实例声明 USERDEFINED 也是这样。",
   },
 };
 

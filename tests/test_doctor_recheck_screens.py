@@ -2259,5 +2259,76 @@ class SourceSummaryTests(unittest.TestCase):
         self.assertNotIn("open", re.sub(r"//.*", "", body).replace("SOURCE_SUMMARY", ""))
 
 
+
+class NoRecheckConditionTests(unittest.TestCase):
+    """W4 (BIM batch two, E120): "nothing left outstanding" only after a READY.
+
+    The record gives ``no-recheck-condition`` whenever the sealed group left no
+    condition. That the original conclusion left nothing to do is true only of
+    a READY; after anything else the page says no more than that the record
+    gave no condition.
+    """
+
+    READY = "原记录没有复检条件：原来的判断没有留下待办。"
+    OTHER = "原记录没有给出复检条件。"
+
+    @classmethod
+    def setUpClass(cls):
+        from internal.doctor_adapter import scenario_envelope, scenario_index
+
+        cls.records = {
+            item["name"]: scenario_envelope(item["name"])["record"]
+            for item in scenario_index()
+            if item["mode"] == "fixture" and item["name"].startswith("recheck-")
+        }
+        base = json.loads(json.dumps(cls.records["recheck-comparison"]))
+        variants = {}
+        for prior in ("READY", "BLOCKED", "UNKNOWN", None):
+            document = json.loads(json.dumps(base))
+            outcome = document["successor"]["subscopes"][0]
+            outcome["condition_status"] = "no-recheck-condition"
+            if prior is None:
+                outcome.pop("prior_verdict", None)
+            else:
+                outcome["prior_verdict"] = prior
+            variants[f"prior:{prior}"] = document
+        cls.variants = _run_model(variants)["models"]
+
+    def test_the_second_half_is_said_only_after_a_ready(self):
+        for prior, said in (
+            ("READY", self.READY),
+            ("BLOCKED", self.OTHER),
+            ("UNKNOWN", self.OTHER),
+            (None, self.OTHER),
+        ):
+            with self.subTest(prior=prior):
+                condition = self.variants[f"prior:{prior}"]["subscopes"][0]["condition"]
+                self.assertEqual(condition["code"], "no-recheck-condition")
+                self.assertEqual(condition["text"], "原记录没有复检条件")
+                self.assertEqual(condition["plain"], said)
+
+    def test_todays_records_reach_it_only_after_a_ready(self):
+        """The technical director's reading of the production path, pinned."""
+
+        seen = 0
+        for name, document in self.records.items():
+            for outcome in document["successor"]["subscopes"]:
+                if outcome.get("condition_status") == "no-recheck-condition":
+                    seen += 1
+                    with self.subTest(record=name):
+                        self.assertEqual(outcome.get("prior_verdict"), "READY")
+        self.assertGreater(seen, 0)
+
+    def test_no_sentence_says_the_model_need_not_change(self):
+        """M1: an unevaluated position is not a finding that the model is fine."""
+
+        static = "".join(
+            path.read_text(encoding="utf-8") for path in sorted(STATIC.glob("vocabulary*.js"))
+        )
+        for said in ("也不需要改模型", "does not need changing", "范围内没有构件漏评"):
+            with self.subTest(said=said):
+                self.assertNotIn(said, static)
+
+
 if __name__ == "__main__":
     unittest.main()

@@ -376,7 +376,15 @@ function conditionModel(outcome) {
   if (!known(CONDITION_ENTRIES, code)) {
     return { code, known: false, text: UNRECOGNISED, plain: UNRECOGNISED };
   }
-  return { code, known: true, ...CONDITION_ENTRIES[code] };
+  const entry = CONDITION_ENTRIES[code];
+  // "Nothing left outstanding" holds only after a READY. Under any other prior
+  // verdict, or none carried, the record gives no condition and that is all
+  // the page says.
+  const plain =
+    code === "no-recheck-condition" && carried(outcome, "prior_verdict") !== "READY"
+      ? entry.plainNotReady
+      : entry.plain;
+  return { code, known: true, text: entry.text, plain };
 }
 
 function dispositionModel(item) {

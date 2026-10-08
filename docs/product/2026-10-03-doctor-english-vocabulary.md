@@ -1,6 +1,6 @@
 # Doctor 英文词表（主路径与真实工作区）
 
-日期：2026-10-03；第二部分（单项、复检）与第三部分（工作区的结果、详情、对比、拒绝、故障）同日补入；2026-10-04 补入行动与复检句（`ACTIONS`）；2026-10-05 补入首次结果卡片的三个标签（`FIRST.cardDetails`、`FIRST.cardElements`、`FIRST.openCard`），以及随附项目检查尝试的拒绝页（`REFUSAL_REASONS`、`REFUSAL_SCOPE_NOTE`、`REFUSAL_PAGE`、`REFUSAL_UNGLOSSED`）；同日删去与页首来源提示重复的 `DIRECTORY_NOTE`，复检单项页的标题序号随区块顺序调整。同日补入本地 IFC 检查的 `LOCAL_CHECK`（146 条，#29）。2026-10-08 补入页首来源提示的短摘要 `SOURCE_SUMMARY`（11 条；原 `DEMO_NOTICE` 不变，成为展开后的全文）和示例目录的一句简介 `DIRECTORY.exampleIntro`。负责：Product/UI Engineer。
+日期：2026-10-03；第二部分（单项、复检）与第三部分（工作区的结果、详情、对比、拒绝、故障）同日补入；2026-10-04 补入行动与复检句（`ACTIONS`）；2026-10-05 补入首次结果卡片的三个标签（`FIRST.cardDetails`、`FIRST.cardElements`、`FIRST.openCard`），以及随附项目检查尝试的拒绝页（`REFUSAL_REASONS`、`REFUSAL_SCOPE_NOTE`、`REFUSAL_PAGE`、`REFUSAL_UNGLOSSED`）；同日删去与页首来源提示重复的 `DIRECTORY_NOTE`，复检单项页的标题序号随区块顺序调整。同日补入本地 IFC 检查的 `LOCAL_CHECK`（146 条，#29）。2026-10-08 补入页首来源提示的短摘要 `SOURCE_SUMMARY`（11 条；原 `DEMO_NOTICE` 不变，成为展开后的全文）和示例目录的一句简介 `DIRECTORY.exampleIntro`。2026-10-09 按 BIM 第二批修正 M1、W2–W8、W10 的中英文，并新增 `CONDITION_ENTRIES.no-recheck-condition.plainNotReady`（W4）。负责：Product/UI Engineer。
 状态：**全部未经 BIM 复核**；有领域含义的条目进 10/15 BIM 批次。
 本文件由界面实际注册的词表生成，测试逐条核对英文与这里一致。中文一列是同一键在 `vocabulary.js` 里的原文。
 
@@ -25,9 +25,9 @@
 | 类别 | 表 | 条目 |
 | --- | --- | --- |
 | 原文（取自 Pack、记录或产品文档，未翻译） | 3 | 12 |
-| 有领域含义（判断、活动、问题类型、限制、来源），待 BIM | 55 | 708 |
+| 有领域含义（判断、活动、问题类型、限制、来源），待 BIM | 55 | 709 |
 | 界面用语 | 24 | 167 |
-| 合计 | 82 | 887 |
+| 合计 | 82 | 888 |
 
 ## 原文
 
@@ -65,10 +65,10 @@
 | 键 | 中文 | English |
 | --- | --- | --- |
 | `missing-project-asset-identity.action` | 在源模型里给这个构件补上本项目约定的资产标识属性（见所列属性集和属性名），重新导出 | In the source model, add to this element the asset-identity properties the project's convention requires (see the property sets and property names listed), then re-export the model |
-| `missing-project-asset-identity.recheck` | 重新发布的模型上，这个构件在所列每条要求下都通过，范围内没有构件漏评 | On the reissued model, this element passes every requirement listed, and no element in the scope is left unevaluated |
+| `missing-project-asset-identity.recheck` | 重新发布的模型上，这个构件在所列每条要求下都通过 | On the reissued model, this element passes every requirement listed |
 | `asset-identity-not-evaluated.action` | 现有资产标识规则没有覆盖到这个构件，所以它有没有资产标识还没有被评估，不能判断是否缺少；这项工作能否开始也因此无法判断。先确认项目约定是否要求它具备资产标识，以及规则该不该覆盖到它。在确认之前，这不表示它必须具备资产标识。 | The existing asset-identity rules do not reach this element, so whether it has an asset identity has not been evaluated, and it cannot be judged to be missing one; for the same reason, whether this work can start cannot be decided. First confirm whether the project's convention requires this element to have an asset identity, and whether the rules should reach it. Until that is confirmed, this does not mean it must have one. |
 | `asset-identity-not-evaluated.recheck` | 范围内每个构件在所绑定的要求下都有评估结果 | Every element in the scope has an evaluation result under the requirements bound to it |
-| `in-model-position-not-evaluated.action` | 这不是已知的模型缺陷，也不需要改模型。空间归属的检查规则没有覆盖到这个构件，需要扩展规则的适用范围 | This is not a known model defect, and the model does not need changing. The spatial-assignment check rules do not reach this element; the rules' scope of application needs to be extended |
+| `in-model-position-not-evaluated.action` | 这不是已知的模型缺陷。它的空间归属目前还没有评估：空间归属的检查规则没有覆盖到这个构件。这一步是扩展规则的适用范围，让检查覆盖到它，而不是改模型；覆盖并运行之后，才知道要不要改模型 | This is not a known model defect. Its spatial assignment has not been evaluated yet: the spatial-assignment check rules do not reach this element. This step is to extend the rules' scope of application so that the check reaches it, not to change the model; only once it is covered and the check has run will it be known whether the model needs changing |
 | `in-model-position-not-evaluated.recheck` | 范围内每个构件在所绑定的要求下都有检查结果 | Every element in the scope has a check result under the requirements bound to it |
 | `penetration-not-determined.action` | 这不是已知的模型缺陷。还没有协调评审判定它是否穿过接收方的构件；需要开一次评审，记录“不穿过”或写明穿过哪些构件 | This is not a known model defect. No coordination review has yet determined whether it passes through the receiving side's elements; hold a review and record either “no penetration” or which elements it passes through |
 | `penetration-not-determined.recheck` | 针对所列模型版本，有一份评审判定记录 | A recorded review determination exists for the model versions listed |
@@ -76,7 +76,7 @@
 | `missing-corresponding-opening.recheck` | 这一对的开洞核查结果为“洞口已建且已关联”。只建洞不够 | The opening check for this pair reports “opening modelled and cross-referenced”. Modelling the opening alone is not enough |
 | `cross-model-alignment-not-confirmed.action` | 这不是已知的错位。还没有人按项目接受的方法确认两侧模型对齐；需要针对所列模型版本做一次并记录 | This is not a known misalignment. No one has yet confirmed, by the method the project accepts, that the two models are aligned; do this once against the model versions listed, and record it |
 | `cross-model-alignment-not-confirmed.recheck` | 对齐确认已做，结果为已对齐，写明模型版本 | The alignment confirmation has been done and reports the models aligned, naming the model versions |
-| `mep-element-not-spatially-assigned.action` | 在源模型里把构件放到正确的标高和空间上，重新导出 | In the source model, place the element on its correct level and in its correct space, then re-export |
+| `mep-element-not-spatially-assigned.action` | 在源模型里把构件放到正确的标高上（项目要求空间归属时，再放进对应的空间），重新导出 | In the source model, place the element on its correct level (and, where the project requires spatial assignment, in its corresponding space), then re-export |
 | `mep-element-not-spatially-assigned.recheck` | 重新发布的模型上，这个构件的空间归属要求通过 | On the reissued model, this element passes its spatial-assignment requirement |
 | `cross-model-misalignment.action` | 重新获取项目共用的坐标基准，按共用原点重新导出（不靠移动几何），再按项目接受的方法重做对齐确认 | Re-acquire the project's shared coordinate datum, re-export against the shared origin (not by moving geometry), then redo the alignment confirmation by the method the project accepts |
 | `cross-model-misalignment.recheck` | 针对新版本重做对齐确认，结果为已对齐 | The alignment confirmation is redone against the new versions and reports the models aligned |
@@ -222,6 +222,7 @@
 | `not-comparable.plain` | 无法对原复检条件下结论：原来的构件有的已经不在本次记录里，条件没有完整的对象可以检查。这不代表条件已满足。 | No conclusion can be drawn on the original recheck condition: some of the original elements are no longer in this record, so the condition has no complete subject to check. This does not mean the condition is met. |
 | `no-recheck-condition.text` | 原记录没有复检条件 | The original record had no recheck condition |
 | `no-recheck-condition.plain` | 原记录没有复检条件：原来的判断没有留下待办。 | The original record had no recheck condition: the original conclusion left nothing outstanding. |
+| `no-recheck-condition.plainNotReady` | 原记录没有给出复检条件。 | The original record gave no recheck condition. |
 
 **`CONDITION_STATES`**
 
@@ -238,7 +239,7 @@
 | 键 | 中文 | English |
 | --- | --- | --- |
 | `work-cannot-start` | 这项工作不能开始 | This work cannot start |
-| `work-suspended` | 这项工作暂停 | This work is suspended |
+| `work-suspended` | 这项工作暂缓，等有结论再定 | This work is held until decided |
 | `rework-risk` | 有返工风险 | Risk of rework |
 | `re-identification-and-reissue-risk` | 有重新标识的风险：引用这些标识的文件届时也须重新出具 | Risk of re-identification: documents that cite these identifiers would then have to be reissued too |
 
@@ -266,7 +267,7 @@
 | `hasActual` | 那次检查观察到了值；本页不显示取值 | That check observed a value; this page does not show it |
 | `expected` | 规则的原话（英文） | The rule's own words |
 | `source` | 规则给出的出处（英文原文）： | Source the rule gives:  |
-| `projectAssumption` | 这是本项目约定的要求，不是通用要求。 | This is a requirement agreed for this project, not a general one. |
+| `projectAssumption` | 这是本项目假定的要求（ProjectAssumption），不是通用要求。 | This is a requirement assumed for this project (ProjectAssumption), not a general one. |
 | `gap` | 要填什么值、对应哪个 Revit 参数，记录未提供。 | What value to fill in, and which Revit parameter it maps to, the record does not say. |
 | `prior` | 复检前那次评估时，这条证据的要求和结果如下。有这段说明不等于这一行可以比较；这一行的状态以上面写的为准。 | At the assessment before the recheck, this evidence's requirement and result were as follows. Having this description does not make the row comparable; the row's state is what is written above. |
 | `currentAbsent` | 本次记录引用的对应证据：要求明细记录未提供。 | The corresponding evidence this record cites: its requirement details are not given in the record. |
@@ -623,10 +624,10 @@
 | --- | --- | --- |
 | `PV-001.title` | 风口要声明四种预定义类型之一 | Air terminals declare one of four predefined types |
 | `PV-001.predicate` | 每个适用的风口（IfcAirTerminal）都要声明预定义类型，取值是 DIFFUSER、GRILLE、LOUVRE、REGISTER 之一。IFC4 还允许 USERDEFINED 和 NOTDEFINED；不接受它们是这条规则自己的决定，用它们的模型仍是有效的 IFC4。 | Every applicable air terminal (IfcAirTerminal) declares a predefined type of DIFFUSER, GRILLE, LOUVRE or REGISTER. IFC4 also admits USERDEFINED and NOTDEFINED; not accepting them is this rule's own decision, and a model using them is still valid IFC4. |
-| `PV-001.passProves` | 检查器按它的读取顺序取到的那一个值（类型上的值优先；类型声明 USERDEFINED 时是它的自由文本；类型什么也没说时才读构件实例），逐字等于 DIFFUSER、GRILLE、LOUVRE、REGISTER 四个值之一。 | The one value the checker took in its reading order (the type's value first; a USERDEFINED type's free text; the element instance only when the type says nothing) is, character for character, one of DIFFUSER, GRILLE, LOUVRE and REGISTER. |
+| `PV-001.passProves` | 检查器按它的读取顺序取到的那一个值（类型上的值优先；类型声明 USERDEFINED 时是它的自由文本；类型什么也没说时才读构件实例；没有类型时，实例声明 USERDEFINED 也是它的自由文本），逐字等于 DIFFUSER、GRILLE、LOUVRE、REGISTER 四个值之一。 | The one value the checker took in its reading order (the type's value first; a USERDEFINED type's free text; the element instance only when the type says nothing, and with no type, a USERDEFINED instance's free text too) is, character for character, one of DIFFUSER, GRILLE, LOUVRE and REGISTER. |
 | `PV-001.passDoesNotProve[0]` | 取值正确：四个值中任何一个都会通过，写成 GRILLE 也会通过。 | That the value is right: any of the four passes; GRILLE passes too. |
 | `PV-001.passDoesNotProve[1]` | 类型和构件实例的取值一致：类型上是四个值之一时，实例上写的值不参与比较；类型是 LOUVRE、实例是 DIFFUSER，也会通过。 | That the type and the element instance agree: when the type carries one of the four, the instance's value is not compared; type LOUVRE with instance DIFFUSER also passes. |
-| `PV-001.passDoesNotProve[2]` | 规则不接受的 USERDEFINED 没有出现：类型声明 USERDEFINED 时，检查器比较的是它的自由文本，逐字、区分大小写；文本恰好是 LOUVRE 会通过，写成 louvre、Louvre 或前后带空格则不通过。 | That no USERDEFINED, which the rule does not accept, is present: when the type declares USERDEFINED, the checker compares its free text, character for character and case-sensitively; text that happens to be LOUVRE passes, while louvre, Louvre or text with leading or trailing spaces does not. |
+| `PV-001.passDoesNotProve[2]` | 规则不接受的 USERDEFINED 没有出现：类型声明 USERDEFINED 时，检查器比较的是它的自由文本；没有类型时，构件实例声明 USERDEFINED 也按它的自由文本比较。比较逐字、区分大小写；文本恰好是 LOUVRE 会通过，写成 louvre、Louvre 或前后带空格则不通过。 | That no USERDEFINED, which the rule does not accept, is present: when the type declares USERDEFINED, the checker compares its free text; with no type, an element instance that declares USERDEFINED is compared by its free text as well. The comparison is character for character and case-sensitive; text that happens to be LOUVRE passes, while louvre, Louvre or text with leading or trailing spaces does not. |
 | `PV-001.passDoesNotProve[3]` | 墙上有对应的洞口。 | That the wall has a corresponding opening. |
 | `PV-001.passDoesNotProve[4]` | 风口所在的模型与风口所在的墙所属的模型已经对齐。 | That the air terminal's model and the model of the wall it sits in are aligned. |
 | `PV-001.passDoesNotProve[5]` | 任何工作可以开始，包括吊顶和开洞工作。 | That any work can start, including ceiling and opening work. |
@@ -638,7 +639,7 @@
 | `PV-001.gaps[0]` | 风口所在的墙上的洞口：需要对照风口所在的模型和这面墙所属的模型做协调评审判定；这项检查不比较两个模型的构件。 | The opening in the wall the air terminal sits in: a coordination-review determination is needed, made against the air terminal's model and the model of that wall; this check does not compare elements across the two models. |
 | `PV-001.gaps[1]` | 风口所在的模型与风口所在的墙所属的模型是否对齐：需要一份对齐确认记录。 | Whether the air terminal's model and the model of the wall it sits in are aligned: an alignment confirmation record is needed. |
 | `PV-001.gaps[2]` | 取值是否选对：分类判断要另行记录；检查通过不能反过来证明分类判断正确。 | Whether the value chosen is right: the classification decision has to be recorded separately; a pass cannot prove in reverse that the classification is right. |
-| `PV-001.reasonFreeText` | 引号里不是预定义类型的枚举值，而是自由文本：类型声明 USERDEFINED 时，检查器拿它的自由文本来比较。 | What is in the quotation marks is not an enumeration value but free text: when the type declares USERDEFINED, the checker compares its free text. |
+| `PV-001.reasonFreeText` | 引号里不是预定义类型的枚举值，而是自由文本：类型声明 USERDEFINED 时，检查器拿它的自由文本来比较；没有类型时，构件实例声明 USERDEFINED 也是这样。 | What is in the quotation marks is not an enumeration value but free text: when the type declares USERDEFINED, the checker compares its free text; with no type, the same holds for an element instance that declares USERDEFINED. |
 
 **`RUN_LABELS`**
 
@@ -678,7 +679,7 @@
 
 | 键 | 中文 | English |
 | --- | --- | --- |
-| `note` | IFC Tag 是导出时写进 IFC 的标记；Revit 导出的通常是构件的 ElementId。核对：在 Revit 里用“按 ID 选择”选中这个 ID，看选中对象的名称和类别是否与本页相同；相同再按它处理，不同就不要按这个 Tag 去改：用 GlobalId 确认是哪个对象，再回到 Revit 源模型修改。 | The IFC Tag is a marker written into the IFC at export; what Revit writes is usually the element's ElementId. To check: in Revit, use "Select by ID" with this ID and see whether the selected object's name and class match this page; if they do, work from it; if they do not, do not change anything by this Tag: use the GlobalId to confirm which object it is, then make the change in the Revit source model. |
+| `note` | IFC Tag 是导出时写进 IFC 的标记；Revit 导出的通常是构件的 ElementId。核对：在 Revit 里用“按 ID 选择”选中这个 ID，看选中对象的名称和类别是否与本页相同；相同再按它处理，不同就不要按这个 Tag 去改：在 IFC 查看器里按 GlobalId 定位，读出名称、类型和位置，再在 Revit 里按这些找到对象并核对，然后在源模型里修改。 | The IFC Tag is a marker written into the IFC at export; what Revit writes is usually the element's ElementId. To check: in Revit, use "Select by ID" with this ID and see whether the selected object's name and class match this page; if they do, work from it; if they do not, do not change anything by this Tag: locate the object by its GlobalId in an IFC viewer, read its name, type and location, find the object in Revit by these and check it, then make the change in the source model. |
 | `byIdNotStorey` | 在 Revit 里按 ID 找对象，不要按楼层找：本页的楼层取自 IFC 文件里的空间归属，不一定能和 Revit 明细表里的标高对上。 | Find the object in Revit by its ID, not by storey: the storey on this page is the IFC file's spatial assignment, which may not match the levels in a Revit schedule. |
 | `storeyFromIfc` | 本页的楼层取自 IFC 文件里的空间归属，不一定能和 Revit 明细表里的标高对上，不要只按楼层去找。 | The storey on this page is the IFC file's spatial assignment, which may not match the levels in a Revit schedule; do not look for the object by storey alone. |
 | `sources.model-file` | 模型文件里这个构件没有写 Tag。 | The model file has no Tag for this element. |

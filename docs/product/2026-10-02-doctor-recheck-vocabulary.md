@@ -113,7 +113,7 @@
 | `named-outcome-not-observed` | 未观察到命名结果 | 原复检条件里点名的那个结果，现在没有观察到：原条件未达成。 |
 | `no-machine-checkable-part` | 条件没有可机检部分，需要人阅读 | 原复检条件没有机器能检查的部分，需要人阅读原条件并判断；记录对它不下结论。 |
 | `not-comparable` | 不可比较：对应的构件不完整 | 无法对原复检条件下结论：原来的构件有的已经不在本次记录里，条件没有完整的对象可以检查。这不代表条件已满足。 |
-| `no-recheck-condition` | 原记录没有复检条件 | 原记录没有复检条件：原来的判断没有留下待办。 |
+| `no-recheck-condition` | 原记录没有复检条件 | 原判断为“可以开始”时：原记录没有复检条件：原来的判断没有留下待办。其余情况（含记录未携带原判断）：原记录没有给出复检条件。 |
 
 没有“整句条件已满足”。
 
@@ -240,7 +240,7 @@ UNKNOWN 的五个都以“不是模型缺陷”开头，与 Pack 的 `next_actio
 | 记录里的代码 | 本界面的中文 |
 | --- | --- |
 | `work-cannot-start` | 这项工作不能开始 |
-| `work-suspended` | 这项工作暂停 |
+| `work-suspended` | 这项工作暂缓，等有结论再定 |
 | `rework-risk` | 有返工风险 |
 | `re-identification-and-reissue-risk` | 有重新标识的风险：引用这些标识的文件届时也须重新出具（第 14 节） |
 
@@ -278,13 +278,13 @@ IFC 类别：`IfcAirTerminal` 风口、`IfcChimney` 烟囱、`IfcDuctSegment` �
 
 | 问题类型 | 要做什么 | 完成后拿什么复检 |
 | --- | --- | --- |
-| `missing-project-asset-identity` | 在源模型里给这个构件补上本项目约定的资产标识属性（见所列属性集和属性名），重新导出 | 重新发布的模型上，这个构件在所列每条要求下都通过，范围内没有构件漏评 |
+| `missing-project-asset-identity` | 在源模型里给这个构件补上本项目约定的资产标识属性（见所列属性集和属性名），重新导出 | 重新发布的模型上，这个构件在所列每条要求下都通过 |
 | `asset-identity-not-evaluated` | 现有资产标识规则没有覆盖到这个构件，所以它有没有资产标识还没有被评估，不能判断是否缺少；这项工作能否开始也因此无法判断。先确认项目约定是否要求它具备资产标识，以及规则该不该覆盖到它。在确认之前，这不表示它必须具备资产标识。（产品裁定的句子取代表中原句；2026-10-02 再按收口文件第 6 节改成现在这句） | 范围内每个构件在所绑定的要求下都有评估结果 |
-| `in-model-position-not-evaluated` | 这不是已知的模型缺陷，也不需要改模型。空间归属的检查规则没有覆盖到这个构件，需要扩展规则的适用范围 | 范围内每个构件在所绑定的要求下都有检查结果 |
+| `in-model-position-not-evaluated` | 这不是已知的模型缺陷。它的空间归属目前还没有评估：空间归属的检查规则没有覆盖到这个构件。这一步是扩展规则的适用范围，让检查覆盖到它，而不是改模型；覆盖并运行之后，才知道要不要改模型 | 范围内每个构件在所绑定的要求下都有检查结果 |
 | `penetration-not-determined` | 这不是已知的模型缺陷。还没有协调评审判定它是否穿过接收方的构件；需要开一次评审，记录“不穿过”或写明穿过哪些构件 | 针对所列模型版本，有一份评审判定记录 |
 | `missing-corresponding-opening` | 在接收方模型里、被穿过的构件上建出洞口或竖井，不要做成交出方模型里的空洞。穿过几个构件就要几个洞口 | 这一对的开洞核查结果为“洞口已建且已关联”。只建洞不够 |
 | `cross-model-alignment-not-confirmed` | 这不是已知的错位。还没有人按项目接受的方法确认两侧模型对齐；需要针对所列模型版本做一次并记录 | 对齐确认已做，结果为已对齐，写明模型版本 |
-| `mep-element-not-spatially-assigned` | 在源模型里把构件放到正确的标高和空间上，重新导出 | 重新发布的模型上，这个构件的空间归属要求通过 |
+| `mep-element-not-spatially-assigned` | 在源模型里把构件放到正确的标高上（项目要求空间归属时，再放进对应的空间），重新导出 | 重新发布的模型上，这个构件的空间归属要求通过 |
 | `cross-model-misalignment` | 重新获取项目共用的坐标基准，按共用原点重新导出（不靠移动几何），再按项目接受的方法重做对齐确认 | 针对新版本重做对齐确认，结果为已对齐 |
 | `opening-not-verifiably-linked` | 在接收方模型里，给洞口补上指回穿过它的那个构件的关联。一个洞口供几个构件穿过，每个各要一条 | 这一对的关联核查结果为已关联 |
 | `opening-status-not-determined` | 这不是已知的缺洞。开洞情况的评审没完成：洞口是否已建、是否已关联 | 核查给出明确结果（已关联／已建未关联／未建） |
@@ -330,7 +330,7 @@ IFC 类别：`IfcAirTerminal` 风口、`IfcChimney` 烟囱、`IfcDuctSegment` �
 
 | 原文 | 本界面的中文 |
 | --- | --- |
-| The required property set does not exist | 所要求的属性集不存在（要补的是整个属性集，不是给已有属性填值） |
+| The required property set does not exist | 所要求的属性集不存在（要让导出写出这个属性集以及其中所要求的属性，不是给已有属性填值） |
 | Requirement satisfied. | 要求已满足 |
 | The predefined type "NOTDEFINED" does not meet the required type | 预定义类型“NOTDEFINED”不属于要求的取值 |
 | No applicable elements exist in this model. | 这个模型里没有这条要求适用的构件 |
@@ -432,7 +432,7 @@ IFC 类别：`IfcAirTerminal` 风口、`IfcChimney` 烟囱、`IfcDuctSegment` �
 
 | 键 | 本界面的中文 |
 | --- | --- |
-| `note` | IFC Tag 是导出时写进 IFC 的标记；Revit 导出的通常是构件的 ElementId。核对：在 Revit 里用“按 ID 选择”选中这个 ID，看选中对象的名称和类别是否与本页相同；相同再按它处理，不同就不要按这个 Tag 去改，改用 GlobalId 在 IFC 里定位。 |
+| `note` | IFC Tag 是导出时写进 IFC 的标记；Revit 导出的通常是构件的 ElementId。核对：在 Revit 里用“按 ID 选择”选中这个 ID，看选中对象的名称和类别是否与本页相同；相同再按它处理，不同就不要按这个 Tag 去改：在 IFC 查看器里按 GlobalId 定位，读出名称、类型和位置，再在 Revit 里按这些找到对象并核对，然后在源模型里修改。 |
 | `byIdNotStorey` | 在 Revit 里按 ID 找对象，不要按楼层找：本页的楼层取自 IFC 文件里的空间归属，不一定能和 Revit 明细表里的标高对上。 |
 | `storeyFromIfc` | 本页的楼层取自 IFC 文件里的空间归属，不一定能和 Revit 明细表里的标高对上，不要只按楼层去找。 |
 | `sources.model-file` | 模型文件里这个构件没有写 Tag。 |
@@ -459,10 +459,10 @@ IFC 类别：`IfcAirTerminal` 风口、`IfcChimney` 烟囱、`IfcDuctSegment` �
 | --- | --- |
 | `PV-001.title` | 风口要声明四种预定义类型之一 |
 | `PV-001.predicate` | 每个适用的风口（IfcAirTerminal）都要声明预定义类型，取值是 DIFFUSER、GRILLE、LOUVRE、REGISTER 之一。IFC4 还允许 USERDEFINED 和 NOTDEFINED；不接受它们是这条规则自己的决定，用它们的模型仍是有效的 IFC4。 |
-| `PV-001.passProves` | 检查器按它的读取顺序取到的那一个值（类型上的值优先；类型声明 USERDEFINED 时是它的自由文本；类型什么也没说时才读构件实例），逐字等于 DIFFUSER、GRILLE、LOUVRE、REGISTER 四个值之一。 |
+| `PV-001.passProves` | 检查器按它的读取顺序取到的那一个值（类型上的值优先；类型声明 USERDEFINED 时是它的自由文本；类型什么也没说时才读构件实例；没有类型时，实例声明 USERDEFINED 也是它的自由文本），逐字等于 DIFFUSER、GRILLE、LOUVRE、REGISTER 四个值之一。 |
 | `PV-001.passDoesNotProve[0]` | 取值正确：四个值中任何一个都会通过，写成 GRILLE 也会通过。 |
 | `PV-001.passDoesNotProve[1]` | 类型和构件实例的取值一致：类型上是四个值之一时，实例上写的值不参与比较；类型是 LOUVRE、实例是 DIFFUSER，也会通过。 |
-| `PV-001.passDoesNotProve[2]` | 规则不接受的 USERDEFINED 没有出现：类型声明 USERDEFINED 时，检查器比较的是它的自由文本，逐字、区分大小写；文本恰好是 LOUVRE 会通过，写成 louvre、Louvre 或前后带空格则不通过。 |
+| `PV-001.passDoesNotProve[2]` | 规则不接受的 USERDEFINED 没有出现：类型声明 USERDEFINED 时，检查器比较的是它的自由文本；没有类型时，构件实例声明 USERDEFINED 也按它的自由文本比较。比较逐字、区分大小写；文本恰好是 LOUVRE 会通过，写成 louvre、Louvre 或前后带空格则不通过。 |
 | `PV-001.passDoesNotProve[3]` | 墙上有对应的洞口。 |
 | `PV-001.passDoesNotProve[4]` | 风口所在的模型与风口所在的墙所属的模型已经对齐。 |
 | `PV-001.passDoesNotProve[5]` | 任何工作可以开始，包括吊顶和开洞工作。 |
@@ -474,7 +474,7 @@ IFC 类别：`IfcAirTerminal` 风口、`IfcChimney` 烟囱、`IfcDuctSegment` �
 | `PV-001.gaps[0]` | 风口所在的墙上的洞口：需要对照风口所在的模型和这面墙所属的模型做协调评审判定；这项检查不比较两个模型的构件。 |
 | `PV-001.gaps[1]` | 风口所在的模型与风口所在的墙所属的模型是否对齐：需要一份对齐确认记录。 |
 | `PV-001.gaps[2]` | 取值是否选对：分类判断要另行记录；检查通过不能反过来证明分类判断正确。 |
-| `PV-001.reasonFreeText` | 引号里不是预定义类型的枚举值，而是自由文本：类型声明 USERDEFINED 时，检查器拿它的自由文本来比较。 |
+| `PV-001.reasonFreeText` | 引号里不是预定义类型的枚举值，而是自由文本：类型声明 USERDEFINED 时，检查器拿它的自由文本来比较；没有类型时，构件实例声明 USERDEFINED 也是这样。 |
 
 **前后对比（`WORKSPACE_COMPARE`）**
 
@@ -700,3 +700,30 @@ IFC 类别：`IfcAirTerminal` 风口、`IfcChimney` 烟囱、`IfcDuctSegment` �
 | `RECHECK_ITEM.actionHeading` | 三、要做什么、由谁处理、完成后拿什么复检 | 二、要做什么、由谁处理、完成后拿什么复检 |
 | `RECHECK_ITEM.whichOne` | 二、是哪个构件 | 三、是哪个构件 |
 | `RECHECK_ITEM.whichTwo` | 二、是哪两个构件 | 三、是哪两个构件 |
+
+## 21. 2026-10-09 BIM 第二批修正（M1、W2–W8、W10）
+
+依据：[PM 对汇报（五）的裁定](2026-10-08-pm-response-to-td-5.md)与技术总监第 1 包。只如实表达既有含义：Pack、规则、评估与复检判定逻辑都没有改。
+W1（Pack 路由，C 通道）、W9（目前没有可达入口）不在本轮。中英义务对照见
+[第二批修正对照](2026-10-09-doctor-bim-batch-two-bilingual-parity.md)。
+
+| BIM | 位置 | 原句 | 现在 |
+| --- | --- | --- | --- |
+| M1 | `ACTIONS.in-model-position-not-evaluated.action` | 这不是已知的模型缺陷，也不需要改模型。空间归属的检查规则没有覆盖到这个构件，需要扩展规则的适用范围 | 这不是已知的模型缺陷。它的空间归属目前还没有评估：空间归属的检查规则没有覆盖到这个构件。这一步是扩展规则的适用范围，让检查覆盖到它，而不是改模型；覆盖并运行之后，才知道要不要改模型 |
+| W2（E014） | `ACTIONS.missing-project-asset-identity.recheck` | 重新发布的模型上，这个构件在所列每条要求下都通过，范围内没有构件漏评 | 重新发布的模型上，这个构件在所列每条要求下都通过 |
+| W3（E025） | `ACTIONS.mep-element-not-spatially-assigned.action` | 在源模型里把构件放到正确的标高和空间上，重新导出 | 在源模型里把构件放到正确的标高上（项目要求空间归属时，再放进对应的空间），重新导出 |
+| W5（E357／E360／E372） | `RULE_NOTES.PV-001.passProves`（括号内一段） | 类型什么也没说时才读构件实例），逐字等于 | 类型什么也没说时才读构件实例；没有类型时，实例声明 USERDEFINED 也是它的自由文本），逐字等于 |
+| W5 | `RULE_NOTES.PV-001.passDoesNotProve[2]`（中段） | 类型声明 USERDEFINED 时，检查器比较的是它的自由文本，逐字、区分大小写； | 类型声明 USERDEFINED 时，检查器比较的是它的自由文本；没有类型时，构件实例声明 USERDEFINED 也按它的自由文本比较。比较逐字、区分大小写； |
+| W5 | `RULE_NOTES.PV-001.reasonFreeText`（后半句） | 类型声明 USERDEFINED 时，检查器拿它的自由文本来比较。 | 类型声明 USERDEFINED 时，检查器拿它的自由文本来比较；没有类型时，构件实例声明 USERDEFINED 也是这样。 |
+| W6（E386） | `TAG_WORDS.note`（后半句） | 不同就不要按这个 Tag 去改：用 GlobalId 确认是哪个对象，再回到 Revit 源模型修改。 | 不同就不要按这个 Tag 去改：在 IFC 查看器里按 GlobalId 定位，读出名称、类型和位置，再在 Revit 里按这些找到对象并核对，然后在源模型里修改。 |
+| W7（E145） | `DETAILS_WORDS.projectAssumption` | 这是本项目约定的要求，不是通用要求。 | 这是本项目假定的要求（ProjectAssumption），不是通用要求。 |
+| W8（E127） | `CONSEQUENCE_KINDS.work-suspended` | 这项工作暂停 | 这项工作暂缓，等有结论再定 |
+| W10 | `REASON_GLOSSES`（The required property set does not exist） | 所要求的属性集不存在（要补的是整个属性集，不是给已有属性填值） | 所要求的属性集不存在（要让导出写出这个属性集以及其中所要求的属性，不是给已有属性填值） |
+| W4（E120） | `CONDITION_ENTRIES.no-recheck-condition.plain`（复检单项页“原复检条件”一节） | 原记录没有复检条件：原来的判断没有留下待办。 | 原判断（`prior_verdict`）为 `READY` 时不变；其余情况，含记录未携带原判断，改为 `plainNotReady`：原记录没有给出复检条件。 |
+
+- M1：撤掉“也不需要改模型”这个没有依据的断言。现在说三件事：空间归属目前还没有评估；这一步是扩展规则的适用范围，让检查覆盖到它，
+  不是改模型；覆盖并运行之后才知道要不要改模型。“还没有结论”没有写成通过。
+- W4：判断由页面做（`recheck-model.js` 的 `conditionModel`），只看这一组的 `prior_verdict`；短说法“原记录没有复检条件”不变。
+- W5：“没有类型时，实例声明 USERDEFINED 也按自由文本比较”是测得的行为（`tests/test_product_validation_ruleset.py` 的
+  `occurrence-free-text`：实例 USERDEFINED、自由文本 LOUVRE、没有类型对象 → PASS）。类型为 NOTDEFINED 时实例 USERDEFINED 的情形没有测过，句子不说。
+- W6、W5、W10 会改动中文工作区页面；W7 只在示例的检查结果明细里出现。

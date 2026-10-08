@@ -53,7 +53,7 @@ export const ACTIONS = {
     action:
       "In the source model, add to this element the asset-identity properties the project's convention requires (see the property sets and property names listed), then re-export the model",
     recheck:
-      "On the reissued model, this element passes every requirement listed, and no element in the scope is left unevaluated",
+      "On the reissued model, this element passes every requirement listed",
   },
   "asset-identity-not-evaluated": {
     action:
@@ -64,7 +64,8 @@ export const ACTIONS = {
   },
   "in-model-position-not-evaluated": {
     action:
-      "This is not a known model defect, and the model does not need changing. The spatial-assignment check rules do not reach this element; the rules' scope of application needs to be extended",
+      "This is not a known model defect. Its spatial assignment has not been evaluated yet: the spatial-assignment check rules do not reach this element. " +
+      "This step is to extend the rules' scope of application so that the check reaches it, not to change the model; only once it is covered and the check has run will it be known whether the model needs changing",
     recheck: "Every element in the scope has a check result under the requirements bound to it",
   },
   "penetration-not-determined": {
@@ -85,7 +86,7 @@ export const ACTIONS = {
     recheck: "The alignment confirmation has been done and reports the models aligned, naming the model versions",
   },
   "mep-element-not-spatially-assigned": {
-    action: "In the source model, place the element on its correct level and in its correct space, then re-export",
+    action: "In the source model, place the element on its correct level (and, where the project requires spatial assignment, in its corresponding space), then re-export",
     recheck: "On the reissued model, this element passes its spatial-assignment requirement",
   },
   "cross-model-misalignment": {
@@ -538,7 +539,7 @@ export const ELEMENT_CARD = {
 
 export const CONSEQUENCE_KINDS = {
   "work-cannot-start": "This work cannot start",
-  "work-suspended": "This work is suspended",
+  "work-suspended": "This work is held until decided",
   "rework-risk": "Risk of rework",
   "re-identification-and-reissue-risk":
     "Risk of re-identification: documents that cite these identifiers would then have to be reissued too",
@@ -591,7 +592,7 @@ export const DETAILS_WORDS = {
   hasActual: "That check observed a value; this page does not show it",
   expected: "The rule's own words",
   source: "Source the rule gives: ",
-  projectAssumption: "This is a requirement agreed for this project, not a general one.",
+  projectAssumption: "This is a requirement assumed for this project (ProjectAssumption), not a general one.",
   gap: "What value to fill in, and which Revit parameter it maps to, the record does not say.",
   prior:
     "At the assessment before the recheck, this evidence's requirement and result were as follows. Having this description does not make the row comparable; the row's state is what is written above.",
@@ -871,6 +872,7 @@ export const CONDITION_ENTRIES = {
   "no-recheck-condition": {
     text: "The original record had no recheck condition",
     plain: "The original record had no recheck condition: the original conclusion left nothing outstanding.",
+    plainNotReady: "The original record gave no recheck condition.",
   },
 };
 
@@ -1072,7 +1074,7 @@ export const WORKSPACE = {
 
 export const TAG_WORDS = {
   note:
-    "The IFC Tag is a marker written into the IFC at export; what Revit writes is usually the element's ElementId. To check: in Revit, use \"Select by ID\" with this ID and see whether the selected object's name and class match this page; if they do, work from it; if they do not, do not change anything by this Tag: use the GlobalId to confirm which object it is, then make the change in the Revit source model.",
+    "The IFC Tag is a marker written into the IFC at export; what Revit writes is usually the element's ElementId. To check: in Revit, use \"Select by ID\" with this ID and see whether the selected object's name and class match this page; if they do, work from it; if they do not, do not change anything by this Tag: locate the object by its GlobalId in an IFC viewer, read its name, type and location, find the object in Revit by these and check it, then make the change in the source model.",
   byIdNotStorey:
     "Find the object in Revit by its ID, not by storey: the storey on this page is the IFC file's spatial assignment, which may not match the levels in a Revit schedule.",
   storeyFromIfc:
@@ -1101,11 +1103,11 @@ export const RULE_NOTES = {
       "Every applicable air terminal (IfcAirTerminal) declares a predefined type of DIFFUSER, GRILLE, LOUVRE or REGISTER. " +
       "IFC4 also admits USERDEFINED and NOTDEFINED; not accepting them is this rule's own decision, and a model using them is still valid IFC4.",
     passProves:
-      "The one value the checker took in its reading order (the type's value first; a USERDEFINED type's free text; the element instance only when the type says nothing) is, character for character, one of DIFFUSER, GRILLE, LOUVRE and REGISTER.",
+      "The one value the checker took in its reading order (the type's value first; a USERDEFINED type's free text; the element instance only when the type says nothing, and with no type, a USERDEFINED instance's free text too) is, character for character, one of DIFFUSER, GRILLE, LOUVRE and REGISTER.",
     passDoesNotProve: [
       "That the value is right: any of the four passes; GRILLE passes too.",
       "That the type and the element instance agree: when the type carries one of the four, the instance's value is not compared; type LOUVRE with instance DIFFUSER also passes.",
-      "That no USERDEFINED, which the rule does not accept, is present: when the type declares USERDEFINED, the checker compares its free text, character for character and case-sensitively; text that happens to be LOUVRE passes, while louvre, Louvre or text with leading or trailing spaces does not.",
+      "That no USERDEFINED, which the rule does not accept, is present: when the type declares USERDEFINED, the checker compares its free text; with no type, an element instance that declares USERDEFINED is compared by its free text as well. The comparison is character for character and case-sensitive; text that happens to be LOUVRE passes, while louvre, Louvre or text with leading or trailing spaces does not.",
       "That the wall has a corresponding opening.",
       "That the air terminal's model and the model of the wall it sits in are aligned.",
       "That any work can start, including ceiling and opening work.",
@@ -1128,7 +1130,7 @@ export const RULE_NOTES = {
       "Whether the value chosen is right: the classification decision has to be recorded separately; a pass cannot prove in reverse that the classification is right.",
     ],
     reasonFreeText:
-      "What is in the quotation marks is not an enumeration value but free text: when the type declares USERDEFINED, the checker compares its free text.",
+      "What is in the quotation marks is not an enumeration value but free text: when the type declares USERDEFINED, the checker compares its free text; with no type, the same holds for an element instance that declares USERDEFINED.",
   },
 };
 
