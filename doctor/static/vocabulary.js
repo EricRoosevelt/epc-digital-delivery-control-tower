@@ -111,6 +111,8 @@ export const HOME = {
     "写回模型、上传到云端，或在 Revit 里打开构件",
   ],
   canHeading: "现在可以做什么",
+  // Above the one entry a first visit is pointed to.
+  recommended: "推荐从这里开始",
   cannotHeading: "现在还不能做什么",
   cannotNote: "这些功能没有实现，所以页面上没有对应的入口。",
 };

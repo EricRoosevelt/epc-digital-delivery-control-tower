@@ -162,6 +162,7 @@ export const HOME = {
     "Write back to a model, upload to the cloud, or open an element in Revit",
   ],
   canHeading: "What you can do now",
+  recommended: "Start here",
   cannotHeading: "What you cannot do yet",
   cannotNote: "These are not implemented, so the page has no entry for them.",
 };
