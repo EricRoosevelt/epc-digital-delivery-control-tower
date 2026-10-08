@@ -2,20 +2,29 @@
 
 日期：2026-10-09（新加坡）。负责：README 会话。基线：`origin/main` = `2e6eafc372d4f62fe01e12731cc83bd57db1b03a`（含 #49、#50）。状态：**清单，不是复核**；本文件不判断任何条目的含义对错，不改任何词条。
 
-> **这是第一阶段版本（路由、键、优先级、条数）。** 页面存在与否是用 `0f4300b` 上渲染的页面判定的，被 #50 改过句子的条目用改前原句去匹配（页面存在与哪句话无关）；页面上下文和页数在用 `2e6eafc` 重新渲染后补上，条数不会因此改变，除非渲染发现新的页面。
-
 依据：技术总监 10/9 的任务，出自 PM 的[简历版本与 UI 优化任务书](2026-10-08-pm-resume-release-ui-brief.md)第 5 节；档次沿用技术总监的顺序“C2 和公开主路径必需 → 本地 IFC → 其余”。在 D6 索引（[总览](2026-10-05-bim-batch-index.md)，基线 `d59dee0`）的基础上，补入 #29（本地 IFC）、#48（Q2）、#50（M1 等）之后的增量。CSV 是全表，含每条的页面与上下文：[`2026-10-09-bim-review-subset-public-route.csv`](2026-10-09-bim-review-subset-public-route.csv)。
 
 ## 1. 每档多少条
 
-“待核”＝需要 BIM 看的条目：10/8 后改句的、新增的、10/8 没核的（B 层、10/15 批）。“10/8 已核”的不再审。“去重”按（中文，英文）句对计：同一句出现在几个键下只算一次。
+先是每档的完整状态分布；各状态相加等于档内总条数（最后一列是校验）。状态的含义见第 9 节第 5 条：**待核**＝改句需重核、新增未核、B 层未核、10/15 批未核、其他；其余几种不需要现在再审。
 
-| 档 | 条目 | 10/8 已核（不再审） | 同句已核／分隔符 | C 通道待裁 | **待核** | 待核·去重 |
-|---|---:|---:|---:|---:|---:|---:|---:|
-| T1 示例主线与 C2 必需 | 440 | 214 | 3 | 1 | 3 | **219** | 210 |
-| T2 本地 IFC 与第二入口 | 90 | 2 | 2 | 0 | 0 | **86** | 86 |
-| T3 其余 | 51 | 13 | 2 | 1 | 0 | **35** | 35 |
-| **合计（子集）** | **581** | 229 | 7 | 2 | 3 | **340** | 331 |
+| 档 | 10/8 已核 | 10/8 后改句，需重核 | 10/8 已核；C 通道待裁 | 新增，未核 | B 层，10/8 未核 | 10/15 批，未核 | 同句已核 | 分隔符，无需判断 | D6 未列，待 BIM 确认 | 其他 | 合计 | 校验 |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| T1 示例主线与 C2 必需 | 214 | 11 | 1 | 16 | 74 | 118 | 3 | 0 | 8 | 0 | **445** | 445 |
+| T2 本地 IFC 与第二入口 | 2 | 1 | 0 | 68 | 1 | 16 | 2 | 0 | 0 | 0 | **90** | 90 |
+| T3 其余 | 13 | 5 | 1 | 2 | 7 | 21 | 0 | 2 | 1 | 0 | **52** | 52 |
+| **合计（子集）** | 229 | 17 | 2 | 86 | 82 | 155 | 5 | 2 | 9 | 0 | **587** | 587 |
+
+再看待核与去重：
+
+| 档 | 条目 | **待核** | 待核·去重句数 | 档内全部·去重句数 | 其中公开路线上不出现（条件出现） | D6 未列、待确认（单列，不在待核里） |
+|---|---:|---:|---:|---:|---:|---:|
+| T1 示例主线与 C2 必需 | 445 | **219** | 210 | 420 | 37 | 8 |
+| T2 本地 IFC 与第二入口 | 90 | **86** | 86 | 88 | 16 | 0 |
+| T3 其余 | 52 | **35** | 35 | 52 | 11 | 1 |
+| **合计（子集）** | **587** | **340** | 331 | 560 | 64 | 9 |
+
+**去重怎么算**：按（中文原句，英文原句）这一对去重，同一句出现在几个键下只算一次；只有中文的条目按中文句。去重只用来估工作量，不改变条目数。CSV 的 `reuse_en`／`reuse_zh` 列标了重复的组。
 
 按“从末尾往前砍”累计的待核量：
 
@@ -25,9 +34,10 @@
 | 做到 T2 | 305 | 296 |
 | 全做（T3） | 340 | 331 |
 
-不进子集（X）：123 条，原因见第 8 节；其中待核口径的有 61 条，它们在公开路线上不出现，不计入上表。
+**那 11 条中文单语释义**（`REASON_GLOSSES` 4 条、`IFC_CLASS_NAMES` 6 条、`CITATION_GLOSSES` 1 条；英文页显示原文）已按页面归档，计入总数：T1 10、T2 0、T3 1。它们的状态：1 条是 W10 改过的（计入待核）；1 条 D6 索引已列且 10/8 已核（`REASON_GLOSSES` 里的 E565，不在待核里）；9 条是“是否已核待 BIM 确认”（D6 索引当时没有逐条列），**不计入待核数**，单列在上表最后一列。10/8 BIM 读过 `REASON_GLOSSES`（W10 出自它），但哪几条已核我没有记录。
+**英文页上的事实**：渲染的 362 个英文页里，这 11 条中文释义有 0 条出现；英文页显示的是记录或规则的英文原文，没有中文释义。英文页上没有任何别的中文字符（语言切换按钮上的“中文”除外）。（这是事实记录，本 PR 不修。）
 
-“D6 未列、待确认”：D6 索引没有逐条列的三张中文单语释义表（`REASON_GLOSSES`、`IFC_CLASS_NAMES`、`CITATION_GLOSSES`，英文显示原文）。它们在公开页上出现；10/8 BIM 读过 `REASON_GLOSSES`（W10 出自它），但哪几条已核，我没有记录，请 BIM 确认；不计入“待核”。
+不进子集（X）：117 条，原因见第 8 节；它们在公开路线上渲染不到、也不被本地结果页的代码引用，不计入上表。
 
 条数不能代表复核时间：长句、含限制和否定的句子比标签慢得多。BIM 的可用时间还没有确认，这里不估工时。#50 改过的句子（第 4 节）和 Q2 的 12 条最短、也最该先看。
 
@@ -36,7 +46,7 @@
 下面是事实，不是建议；取舍由 TD／PM 定。
 
 - **T3 审不完**：目录里其余示例的页面（中文 138 页）和每份记录的“记录／活动／成员”明细页（中文 299 页，英文都是“尚未翻译”）上的文字没有复核。这些页面都是从公开页上的链接点得到的。要么复核，要么公开版本不链接、或在链接处标明未复核（任务书 §5 的“英文未译的次要链接仍提前注明”）。T3 里还有只在特定条件下出现的句子（指定工作区时的首页状态、没有证据可引用时的摘要等），公开路线默认不出现。
-- **T2 审不完**：本地 IFC 检查（#/local 各页和结果页里 #29 的句子）与首页第二入口的拒绝页上的文字没有复核。这两条路径的文字就是它们的主体，没有复核时只能不对外展示这两个入口。
+- **T2 审不完**：本地 IFC 检查（#/local 各页和结果页里 #29 的句子）与首页第二入口的拒绝页上的文字没有复核。这两条路径的文字就是它们的主体；按任务书 §5，没有复核的文字不进公开展示，所以这两个入口要么复核完，要么不公开。
 - **T1 审不完**：示例主线（首页、目录、首次结果、单项、复检）与工作区结果页没有复核，没有可展示的路线。T1 不可砍。
 
 ## 3. 渲染了哪些页面
@@ -47,12 +57,12 @@
 |---|---|---:|---:|
 | 首页 | `#/` | 1 | 1 |
 | 示例目录 | `#/fixture` | 1 | 1 |
-| 示例主线 | `member-evidence`（首次结果、单项）、`recheck-requirement-relaxed`（复检、复检单项） | 43 | 42 |
+| 示例主线 | `member-evidence`（首次结果、单项）、`recheck-requirement-relaxed`（复检、复检单项） | 43 | 43 |
 | 本地结果页 | `#/local/<检查号>` 及其检查结果详情 | 16 | 16 |
 | 本地检查（选文件至运行） | `#/local` 与本地检查各状态（见下） | 19 | 19 |
 | 第二入口 | `#/real`、`#/real/real-refusal` | 2 | 2 |
 | 其他示例 | 目录里其余示例的各页 | 138 | 138 |
-| 次要明细页 | 记录、活动、成员明细页 | 299 | 141 |
+| 次要明细页 | 记录、活动、成员明细页 | 299 | 142 |
 
 本地检查按真实界面逐状态走了一遍（中英各一遍）：`check-architecture:planned`、`check-architecture:result`、`check-architecture:running`、`check-both:planned`、`check-both:result`、`check-both:running`、`check-garbled:after-run`、`check-garbled:planned`、`check-garbled:running`、`check-hvac:planned`、`check-hvac:result`、`check-hvac:running`、`check-mixed:planned`、`check-mixed:result`、`check-mixed:running`、`local:chosen`、`local:file-refused-not-an-ifc`、`local:plan-refused-discipline-not-declared`、`local:plan-refused-unsupported-schema`、`local:result-missing`、`local:start`、`local:start-with-earlier-checks`。输入是仓库里的公开样例 `Building-Hvac.ifc`、`Building-Architecture.ifc`，加三个小文件：一个 IFC2x3 头的、一个根本不是 IFC 的、一个文件头对但内容坏的（触发“程序故障”），以及把 HVAC 样例里一个类型改成 DIFFUSER 的变体（得到 PASS 与 FAIL 并存）。
 
@@ -64,7 +74,7 @@
 |---|---|---|---|---|---|
 | E014 | `ACTIONS.missing-project-asset-identity.recheck` | W2 | T1 | zh 36｜en 36 | W2：复检义务收窄到这个构件“在所列要求下都通过”，删去“范围内没有构件漏评”；#50 已改句（10/8 已核的是改前原句），需重核 |
 | E017 | `ACTIONS.in-model-position-not-evaluated.action` | M1 | T1 | zh 34｜en 34 | M1：含义错误（P0）：断言“模型不需要改”，而空间归属尚未评估；中英同改；#50 已改句（10/8 已核的是改前原句），需重核 |
-| E120 | `CONDITION_ENTRIES.no-recheck-condition.plain` | W4 | T1 | zh 50｜en 49 | W4：句子未变；#50 起只在原判断为“可以开始”时显示，需 BIM 确认 |
+| E120 | `CONDITION_ENTRIES.no-recheck-condition.plain` | W4 | T1 | zh 50｜en 50 | W4：句子未变；#50 起只在原判断为“可以开始”时显示，需 BIM 确认 |
 | E127 | `CONSEQUENCE_KINDS.work-suspended` | W8 | T1 | zh 73｜en 73 | W8：“暂停”暗示工作已经开始；#50 已改句（10/8 已核的是改前原句），需重核 |
 | E145 | `DETAILS_WORDS.projectAssumption` | W7 | T1 | zh 36｜en 36 | W7：“约定”说重了；#50 已改句（10/8 已核的是改前原句），需重核 |
 | Z01 | `REASON_GLOSSES.The required property set does not exist` | W10 | T1 | zh 36｜en 0 | W10：属性集的释义：改为可执行的说法（让导出写出属性集和其中要求的属性）；#50 已改句（10/8 已核的是改前原句），需重核 |
@@ -113,23 +123,35 @@
 | G052 | E574、E584 | 处理团队 | B 层，10/8 未核 |
 | G053 | E589、E590 | {label}，按处理团队（{count} 个事项） | B 层，10/8 未核 |
 
-“同句已核”：句子与某条 10/8 已核且未改的条目逐字相同（中英都相同），不再列入待核。例如 Q2 的 `kinds.*` 若与 `CITATION_PROVENANCE.*.short` 同词，就按已核处理。
+中文逐字相同、英文不同的（没有按“同句已核”处理；英文差别是否算同义由 BIM 定）：
+
+| 待核条目 | 英文 | 已核条目 | 英文 | 中文 |
+|---|---|---|---|---|
+| E096 | checker | E476 | Checkers | 检查程序 |
+| L008 | Give an overall compliance, ready-to-build or "can be handed over" co… | E195 | Give an overall compliance, ready-to-build or "ready to hand over" co… | 给出整体合规、可施工或“可以交付”的结论 |
+| Q05 | real check output | E100 | Real check output | 真实检查输出 |
+| Q06 | simulated check results | E103 | Simulated check result | 模拟的检查结果 |
+| Q07 | simulated human determinations | E106 | Simulated human determination | 模拟的人工判定 |
+| Q08 | determinations of unstated source | E109 | Determination of unstated source | 来源未标注的判定 |
+
+“同句已核”：句子与某条 10/8 已核且未改的条目逐字相同（中英都相同），不再列入待核。Q2 的 `kinds.*` 与 `CITATION_PROVENANCE.*.short` 中文逐字相同、英文只差大小写和单复数（见上表），所以没有按同句已核处理。
 
 ## 6. 没覆盖到的、没核验的
 
-- **条件出现、本次没触发**：63 条在子集里，但本次渲染没看到它们（取决于用户自己的模型、拒绝或故障状态等）。CSV 的 `conditional` 列写了原因；它们的页面列为空。是否触发过，以“本地检查各状态”那一行为准。
-- **英文未译的页面**：141 个路由在英文里显示“This page has not been translated yet”（记录、活动、成员明细页；每份记录各有若干个）。这些页面在英文里是死胡同，主线不经过它们；单项页上的“在明细页查看完整的证据路径”链接指向其中一个，英文里旁注“Chinese only”。
+- **条件出现、本次没触发**：64 条在子集里，但本次渲染没看到它们（取决于用户自己的模型、拒绝或故障状态等）。CSV 的 `conditional` 列写了原因；它们的页面列为空。是否触发过，以“本地检查各状态”那一行为准。
+- **英文未译的页面**：142 个路由在英文里显示“This page has not been translated yet”（记录、活动、成员明细页；每份记录各有若干个）。这些页面在英文里是死胡同，主线不经过它们；单项页上的“在明细页查看完整的证据路径”链接指向其中一个，英文里旁注“Chinese only”。
 - **C2 工作区专用页**（对比页、拒绝页）不在公开路线上，没有渲染；这部分句子不进子集。C2 走查按 `577620e` 做过，之后这些页面的文字没有变。
 - **UI 包 2（任务书 §3，10/10–12）**：首页和示例目录的措辞可能还会改。CSV 的 `ui_pkg2_watch` 标了只出现在首页／目录上的条目，它们的复核最好排在包 2 的措辞冻结之后。
 - **本地检查的异常状态**：任务书 §3 要求走通的五个状态里，成功、没有适用对象、不支持 schema、运行失败（程序故障）都在界面里走通了；“无几何对象”在界面里没有单独的状态（没有形体的构件照常显示检查结果，页面只有一句静态说明 `scope.geometryText`）。Framework 待命补异常状态；如果补了，会有新句子，需要追加。
-- **匹配方法的限制**：条目靠文字匹配到页面。长句按固定文字的子串匹配；短标签只算整块或整个元素相等；极短的模板（如 `{label}：{meaning}。`）无法按文字找到，按所在表其余条目出现的页面继承（CSV 的 `inherited_pages` 列）。一个词条只写在代码里、不在词表里的页面文字（词表测试保证这种情况不应有）不在本清单内。
+- **匹配方法的限制**：条目靠文字匹配到页面。长句按固定文字的子串匹配；短标签只算整块或整个元素相等；极短的模板（如 `{label}：{meaning}。`）无法按文字找到，按所在表其余条目出现的页面继承（CSV 的 `inherited_pages` 列）。短标签按文字匹配，会把页面别处的同一个词也算进页数（例如 Q2 的 `kinds.*` 与图例里的同一个词），页数只是“出现过”的粗指标。一个词条只写在代码里、不在词表里的页面文字（词表测试保证这种情况不应有）不在本清单内。
+- **与第一阶段（5b64b42，用 `0f4300b` 上渲染的页面）相比**：在 `2e6eafc` 上重新渲染后，爬到的页面数变化：en 示例主线 42→43；en 次要明细页 141→142。条目变化 6 条（原因是匹配方法，不是页面变了：中文单语释义现在按“和它注释的原文在同一页”匹配，第一阶段没有这条规则）：
 - **没有私有内容**：渲染只用仓库里的公开样例和随附示例；没有用 C2 的私有工作区、模型或路径。
 
 ## 7. 清单
 
 列：ID 沿用 D6 索引的 `E###`；`L###` 是 #29 的 76 条，`Q##` 是 #48 的 12 条，`N01` 是 #50 新增的一条，`C01` 是 #29 改了但 D6 索引没列的一条。页面列是“中文页数｜英文页数｜在哪些页面”。
 
-### T1 示例主线与 C2 必需（440 条，待核 219）
+### T1 示例主线与 C2 必需（445 条，待核 219）
 
 #### ACTIVITY_NAMES（6 条，待核 0）
 
@@ -137,8 +159,8 @@
 |---|---|---|---|---|---|
 | E001 | `builders-work-openings.name` | Builder's-work openings | 土建预留开洞 | 10/8 已核 | zh 85｜en 85｜示例主线、其他示例 |
 | E002 | `builders-work-openings.needs` | Needs to know where MEP penetrates architectural fabric, so openings can be cut in walls, floors and roof. | 要知道交出方的构件在哪里穿过墙、楼板和屋顶，才能在这些构件上开洞。 | 10/8 已核 | zh 10｜en 10｜示例主线、其他示例 |
-| E003 | `ceiling-and-bulkhead-geometry.name` | Reflected ceiling and bulkhead layout | 吊顶平面与包封布置 | 10/8 已核 | zh 70｜en 68｜示例主线、其他示例 |
-| E004 | `ceiling-and-bulkhead-geometry.needs` | Needs to know where MEP equipment physically is, in which storey, so ceiling zones and bulkheads can be drawn around it. | 要知道交出方的设备在哪一层、在什么位置，才能围着它画吊顶分区和包封。 | 10/8 已核 | zh 8｜en 7｜示例主线、其他示例 |
+| E003 | `ceiling-and-bulkhead-geometry.name` | Reflected ceiling and bulkhead layout | 吊顶平面与包封布置 | 10/8 已核 | zh 70｜en 70｜示例主线、其他示例 |
+| E004 | `ceiling-and-bulkhead-geometry.needs` | Needs to know where MEP equipment physically is, in which storey, so ceiling zones and bulkheads can be drawn around it. | 要知道交出方的设备在哪一层、在什么位置，才能围着它画吊顶分区和包封。 | 10/8 已核 | zh 8｜en 8｜示例主线、其他示例 |
 | E005 | `schedules-and-room-data-sheets.name` | Room data sheets and equipment schedules | 房间数据表与设备明细表 | 10/8 已核 | zh 70｜en 70｜示例主线、其他示例 |
 | E006 | `schedules-and-room-data-sheets.needs` | Needs each piece of equipment to carry the project's asset identity, so a schedule can be keyed to it. | 要每件设备都带有项目的资产标识，明细表才能按它编排。 | 10/8 已核 | zh 8｜en 8｜示例主线、其他示例 |
 
@@ -146,17 +168,17 @@
 
 | ID | 键 | English | 中文 | 状态 | 页面 |
 |---|---|---|---|---|---|
-| E007 | `READY` | Ready | 可以开始 | 10/8 已核 | zh 181｜en 179｜示例主线、其他示例 |
-| E008 | `BLOCKED` | Blocked | 受阻 | 10/8 已核 | zh 181｜en 179｜示例主线、其他示例 |
-| E009 | `UNKNOWN` | Unknown | 无法判断 | 10/8 已核 | zh 181｜en 179｜示例主线、其他示例 |
+| E007 | `READY` | Ready | 可以开始 | 10/8 已核 | zh 181｜en 181｜示例主线、其他示例 |
+| E008 | `BLOCKED` | Blocked | 受阻 | 10/8 已核 | zh 181｜en 181｜示例主线、其他示例 |
+| E009 | `UNKNOWN` | Unknown | 无法判断 | 10/8 已核 | zh 181｜en 181｜示例主线、其他示例 |
 
 #### VERDICT_WORDS（3 条，待核 0）
 
 | ID | 键 | English | 中文 | 状态 | 页面 |
 |---|---|---|---|---|---|
-| E010 | `READY` | Every piece of necessary evidence is present and satisfies the applicable acceptance conditions, and there is no unresolved blocker and no evidence gap. The activity can… | 必要的证据齐全且满足验收条件，没有未解决的阻碍，也没有证据缺口：在本次评估范围内，这项工作可以开始 | 10/8 已核 | zh 181｜en 179｜示例主线、其他示例 |
-| E011 | `BLOCKED` | A known unmet requirement prevents the activity | 有一项已知未满足的要求，阻止这项工作 | 10/8 已核 | zh 181｜en 179｜示例主线、其他示例 |
-| E012 | `UNKNOWN` | An evidence gap makes the activity undecidable — the evidence needed to answer the question was never produced, so neither release nor refusal can be justified | 回答这个问题所需的证据没有产生，这项工作能否开始无法决定：既不能放行，也不能拒绝 | 10/8 已核 | zh 181｜en 179｜示例主线、其他示例 |
+| E010 | `READY` | Every piece of necessary evidence is present and satisfies the applicable acceptance conditions, and there is no unresolved blocker and no evidence gap. The activity can… | 必要的证据齐全且满足验收条件，没有未解决的阻碍，也没有证据缺口：在本次评估范围内，这项工作可以开始 | 10/8 已核 | zh 181｜en 181｜示例主线、其他示例 |
+| E011 | `BLOCKED` | A known unmet requirement prevents the activity | 有一项已知未满足的要求，阻止这项工作 | 10/8 已核 | zh 181｜en 181｜示例主线、其他示例 |
+| E012 | `UNKNOWN` | An evidence gap makes the activity undecidable — the evidence needed to answer the question was never produced, so neither release nor refusal can be justified | 回答这个问题所需的证据没有产生，这项工作能否开始无法决定：既不能放行，也不能拒绝 | 10/8 已核 | zh 181｜en 181｜示例主线、其他示例 |
 
 #### ACTIONS（10 条，待核 2）
 
@@ -175,8 +197,8 @@
 
 页面上下文（只列待核的条目；前后各一块，‹ › 里是匹配到的那一块）：
 
-- `E014` zh `#/fixture/member-evidence/item/2/2/0`：完成后拿什么复检 ‹ 重新发布的模型上，这个构件在所列每条要求下都通过，范围内没有构件漏评 › 来源原文（英文，记录所带）：供追溯，不是操作指令；en `#/fixture/member-evidence/item/2/2/0`：What a recheck must show ‹ On the reissued model, this element passes every requirement listed, and no element in the scope is left uneva › Source wording (as the record carries it): for tracing, not an instruc
-- `E017` zh `#/fixture/member-evidence`：要做什么 ‹ 这不是已知的模型缺陷，也不需要改模型。空间归属的检查规则没有覆盖到这个构件，需要扩展规则的适用范围 › 查看这一项；en `#/fixture/member-evidence`：What to do ‹ This is not a known model defect, and the model does not need changing. The spatial-assignment check rules do  › See this item
+- `E014` zh `#/fixture/member-evidence/item/2/2/0`：完成后拿什么复检 ‹ 重新发布的模型上，这个构件在所列每条要求下都通过 › 来源原文（英文，记录所带）：供追溯，不是操作指令；en `#/fixture/member-evidence/item/2/2/0`：What a recheck must show ‹ On the reissued model, this element passes every requirement listed › Source wording (as the record carries it): for tracing, not an instruc
+- `E017` zh `#/fixture/member-evidence`：要做什么 ‹ 这不是已知的模型缺陷。它的空间归属目前还没有评估：空间归属的检查规则没有覆盖到这个构件。这一步是扩展规则的适用范围，让检查覆盖到它，而不是改模型；覆盖并运行之后，才知道要不要改模型 › 查看这一项；en `#/fixture/member-evidence`：What to do ‹ This is not a known model defect. Its spatial assignment has not been evaluated yet: the spatial-assignment ch › See this item
 
 #### ACTION_GROUPS（6 条，待核 0）
 
@@ -203,9 +225,9 @@
 
 | ID | 键 | English | 中文 | 状态 | 页面 |
 |---|---|---|---|---|---|
-| E051 | `simulated` | This conclusion rests on simulated evidence: | 这个结论建立在模拟证据上： | 10/8 已核 | zh 16｜en 15｜示例主线、其他示例 |
+| E051 | `simulated` | This conclusion rests on simulated evidence: | 这个结论建立在模拟证据上： | 10/8 已核 | zh 16｜en 16｜示例主线、其他示例 |
 | E052 | `real` | Basis of this conclusion: | 这个结论的依据： | 10/8 已核 | zh 18｜en 18｜示例主线、其他示例 |
-| E053 | `sharedSimulated` | Basis shared by the items in this group, some of it simulated: | 同组事项共用的依据，其中有模拟证据： | 10/8 已核 | zh 88｜en 87｜示例主线、其他示例 |
+| E053 | `sharedSimulated` | Basis shared by the items in this group, some of it simulated: | 同组事项共用的依据，其中有模拟证据： | 10/8 已核 | zh 88｜en 88｜示例主线、其他示例 |
 | E054 | `sharedReal` | Basis shared by the items in this group: | 同组事项共用的依据： | 10/8 已核 | zh 65｜en 65｜示例主线、其他示例 |
 | E056 | `gaps.no-finding` | no check result at all (a real absence) | 没有任何检查结果（真实的缺席） | 10/8 已核 | zh 46｜en 46｜示例主线、其他示例 |
 | E057 | `gaps.no-determination` | no determination yet (a real absence) | 还没有判定（真实的缺席） | 10/8 已核 | zh 64｜en 64｜示例主线、其他示例 |
@@ -214,19 +236,19 @@
 
 | ID | 键 | English | 中文 | 状态 | 页面 |
 |---|---|---|---|---|---|
-| E059 | `readyScope` | Holds for this one item, this work and the listed model versions only; it does not mean the whole handover is complete. | 只对这一个事项、这项工作、所列的模型版本成立；不代表整次交接完成。 | 10/8 已核 | zh 54｜en 52｜示例主线、其他示例 |
+| E059 | `readyScope` | Holds for this one item, this work and the listed model versions only; it does not mean the whole handover is complete. | 只对这一个事项、这项工作、所列的模型版本成立；不代表整次交接完成。 | 10/8 已核 | zh 54｜en 54｜示例主线、其他示例 |
 | E060 | `unknown` | "Unknown" means whether this work can start cannot be decided: it does not mean the element has no problem, and it is not a system error. | “无法判断”说的是这项工作能否开始无法判断：不等于这个构件没有问题，也不是系统出错。 | 10/8 已核 | zh 88｜en 88｜示例主线、其他示例 |
 | E061 | `assetIdentity` | Where the asset-identity value comes from, and which Revit parameter it maps to, the record does not say. | 资产标识的取值从哪里来、对应哪个 Revit 参数，记录未提供。 | 10/8 已核 | zh 6｜en 6｜示例主线、其他示例 |
 | E062 | `team` | The handling team is an entry in the record; it does not mean the work has been assigned. | 处理团队是记录里的安排，不代表已经派发。 | 10/8 已核 | zh 107｜en 107｜示例主线、其他示例 |
 | E063 | `simulatedTeam` | Example handling team | 示例处理团队 | 10/8 已核 | zh 107｜en 107｜示例主线、其他示例 |
 | E065 | `defaultRole` | Default handling role (the rule's default, not an assignment) | 默认处理角色（规则给出的默认，不是指派） | 10/8 已核 | zh 107｜en 107｜示例主线、其他示例 |
-| E066 | `unchanged` | Unchanged by the recheck | 复检前后未变 | 10/8 已核 | zh 0｜en 111｜示例主线、其他示例 |
+| E066 | `unchanged` | Unchanged by the recheck | 复检前后未变 | 10/8 已核 | zh 0｜en 112｜示例主线、其他示例 |
 
 #### CARRY_OVER_REASONS（14 条，待核 14）
 
 | ID | 键 | English | 中文 | 状态 | 页面 |
 |---|---|---|---|---|---|
-| E067 | `finding-equivalent` | There is exactly one corresponding check result; model version, check result content, check requirement and checker are the same, aspect by aspect. | 对应的检查结果只有一条，模型版本、检查结果内容、检查要求、检查程序逐项相同。 | 10/15 批，未核 | zh 50｜en 49｜示例主线、其他示例 |
+| E067 | `finding-equivalent` | There is exactly one corresponding check result; model version, check result content, check requirement and checker are the same, aspect by aspect. | 对应的检查结果只有一条，模型版本、检查结果内容、检查要求、检查程序逐项相同。 | 10/15 批，未核 | zh 50｜en 50｜示例主线、其他示例 |
 | E068 | `finding-changed` | There is exactly one corresponding check result; compared aspect by aspect, at least one differs. | 对应的检查结果只有一条，逐项比较后至少有一个方面不同。 | 10/15 批，未核 | zh 53｜en 53｜示例主线、其他示例 |
 | E069 | `no-counterpart-in-the-cited-run` | In the validation run this record rests on, this element has no check result under this requirement. | 本次记录依据的验证运行里，这个构件在这条要求下没有检查结果。 | 10/15 批，未核 | zh 20｜en 20｜示例主线、其他示例 |
 | E070 | `counterpart-not-cited-under-the-current-binding` | The validation run has a corresponding check result, but this record does not cite it. | 验证运行里有对应的检查结果，但本次记录没有引用它。 | 10/15 批，未核 | zh 20｜en 20｜示例主线、其他示例 |
@@ -236,7 +258,7 @@
 | E074 | `counterpart-not-unique` | This time there is more than one candidate corresponding check result, and the system does not choose between them (all candidates: see "the reason the record gives"). | 本次有不止一条候选的对应检查结果，系统不从中挑选（全部候选见“记录给出的原因”）。 | 10/15 批，未核 | zh 20｜en 20｜示例主线、其他示例 |
 | E075 | `requirement-semantics-basis-unavailable` | The sealed side or the current side has no comparison basis for the check requirement. | 封存一方或当前一方没有“检查要求”的比较依据。 | 10/15 批，未核 | zh 20｜en 20｜示例主线、其他示例 |
 | E076 | `comparison-basis-incomplete` | The sealed side or the current side lacks part of the comparison basis (model version, check result content digest or checker fingerprint). | 封存一方或当前一方缺少部分比较依据（模型版本、检查结果内容摘要或检查程序指纹）。 | 10/15 批，未核 | zh 20｜en 20｜示例主线、其他示例 |
-| E077 | `determination-same-reference-same-content` | The same determination: the same reference and the same content digest. | 同一份判定：引用相同，内容摘要也相同。 | 10/15 批，未核 | zh 50｜en 49｜示例主线、其他示例 |
+| E077 | `determination-same-reference-same-content` | The same determination: the same reference and the same content digest. | 同一份判定：引用相同，内容摘要也相同。 | 10/15 批，未核 | zh 50｜en 50｜示例主线、其他示例 |
 | E078 | `determination-content-changed-under-the-same-reference` | The same reference, but the determination's content is no longer what the original record read (made again, re-attributed or re-signed). The new determination is read as… | 引用相同，但判定的内容已经不是原记录读到的那一份（被重新作出、重新归属或重新签署）。新判定照常作为证据读取，只是不能说它和原判定是同一份。 | 10/15 批，未核 | zh 20｜en 20｜示例主线、其他示例 |
 | E079 | `determination-not-cited-by-this-record` | The model version did not change, and this record no longer cites this determination: another determination replaced it. | 模型版本没有变，本次记录没有再引用这份判定：它被别的判定取代了。 | 10/15 批，未核 | zh 21｜en 21｜示例主线、其他示例 |
 | E080 | `determination-not-attributable-to-this-context` | The model version has changed, and the original determination was made against the old version, so it cannot be attributed to the current one. The evidence is not missin… | 模型版本已经变化，原判定是针对旧版本作出的，不能归到当前版本。不是证据不存在，也不是原判定错误；需要针对当前版本的判定。 | 10/15 批，未核 | zh 50｜en 50｜示例主线、其他示例 |
@@ -262,9 +284,9 @@
 
 | ID | 键 | English | 中文 | 状态 | 页面 |
 |---|---|---|---|---|---|
-| E081 | `equivalent.label` | Comparison basis unchanged | 比较依据一致 | 10/15 批，未核 | zh 68｜en 150｜示例主线、其他示例 |
-| E082 | `equivalent.meaning` | This old evidence has exactly one counterpart in this record, and every aspect compared is the same. | 这条旧证据在本次记录里有唯一对应的一条，逐项比较都相同。 | 10/15 批，未核 | zh 58｜en 57｜示例主线、其他示例 |
-| E083 | `equivalent.caveat` | It only means the evidence need not be gathered again because its citation changed key; it does not mean the whole handover needs no review. | 这只说明不必因为引用换了键而重新收集这条证据，不代表整个交接不用复核。 | 10/15 批，未核 | zh 58｜en 57｜示例主线、其他示例 |
+| E081 | `equivalent.label` | Comparison basis unchanged | 比较依据一致 | 10/15 批，未核 | zh 68｜en 151｜示例主线、其他示例 |
+| E082 | `equivalent.meaning` | This old evidence has exactly one counterpart in this record, and every aspect compared is the same. | 这条旧证据在本次记录里有唯一对应的一条，逐项比较都相同。 | 10/15 批，未核 | zh 58｜en 58｜示例主线、其他示例 |
+| E083 | `equivalent.caveat` | It only means the evidence need not be gathered again because its citation changed key; it does not mean the whole handover needs no review. | 这只说明不必因为引用换了键而重新收集这条证据，不代表整个交接不用复核。 | 10/15 批，未核 | zh 58｜en 58｜示例主线、其他示例 |
 | E084 | `changed.label` | Comparison basis changed | 比较依据有变化 | 10/15 批，未核 | zh 53｜en 53｜示例主线、其他示例 |
 | E085 | `changed.meaning` | This old evidence has exactly one counterpart in this record, but at least one aspect differs. | 这条旧证据在本次记录里有唯一对应的一条，但至少有一个方面不同。 | 10/15 批，未核 | zh 45｜en 45｜示例主线、其他示例 |
 | E086 | `changed.caveat` | Even if the result reads the same, it still counts as changed; which aspects changed is said on the row. | 结果读起来相同，也仍然算有变化；变了的是哪些方面，见这一条的说明。 | 10/15 批，未核 | zh 45｜en 45｜示例主线、其他示例 |
@@ -286,9 +308,9 @@
 
 | ID | 键 | English | 中文 | 状态 | 页面 |
 |---|---|---|---|---|---|
-| E093 | `model-version` | model version | 模型版本 | 10/15 批，未核 | zh 163｜en 180｜示例目录、示例主线、其他示例、次要明细页 |
-| E094 | `finding-content` | check result content | 检查结果内容 | 10/15 批，未核 | zh 20｜en 73｜示例主线、其他示例 |
-| E095 | `requirement-semantics` | check requirement | 检查要求 | 10/15 批，未核 | zh 20｜en 74｜示例目录、示例主线、其他示例 |
+| E093 | `model-version` | model version | 模型版本 | 10/15 批，未核 | zh 179｜en 182｜示例目录、示例主线、其他示例、次要明细页 |
+| E094 | `finding-content` | check result content | 检查结果内容 | 10/15 批，未核 | zh 20｜en 74｜示例主线、其他示例 |
+| E095 | `requirement-semantics` | check requirement | 检查要求 | 10/15 批，未核 | zh 20｜en 75｜示例目录、示例主线、其他示例 |
 | E096 | `checker` | checker | 检查程序 | 10/15 批，未核 | zh 36｜en 20｜示例主线、本地结果页、其他示例；复用 G002 |
 
 页面上下文（只列待核的条目；前后各一块，‹ › 里是匹配到的那一块）：
@@ -302,21 +324,21 @@
 
 | ID | 键 | English | 中文 | 状态 | 页面 |
 |---|---|---|---|---|---|
-| E097 | `finding` | Check-result citation | 检查结果引用 | 10/8 已核 | zh 0｜en 77｜示例主线、其他示例 |
-| E098 | `determination` | Determination citation | 判定引用 | 10/8 已核 | zh 0｜en 80｜示例主线、其他示例 |
+| E097 | `finding` | Check-result citation | 检查结果引用 | 10/8 已核 | zh 0｜en 78｜示例主线、其他示例 |
+| E098 | `determination` | Determination citation | 判定引用 | 10/8 已核 | zh 0｜en 81｜示例主线、其他示例 |
 
 #### CITATION_PROVENANCE（8 条，待核 0）
 
 | ID | 键 | English | 中文 | 状态 | 页面 |
 |---|---|---|---|---|---|
-| E100 | `finding-real.short` | Real check output | 真实检查输出 | 10/8 已核 | zh 452｜en 179｜示例主线、其他示例、次要明细页；复用 G003 |
-| E101 | `finding-real.long` | A check-result citation without the simulation marker: from a real check run, the product of checking a real IFC model against real rules. | 未带模拟标记的检查结果引用：来自真实的检查运行，是真实 IFC 模型按真实规则检查的产物。 | 10/8 已核 | zh 452｜en 179｜示例主线、其他示例、次要明细页 |
-| E103 | `finding-fixture.short` | Simulated check result | 模拟的检查结果 | 10/8 已核 | zh 452｜en 179｜示例主线、其他示例、次要明细页；复用 G005 |
-| E104 | `finding-fixture.long` | A check-result citation with the simulation marker (starting with fixture): generated by the example, not the output of any real check run. | 带模拟标记（以 fixture 开头）的检查结果引用：由示例生成，不是任何真实检查运行的输出。 | 10/8 已核 | zh 452｜en 179｜示例主线、其他示例、次要明细页 |
-| E106 | `determination-fixture.short` | Simulated human determination | 模拟的人工判定 | 10/8 已核 | zh 452｜en 179｜示例主线、其他示例、次要明细页；复用 G006 |
-| E107 | `determination-fixture.long` | A determination citation with the simulation marker: supplied by the example; no coordination review ever took place. | 带模拟标记的判定引用：由示例提供，没有任何协调评审真的发生过。 | 10/8 已核 | zh 452｜en 179｜示例主线、其他示例、次要明细页 |
-| E109 | `determination-unmarked.short` | Determination of unstated source | 来源未标注的判定 | 10/8 已核 | zh 452｜en 179｜示例主线、其他示例、次要明细页；复用 G007 |
-| E110 | `determination-unmarked.long` | A determination citation without the simulation marker: a determination is not the output of a check run, and this interface has nothing it can verify about where it cam… | 未带模拟标记的判定引用：判定不是检查运行的输出，本界面也没有可核依据说明它来自哪里，因此不作真实或模拟的断言。 | 10/8 已核 | zh 452｜en 179｜示例主线、其他示例、次要明细页 |
+| E100 | `finding-real.short` | Real check output | 真实检查输出 | 10/8 已核 | zh 468｜en 181｜示例主线、其他示例、次要明细页；复用 G003 |
+| E101 | `finding-real.long` | A check-result citation without the simulation marker: from a real check run, the product of checking a real IFC model against real rules. | 未带模拟标记的检查结果引用：来自真实的检查运行，是真实 IFC 模型按真实规则检查的产物。 | 10/8 已核 | zh 468｜en 181｜示例主线、其他示例、次要明细页 |
+| E103 | `finding-fixture.short` | Simulated check result | 模拟的检查结果 | 10/8 已核 | zh 468｜en 181｜示例主线、其他示例、次要明细页；复用 G005 |
+| E104 | `finding-fixture.long` | A check-result citation with the simulation marker (starting with fixture): generated by the example, not the output of any real check run. | 带模拟标记（以 fixture 开头）的检查结果引用：由示例生成，不是任何真实检查运行的输出。 | 10/8 已核 | zh 468｜en 181｜示例主线、其他示例、次要明细页 |
+| E106 | `determination-fixture.short` | Simulated human determination | 模拟的人工判定 | 10/8 已核 | zh 468｜en 181｜示例主线、其他示例、次要明细页；复用 G006 |
+| E107 | `determination-fixture.long` | A determination citation with the simulation marker: supplied by the example; no coordination review ever took place. | 带模拟标记的判定引用：由示例提供，没有任何协调评审真的发生过。 | 10/8 已核 | zh 468｜en 181｜示例主线、其他示例、次要明细页 |
+| E109 | `determination-unmarked.short` | Determination of unstated source | 来源未标注的判定 | 10/8 已核 | zh 468｜en 181｜示例主线、其他示例、次要明细页；复用 G007 |
+| E110 | `determination-unmarked.long` | A determination citation without the simulation marker: a determination is not the output of a check run, and this interface has nothing it can verify about where it cam… | 未带模拟标记的判定引用：判定不是检查运行的输出，本界面也没有可核依据说明它来自哪里，因此不作真实或模拟的断言。 | 10/8 已核 | zh 468｜en 181｜示例主线、其他示例、次要明细页 |
 
 #### CONDITION_ENTRIES（8 条，待核 1）
 
@@ -328,8 +350,8 @@
 | E115 | `no-machine-checkable-part.text` | The condition has no machine-checkable part; a person must read it | 条件没有可机检部分，需要人阅读 | 10/8 已核 | zh 87｜en 87｜示例主线、其他示例；复用 G010 |
 | E116 | `no-machine-checkable-part.plain` | The original recheck condition has no part a machine can check; a person needs to read the original condition and judge it. The record draws no conclusion on it. | 原复检条件没有机器能检查的部分，需要人阅读原条件并判断；记录对它不下结论。 | 10/8 已核 | zh 67｜en 67｜示例主线、其他示例 |
 | E117 | `not-comparable.text` | Cannot be compared: the corresponding elements are incomplete | 不可比较：对应的构件不完整 | 10/8 已核 | zh 29｜en 29｜示例主线、其他示例；复用 G011 |
-| E119 | `no-recheck-condition.text` | The original record had no recheck condition | 原记录没有复检条件 | 10/8 已核 | zh 70｜en 69｜示例主线、其他示例；复用 G012 |
-| E120 | `no-recheck-condition.plain` | The original record had no recheck condition: the original conclusion left nothing outstanding. | 原记录没有复检条件：原来的判断没有留下待办。 | 10/8 后改句，需重核 | zh 50｜en 49｜示例主线、其他示例 |
+| E119 | `no-recheck-condition.text` | The original record had no recheck condition | 原记录没有复检条件 | 10/8 已核 | zh 70｜en 70｜示例主线、其他示例；复用 G012 |
+| E120 | `no-recheck-condition.plain` | The original record had no recheck condition: the original conclusion left nothing outstanding. | 原记录没有复检条件：原来的判断没有留下待办。 | 10/8 后改句，需重核 | zh 50｜en 50｜示例主线、其他示例 |
 
 页面上下文（只列待核的条目；前后各一块，‹ › 里是匹配到的那一块）：
 
@@ -343,7 +365,7 @@
 | E122 | `named-outcome-not-observed` | Named outcome not observed | 未观察到命名结果 | 10/8 已核 | zh 25｜en 25｜示例主线、其他示例；复用 G009 |
 | E123 | `no-machine-checkable-part` | The condition has no machine-checkable part; a person must read it | 条件没有可机检部分，需要人阅读 | 10/8 已核 | zh 87｜en 87｜示例主线、其他示例；复用 G010 |
 | E124 | `not-comparable` | Cannot be compared: the corresponding elements are incomplete | 不可比较：对应的构件不完整 | 10/8 已核 | zh 29｜en 29｜示例主线、其他示例；复用 G011 |
-| E125 | `no-recheck-condition` | The original record had no recheck condition | 原记录没有复检条件 | 10/8 已核 | zh 70｜en 69｜示例主线、其他示例；复用 G012 |
+| E125 | `no-recheck-condition` | The original record had no recheck condition | 原记录没有复检条件 | 10/8 已核 | zh 70｜en 70｜示例主线、其他示例；复用 G012 |
 
 #### CONSEQUENCE_KINDS（3 条，待核 1）
 
@@ -355,13 +377,13 @@
 
 页面上下文（只列待核的条目；前后各一块，‹ › 里是匹配到的那一块）：
 
-- `E127` zh `#/fixture/member-evidence/item/0/2/0`：对这项工作的后果 ‹ 这项工作暂停 › 完成后拿什么复检；en `#/fixture/member-evidence/item/0/2/0`：What it means for this work ‹ This work is suspended › What a recheck must show
+- `E127` zh `#/fixture/member-evidence/item/0/2/0`：对这项工作的后果 ‹ 这项工作暂缓，等有结论再定 › 完成后拿什么复检；en `#/fixture/member-evidence/item/0/2/0`：What it means for this work ‹ This work is held until decided › What a recheck must show
 
 #### DEMO_NOTICE（1 条，待核 0）
 
 | ID | 键 | English | 中文 | 状态 | 页面 |
 |---|---|---|---|---|---|
-| E130 | `(整表)` | Simulated example: the project settings in the example, including the handling teams and the acceptance of evidence methods, are demonstration settings, not real project… | 模拟示例：示例中的项目设定，包括处理团队安排、证据方法的接受等，是演示用设定，不代表真实项目决定；一个结论的证据可能是真实检查的结果、模拟的检查结果或模拟的人工判定，具体是哪一种，看每个结论旁的“依据”一行（按逐条引用… | 10/8 已核 | zh 465｜en 321｜示例目录、示例主线、其他示例、次要明细页 |
+| E130 | `(整表)` | Simulated example: the project settings in the example, including the handling teams and the acceptance of evidence methods, are demonstration settings, not real project… | 模拟示例：示例中的项目设定，包括处理团队安排、证据方法的接受等，是演示用设定，不代表真实项目决定；一个结论的证据可能是真实检查的结果、模拟的检查结果或模拟的人工判定，具体是哪一种，看每个结论旁的“依据”一行（按逐条引用… | 10/8 已核 | zh 481｜en 324｜示例目录、示例主线、其他示例、次要明细页 |
 
 #### DETAILS_WORDS（15 条，待核 1）
 
@@ -371,21 +393,21 @@
 | E133 | `determinations` | This conclusion cites human determinations, not check results; a determination has no requirement details. What is missing is said in the conclusion and in "What to do"… | 这个结论引用的是人工判定，不是检查结果；判定没有要求明细。缺的是什么，见上面的结论和“要做什么”。 | 10/8 已核 | zh 2｜en 2｜示例主线、其他示例 |
 | E134 | `nothingCited` | This conclusion cites no check result, so there are no requirement details to show. | 这个结论没有引用任何检查结果，所以没有要求明细可以显示。 | 10/8 已核 | zh 8｜en 8｜示例主线、其他示例 |
 | E135 | `requirement` | Requirement not met | 不满足的要求 | 10/8 已核 | zh 36｜en 36｜示例主线、其他示例 |
-| E136 | `requirementMet` | Requirement | 要求 | 10/8 已核 | zh 40｜en 39｜示例主线、本地检查（选文件至运行）、其他示例；复用 G013 |
-| E137 | `rule` | Rule | 规则编号 | 10/8 已核 | zh 66｜en 65｜示例主线、其他示例 |
-| E138 | `status` | Result of that check | 那次检查的结果 | 10/8 已核 | zh 66｜en 65｜示例主线、其他示例 |
-| E139 | `reason` | Reason | 原因 | 10/8 已核 | zh 206｜en 65｜示例主线、其他示例、次要明细页 |
-| E140 | `actual` | Value that check observed | 那次检查观察到的值 | 10/8 已核 | zh 66｜en 65｜示例主线、其他示例 |
-| E141 | `noActual` | That check observed no value | 那次检查没有观察到值 | 10/8 已核 | zh 66｜en 65｜示例主线、其他示例 |
-| E143 | `expected` | The rule's own words | 规则的原话（英文） | 10/8 已核 | zh 74｜en 73｜示例主线、本地结果页、其他示例；复用 G014 |
-| E144 | `source` | Source the rule gives: | 规则给出的出处（英文原文）： | 10/8 已核 | zh 66｜en 65｜示例主线、其他示例 |
+| E136 | `requirementMet` | Requirement | 要求 | 10/8 已核 | zh 40｜en 40｜示例主线、本地检查（选文件至运行）、其他示例；复用 G013 |
+| E137 | `rule` | Rule | 规则编号 | 10/8 已核 | zh 66｜en 66｜示例主线、其他示例 |
+| E138 | `status` | Result of that check | 那次检查的结果 | 10/8 已核 | zh 66｜en 66｜示例主线、其他示例 |
+| E139 | `reason` | Reason | 原因 | 10/8 已核 | zh 206｜en 66｜示例主线、其他示例、次要明细页 |
+| E140 | `actual` | Value that check observed | 那次检查观察到的值 | 10/8 已核 | zh 66｜en 66｜示例主线、其他示例 |
+| E141 | `noActual` | That check observed no value | 那次检查没有观察到值 | 10/8 已核 | zh 66｜en 66｜示例主线、其他示例 |
+| E143 | `expected` | The rule's own words | 规则的原话（英文） | 10/8 已核 | zh 74｜en 74｜示例主线、本地结果页、其他示例；复用 G014 |
+| E144 | `source` | Source the rule gives: | 规则给出的出处（英文原文）： | 10/8 已核 | zh 66｜en 66｜示例主线、其他示例 |
 | E145 | `projectAssumption` | This is a requirement assumed for this project (ProjectAssumption), not a general one. | 这是本项目假定的要求（ProjectAssumption），不是通用要求。 | 10/8 后改句，需重核 | zh 36｜en 36｜示例主线、其他示例 |
-| E147 | `prior` | At the assessment before the recheck, this evidence's requirement and result were as follows. Having this description does not make the row comparable; the row's state i… | 复检前那次评估时，这条证据的要求和结果如下。有这段说明不等于这一行可以比较；这一行的状态以上面写的为准。 | 10/8 已核 | zh 60｜en 59｜示例主线、其他示例 |
-| E148 | `currentAbsent` | The corresponding evidence this record cites: its requirement details are not given in the record. | 本次记录引用的对应证据：要求明细记录未提供。 | 10/8 已核 | zh 54｜en 53｜示例主线、其他示例 |
+| E147 | `prior` | At the assessment before the recheck, this evidence's requirement and result were as follows. Having this description does not make the row comparable; the row's state i… | 复检前那次评估时，这条证据的要求和结果如下。有这段说明不等于这一行可以比较；这一行的状态以上面写的为准。 | 10/8 已核 | zh 60｜en 60｜示例主线、其他示例 |
+| E148 | `currentAbsent` | The corresponding evidence this record cites: its requirement details are not given in the record. | 本次记录引用的对应证据：要求明细记录未提供。 | 10/8 已核 | zh 54｜en 54｜示例主线、其他示例 |
 
 页面上下文（只列待核的条目；前后各一块，‹ › 里是匹配到的那一块）：
 
-- `E145` zh `#/fixture/member-evidence/item/2/2/0`：SystemCode data shall be provided in the dataset EPC_Delivery ‹ 这是本项目约定的要求，不是通用要求。 规则给出的出处（英文原文）：Project-assumed EPC delivery requirement; not a buildingSMART obligation. › 不满足的要求；en `#/fixture/member-evidence/item/2/2/0`：SystemCode data shall be provided in the dataset EPC_Delivery ‹ This is a requirement agreed for this project, not a general one. Source the rule gives: Project-assumed EPC d › Requirement not met
+- `E145` zh `#/fixture/member-evidence/item/2/2/0`：SystemCode data shall be provided in the dataset EPC_Delivery ‹ 这是本项目假定的要求（ProjectAssumption），不是通用要求。 规则给出的出处（英文原文）：Project-assumed EPC delivery requirement; not a buildingSM › 不满足的要求；en `#/fixture/member-evidence/item/2/2/0`：SystemCode data shall be provided in the dataset EPC_Delivery ‹ This is a requirement assumed for this project (ProjectAssumption), not a general one. Source the rule gives:  › Requirement not met
 
 #### DISPOSITIONS（5 条，待核 5）
 
@@ -429,10 +451,10 @@
 |---|---|---|---|---|---|
 | E164 | `unnamed` | No name filled in in the model | 模型中没有填写名称 | 10/15 批，未核 | zh 0｜en 0｜（本次渲染未触发） |
 | E166 | `noStorey` | No storey assignment in the model | 模型中没有楼层归属 | 10/15 批，未核 | zh 13｜en 37｜示例主线、其他示例 |
-| E167 | `noDiscipline` | The record gives no discipline; this interface does not infer one from a model identifier | 记录未提供专业信息；本界面不从模型标识推断专业 | 10/15 批，未核 | zh 157｜en 155｜示例主线、其他示例 |
-| E168 | `modelIsNotDiscipline` | This is a model identifier, not a statement of discipline | 这是模型标识，不是专业声明 | 10/15 批，未核 | zh 157｜en 155｜示例主线、其他示例 |
-| E169 | `noClassName` | (IFC class) | 本界面没有这个类别的中文名 | 10/15 批，未核 | zh 0｜en 192｜示例主线、本地结果页、其他示例 |
-| E170 | `naming` | The name is taken from the model file itself; it may be empty or shared with other elements. To find it in the model, use the GlobalId. | 名称取自模型文件本身，可能为空，也可能与别的构件重名；要在模型里定位，请用 GlobalId。 | 10/15 批，未核 | zh 157｜en 155｜示例主线、其他示例 |
+| E167 | `noDiscipline` | The record gives no discipline; this interface does not infer one from a model identifier | 记录未提供专业信息；本界面不从模型标识推断专业 | 10/15 批，未核 | zh 157｜en 157｜示例主线、其他示例 |
+| E168 | `modelIsNotDiscipline` | This is a model identifier, not a statement of discipline | 这是模型标识，不是专业声明 | 10/15 批，未核 | zh 157｜en 157｜示例主线、其他示例 |
+| E169 | `noClassName` | (IFC class) | 本界面没有这个类别的中文名 | 10/15 批，未核 | zh 0｜en 194｜示例主线、本地结果页、其他示例 |
+| E170 | `naming` | The name is taken from the model file itself; it may be empty or shared with other elements. To find it in the model, use the GlobalId. | 名称取自模型文件本身，可能为空，也可能与别的构件重名；要在模型里定位，请用 GlobalId。 | 10/15 批，未核 | zh 157｜en 157｜示例主线、其他示例 |
 
 页面上下文（只列待核的条目；前后各一块，‹ › 里是匹配到的那一块）：
 
@@ -473,14 +495,14 @@
 | ID | 键 | English | 中文 | 状态 | 页面 |
 |---|---|---|---|---|---|
 | E178 | `FAIL` | Fail | 不通过 | 10/8 已核 | zh 49｜en 49｜示例主线、本地结果页、其他示例 |
-| E179 | `PASS` | Pass | 通过 | 10/8 已核 | zh 34｜en 33｜示例主线、本地结果页、其他示例 |
+| E179 | `PASS` | Pass | 通过 | 10/8 已核 | zh 34｜en 34｜示例主线、本地结果页、其他示例 |
 | E180 | `N/A` | Not applicable | 不适用 | 10/8 已核 | zh 8｜en 8｜本地结果页 |
 
 #### HANDOVER_SIDES（2 条，待核 0）
 
 | ID | 键 | English | 中文 | 状态 | 页面 |
 |---|---|---|---|---|---|
-| E181 | `producing` | the handing-over side's model in this handover | 本次交接中交出方的模型 | 10/8 已核 | zh 0｜en 155｜示例主线、其他示例 |
+| E181 | `producing` | the handing-over side's model in this handover | 本次交接中交出方的模型 | 10/8 已核 | zh 0｜en 157｜示例主线、其他示例 |
 | E182 | `consuming` | the receiving side's model in this handover | 本次交接中接收方的模型 | 10/8 已核 | zh 0｜en 25｜示例主线、其他示例 |
 
 #### HOME（13 条，待核 10）
@@ -518,7 +540,7 @@
 
 | ID | 键 | English | 中文 | 状态 | 页面 |
 |---|---|---|---|---|---|
-| E200 | `(整表)` | An item is the conclusion for one element (or a pair of elements assessed together) on one piece of the receiving side's work. The same element can appear in several ite… | 一个事项是一个构件（或被放在一起评估的一对构件）在接收方的一项工作上的结论。同一个构件可以出现在几个事项里，所以事项数不是缺陷数。 | 10/8 已核 | zh 181｜en 179｜示例主线、其他示例 |
+| E200 | `(整表)` | An item is the conclusion for one element (or a pair of elements assessed together) on one piece of the receiving side's work. The same element can appear in several ite… | 一个事项是一个构件（或被放在一起评估的一对构件）在接收方的一项工作上的结论。同一个构件可以出现在几个事项里，所以事项数不是缺陷数。 | 10/8 已核 | zh 181｜en 181｜示例主线、其他示例 |
 
 #### KEY_CHANGED（1 条，待核 1）
 
@@ -538,7 +560,7 @@
 | E204 | `asset-identity/unmet` | The project asset-identity requirement is not met | 项目资产标识的要求没有满足 | B 层，10/8 未核 | zh 30｜en 30｜示例主线、其他示例 |
 | E205 | `asset-identity/not-yet-evaluated` | The asset-identity rules did not cover it | 资产标识的规则没有覆盖到它 | B 层，10/8 未核 | zh 12｜en 12｜示例主线、其他示例 |
 | E208 | `in-model-position/not-yet-evaluated` | The storey or space check did not cover it | 楼层或空间归属的检查没有覆盖到它 | B 层，10/8 未核 | zh 16｜en 12｜示例主线、其他示例 |
-| E209 | `cross-model-alignment/confirmed` | A record confirms the two models are aligned to a common datum (by the method the project accepts, for the listed model versions) | 已有记录确认两侧模型对齐到共同的基准（按项目接受的方法，针对所列模型版本） | B 层，10/8 未核 | zh 21｜en 19｜示例主线、其他示例 |
+| E209 | `cross-model-alignment/confirmed` | A record confirms the two models are aligned to a common datum (by the method the project accepts, for the listed model versions) | 已有记录确认两侧模型对齐到共同的基准（按项目接受的方法，针对所列模型版本） | B 层，10/8 未核 | zh 21｜en 21｜示例主线、其他示例 |
 | E212 | `penetration-determination/no-penetration` | A coordination-review determination says it passes through no element of the receiving model. With no penetration no opening is needed, so the opening was not assessed —… | 已有协调评审判定：它不穿过接收方模型里的任何构件。不穿过就不需要开洞，所以开洞情况没有被评估——这不是“开洞没问题” | B 层，10/8 未核 | zh 7｜en 7｜示例主线、其他示例 |
 | E214 | `penetration-determination/not-yet-determined` | No coordination review has determined yet whether it passes through elements of the receiving model | 还没有协调评审判定它是否穿过接收方模型里的构件 | B 层，10/8 未核 | zh 28｜en 28｜示例主线、其他示例 |
 | E215 | `opening-status/cross-referenced` | This pair: the opening is modelled in the element passed through, and linked to the element passing through it | 这一对：洞口已建在被穿过的构件上，并且已关联到穿过它的这个构件 | B 层，10/8 未核 | zh 7｜en 7｜示例主线、其他示例 |
@@ -560,7 +582,7 @@
 
 | ID | 键 | English | 中文 | 状态 | 页面 |
 |---|---|---|---|---|---|
-| E219 | `label` | The result this conclusion rests on | 这个结论依据的结果 | B 层，10/8 未核 | zh 157｜en 155｜示例主线、其他示例 |
+| E219 | `label` | The result this conclusion rests on | 这个结论依据的结果 | B 层，10/8 未核 | zh 157｜en 157｜示例主线、其他示例 |
 
 页面上下文（只列待核的条目；前后各一块，‹ › 里是匹配到的那一块）：
 
@@ -570,7 +592,7 @@
 
 | ID | 键 | English | 中文 | 状态 | 页面 |
 |---|---|---|---|---|---|
-| E222 | `fixture` | Simulated example | 模拟示例 | 10/15 批，未核 | zh 465｜en 321｜示例目录、示例主线、其他示例、次要明细页 |
+| E222 | `fixture` | Simulated example | 模拟示例 | 10/15 批，未核 | zh 481｜en 324｜示例目录、示例主线、其他示例、次要明细页 |
 
 页面上下文（只列待核的条目；前后各一块，‹ › 里是匹配到的那一块）：
 
@@ -580,7 +602,7 @@
 
 | ID | 键 | English | 中文 | 状态 | 页面 |
 |---|---|---|---|---|---|
-| E225 | `(整表)` | Only the citation's key changed | 只是引用换了键 | 10/15 批，未核 | zh 30｜en 37｜示例主线、其他示例 |
+| E225 | `(整表)` | Only the citation's key changed | 只是引用换了键 | 10/15 批，未核 | zh 30｜en 38｜示例主线、其他示例 |
 
 页面上下文（只列待核的条目；前后各一块，‹ › 里是匹配到的那一块）：
 
@@ -590,24 +612,24 @@
 
 | ID | 键 | English | 中文 | 状态 | 页面 |
 |---|---|---|---|---|---|
-| E226 | `(整表)` | Each citation's source label on this page is decided from that citation alone (whether it carries the simulation marker), never inferred for the whole page or record: | 本页每条引用旁的来源标注按该条引用自身判定（是否带模拟标记），不按整页或整份记录推断： | 10/8 已核 | zh 452｜en 179｜示例主线、其他示例、次要明细页 |
+| E226 | `(整表)` | Each citation's source label on this page is decided from that citation alone (whether it carries the simulation marker), never inferred for the whole page or record: | 本页每条引用旁的来源标注按该条引用自身判定（是否带模拟标记），不按整页或整份记录推断： | 10/8 已核 | zh 468｜en 181｜示例主线、其他示例、次要明细页 |
 
 #### READING_GUIDE（5 条，待核 0）
 
 | ID | 键 | English | 中文 | 状态 | 页面 |
 |---|---|---|---|---|---|
-| E227 | `verdictWords` | The three conclusion words | 三个判断词 | 10/8 已核 | zh 181｜en 179｜示例主线、其他示例 |
-| E228 | `verdictLine` | {label}: {meaning}. | {label}：{meaning}。 | 10/8 已核 | zh 181｜en 358｜首页、示例目录、示例主线、本地结果页、本地检查（选文件至运行）、第二入口、其他示例、次要明细页 |
-| E229 | `provenance` | How the source of evidence is labelled | 证据来源的标注 | 10/8 已核 | zh 181｜en 179｜示例主线、其他示例 |
-| E230 | `teams` | Handling team and default handling role | 处理团队与默认处理角色 | 10/8 已核 | zh 181｜en 179｜示例主线、其他示例 |
-| E231 | `teamsBody` | The handling team is taken from the staffing in the record; the default handling role is the rule's default, an input to the staffing, not an assignment. The two are sho… | 处理团队取自记录里的人员安排；默认处理角色是规则给出的默认，是安排的输入，不是指派。两者分开显示。 | 10/8 已核 | zh 181｜en 179｜示例主线、其他示例 |
+| E227 | `verdictWords` | The three conclusion words | 三个判断词 | 10/8 已核 | zh 181｜en 181｜示例主线、其他示例 |
+| E228 | `verdictLine` | {label}: {meaning}. | {label}：{meaning}。 | 10/8 已核 | zh 181｜en 361｜首页、示例目录、示例主线、本地结果页、本地检查（选文件至运行）、第二入口、其他示例、次要明细页 |
+| E229 | `provenance` | How the source of evidence is labelled | 证据来源的标注 | 10/8 已核 | zh 181｜en 181｜示例主线、其他示例 |
+| E230 | `teams` | Handling team and default handling role | 处理团队与默认处理角色 | 10/8 已核 | zh 181｜en 181｜示例主线、其他示例 |
+| E231 | `teamsBody` | The handling team is taken from the staffing in the record; the default handling role is the rule's default, an input to the staffing, not an assignment. The two are sho… | 处理团队取自记录里的人员安排；默认处理角色是规则给出的默认，是安排的输入，不是指派。两者分开显示。 | 10/8 已核 | zh 181｜en 181｜示例主线、其他示例 |
 
 #### READY_NOTES（2 条，待核 0）
 
 | ID | 键 | English | 中文 | 状态 | 页面 |
 |---|---|---|---|---|---|
-| E232 | `ceiling-and-bulkhead-geometry[0]` | The rule proves only that the element has a storey or space assignment; it does not check that the receiving model has a matching storey. | 规则只证明构件有楼层或空间归属，没有验证接收方模型有对应楼层。 | 10/8 已核 | zh 33｜en 31｜示例主线、其他示例 |
-| E233 | `ceiling-and-bulkhead-geometry[1]` | This conclusion rests on a confirmation that the two models are aligned, not on a shared positioning marker passing. | 这个结论靠的是两侧模型的对齐确认，不是共享定位标记通过。 | 10/8 已核 | zh 33｜en 31｜示例主线、其他示例 |
+| E232 | `ceiling-and-bulkhead-geometry[0]` | The rule proves only that the element has a storey or space assignment; it does not check that the receiving model has a matching storey. | 规则只证明构件有楼层或空间归属，没有验证接收方模型有对应楼层。 | 10/8 已核 | zh 33｜en 33｜示例主线、其他示例 |
+| E233 | `ceiling-and-bulkhead-geometry[1]` | This conclusion rests on a confirmation that the two models are aligned, not on a shared positioning marker passing. | 这个结论靠的是两侧模型的对齐确认，不是共享定位标记通过。 | 10/8 已核 | zh 33｜en 33｜示例主线、其他示例 |
 
 #### RECHECK（37 条，待核 36）
 
@@ -618,20 +640,20 @@
 | E239 | `summary.one` | This result: {count} item | 本次结果：共 {count} 个事项 | 10/15 批，未核 | zh 24｜en 20｜示例主线、其他示例；复用 G023 |
 | E240 | `summary.other` | This result: {count} items | 本次结果：共 {count} 个事项 | 10/15 批，未核 | zh 24｜en 18｜示例主线、其他示例；复用 G023 |
 | E241 | `groupLine.one` | {count} item | {count} 个事项 | 10/15 批，未核 | zh 24｜en 6｜示例主线、其他示例；复用 G024 |
-| E242 | `groupLine.other` | {count} items | {count} 个事项 | 10/15 批，未核 | zh 24｜en 181｜首页、示例目录、示例主线、其他示例；复用 G024 |
-| E243 | `groupSummary` | : {summary} | ：{summary} | 10/15 批，未核 | zh 458｜en 358｜首页、示例目录、示例主线、本地结果页、本地检查（选文件至运行）、第二入口、其他示例、次要明细页 |
+| E242 | `groupLine.other` | {count} items | {count} 个事项 | 10/15 批，未核 | zh 24｜en 183｜首页、示例目录、示例主线、其他示例；复用 G024 |
+| E243 | `groupSummary` | : {summary} | ：{summary} | 10/15 批，未核 | zh 474｜en 361｜首页、示例目录、示例主线、本地结果页、本地检查（选文件至运行）、第二入口、其他示例、次要明细页 |
 | E244 | `models` | Models: {headline}. | 模型：{headline}。 | 10/15 批，未核 | zh 20｜en 20｜示例主线、其他示例 |
 | E245 | `moved.one` | {count} item's conclusion differs from before the recheck: | {count} 个事项的结论和复检前不同： | 10/15 批，未核 | zh 12｜en 2｜示例主线、其他示例；复用 G025 |
 | E246 | `moved.other` | {count} items' conclusions differ from before the recheck: | {count} 个事项的结论和复检前不同： | 10/15 批，未核 | zh 12｜en 10｜示例主线、其他示例；复用 G025 |
 | E247 | `requirementChanged` | Of the old evidence cited before the recheck ({count} in all), the check requirement changed for {edited}. | 复检前引用的 {count} 条旧证据里，有 {edited} 条的检查要求变了。 | 10/15 批，未核 | zh 4｜en 4｜示例主线、其他示例 |
 | E248 | `groupHeading.one` | {label} ({count} item) | {label}（{count} 个事项） | 10/15 批，未核 | zh 24｜en 2｜示例主线、其他示例；复用 G026 |
 | E249 | `groupHeading.other` | {label} ({count} items) | {label}（{count} 个事项） | 10/15 批，未核 | zh 24｜en 24｜示例主线、其他示例；复用 G026 |
-| E250 | `cannotHeading` | What this preview cannot do | 本预览做不了的事 | 10/15 批，未核 | zh 151｜en 150｜示例主线、其他示例 |
+| E250 | `cannotHeading` | What this preview cannot do | 本预览做不了的事 | 10/15 批，未核 | zh 151｜en 151｜示例主线、其他示例 |
 | E251 | `cannotNote` | These actions are not implemented, so the page has no buttons for them. | 这些动作没有实现，所以页面上没有对应的按钮。 | 10/15 批，未核 | zh 20｜en 20｜示例主线、其他示例 |
-| E252 | `limitsHeading` | When reading a recheck result | 读复检结果时 | 10/15 批，未核 | zh 151｜en 150｜示例主线、其他示例 |
-| E253 | `sideModel` | {side} model | {side}模型 | 10/15 批，未核 | zh 458｜en 358｜首页、示例目录、示例主线、本地结果页、本地检查（选文件至运行）、第二入口、其他示例、次要明细页 |
+| E252 | `limitsHeading` | When reading a recheck result | 读复检结果时 | 10/15 批，未核 | zh 151｜en 151｜示例主线、其他示例 |
+| E253 | `sideModel` | {side} model | {side}模型 | 10/15 批，未核 | zh 474｜en 361｜首页、示例目录、示例主线、本地结果页、本地检查（选文件至运行）、第二入口、其他示例、次要明细页 |
 | E254 | `detailsSummary` | Before-and-after details: models, items, old evidence | 复检前后的比较明细：模型、事项、旧证据 | 10/15 批，未核 | zh 20｜en 20｜示例主线、其他示例 |
-| E255 | `modelsHeading` | Models | 模型 | 同句已核 | zh 320｜en 176｜示例主线、本地结果页、本地检查（选文件至运行）、其他示例、次要明细页；复用 G027、G028 |
+| E255 | `modelsHeading` | Models | 模型 | 同句已核 | zh 336｜en 177｜示例主线、本地结果页、本地检查（选文件至运行）、其他示例、次要明细页；复用 G027、G028 |
 | E256 | `itemsHeading.one` | The item in the record before the recheck ({count}), and where it stands now | 复检前记录里的事项（{count} 个），现在的情况 | 10/15 批，未核 | zh 20｜en 2｜示例主线、其他示例；复用 G029 |
 | E257 | `itemsHeading.other` | The items in the record before the recheck ({count}), and where they stand now | 复检前记录里的事项（{count} 个），现在的情况 | 10/15 批，未核 | zh 20｜en 18｜示例主线、其他示例；复用 G029 |
 | E258 | `evidenceHeading.one` | The old evidence cited before the recheck ({count} row), compared with this record | 复检前引用的旧证据（{count} 条），和本次记录比较的结果 | 10/15 批，未核 | zh 20｜en 0｜示例主线、其他示例；复用 G030 |
@@ -694,40 +716,40 @@
 
 | ID | 键 | English | 中文 | 状态 | 页面 |
 |---|---|---|---|---|---|
-| E274 | `[0]` | Start a new recheck or upload a new model | 发起新的复检或上传新模型 | 10/8 已核 | zh 151｜en 150｜示例主线、其他示例 |
-| E275 | `[1]` | Mark an item resolved, closed or risk-accepted | 把事项标记为已解决、关闭或接受风险 | 10/8 已核 | zh 151｜en 150｜示例主线、其他示例 |
-| E276 | `[2]` | Assign or notify anyone | 指派或通知责任人 | 10/8 已核 | zh 151｜en 150｜示例主线、其他示例 |
-| E277 | `[3]` | Open or locate an element in Revit | 在 Revit 中打开或定位构件 | 10/8 已核 | zh 151｜en 150｜示例主线、其他示例 |
-| E278 | `[4]` | Export a recheck record | 导出复检记录 | 10/8 已核 | zh 151｜en 150｜示例主线、其他示例 |
+| E274 | `[0]` | Start a new recheck or upload a new model | 发起新的复检或上传新模型 | 10/8 已核 | zh 151｜en 151｜示例主线、其他示例 |
+| E275 | `[1]` | Mark an item resolved, closed or risk-accepted | 把事项标记为已解决、关闭或接受风险 | 10/8 已核 | zh 151｜en 151｜示例主线、其他示例 |
+| E276 | `[2]` | Assign or notify anyone | 指派或通知责任人 | 10/8 已核 | zh 151｜en 151｜示例主线、其他示例 |
+| E277 | `[3]` | Open or locate an element in Revit | 在 Revit 中打开或定位构件 | 10/8 已核 | zh 151｜en 151｜示例主线、其他示例 |
+| E278 | `[4]` | Export a recheck record | 导出复检记录 | 10/8 已核 | zh 151｜en 151｜示例主线、其他示例 |
 
 #### RECHECK_ITEM（24 条，待核 23）
 
 | ID | 键 | English | 中文 | 状态 | 页面 |
 |---|---|---|---|---|---|
-| E280 | `back` | ← Back to the recheck items (to this item's place) | ← 返回复检事项列表（回到这一项的位置） | B 层，10/8 未核 | zh 131｜en 130｜示例主线、其他示例 |
-| E281 | `kicker` | Recheck item · {count} | 复检事项 · {count} | B 层，10/8 未核 | zh 131｜en 130｜示例主线、其他示例 |
-| E283 | `model` | Models | 模型 | 同句已核 | zh 320｜en 176｜示例主线、本地结果页、本地检查（选文件至运行）、其他示例、次要明细页；复用 G027、G028 |
-| E284 | `actionHeading` | 2. What to do, who deals with it, what a recheck must show | 二、要做什么、由谁处理、完成后拿什么复检 | B 层，10/8 未核 | zh 147｜en 146｜示例主线、其他示例；复用 G031 |
-| E285 | `whichOne` | 3. Which element | 三、是哪个构件 | B 层，10/8 未核 | zh 132｜en 130｜示例主线、其他示例 |
+| E280 | `back` | ← Back to the recheck items (to this item's place) | ← 返回复检事项列表（回到这一项的位置） | B 层，10/8 未核 | zh 131｜en 131｜示例主线、其他示例 |
+| E281 | `kicker` | Recheck item · {count} | 复检事项 · {count} | B 层，10/8 未核 | zh 131｜en 131｜示例主线、其他示例 |
+| E283 | `model` | Models | 模型 | 同句已核 | zh 336｜en 177｜示例主线、本地结果页、本地检查（选文件至运行）、其他示例、次要明细页；复用 G027、G028 |
+| E284 | `actionHeading` | 2. What to do, who deals with it, what a recheck must show | 二、要做什么、由谁处理、完成后拿什么复检 | B 层，10/8 未核 | zh 147｜en 147｜示例主线、其他示例；复用 G031 |
+| E285 | `whichOne` | 3. Which element | 三、是哪个构件 | B 层，10/8 未核 | zh 132｜en 132｜示例主线、其他示例 |
 | E286 | `whichTwo` | 3. Which two elements | 三、是哪两个构件 | B 层，10/8 未核 | zh 25｜en 25｜示例主线、其他示例 |
-| E288 | `conditionHeading` | 4. Was the exit condition left before the recheck reached this time? | 四、复检前留下的结束条件，这次达到了吗 | B 层，10/8 未核 | zh 131｜en 130｜示例主线、其他示例 |
+| E288 | `conditionHeading` | 4. Was the exit condition left before the recheck reached this time? | 四、复检前留下的结束条件，这次达到了吗 | B 层，10/8 未核 | zh 131｜en 131｜示例主线、其他示例 |
 | E289 | `priorCondition` | The exit condition left before the recheck: {text} | 复检前留下的结束条件：{text}。 | B 层，10/8 未核 | zh 81｜en 81｜示例主线、其他示例 |
-| E291 | `conditionNote` | This says only how far the exit condition left before the recheck has been shown to be reached; read it apart from the conclusion now. A changed conclusion does not mean… | 这里只说复检前留下的结束条件被证明到了什么程度，与现在的结论分开读：结论变了，不等于原条件已满足。 | B 层，10/8 未核 | zh 131｜en 130｜示例主线、其他示例 |
-| E292 | `originalSummary` | Source wording and record codes: for tracing, not an instruction | 来源原文（英文）与记录原码：供追溯，不是操作指令 | B 层，10/8 未核 | zh 131｜en 130｜示例主线、其他示例 |
-| E293 | `conditionBasis` | condition_basis (as written) | condition_basis（原文） | B 层，10/8 未核 | zh 131｜en 130｜示例主线、其他示例 |
-| E294 | `evidenceHeading` | 5. The evidence before the recheck | 五、复检前的证据 | B 层，10/8 未核 | zh 131｜en 130｜示例主线、其他示例 |
+| E291 | `conditionNote` | This says only how far the exit condition left before the recheck has been shown to be reached; read it apart from the conclusion now. A changed conclusion does not mean… | 这里只说复检前留下的结束条件被证明到了什么程度，与现在的结论分开读：结论变了，不等于原条件已满足。 | B 层，10/8 未核 | zh 131｜en 131｜示例主线、其他示例 |
+| E292 | `originalSummary` | Source wording and record codes: for tracing, not an instruction | 来源原文（英文）与记录原码：供追溯，不是操作指令 | B 层，10/8 未核 | zh 131｜en 131｜示例主线、其他示例 |
+| E293 | `conditionBasis` | condition_basis (as written) | condition_basis（原文） | B 层，10/8 未核 | zh 131｜en 131｜示例主线、其他示例 |
+| E294 | `evidenceHeading` | 5. The evidence before the recheck | 五、复检前的证据 | B 层，10/8 未核 | zh 131｜en 131｜示例主线、其他示例 |
 | E295 | `evidenceCount.one` | {count} piece of old evidence was assessed together with this item | 和这一项放在一起评估的旧证据共 {count} 条 | B 层，10/8 未核 | zh 91｜en 10｜示例主线、其他示例；复用 G032 |
-| E296 | `evidenceCount.other` | {count} pieces of old evidence were assessed together with this item | 和这一项放在一起评估的旧证据共 {count} 条 | B 层，10/8 未核 | zh 91｜en 80｜示例主线、其他示例；复用 G032 |
+| E296 | `evidenceCount.other` | {count} pieces of old evidence were assessed together with this item | 和这一项放在一起评估的旧证据共 {count} 条 | B 层，10/8 未核 | zh 91｜en 81｜示例主线、其他示例；复用 G032 |
 | E297 | `requirementChanged.one` | , and for {count} of them the check requirement changed | ，其中 {count} 条的检查要求变了 | B 层，10/8 未核 | zh 9｜en 9｜示例主线、其他示例；复用 G033 |
 | E298 | `requirementChanged.other` | , and for {count} of them the check requirement changed | ，其中 {count} 条的检查要求变了 | B 层，10/8 未核 | zh 9｜en 9｜示例主线、其他示例；复用 G033 |
-| E299 | `priorSources` | Evidence cited before the recheck, by source: | 复检前引用的证据，来源： | B 层，10/8 未核 | zh 91｜en 90｜示例主线、其他示例 |
-| E300 | `currentSources` | Corresponding evidence this record cites, by source: | 本次记录引用的对应证据，来源： | B 层，10/8 未核 | zh 91｜en 90｜示例主线、其他示例 |
-| E301 | `rowsSummary` | See each piece of old evidence and how it compared | 逐条查看旧证据和比较结果 | B 层，10/8 未核 | zh 91｜en 90｜示例主线、其他示例 |
+| E299 | `priorSources` | Evidence cited before the recheck, by source: | 复检前引用的证据，来源： | B 层，10/8 未核 | zh 91｜en 91｜示例主线、其他示例 |
+| E300 | `currentSources` | Corresponding evidence this record cites, by source: | 本次记录引用的对应证据，来源： | B 层，10/8 未核 | zh 91｜en 91｜示例主线、其他示例 |
+| E301 | `rowsSummary` | See each piece of old evidence and how it compared | 逐条查看旧证据和比较结果 | B 层，10/8 未核 | zh 91｜en 91｜示例主线、其他示例 |
 | E302 | `shared.one` | The record keeps the old evidence of a group of elements assessed together in one place, not split by element: the group's {count} item shares the rows below. | 记录把放在一起评估的一组构件的旧证据存在一处，不按构件拆开：这一组的 {count} 个事项共用下面这些行。 | B 层，10/8 未核 | zh 91｜en 31｜示例主线、其他示例；复用 G034 |
-| E303 | `shared.other` | The record keeps the old evidence of a group of elements assessed together in one place, not split by element: the group's {count} items share the rows below. | 记录把放在一起评估的一组构件的旧证据存在一处，不按构件拆开：这一组的 {count} 个事项共用下面这些行。 | B 层，10/8 未核 | zh 91｜en 59｜示例主线、其他示例；复用 G034 |
+| E303 | `shared.other` | The record keeps the old evidence of a group of elements assessed together in one place, not split by element: the group's {count} items share the rows below. | 记录把放在一起评估的一组构件的旧证据存在一处，不按构件拆开：这一组的 {count} 个事项共用下面这些行。 | B 层，10/8 未核 | zh 91｜en 60｜示例主线、其他示例；复用 G034 |
 | E304 | `noEvidence` | The group's evidence path before the recheck cites no evidence. | 复检前这一组的证据路径没有引用任何证据。 | B 层，10/8 未核 | zh 40｜en 40｜示例主线、其他示例 |
-| E305 | `priorOrdinal` | Internal group number before the recheck | 复检前的内部分组编号 | B 层，10/8 未核 | zh 131｜en 130｜示例主线、其他示例 |
-| E306 | `currentLine` | Current internal group number, verdict and final outcome | 现在的内部分组编号、verdict 与终点 outcome | B 层，10/8 未核 | zh 131｜en 130｜示例主线、其他示例 |
+| E305 | `priorOrdinal` | Internal group number before the recheck | 复检前的内部分组编号 | B 层，10/8 未核 | zh 131｜en 131｜示例主线、其他示例 |
+| E306 | `currentLine` | Current internal group number, verdict and final outcome | 现在的内部分组编号、verdict 与终点 outcome | B 层，10/8 未核 | zh 131｜en 131｜示例主线、其他示例 |
 
 页面上下文（只列待核的条目；前后各一块，‹ › 里是匹配到的那一块）：
 
@@ -759,17 +781,17 @@
 
 | ID | 键 | English | 中文 | 状态 | 页面 |
 |---|---|---|---|---|---|
-| E307 | `[0]` | "Comparison basis unchanged" does not mean the whole handover needs no review. | “比较依据一致”不代表整个交接不用复核。 | 10/8 已核 | zh 151｜en 150｜示例主线、其他示例 |
-| E308 | `[1]` | An element that is gone, or evidence with no counterpart, does not mean the problem was fixed. | 构件不在了、或找不到对应证据，不代表问题已修复。 | 10/8 已核 | zh 151｜en 150｜示例主线、其他示例 |
-| E309 | `[2]` | A model re-issued (on either side) does not mean a fix has happened. | 模型重新发布（不论哪一侧）不代表修复已经发生。 | 10/8 已核 | zh 151｜en 150｜示例主线、其他示例 |
-| E310 | `[3]` | "Only the model version changed" does not mean the check result's content changed. | “只有模型版本变了”不等于检查结果的内容变了。 | 10/8 已核 | zh 151｜en 150｜示例主线、其他示例 |
-| E311 | `[4]` | "Cannot be compared" is not "evidence missing": where the old record kept no comparison basis, this page says honestly that it cannot compare. | “无法比较”不是“证据缺失”：旧记录没保存比较依据时，本页如实显示无法比较。 | 10/8 已核 | zh 151｜en 150｜示例主线、其他示例 |
+| E307 | `[0]` | "Comparison basis unchanged" does not mean the whole handover needs no review. | “比较依据一致”不代表整个交接不用复核。 | 10/8 已核 | zh 151｜en 151｜示例主线、其他示例 |
+| E308 | `[1]` | An element that is gone, or evidence with no counterpart, does not mean the problem was fixed. | 构件不在了、或找不到对应证据，不代表问题已修复。 | 10/8 已核 | zh 151｜en 151｜示例主线、其他示例 |
+| E309 | `[2]` | A model re-issued (on either side) does not mean a fix has happened. | 模型重新发布（不论哪一侧）不代表修复已经发生。 | 10/8 已核 | zh 151｜en 151｜示例主线、其他示例 |
+| E310 | `[3]` | "Only the model version changed" does not mean the check result's content changed. | “只有模型版本变了”不等于检查结果的内容变了。 | 10/8 已核 | zh 151｜en 151｜示例主线、其他示例 |
+| E311 | `[4]` | "Cannot be compared" is not "evidence missing": where the old record kept no comparison basis, this page says honestly that it cannot compare. | “无法比较”不是“证据缺失”：旧记录没保存比较依据时，本页如实显示无法比较。 | 10/8 已核 | zh 151｜en 151｜示例主线、其他示例 |
 
 #### REISSUE_CASES（2 条，待核 2）
 
 | ID | 键 | English | 中文 | 状态 | 页面 |
 |---|---|---|---|---|---|
-| E327 | `none.headline` | Neither model was re-issued (versions unchanged) | 两侧模型都没有重新发布（版本未变） | 10/15 批，未核 | zh 76｜en 75｜示例主线、其他示例 |
+| E327 | `none.headline` | Neither model was re-issued (versions unchanged) | 两侧模型都没有重新发布（版本未变） | 10/15 批，未核 | zh 76｜en 76｜示例主线、其他示例 |
 | E328 | `none.detail` | This recheck uses the same pair of model versions as the original record, so the differences below do not come from model edits. | 本次复检和原记录用的是同一对模型版本，所以下面的差异不来自模型改动。 | 10/15 批，未核 | zh 10｜en 10｜示例主线、其他示例 |
 
 页面上下文（只列待核的条目；前后各一块，‹ › 里是匹配到的那一块）：
@@ -832,9 +854,9 @@
 
 页面上下文（只列待核的条目；前后各一块，‹ › 里是匹配到的那一块）：
 
-- `E357` zh `#/local/ce485f9c0c179def/finding/b642cc33-f6ce-586c-a8dd-fe64325b560e`：这条通过证明了什么 ‹ 它证明：检查器按它的读取顺序取到的那一个值（类型上的值优先；类型声明 USERDEFINED 时是它的自由文本；类型什么也没说时才读构件实例），逐字等于 DIFFUSER、GRILLE、LOUVRE、REGISTER 四 › 它不证明：；en `#/local/ce485f9c0c179def/finding/b642cc33-f6ce-586c-a8dd-fe64325b560e`：What this pass proves ‹ It proves: The one value the checker took in its reading order (the type's value first; a USERDEFINED type's f › It does not prove:
-- `E360` zh `#/local/ce485f9c0c179def/finding/b642cc33-f6ce-586c-a8dd-fe64325b560e`：类型和构件实例的取值一致：类型上是四个值之一时，实例上写的值不参与比较；类型是 LOUVRE、实例是 DIFFUSER，也会通过。 ‹ 规则不接受的 USERDEFINED 没有出现：类型声明 USERDEFINED 时，检查器比较的是它的自由文本，逐字、区分大小写；文本恰好是 LOUVRE 会通过，写成 louvre、Louvre 或前后带空格则不通过 › 墙上有对应的洞口。；en `#/local/ce485f9c0c179def/finding/b642cc33-f6ce-586c-a8dd-fe64325b560e`：That the type and the element instance agree: when the type carries on ‹ That no USERDEFINED, which the rule does not accept, is present: when the type declares USERDEFINED, the check › That the wall has a corresponding opening.
-- `E372` zh `#/local/c653c7e0bb676a4a/finding/eed53402-33a9-5b7a-9d4c-a912e10c4566`：The predefined type "chimney cover" does not meet the required type ‹ 引号里不是预定义类型的枚举值，而是自由文本：类型声明 USERDEFINED 时，检查器拿它的自由文本来比较。 › 观察值一栏；en `#/local/c653c7e0bb676a4a/finding/eed53402-33a9-5b7a-9d4c-a912e10c4566`：The predefined type "chimney cover" does not meet the required type ‹ What is in the quotation marks is not an enumeration value but free text: when the type declares USERDEFINED,  › Observed value
+- `E357` zh `#/local/ce485f9c0c179def/finding/b642cc33-f6ce-586c-a8dd-fe64325b560e`：这条通过证明了什么 ‹ 它证明：检查器按它的读取顺序取到的那一个值（类型上的值优先；类型声明 USERDEFINED 时是它的自由文本；类型什么也没说时才读构件实例；没有类型时，实例声明 USERDEFINED 也是它的自由文本），逐字等于 D › 它不证明：；en `#/local/ce485f9c0c179def/finding/b642cc33-f6ce-586c-a8dd-fe64325b560e`：What this pass proves ‹ It proves: The one value the checker took in its reading order (the type's value first; a USERDEFINED type's f › It does not prove:
+- `E360` zh `#/local/ce485f9c0c179def/finding/b642cc33-f6ce-586c-a8dd-fe64325b560e`：类型和构件实例的取值一致：类型上是四个值之一时，实例上写的值不参与比较；类型是 LOUVRE、实例是 DIFFUSER，也会通过。 ‹ 规则不接受的 USERDEFINED 没有出现：类型声明 USERDEFINED 时，检查器比较的是它的自由文本；没有类型时，构件实例声明 USERDEFINED 也按它的自由文本比较。比较逐字、区分大小写；文本恰好是  › 墙上有对应的洞口。；en `#/local/ce485f9c0c179def/finding/b642cc33-f6ce-586c-a8dd-fe64325b560e`：That the type and the element instance agree: when the type carries on ‹ That no USERDEFINED, which the rule does not accept, is present: when the type declares USERDEFINED, the check › That the wall has a corresponding opening.
+- `E372` zh `#/local/c653c7e0bb676a4a/finding/eed53402-33a9-5b7a-9d4c-a912e10c4566`：The predefined type "chimney cover" does not meet the required type ‹ 引号里不是预定义类型的枚举值，而是自由文本：类型声明 USERDEFINED 时，检查器拿它的自由文本来比较；没有类型时，构件实例声明 USERDEFINED 也是这样。 › 观察值一栏；en `#/local/c653c7e0bb676a4a/finding/eed53402-33a9-5b7a-9d4c-a912e10c4566`：The predefined type "chimney cover" does not meet the required type ‹ What is in the quotation marks is not an enumeration value but free text: when the type declares USERDEFINED,  › Observed value
 
 #### RUN_LABELS（12 条，待核 12）
 
@@ -850,7 +872,7 @@
 | E380 | `recheck-prior-without-basis` | Recheck record 6 (simulated example) | 复检记录 6（模拟示例） | 10/15 批，未核 | zh 4｜en 3｜示例目录、其他示例、次要明细页 |
 | E381 | `recheck-producing-reissued` | Recheck record 7 (simulated example) | 复检记录 7（模拟示例） | 10/15 批，未核 | zh 4｜en 3｜示例目录、其他示例、次要明细页 |
 | E382 | `recheck-producing-reissued-content-changed` | Recheck record 8 (simulated example) | 复检记录 8（模拟示例） | 10/15 批，未核 | zh 4｜en 3｜示例目录、其他示例、次要明细页 |
-| E383 | `recheck-requirement-relaxed` | The models did not change, but a handover conclusion did | 模型未改，但交接判断发生变化 | 10/15 批，未核 | zh 19｜en 17｜示例目录、示例主线、次要明细页 |
+| E383 | `recheck-requirement-relaxed` | The models did not change, but a handover conclusion did | 模型未改，但交接判断发生变化 | 10/15 批，未核 | zh 19｜en 18｜示例目录、示例主线、次要明细页 |
 | E384 | `recheck-semantics-changed` | Recheck record 10 (simulated example) | 复检记录 10（模拟示例） | 10/15 批，未核 | zh 4｜en 3｜示例目录、其他示例、次要明细页 |
 
 页面上下文（只列待核的条目；前后各一块，‹ › 里是匹配到的那一块）：
@@ -901,7 +923,7 @@
 
 | ID | 键 | English | 中文 | 状态 | 页面 |
 |---|---|---|---|---|---|
-| E411 | `(整表)` | Each conclusion is about one piece of the receiving side's work, this item within this assessment's scope, and the listed model versions; it is not an overall verdict on… | 每个判断只针对接收方的一项工作、本次评估范围内的这一项，以及所列的模型版本；它不是“模型好不好”的总评，也不是“某项检查通过了”。 | 10/8 已核 | zh 181｜en 179｜示例主线、其他示例 |
+| E411 | `(整表)` | Each conclusion is about one piece of the receiving side's work, this item within this assessment's scope, and the listed model versions; it is not an overall verdict on… | 每个判断只针对接收方的一项工作、本次评估范围内的这一项，以及所列的模型版本；它不是“模型好不好”的总评，也不是“某项检查通过了”。 | 10/8 已核 | zh 181｜en 181｜示例主线、其他示例 |
 
 #### WORKSPACE（73 条，待核 0）
 
@@ -916,9 +938,9 @@
 | E425 | `compareLink` | See the comparison with the earlier run | 看与前一次运行的对比 | 10/8 已核 | zh 0｜en 0｜（本次渲染未触发） |
 | E426 | `compareTeaser` | The server was also started with an earlier run. Before and after: | 服务器启动时还指定了前一次运行。两次结果的前后对比： | 10/8 已核 | zh 0｜en 0｜（本次渲染未触发） |
 | E427 | `checkedHeading` | What was checked | 检查了什么 | 10/8 已核 | zh 16｜en 16｜本地结果页 |
-| E428 | `ruleTitle` | Requirement | 要求 | 10/8 已核 | zh 40｜en 39｜示例主线、本地检查（选文件至运行）、其他示例；复用 G013 |
+| E428 | `ruleTitle` | Requirement | 要求 | 10/8 已核 | zh 40｜en 40｜示例主线、本地检查（选文件至运行）、其他示例；复用 G013 |
 | E429 | `rulePredicate` | What this rule asks | 这条规则要求 | 10/8 已核 | zh 16｜en 16｜本地结果页 |
-| E430 | `ruleExpected` | The rule's own words | 规则的原话（英文） | 10/8 已核 | zh 74｜en 73｜示例主线、本地结果页、其他示例；复用 G014 |
+| E430 | `ruleExpected` | The rule's own words | 规则的原话（英文） | 10/8 已核 | zh 74｜en 74｜示例主线、本地结果页、其他示例；复用 G014 |
 | E431 | `ruleOrigin` | Source (the returned data's citation, as written) | 出处（返回数据的引文，英文原文） | 10/8 已核 | zh 16｜en 16｜本地结果页 |
 | E432 | `ruleLabels` | Labels in the returned data | 返回数据的标签 | 10/8 已核 | zh 16｜en 16｜本地结果页 |
 | E433 | `productValidation` | The label in the returned data (ProductValidation) says: this is a product validation rule. | 返回数据的标签（ProductValidation）标明：这是一条产品验证规则。 | 10/8 已核 | zh 16｜en 16｜本地结果页 |
@@ -932,9 +954,9 @@
 | E441 | `columns.status` | Result | 结果 | 10/8 已核 | zh 16｜en 16｜本地结果页；复用 G040 |
 | E442 | `columns.tag` | IFC Tag | IFC Tag | 10/8 已核 | zh 16｜en 16｜本地结果页 |
 | E443 | `columns.name` | Name | 名称 | 10/8 已核 | zh 156｜en 16｜本地结果页、次要明细页；复用 G041 |
-| E444 | `columns.class` | Class | 类别 | 10/8 已核 | zh 173｜en 171｜示例主线、本地结果页、其他示例；复用 G042 |
+| E444 | `columns.class` | Class | 类别 | 10/8 已核 | zh 173｜en 173｜示例主线、本地结果页、其他示例；复用 G042 |
 | E445 | `columns.storey` | Storey (IFC) | 楼层（IFC） | 10/8 已核 | zh 16｜en 16｜本地结果页；复用 G043 |
-| E446 | `columns.model` | Model | 模型 | 10/8 已核 | zh 320｜en 191｜示例主线、本地结果页、本地检查（选文件至运行）、其他示例、次要明细页；复用 G044、G028 |
+| E446 | `columns.model` | Model | 模型 | 10/8 已核 | zh 336｜en 193｜示例主线、本地结果页、本地检查（选文件至运行）、其他示例、次要明细页；复用 G044、G028 |
 | E447 | `pickOne` | Choose a result from the list to see its details here. | 从结果列表里选一条，在这里看它的详情。 | 10/8 已核 | zh 8｜en 8｜本地结果页 |
 | E448 | `detailKicker` | One result of a real check | 一条真实检查结果 | 10/8 已核 | zh 8｜en 8｜本地结果页 |
 | E449 | `wholeModel` | Whole model | 整个模型 | 10/8 已核 | zh 8｜en 8｜本地结果页；复用 G037 |
@@ -965,21 +987,21 @@
 | E474 | `identity.ruleset` | Rule set | 规则集 | 10/8 已核 | zh 38｜en 26｜本地结果页、本地检查（选文件至运行）、次要明细页 |
 | E475 | `identity.asOf` | Logical date (given by the run configuration, not when it ran) | 逻辑日期（运行配置给定，不是运行的时间） | 10/8 已核 | zh 16｜en 16｜本地结果页 |
 | E476 | `identity.checkers` | Checkers | 检查程序 | 10/8 已核 | zh 36｜en 16｜示例主线、本地结果页、其他示例；复用 G002 |
-| E477 | `identity.models` | Models | 模型 | 10/8 已核 | zh 320｜en 176｜示例主线、本地结果页、本地检查（选文件至运行）、其他示例、次要明细页；复用 G027、G028 |
-| E478 | `identity.modelId` | Model | 模型 | 10/8 已核 | zh 320｜en 191｜示例主线、本地结果页、本地检查（选文件至运行）、其他示例、次要明细页；复用 G044、G028 |
+| E477 | `identity.models` | Models | 模型 | 10/8 已核 | zh 336｜en 177｜示例主线、本地结果页、本地检查（选文件至运行）、其他示例、次要明细页；复用 G027、G028 |
+| E478 | `identity.modelId` | Model | 模型 | 10/8 已核 | zh 336｜en 193｜示例主线、本地结果页、本地检查（选文件至运行）、其他示例、次要明细页；复用 G044、G028 |
 | E479 | `identity.declaredDiscipline` | Discipline declared in the project manifest | 项目清单声明的专业 | 10/8 已核 | zh 16｜en 16｜本地结果页 |
 | E480 | `identity.filename` | File | 文件 | 10/8 已核 | zh 30｜en 30｜本地结果页、本地检查（选文件至运行） |
 | E481 | `identity.digest` | File content digest (SHA-256) | 文件内容摘要（SHA-256） | 10/8 已核 | zh 16｜en 16｜本地结果页 |
 | E482 | `identity.tagSource` | Where the IFC Tag comes from | IFC Tag 的来源 | 10/8 已核 | zh 16｜en 16｜本地结果页 |
-| E483 | `identity.elementKey` | Internal key for tracing | 追溯用内部键 | 10/8 已核 | zh 165｜en 163｜示例主线、本地结果页、其他示例 |
+| E483 | `identity.elementKey` | Internal key for tracing | 追溯用内部键 | 10/8 已核 | zh 165｜en 165｜示例主线、本地结果页、其他示例 |
 | E484 | `identity.findingKey` | Check result key | 检查结果键 | 10/8 已核 | zh 8｜en 8｜本地结果页 |
 | E485 | `identity.requirementKey` | Requirement key | 要求键 | 10/8 已核 | zh 8｜en 8｜本地结果页 |
 | E486 | `element.name` | Name | 名称 | 10/8 已核 | zh 156｜en 16｜本地结果页、次要明细页；复用 G041 |
-| E487 | `element.class` | Class | 类别 | 10/8 已核 | zh 173｜en 171｜示例主线、本地结果页、其他示例；复用 G042 |
+| E487 | `element.class` | Class | 类别 | 10/8 已核 | zh 173｜en 173｜示例主线、本地结果页、其他示例；复用 G042 |
 | E488 | `element.storey` | Storey (IFC) | 楼层（IFC） | 10/8 已核 | zh 16｜en 16｜本地结果页；复用 G043 |
-| E489 | `element.model` | Model | 所属模型 | 10/8 已核 | zh 165｜en 191｜示例主线、本地结果页、其他示例；复用 G044 |
+| E489 | `element.model` | Model | 所属模型 | 10/8 已核 | zh 165｜en 193｜示例主线、本地结果页、其他示例；复用 G044 |
 | E490 | `element.file` | Model file | 模型文件 | 10/8 已核 | zh 8｜en 8｜本地结果页 |
-| E491 | `element.globalId` | GlobalId | GlobalId | 10/8 已核 | zh 294｜en 161｜示例主线、本地结果页、其他示例、次要明细页 |
+| E491 | `element.globalId` | GlobalId | GlobalId | 10/8 已核 | zh 310｜en 163｜示例主线、本地结果页、其他示例、次要明细页 |
 
 #### WORKSPACE_COMPARE（14 条，待核 14）
 
@@ -1026,7 +1048,7 @@
 
 页面上下文（只列待核的条目；前后各一块，‹ › 里是匹配到的那一块）：
 
-- `Z01` zh `#/fixture/member-evidence/item/2/2/0`：原因 ‹ 所要求的属性集不存在（要补的是整个属性集，不是给已有属性填值） › The required property set does not exist
+- `Z01` zh `#/fixture/member-evidence/item/2/2/0`：原因 ‹ 所要求的属性集不存在（要让导出写出这个属性集以及其中所要求的属性，不是给已有属性填值） › The required property set does not exist
 
 #### FIRST（11 条，待核 11）
 
@@ -1034,9 +1056,9 @@
 |---|---|---|---|---|---|
 | E566 | `cardDetails` | Element details and what to do | 构件信息和要做什么 | 10/15 批，未核 | zh 4｜en 4｜示例主线、其他示例 |
 | E567 | `cardElements` | Element details | 构件信息 | 10/15 批，未核 | zh 0｜en 4｜示例主线、其他示例 |
-| E568 | `openCard` | See this item | 查看这一项 | 10/15 批，未核 | zh 4｜en 36｜示例主线、其他示例 |
-| E572 | `notRevised` | (Chinese only: that page has not been translated or revised yet, and still uses internal terms) | （该页尚未改版，仍是内部用语） | 10/15 批，未核 | zh 167｜en 165｜示例主线、其他示例 |
-| E584 | `team` | Handling team | 处理团队 | B 层，10/8 未核 | zh 103｜en 179｜示例主线、其他示例；复用 G052 |
+| E568 | `openCard` | See this item | 查看这一项 | 10/15 批，未核 | zh 4｜en 37｜示例主线、其他示例 |
+| E572 | `notRevised` | (Chinese only: that page has not been translated or revised yet, and still uses internal terms) | （该页尚未改版，仍是内部用语） | 10/15 批，未核 | zh 167｜en 167｜示例主线、其他示例 |
+| E584 | `team` | Handling team | 处理团队 | B 层，10/8 未核 | zh 103｜en 181｜示例主线、其他示例；复用 G052 |
 | E585 | `verdictLine` | : the work concerned is | ：对应的那项工作 | B 层，10/8 未核 | zh 0｜en 4｜示例主线、其他示例 |
 | E586 | `quietLine` | : {summary} (listed further down this page) | ：{summary}（列在本页下方） | B 层，10/8 未核 | zh 4｜en 4｜示例主线、其他示例 |
 | E587 | `problem` | Problem | 问题 | B 层，10/8 未核 | zh 107｜en 107｜示例主线、其他示例 |
@@ -1063,7 +1085,7 @@
 | ID | 键 | English | 中文 | 状态 | 页面 |
 |---|---|---|---|---|---|
 | E573 | `what` | What to do | 要做什么 | B 层，10/8 未核 | zh 125｜en 125｜示例主线、其他示例 |
-| E574 | `team` | Handling team | 处理团队 | B 层，10/8 未核 | zh 103｜en 179｜示例主线、其他示例；复用 G052 |
+| E574 | `team` | Handling team | 处理团队 | B 层，10/8 未核 | zh 103｜en 181｜示例主线、其他示例；复用 G052 |
 | E575 | `consequence` | What it means for this work | 对这项工作的后果 | B 层，10/8 未核 | zh 103｜en 103｜示例主线、其他示例 |
 | E576 | `recheck` | What a recheck must show | 完成后拿什么复检 | B 层，10/8 未核 | zh 103｜en 103｜示例主线、其他示例 |
 | E577 | `original` | Source wording (as the record carries it): for tracing, not an instruction | 来源原文（英文，记录所带）：供追溯，不是操作指令 | B 层，10/8 未核 | zh 103｜en 103｜示例主线、其他示例 |
@@ -1072,20 +1094,20 @@
 
 - `E573` zh `#/fixture/member-evidence`：问题：不是已知的模型缺陷：还没有协调评审判定它是否穿过接收方的构件 ‹ 构件信息和要做什么 › 风口 IfcAirTerminal · 00 groundfloor · 模型 hvac；en `#/fixture/member-evidence`：IfcAirTerminal (IFC class) · 00 groundfloor · model hvac ‹ What to do › This is not a known model defect. No coordination review has yet deter
 - `E574` zh `#/fixture/member-evidence/item/0/2/0`：随附的模拟示例，不是你的模型；团队等项目设定为演示用，不能用于正式项目决定。 这份记录的结论引用了：真实检查输出、模拟的人工判定，逐条标在结 ‹ 模拟示例：示例中的项目设定，包括处理团队安排、证据方法的接受等，是演示用设定，不代表真实项目决定；一个结论的证据可能是真实检查的结果、模拟的检查结果或模拟的人工判定，具体是哪一种，看每个结论旁的“依据”一行（按逐条引用标 › ← 返回事项列表（回到这一项的位置）；en `#/fixture/member-evidence`：Items to deal with, by handling team (8 items) ‹ Handling team coordination-team Example handling team: 6 items › Default handling role (the rule's default, not an assignment): model-c
-- `E575` zh `#/fixture/member-evidence/item/0/2/0`：model-coordination ‹ 对这项工作的后果 › 这项工作暂停；en `#/fixture/member-evidence/item/0/2/0`：model-coordination ‹ What it means for this work › This work is suspended
-- `E576` zh `#/fixture/member-evidence/item/0/2/0`：要知道交出方的构件在哪里穿过墙、楼板和屋顶，才能在这些构件上开洞。 ‹ 二、要做什么、由谁处理、完成后拿什么复检 › 要做什么；en `#/fixture/member-evidence/item/0/2/0`：This work is suspended ‹ What a recheck must show › A recorded review determination exists for the model versions listed
+- `E575` zh `#/fixture/member-evidence/item/0/2/0`：model-coordination ‹ 对这项工作的后果 › 这项工作暂缓，等有结论再定；en `#/fixture/member-evidence/item/0/2/0`：model-coordination ‹ What it means for this work › This work is held until decided
+- `E576` zh `#/fixture/member-evidence/item/0/2/0`：要知道交出方的构件在哪里穿过墙、楼板和屋顶，才能在这些构件上开洞。 ‹ 二、要做什么、由谁处理、完成后拿什么复检 › 要做什么；en `#/fixture/member-evidence/item/0/2/0`：This work is held until decided ‹ What a recheck must show › A recorded review determination exists for the model versions listed
 - `E577` zh `#/fixture/member-evidence/item/0/2/0`：针对所列模型版本，有一份评审判定记录 ‹ 来源原文（英文，记录所带）：供追溯，不是操作指令 › next_action；en `#/fixture/member-evidence/item/0/2/0`：A recorded review determination exists for the model versions listed ‹ Source wording (as the record carries it): for tracing, not an instruction › next_action
 
 #### ITEM（6 条，待核 6）
 
 | ID | 键 | English | 中文 | 状态 | 页面 |
 |---|---|---|---|---|---|
-| E578 | `noFollowUp` | The record gives no follow-up action, handling team or default handling role for this item. | 记录没有为这一项给出后续处理动作、处理团队或默认处理角色。 | B 层，10/8 未核 | zh 40｜en 38｜示例主线、其他示例 |
-| E579 | `needs` | What this work needs | 这项工作需要什么 | B 层，10/8 未核 | zh 26｜en 25｜示例主线、其他示例 |
-| E580 | `leaf` | Final outcome | 终点 outcome | B 层，10/8 未核 | zh 26｜en 25｜示例主线、其他示例 |
-| E581 | `context` | Background citations: not the basis of this conclusion, shown word for word. | 背景引用：不是这个结论的依据，逐字显示。 | B 层，10/8 未核 | zh 6｜en 5｜示例主线、其他示例 |
-| E582 | `actionHeading` | 2. What to do, who deals with it, what a recheck must show | 二、要做什么、由谁处理、完成后拿什么复检 | B 层，10/8 未核 | zh 147｜en 146｜示例主线、其他示例；复用 G031 |
-| E583 | `followUpHeading` | 2. Follow-up | 二、后续 | B 层，10/8 未核 | zh 10｜en 9｜示例主线、其他示例 |
+| E578 | `noFollowUp` | The record gives no follow-up action, handling team or default handling role for this item. | 记录没有为这一项给出后续处理动作、处理团队或默认处理角色。 | B 层，10/8 未核 | zh 40｜en 40｜示例主线、其他示例 |
+| E579 | `needs` | What this work needs | 这项工作需要什么 | B 层，10/8 未核 | zh 26｜en 26｜示例主线、其他示例 |
+| E580 | `leaf` | Final outcome | 终点 outcome | B 层，10/8 未核 | zh 26｜en 26｜示例主线、其他示例 |
+| E581 | `context` | Background citations: not the basis of this conclusion, shown word for word. | 背景引用：不是这个结论的依据，逐字显示。 | B 层，10/8 未核 | zh 6｜en 6｜示例主线、其他示例 |
+| E582 | `actionHeading` | 2. What to do, who deals with it, what a recheck must show | 二、要做什么、由谁处理、完成后拿什么复检 | B 层，10/8 未核 | zh 147｜en 147｜示例主线、其他示例；复用 G031 |
+| E583 | `followUpHeading` | 2. Follow-up | 二、后续 | B 层，10/8 未核 | zh 10｜en 10｜示例主线、其他示例 |
 
 页面上下文（只列待核的条目；前后各一块，‹ › 里是匹配到的那一块）：
 
@@ -1112,7 +1134,7 @@
 
 | ID | 键 | English | 中文 | 状态 | 页面 |
 |---|---|---|---|---|---|
-| E597 | `onlyRekeyed` | {rekeyed}: neither the evidence content nor the comparison basis changed. | {rekeyed}：证据内容和比较依据都没有变。 | B 层，10/8 未核 | zh 30｜en 29｜示例主线、其他示例 |
+| E597 | `onlyRekeyed` | {rekeyed}: neither the evidence content nor the comparison basis changed. | {rekeyed}：证据内容和比较依据都没有变。 | B 层，10/8 未核 | zh 30｜en 30｜示例主线、其他示例 |
 | E598 | `producing` | Handing-over side | 交出方 | B 层，10/8 未核 | zh 20｜en 20｜示例主线、其他示例 |
 | E599 | `consuming` | Receiving side | 接收方 | B 层，10/8 未核 | zh 20｜en 20｜示例主线、其他示例 |
 
@@ -1126,7 +1148,7 @@
 
 | ID | 键 | English | 中文 | 状态 | 页面 |
 |---|---|---|---|---|---|
-| E600 | `unchanged` | {work}: {before} ({note}) | {work}：{before} （{note}） | B 层，10/8 未核 | zh 112｜en 120｜示例目录、示例主线、本地结果页、其他示例 |
+| E600 | `unchanged` | {work}: {before} ({note}) | {work}：{before} （{note}） | B 层，10/8 未核 | zh 112｜en 121｜示例目录、示例主线、本地结果页、其他示例 |
 | E601 | `changed` | {work}: before the recheck {before} → now {now} | {work}：复检前 {before} → 现在 {now} | B 层，10/8 未核 | zh 35｜en 35｜示例主线、其他示例 |
 
 页面上下文（只列待核的条目；前后各一块，‹ › 里是匹配到的那一块）：
@@ -1151,7 +1173,7 @@
 | L007 | `home.cannot[0]` | Import a Revit file itself (.rvt), or check your own model against rules other than the product validation exercise | 导入 Revit 文件本身（.rvt），或用产品验证练习以外的规则检查自己的模型 | 新增，未核 | zh 1｜en 1｜首页 |
 | L008 | `home.cannot[1]` | Give an overall compliance, ready-to-build or "can be handed over" conclusion | 给出整体合规、可施工或“可以交付”的结论 | 新增，未核 | zh 1｜en 1｜首页；复用 G020 |
 | L009 | `home.cannot[2]` | Write back to a model, upload to the cloud, or open an element in Revit | 写回模型、上传到云端，或在 Revit 里打开构件 | 同句已核 | zh 1｜en 1｜首页；复用 G021 |
-| L050 | `disciplines.Architecture` | Architecture | 建筑（Architecture） | 新增，未核 | zh 22｜en 346｜示例主线、本地结果页、本地检查（选文件至运行）、其他示例、次要明细页 |
+| L050 | `disciplines.Architecture` | Architecture | 建筑（Architecture） | 新增，未核 | zh 22｜en 349｜示例主线、本地结果页、本地检查（选文件至运行）、其他示例、次要明细页 |
 | L052 | `disciplines.MEP` | MEP | 机电（MEP） | 新增，未核 | zh 14｜en 34｜示例主线、本地检查（选文件至运行）、其他示例 |
 
 页面上下文（只列待核的条目；前后各一块，‹ › 里是匹配到的那一块）：
@@ -1168,14 +1190,14 @@
 
 | ID | 键 | English | 中文 | 状态 | 页面 |
 |---|---|---|---|---|---|
-| Q01 | `lead` | A simulated example shipped with the tool, not your model; project settings such as teams are for demonstration, not for formal project decisions. | 随附的模拟示例，不是你的模型；团队等项目设定为演示用，不能用于正式项目决定。 | 新增，未核 | zh 465｜en 321｜示例目录、示例主线、其他示例、次要明细页 |
-| Q02 | `cites` | This record's conclusions cite {kinds}, labelled citation by citation on the "Basis" line beside each conclusion. | 这份记录的结论引用了：{kinds}，逐条标在结论旁的“依据”一行。 | 新增，未核 | zh 464｜en 320｜示例主线、其他示例、次要明细页 |
+| Q01 | `lead` | A simulated example shipped with the tool, not your model; project settings such as teams are for demonstration, not for formal project decisions. | 随附的模拟示例，不是你的模型；团队等项目设定为演示用，不能用于正式项目决定。 | 新增，未核 | zh 481｜en 324｜示例目录、示例主线、其他示例、次要明细页 |
+| Q02 | `cites` | This record's conclusions cite {kinds}, labelled citation by citation on the "Basis" line beside each conclusion. | 这份记录的结论引用了：{kinds}，逐条标在结论旁的“依据”一行。 | 新增，未核 | zh 480｜en 323｜示例主线、其他示例、次要明细页 |
 | Q04 | `noRecord` | Whether the evidence a conclusion cites is real or simulated is labelled citation by citation on the "Basis" line beside it. | 结论引用的证据是真实的还是模拟的，逐条标在结论旁的“依据”一行。 | 新增，未核 | zh 1｜en 1｜示例目录 |
-| Q05 | `kinds.finding-real` | real check output | 真实检查输出 | 新增，未核 | zh 452｜en 320｜示例主线、其他示例、次要明细页；复用 G003 |
-| Q06 | `kinds.finding-fixture` | simulated check results | 模拟的检查结果 | 新增，未核 | zh 452｜en 231｜示例主线、其他示例、次要明细页；复用 G005 |
-| Q07 | `kinds.determination-fixture` | simulated human determinations | 模拟的人工判定 | 新增，未核 | zh 452｜en 320｜示例主线、其他示例、次要明细页；复用 G006 |
-| Q08 | `kinds.determination-unmarked` | determinations of unstated source | 来源未标注的判定 | 新增，未核 | zh 452｜en 0｜示例主线、其他示例、次要明细页；复用 G007 |
-| Q11 | `more` | About the sources | 来源说明 | 新增，未核 | zh 465｜en 321｜示例目录、示例主线、其他示例、次要明细页 |
+| Q05 | `kinds.finding-real` | real check output | 真实检查输出 | 新增，未核 | zh 468｜en 323｜示例主线、其他示例、次要明细页；复用 G003 |
+| Q06 | `kinds.finding-fixture` | simulated check results | 模拟的检查结果 | 新增，未核 | zh 468｜en 232｜示例主线、其他示例、次要明细页；复用 G005 |
+| Q07 | `kinds.determination-fixture` | simulated human determinations | 模拟的人工判定 | 新增，未核 | zh 468｜en 323｜示例主线、其他示例、次要明细页；复用 G006 |
+| Q08 | `kinds.determination-unmarked` | determinations of unstated source | 来源未标注的判定 | 新增，未核 | zh 468｜en 0｜示例主线、其他示例、次要明细页；复用 G007 |
+| Q11 | `more` | About the sources | 来源说明 | 新增，未核 | zh 481｜en 324｜示例目录、示例主线、其他示例、次要明细页 |
 
 页面上下文（只列待核的条目；前后各一块，‹ › 里是匹配到的那一块）：
 
@@ -1197,6 +1219,16 @@
 页面上下文（只列待核的条目；前后各一块，‹ › 里是匹配到的那一块）：
 
 - `Q12` zh `#/fixture`：选择一个模拟示例 ‹ 每个示例是一份检查记录。 › 第一步；en `#/fixture`：Choose a simulated example ‹ Each example is one check record. › Step 1
+
+#### IFC_CLASS_NAMES（5 条，待核 0）
+
+| ID | 键 | English | 中文 | 状态 | 页面 |
+|---|---|---|---|---|---|
+| Z04 | `IfcAirTerminal` |  | 风口 | D6 未列，是否已核待确认 | zh 128｜en 0｜示例主线、本地结果页、本地检查（选文件至运行）、其他示例 |
+| Z05 | `IfcChimney` |  | 烟囱 | D6 未列，是否已核待确认 | zh 73｜en 0｜示例主线、其他示例 |
+| Z06 | `IfcDuctSegment` |  | 风管段 | D6 未列，是否已核待确认 | zh 56｜en 0｜示例主线、其他示例 |
+| Z07 | `IfcRoof` |  | 屋顶 | D6 未列，是否已核待确认 | zh 37｜en 0｜示例主线、其他示例 |
+| Z08 | `IfcSlab` |  | 楼板 | D6 未列，是否已核待确认 | zh 22｜en 0｜示例主线、其他示例 |
 
 #### CITATION_GLOSSES（1 条，待核 0）
 
@@ -1443,7 +1475,7 @@
 - `L075` zh `flow:check-both:result`：Building-Hvac.ifc（你声明的专业：暖通（HVAC）） ‹ 进度计划：规则集的阶段 Coordination 由本次检查代填，没有到期日；本页不显示到期、逾期或优先级。 › 不计算几何。没有形体的构件不会让整次检查中断，它的检查结果、标识和下一步照常显示；本次结果也没有 3D 视图。；en `flow:check-both:result`：Building-Hvac.ifc (discipline you declared: HVAC) ‹ Programme: the rule set's stages Coordination were filled in by this check, with no due date; this page shows  › No geometry is computed. An element without a shape does not stop the
 - `L076` zh `flow:check-both:running`：运行检查 ‹ 正在检查，可能需要几十秒到几分钟。完成后会打开结果。 › 以前的检查；en `flow:check-both:running`：Run the check ‹ Checking. This may take from tens of seconds to a few minutes; the result opens when it is done. › Earlier checks
 
-### T3 其余（51 条，待核 35）
+### T3 其余（52 条，待核 35）
 
 #### ACTIONS（4 条，待核 1）
 
@@ -1636,6 +1668,12 @@
 | Q09 | `join` | , | 、 | 分隔符，无需判断 | zh 0｜en 0｜（本次渲染未触发）；复用 G054 |
 | Q10 | `lastJoin` | and | 、 | 分隔符，无需判断 | zh 0｜en 0｜（本次渲染未触发）；复用 G054 |
 
+#### IFC_CLASS_NAMES（1 条，待核 0）
+
+| ID | 键 | English | 中文 | 状态 | 页面 |
+|---|---|---|---|---|---|
+| Z09 | `IfcWall` |  | 墙 | D6 未列，是否已核待确认 | zh 0｜en 0｜（本次渲染未触发） |
+
 ## 8. 不进子集的条目（X）
 
 D6 索引里的条目，在公开路线上渲染不到，也没有被本地结果页的代码引用。CSV 里 `tier` = X，`x_reason` 写了原因。
@@ -1655,7 +1693,6 @@ D6 索引里的条目，在公开路线上渲染不到，也没有被本地结�
 | DETAILS_WORDS | 2 | 0 | 示例页的代码能到达，但随附的 12 份示例记录都没有触发 |
 | DISPOSITION_ENTRIES | 3 | 3 | 示例页的代码能到达，但随附的 12 份示例记录都没有触发 |
 | ELEMENT_WORDS | 1 | 1 | 示例页的代码能到达，但随附的 12 份示例记录都没有触发 |
-| IFC_CLASS_NAMES | 6 | 0 | 公开路线上的代码不引用它 |
 | KEY_CHANGED | 1 | 1 | 公开路线上的代码不引用它 |
 | LANGUAGE | 1 | 1 | 公开路线上的代码不引用它 |
 | LEAF_READINGS | 6 | 5 | 示例页的代码能到达，但随附的 12 份示例记录都没有触发 |
@@ -1683,5 +1720,16 @@ D6 索引里的条目，在公开路线上渲染不到，也没有被本地结�
 2. 页面：见第 3 节。每页读出文字块和短元素文本，匹配方法见第 6 节。
 3. 档次：T1＝出现在首页、目录、示例主线页，或出现在本地结果页但不属于 `LOCAL_CHECK` 表（结果页复用工作区的结果画面，C2 走查看的也是这些画面）；T2＝其余出现在本地检查页或第二入口页上的，以及 `LOCAL_CHECK` 表里在首页以外的；T3＝其余只出现在其他示例、次要明细页上的，加条件出现的句子。
 4. 条件出现：本次没渲染到的条目，若本地结果页的代码（经调用图）能引用到它所在的表和键，就按条件出现收进子集；只被示例页引用、而随附 12 份记录都没有触发的，不进子集。
-5. 状态：10/8 已核＝D6 的 A 层（299 条，BIM 10/8 已核完）且句子自 `d59dee0` 起没变；其余见 CSV 的 `status`。
+5. 状态（每条恰好一个）：
+   - **10/8 已核**：D6 的 A 层（299 条，BIM 10/8 已核完）且句子自 `d59dee0` 起没变。不再审。
+   - **10/8 后改句，需重核**：10/8 已核或已列入 D6 的条目，句子在 10/8 之后改过（#29 的 6 条中央句子、#50 的 10 条）或显示条件改了（W4）。**待核**。
+   - **10/8 已核；C 通道待裁**：W1 的两条，本轮不改。不再审。
+   - **新增，未核**：#29（`L###`）、#48（`Q##`）、#50（`N01`）新增的句子。**待核**。
+   - **B 层，10/8 未核**、**10/15 批，未核**：D6 里原本排在 10/8 之后的条目，在公开页上出现，所以收进来。**待核**。
+   - **同句已核**：句子与某条 10/8 已核且未改的条目中英都逐字相同。不再审。
+   - **分隔符，无需判断**：Q2 的列举分隔符 `join`／`lastJoin`。
+   - **D6 未列，待 BIM 确认**：三张中文单语释义表里 D6 没逐条列的条目。**不计入待核**，单列。
+   - **其他**：不属于以上任何一种的（本次为 0）。
+   **待核** ＝ 改句需重核 ＋ 新增未核 ＋ B 层未核 ＋ 10/15 批未核 ＋ 其他。
 6. 生成的是这份清单，不是复核；渲染用的服务器、临时检查目录和浏览器配置都在会话临时目录，没有写进检出目录。
+7. 生成清单用的脚本（词表导出、页面遍历、本地检查逐状态走查、匹配与分档）没有提交进仓库：它们是为这次清单写的会话工具。main 变动后要重新生成时，请 TD 说一声，我整理脚本后另开 PR，不在这个 PR 里加代码。
