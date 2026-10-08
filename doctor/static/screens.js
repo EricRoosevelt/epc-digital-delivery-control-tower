@@ -1698,17 +1698,20 @@ function firstItem(state, activityIndex, ordinal, memberIndex) {
       h("p", { class: "headline conclusion" }, workVerdict(item.activity, item.verdict)),
       basisLine(item.basis),
       besideVerdict(item.activity, item.verdict),
-      item.kind === undefined ? null : definitions([[FIRST.problem, problemName(item.kind)]]),
+      // The result the conclusion rests on stays beside it: a reading such as
+      // "not evaluated — this is not 'no problem'" is itself how to read it.
+      definitions([
+        item.kind === undefined ? null : [FIRST.problem, problemName(item.kind)],
+        [LEAF_READING_WORDS.label, leafName(item.leaf)],
+      ]),
     ),
   );
-  // What the conclusion rests on and what the work needs explain it; they do
-  // not change how it reads, so they follow the next step rather than push it
-  // down. The basis line and the notes that do change the reading stay above.
+  // What the work needs explains the conclusion without changing how it reads,
+  // so it follows the next step rather than push it down.
   const explained = h(
     "section",
     { class: "block conclusion-more" },
     definitions([
-      [LEAF_READING_WORDS.label, leafName(item.leaf)],
       [
         ITEM.needs,
         Object.hasOwn(ACTIVITY_NAMES, item.activity)
@@ -2597,8 +2600,9 @@ function recheckItem(state, subscopeIndex, memberIndex) {
             RECHECK_ITEM.pairNote,
           )
         : null,
-      // What became of the member stays: "gone" changes how the conclusion reads.
-      definitions([problemRow(item), dispositionRow(item)]),
+      // The result read and what became of the member stay: either can change
+      // how the conclusion reads ("not evaluated", "gone").
+      definitions([problemRow(item), readingRow(item), dispositionRow(item)]),
     ),
     // What is left to do comes before the element's particulars, as on the
     // first check's item page: the action is what this page is for.
@@ -2613,12 +2617,12 @@ function recheckItem(state, subscopeIndex, memberIndex) {
         ? item.current.map((current) => currentSubscopeBlock(state, item, current))
         : note(RECHECK_ITEM.noCurrent),
     ),
-    // The result read, the models and the record's own cause explain the
-    // conclusion; they follow the next step, as on the first check's item page.
+    // The models and the record's own cause explain the conclusion; they follow
+    // the next step, as on the first check's item page.
     h(
       "section",
       { class: "block conclusion-more" },
-      definitions([readingRow(item), [RECHECK_ITEM.model, model.reissue.headline]]),
+      definitions([[RECHECK_ITEM.model, model.reissue.headline]]),
       carries(item.entry, "cause")
         ? h(
             "div",
