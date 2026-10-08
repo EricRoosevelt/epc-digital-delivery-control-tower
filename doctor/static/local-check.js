@@ -292,12 +292,16 @@ function refusalBlock(refusal, ofCheck = true) {
         ),
       ),
     ),
-    h(
-      "details",
-      { class: "evidence-details" },
-      h("summary", {}, words.original),
-      h("pre", { class: "refusal-text" }, refusal.text),
-    ),
+    // What the system returned, when it returned something: a refusal this
+    // page made itself has no original, and is not shown as if it had one.
+    typeof refusal.text === "string"
+      ? h(
+          "details",
+          { class: "evidence-details" },
+          h("summary", {}, words.original),
+          h("pre", { class: "refusal-text" }, refusal.text),
+        )
+      : null,
   );
 }
 
@@ -350,11 +354,29 @@ function focusIn(container) {
   }
 }
 
+/** Whether this server would refuse a file of `size` bytes as too large, unread.
+ *
+ * The same comparison the server makes: a file of exactly the limit is taken.
+ */
+export function overLimit(size, max) {
+  return typeof max === "number" && typeof size === "number" && size > max;
+}
+
 async function stage(files, steps) {
   const status = steps.querySelector("#local-copying");
   session.fileRefusals = [];
   session.fault = null;
   for (const file of files) {
+    // A file over this server's limit is refused here and never sent. The
+    // server refuses it unread too, but a connection closed in the middle of
+    // an upload reaches a browser as a dropped connection, not as that answer.
+    if (overLimit(file.size, session.described && session.described.max_model_bytes)) {
+      session.fileRefusals.push({
+        filename: file.name,
+        refusal: { reasons: [{ code: "model-too-large", filename: file.name }] },
+      });
+      continue;
+    }
     status.textContent = fill(LOCAL.choose.copying, { file: file.name });
     try {
       const answer = await ask(`/api/local/models?filename=${encodeURIComponent(file.name)}`, {
