@@ -1,0 +1,237 @@
+﻿id,tier,status_in_subset,table,key,verdict,finding_ref,reason,suggestion,zh_text,en_text
+E573,1,b-tier,ACTION,what,通过,,,,要做什么,What to do
+E574,1,b-tier,ACTION,team,通过,,,,处理团队,Handling team
+E575,1,b-tier,ACTION,consequence,通过,,,,对这项工作的后果,What it means for this work
+E576,1,b-tier,ACTION,recheck,通过,,,,完成后拿什么复检,What a recheck must show
+E577,1,b-tier,ACTION,original,通过,,,,来源原文（英文，记录所带）：供追溯，不是操作指令,"Source wording (as the record carries it): for tracing, not an instruction"
+E014,1,changed,ACTIONS,missing-project-asset-identity.recheck,通过,,W2 新句义务正确（只对这个构件）。另见 E289：同一句在复检单项页被当作“复检前留下的条件”。,,重新发布的模型上，这个构件在所列每条要求下都通过,"On the reissued model, this element passes every requirement listed"
+E017,1,changed,ACTIONS,in-model-position-not-evaluated.action,通过,,,,这不是已知的模型缺陷。它的空间归属目前还没有评估：空间归属的检查规则没有覆盖到这个构件。这一步是扩展规则的适用范围，让检查覆盖到它，而不是改模型；覆盖并运行之后，才知道要不要改模型,"This is not a known model defect. Its spatial assignment has not been evaluated yet: the spatial-assignment check rules do not reach this element. This step is to extend the rules' scope of application so that the check reaches it, not to change the model; only once it is covered and the check has run will it be known whether the model needs changing"
+E021,1,c-channel,ACTIONS,missing-corresponding-opening.action,（C 通道，维持 10/8 意见）,,未改；按 Pack 0.1.0 忠实表达。00487 的穿越跨两个作者模型的问题仍在册，等 C 通道。,,在接收方模型里、被穿过的构件上建出洞口或竖井，不要做成交出方模型里的空洞。穿过几个构件就要几个洞口,"In the receiving side's model, model an opening or shaft in the element it passes through, not a void in the handing-over side's model. One opening for each element it passes through"
+E047,1,batch-1015,ASPECT_NOTES,semanticsAndContent,通过,,,,检查要求被修改过，检查结果内容也变了：结果的变化可能来自要求的修改（例如要求放宽），不能据此说模型修好了。记录不说明要求是放宽还是收紧。,"The check requirement was edited and the check result content changed too: the change in result may come from the edit to the requirement (for example a relaxed requirement), so it cannot be taken to mean the model was fixed. The record does not say whether the requirement was relaxed or tightened."
+E067,1,batch-1015,CARRY_OVER_REASONS,finding-equivalent,通过,,,,对应的检查结果只有一条，模型版本、检查结果内容、检查要求、检查程序逐项相同。,"There is exactly one corresponding check result; model version, check result content, check requirement and checker are the same, aspect by aspect."
+E068,1,batch-1015,CARRY_OVER_REASONS,finding-changed,通过,,,,对应的检查结果只有一条，逐项比较后至少有一个方面不同。,"There is exactly one corresponding check result; compared aspect by aspect, at least one differs."
+E069,1,batch-1015,CARRY_OVER_REASONS,no-counterpart-in-the-cited-run,通过,,,,本次记录依据的验证运行里，这个构件在这条要求下没有检查结果。,"In the validation run this record rests on, this element has no check result under this requirement."
+E070,1,batch-1015,CARRY_OVER_REASONS,counterpart-not-cited-under-the-current-binding,通过,,,,验证运行里有对应的检查结果，但本次记录没有引用它。,"The validation run has a corresponding check result, but this record does not cite it."
+E071,1,batch-1015,CARRY_OVER_REASONS,sealed-citation-has-no-comparison-basis,通过,,,,原记录封存时没有保存这条引用的比较依据（旧版本的记录）。本页不会用当前规则去补造，所以只能如实显示无法比较。,"When the original record was sealed it kept no comparison basis for this citation (a record from an older version). This page will not make one up from the current rules, so it can only say honestly that it cannot compare."
+E072,1,batch-1015,CARRY_OVER_REASONS,comparison-basis-version-unknown,通过,,,,原记录保存的比较依据，是本系统不认识的版本。,The comparison basis the original record kept is of a version this system does not recognise.
+E073,1,batch-1015,CARRY_OVER_REASONS,subject-not-present,通过,,,,这条证据所针对的构件，在本次记录里已经不在（去向见“记录给出的原因”）。构件不在不等于已修复。,"The element this evidence is about is no longer in this record (where it went: see ""the reason the record gives""). An element that is gone is not fixed."
+E074,1,batch-1015,CARRY_OVER_REASONS,counterpart-not-unique,通过,,,,本次有不止一条候选的对应检查结果，系统不从中挑选（全部候选见“记录给出的原因”）。,"This time there is more than one candidate corresponding check result, and the system does not choose between them (all candidates: see ""the reason the record gives"")."
+E075,1,batch-1015,CARRY_OVER_REASONS,requirement-semantics-basis-unavailable,通过,,,,封存一方或当前一方没有“检查要求”的比较依据。,The sealed side or the current side has no comparison basis for the check requirement.
+E076,1,batch-1015,CARRY_OVER_REASONS,comparison-basis-incomplete,通过,,,,封存一方或当前一方缺少部分比较依据（模型版本、检查结果内容摘要或检查程序指纹）。,"The sealed side or the current side lacks part of the comparison basis (model version, check result content digest or checker fingerprint)."
+E077,1,batch-1015,CARRY_OVER_REASONS,determination-same-reference-same-content,通过,,,,同一份判定：引用相同，内容摘要也相同。,The same determination: the same reference and the same content digest.
+E078,1,batch-1015,CARRY_OVER_REASONS,determination-content-changed-under-the-same-reference,通过,,,,引用相同，但判定的内容已经不是原记录读到的那一份（被重新作出、重新归属或重新签署）。新判定照常作为证据读取，只是不能说它和原判定是同一份。,"The same reference, but the determination's content is no longer what the original record read (made again, re-attributed or re-signed). The new determination is read as evidence as usual; it just cannot be called the same determination as the original."
+E079,1,batch-1015,CARRY_OVER_REASONS,determination-not-cited-by-this-record,含义错误,M2,引擎只在模型版本未变、本次记录未再引用该判定时给出此码（recheck.py 约 676 行），不核对是否有替代判定；“它被别的判定取代了”是记录没有的事实。,删去后半句，改为“本次记录没有再引用这份判定；记录没有说明原因”。英文同步。,模型版本没有变，本次记录没有再引用这份判定：它被别的判定取代了。,"The model version did not change, and this record no longer cites this determination: another determination replaced it."
+E080,1,batch-1015,CARRY_OVER_REASONS,determination-not-attributable-to-this-context,通过,,,,模型版本已经变化，原判定是针对旧版本作出的，不能归到当前版本。不是证据不存在，也不是原判定错误；需要针对当前版本的判定。,"The model version has changed, and the original determination was made against the old version, so it cannot be attributed to the current one. The evidence is not missing and the original determination is not wrong; a determination against the current version is needed."
+E081,1,batch-1015,CARRY_OVER_STATES,equivalent.label,通过,,,,比较依据一致,Comparison basis unchanged
+E082,1,batch-1015,CARRY_OVER_STATES,equivalent.meaning,通过,,,,这条旧证据在本次记录里有唯一对应的一条，逐项比较都相同。,"This old evidence has exactly one counterpart in this record, and every aspect compared is the same. "
+E083,1,batch-1015,CARRY_OVER_STATES,equivalent.caveat,通过,,,,这只说明不必因为引用换了键而重新收集这条证据，不代表整个交接不用复核。,It only means the evidence need not be gathered again because its citation changed key; it does not mean the whole handover needs no review.
+E084,1,batch-1015,CARRY_OVER_STATES,changed.label,通过,,,,比较依据有变化,Comparison basis changed
+E085,1,batch-1015,CARRY_OVER_STATES,changed.meaning,通过,,,,这条旧证据在本次记录里有唯一对应的一条，但至少有一个方面不同。,"This old evidence has exactly one counterpart in this record, but at least one aspect differs. "
+E086,1,batch-1015,CARRY_OVER_STATES,changed.caveat,通过,,,,结果读起来相同，也仍然算有变化；变了的是哪些方面，见这一条的说明。,"Even if the result reads the same, it still counts as changed; which aspects changed is said on the row."
+E087,1,batch-1015,CARRY_OVER_STATES,no-counterpart.label,通过,,,,未找到对应证据,No counterpart found
+E090,1,batch-1015,CARRY_OVER_STATES,not-provable.label,通过,,,,现有依据不足以比较,Not enough basis to compare
+E093,1,batch-1015,CHANGED_ASPECTS,model-version,通过,,,,模型版本,model version
+E094,1,batch-1015,CHANGED_ASPECTS,finding-content,通过,,,,检查结果内容,check result content
+E095,1,batch-1015,CHANGED_ASPECTS,requirement-semantics,通过,,,,检查要求,check requirement
+E096,1,batch-1015,CHANGED_ASPECTS,checker,通过,,,,检查程序,checker
+Z10,1,unindexed,CITATION_GLOSSES,"Product validation rule of this repository; not a project, owner, statutory or buildingSMART requirement. Values from IFC4 ADD2 TC1 IfcAirTerminalTypeEnum.",通过,,,,本仓库的产品验证规则；不是项目、业主、法规或 buildingSMART 的要求。取值来自 IFC4 ADD2 TC1 的 IfcAirTerminalTypeEnum。,
+E120,1,changed,CONDITION_ENTRIES,no-recheck-condition.plain,通过,,,,原记录没有复检条件：原来的判断没有留下待办。,The original record had no recheck condition: the original conclusion left nothing outstanding.
+E127,1,changed,CONSEQUENCE_KINDS,work-suspended,含义错误,M1,Pack 把 work-suspended 同时挂在 4 种 BLOCKED 问题类型上（含示例里出现的 missing-corresponding-opening）；item/0/4/0“受阻”旁显示“等有结论再定”，而受阻已有结论。源头是 BIM 10/8 的 W8 建议。,改为“这项工作暂缓”／“This work is on hold”，不带“等有结论再定”。,这项工作暂缓，等有结论再定,This work is held until decided
+E145,1,changed,DETAILS_WORDS,projectAssumption,通过,,,,这是本项目假定的要求（ProjectAssumption），不是通用要求。,"This is a requirement assumed for this project (ProjectAssumption), not a general one."
+Q12,1,new,DIRECTORY,exampleIntro,通过,,,,每个示例是一份检查记录。,Each example is one check record.
+E149,1,batch-1015,DISPOSITIONS,present,通过,,,,仍在本次检查范围内；判断与条件另看,Still in this check's scope; conclusion and condition are read separately
+E150,1,batch-1015,DISPOSITIONS,element-deleted-in-reissued-model,通过,,,,在重发模型中删除，不等于修复,Deleted in the re-issued model; that is not a fix
+E151,1,batch-1015,DISPOSITIONS,element-out-of-subject-class,通过,,,,已不属于此活动对象类别，不等于修复,No longer of this activity's subject classes; that is not a fix
+E152,1,batch-1015,DISPOSITIONS,pairing-no-longer-derived,通过,,,,这两个构件现在不再被配成一对来检查，不等于开洞已补,These two elements are no longer paired for checking; that does not mean the opening was added
+E153,1,batch-1015,DISPOSITIONS,outside-declared-scope,通过,,,,本次未声明该范围，不等于问题解除,This scope was not declared this time; that does not mean the problem is gone
+E154,1,batch-1015,DISPOSITION_ENTRIES,present.text,通过,,,,仍在本次检查范围内；判断与条件另看,Still in this check's scope; conclusion and condition are read separately
+E156,1,batch-1015,DISPOSITION_ENTRIES,element-deleted-in-reissued-model.text,通过,,,,在重发模型中删除，不等于修复,Deleted in the re-issued model; that is not a fix
+E158,1,batch-1015,DISPOSITION_ENTRIES,element-out-of-subject-class.text,通过,,,,已不属于此活动对象类别，不等于修复,No longer of this activity's subject classes; that is not a fix
+E160,1,batch-1015,DISPOSITION_ENTRIES,pairing-no-longer-derived.text,通过,,,,这两个构件现在不再被配成一对来检查，不等于开洞已补,These two elements are no longer paired for checking; that does not mean the opening was added
+E162,1,batch-1015,DISPOSITION_ENTRIES,outside-declared-scope.text,通过,,,,本次未声明该范围，不等于问题解除,This scope was not declared this time; that does not mean the problem is gone
+E164,1,batch-1015,ELEMENT_WORDS,unnamed,通过,,,,模型中没有填写名称,No name filled in in the model
+E166,1,batch-1015,ELEMENT_WORDS,noStorey,通过,,,,模型中没有楼层归属,No storey assignment in the model
+E167,1,batch-1015,ELEMENT_WORDS,noDiscipline,通过,,,,记录未提供专业信息；本界面不从模型标识推断专业,The record gives no discipline; this interface does not infer one from a model identifier
+E168,1,batch-1015,ELEMENT_WORDS,modelIsNotDiscipline,通过,,,,这是模型标识，不是专业声明,"This is a model identifier, not a statement of discipline"
+E169,1,batch-1015,ELEMENT_WORDS,noClassName,通过,,,,本界面没有这个类别的中文名,(IFC class)
+E170,1,batch-1015,ELEMENT_WORDS,naming,通过,,,,名称取自模型文件本身，可能为空，也可能与别的构件重名；要在模型里定位，请用 GlobalId。,"The name is taken from the model file itself; it may be empty or shared with other elements. To find it in the model, use the GlobalId."
+E593,1,b-tier,EVIDENCE,reissueColumns.role,通过,,,,角色（取自本次请求的交接）,Role (from this request's handover)
+E596,1,b-tier,EVIDENCE,notReissued,通过,,,,没有变（原版本）,Unchanged (original version)
+E171,1,batch-1015,EXAMPLES,member-evidence.step,通过,,,,第一步,Step 1
+E172,1,batch-1015,EXAMPLES,member-evidence.question,通过,,,,交出方交了模型：有哪些事项要处理，各由谁处理，每一项要做什么？,"The handing-over side has handed over its model: which items need dealing with, who deals with each, and what does each one need?"
+E173,1,batch-1015,EXAMPLES,member-evidence.given,通过,,,,这个示例被给了：随附样例项目的两份模型；处理团队的安排，以及人工判定（是否穿过、洞口情况、两侧模型是否对齐），由示例设定。,"This example was given: the bundled sample project's two models; the handling teams, and the human determinations (whether something passes through, the state of openings, whether the two models are aligned), set by the example."
+E174,1,batch-1015,EXAMPLES,recheck-requirement-relaxed.step,通过,,,,第二步,Step 2
+E175,1,batch-1015,EXAMPLES,recheck-requirement-relaxed.question,通过,,,,同一份记录复检之后：两侧模型都没有重新发布，却有判断变了。变的是哪一项，为什么？,"The same record after a recheck: neither model was re-issued, yet a conclusion changed. Which one changed, and why?"
+E176,1,batch-1015,EXAMPLES,recheck-requirement-relaxed.given,通过,,,,这个示例被给了：一条被引用的检查要求放宽了；交出方和接收方的模型版本都没有变。,This example was given: one cited check requirement was relaxed; neither the handing-over nor the receiving side's model version changed.
+E603,1,b-tier,FAULT_WORDS,note,通过,,,,这是程序自身的问题，不是对任何项目或模型的判断；没有任何检查结果可以显示。,"This is a problem of the program itself, not a judgement about any project or model; there are no check results to show."
+E604,1,b-tier,FAULT_WORDS,fault,通过,,,,程序故障：没有拿到检查数据,Program fault: no check data was received
+E566,1,batch-1015,FIRST,cardDetails,通过,,,,构件信息和要做什么,Element details and what to do
+E567,1,batch-1015,FIRST,cardElements,通过,,,,构件信息,Element details
+E568,1,batch-1015,FIRST,openCard,通过,,,,查看这一项,See this item
+E572,1,batch-1015,FIRST,notRevised,通过,,,,（该页尚未改版，仍是内部用语）," (Chinese only: that page has not been translated or revised yet, and still uses internal terms)"
+E584,1,b-tier,FIRST,team,通过,,,,处理团队 ,Handling team 
+E585,1,b-tier,FIRST,verdictLine,通过,,,,：对应的那项工作 ,: the work concerned is 
+E586,1,b-tier,FIRST,quietLine,通过,,,,：{summary}（列在本页下方）,: {summary} (listed further down this page)
+E587,1,b-tier,FIRST,problem,措辞建议,W4,“问题”标签挨着“不是已知的模型缺陷：……”，两者语气相抵。低优先级。,改为“情况”／“What the record says”，或保留并接受。,问题,Problem
+E588,1,b-tier,FIRST,columns.work,通过,,,,哪项工作：结论,Which work: conclusion
+E589,1,b-tier,FIRST,openHeading.one,通过,,,,{label}，按处理团队（{count} 个事项）,"{label}, by handling team ({count} item)"
+E590,1,b-tier,FIRST,openHeading.other,通过,,,,{label}，按处理团队（{count} 个事项）,"{label}, by handling team ({count} items)"
+E183,1,batch-1015,HOME,title,通过,,,,查看模型交接中仍需处理的事项,Items still to be dealt with in a model handover
+E184,1,batch-1015,HOME,lede,通过,,,,帮助 BIM 经理了解：一次交接前检查发现了什么；复检之后，哪些判断变了、哪些事项仍需处理、每一项涉及哪些构件、依据是什么、下一步做什么。,"For a BIM manager: what a pre-handover check found; after a recheck, which conclusions changed, which items still need dealing with, which elements each one involves, what it rests on, and what to do next."
+E188,1,batch-1015,HOME,example.title,通过,,,,看一个模拟示例,Look at a simulated example
+E189,1,batch-1015,HOME,example.body,通过,,,,从一次首次检查出发：找到需要处理的事项，看清涉及的构件、要做什么、由谁处理、完成后拿什么复检；然后再看同一事项复检后的变化。示例里模拟的内容，页面上逐处标明。,"Start from a first check: find the items that need dealing with, and see which elements they involve, what to do, who deals with it and what a recheck must show; then see how the same item changed after a recheck. What is simulated in the example is marked where it appears."
+E190,1,batch-1015,HOME,example.action,通过,,,,选择模拟示例,Choose a simulated example
+E191,1,batch-1015,HOME,attempt.title,通过,,,,查看随附项目的检查尝试,See the check attempt on the bundled project
+E192,1,changed,HOME,attempt.body,通过,,,,仓库随附一个样例项目。对它的检查尝试没有开始评估；这里说明原因。这个入口不是导入入口：只看这个样例项目，不能换成别的模型。,"The repository comes with a sample project. The check attempt on it did not start an assessment; this explains why. This entry is not an import: it shows only this sample project, and you cannot swap in another model."
+E193,1,batch-1015,HOME,attempt.action,通过,,,,查看这次检查尝试,See this check attempt
+E197,1,batch-1015,HOME,canHeading,通过,,,,现在可以做什么,What you can do now
+E198,1,batch-1015,HOME,cannotHeading,通过,,,,现在还不能做什么,What you cannot do yet
+Z04,1,unindexed,IFC_CLASS_NAMES,IfcAirTerminal,通过,,,,风口,
+Z05,1,unindexed,IFC_CLASS_NAMES,IfcChimney,通过,,,,烟囱,
+Z06,1,unindexed,IFC_CLASS_NAMES,IfcDuctSegment,通过,,,,风管段,
+Z07,1,unindexed,IFC_CLASS_NAMES,IfcRoof,通过,,,,屋顶,
+Z08,1,unindexed,IFC_CLASS_NAMES,IfcSlab,通过,,,,楼板,
+E578,1,b-tier,ITEM,noFollowUp,通过,,,,记录没有为这一项给出后续处理动作、处理团队或默认处理角色。,"The record gives no follow-up action, handling team or default handling role for this item."
+E579,1,b-tier,ITEM,needs,通过,,,,这项工作需要什么,What this work needs
+E580,1,b-tier,ITEM,leaf,通过,,,,终点 outcome,Final outcome
+E581,1,b-tier,ITEM,context,通过,,,,背景引用：不是这个结论的依据，逐字显示。,"Background citations: not the basis of this conclusion, shown word for word."
+E582,1,b-tier,ITEM,actionHeading,通过,,,,二、要做什么、由谁处理、完成后拿什么复检,"2. What to do, who deals with it, what a recheck must show"
+E583,1,b-tier,ITEM,followUpHeading,通过,,,,二、后续,2. Follow-up
+E201,1,batch-1015,KEY_CHANGED,yes,通过,,,,引用换了键（新键就是上面“本次记录引用的对应证据”）。换键本身不算变化。,"The citation changed key (the new key is the ""corresponding evidence this record cites"" above). A change of key is not itself a change."
+E203,1,b-tier,LEAF_READINGS,asset-identity/satisfied,通过,,,,适用于它的项目资产标识要求评为通过，并且它确实被评估到,"The project asset-identity requirements that apply to it passed, and it was actually evaluated"
+E204,1,b-tier,LEAF_READINGS,asset-identity/unmet,通过,,,,项目资产标识的要求没有满足,The project asset-identity requirement is not met
+E205,1,b-tier,LEAF_READINGS,asset-identity/not-yet-evaluated,通过,,,,资产标识的规则没有覆盖到它,The asset-identity rules did not cover it
+E208,1,b-tier,LEAF_READINGS,in-model-position/not-yet-evaluated,通过,,,,楼层或空间归属的检查没有覆盖到它,The storey or space check did not cover it
+E209,1,b-tier,LEAF_READINGS,cross-model-alignment/confirmed,通过,,,,已有记录确认两侧模型对齐到共同的基准（按项目接受的方法，针对所列模型版本）,"A record confirms the two models are aligned to a common datum (by the method the project accepts, for the listed model versions)"
+E212,1,b-tier,LEAF_READINGS,penetration-determination/no-penetration,通过,,,,已有协调评审判定：它不穿过接收方模型里的任何构件。不穿过就不需要开洞，所以开洞情况没有被评估——这不是“开洞没问题”,"A coordination-review determination says it passes through no element of the receiving model. With no penetration no opening is needed, so the opening was not assessed — this is not ""the opening is fine"""
+E214,1,b-tier,LEAF_READINGS,penetration-determination/not-yet-determined,通过,,,,还没有协调评审判定它是否穿过接收方模型里的构件,No coordination review has determined yet whether it passes through elements of the receiving model
+E215,1,b-tier,LEAF_READINGS,opening-status/cross-referenced,通过,,,,这一对：洞口已建在被穿过的构件上，并且已关联到穿过它的这个构件,"This pair: the opening is modelled in the element passed through, and linked to the element passing through it"
+E217,1,b-tier,LEAF_READINGS,opening-status/not-modelled,通过,,,,这一对：被穿过的构件上没有建出洞口,This pair: no opening is modelled in the element passed through
+E219,1,b-tier,LEAF_READING_WORDS,label,通过,,,,这个结论依据的结果,The result this conclusion rests on
+L002,1,new,LOCAL_CHECK,home.title,通过,,,,检查自己的 IFC 模型（产品验证练习）,Check your own IFC model (product validation exercise)
+L003,1,new,LOCAL_CHECK,home.body,通过,,,,选择自己导出的 IFC4 文件，只用一条产品验证规则检查风口的预定义类型。运行前会说明检查什么、要求从哪里来、结果不能说明什么，以及本机会留下哪些记录。,"Choose an IFC4 file you exported and check the predefined type of its air terminals against one product validation rule. Before it runs, the page says what is checked, where the requirement comes from, what the result cannot tell you, and what this computer keeps."
+L004,1,new,LOCAL_CHECK,home.status,通过,,,,当前提供模拟示例，以及对自己 IFC4 文件的一项有限产品验证练习；不能导入 Revit 文件本身，也不提供整体合规或可施工结论。,"Available now: simulated examples, and one limited product validation exercise on your own IFC4 files. A Revit file itself cannot be imported, and there is no overall compliance or ready-to-build conclusion."
+L007,1,new,LOCAL_CHECK,home.cannot[0],通过,,,,导入 Revit 文件本身（.rvt），或用产品验证练习以外的规则检查自己的模型,"Import a Revit file itself (.rvt), or check your own model against rules other than the product validation exercise"
+L008,1,new,LOCAL_CHECK,home.cannot[1],通过,,,,给出整体合规、可施工或“可以交付”的结论,"Give an overall compliance, ready-to-build or ""can be handed over"" conclusion"
+L050,1,new,LOCAL_CHECK,disciplines.Architecture,通过,,,,建筑（Architecture）,Architecture
+L052,1,new,LOCAL_CHECK,disciplines.MEP,通过,,,,机电（MEP）,MEP
+E222,1,batch-1015,MODE_LABELS,fixture,通过,,,,模拟示例,Simulated example
+E225,1,batch-1015,ONLY_REKEYED,,通过,,,,只是引用换了键,Only the citation's key changed
+Z01,1,changed,REASON_GLOSSES,The required property set does not exist,通过,,,,所要求的属性集不存在（要让导出写出这个属性集以及其中所要求的属性，不是给已有属性填值）,
+Z02,1,unindexed,REASON_GLOSSES,Requirement satisfied.,通过,,,,要求已满足,
+Z03,1,unindexed,REASON_GLOSSES,No applicable elements exist in this model.,通过,,,,这个模型里没有这条要求适用的构件,
+E234,1,batch-1015,RECHECK,title,通过,,,,复检结果,Recheck result
+E238,1,batch-1015,RECHECK,resultTitle,通过,,,,复检结果：需要处理的事项,Recheck result: items to deal with
+E239,1,batch-1015,RECHECK,summary.one,通过,,,,本次结果：共 {count} 个事项,This result: {count} item
+E240,1,batch-1015,RECHECK,summary.other,通过,,,,本次结果：共 {count} 个事项,This result: {count} items
+E241,1,batch-1015,RECHECK,groupLine.one,通过,,,,{count} 个事项,{count} item
+E242,1,batch-1015,RECHECK,groupLine.other,通过,,,,{count} 个事项,{count} items
+E243,1,batch-1015,RECHECK,groupSummary,通过,,,,：{summary},: {summary}
+E244,1,batch-1015,RECHECK,models,通过,,,,模型：{headline}。,Models: {headline}.
+E245,1,batch-1015,RECHECK,moved.one,通过,,,,{count} 个事项的结论和复检前不同：,{count} item's conclusion differs from before the recheck:
+E246,1,batch-1015,RECHECK,moved.other,通过,,,,{count} 个事项的结论和复检前不同：,{count} items' conclusions differ from before the recheck:
+E247,1,batch-1015,RECHECK,requirementChanged,通过,,,,复检前引用的 {count} 条旧证据里，有 {edited} 条的检查要求变了。,"Of the old evidence cited before the recheck ({count} in all), the check requirement changed for {edited}."
+E248,1,batch-1015,RECHECK,groupHeading.one,通过,,,,{label}（{count} 个事项）,{label} ({count} item)
+E249,1,batch-1015,RECHECK,groupHeading.other,通过,,,,{label}（{count} 个事项）,{label} ({count} items)
+E250,1,batch-1015,RECHECK,cannotHeading,通过,,,,本预览做不了的事,What this preview cannot do
+E251,1,batch-1015,RECHECK,cannotNote,通过,,,,这些动作没有实现，所以页面上没有对应的按钮。,"These actions are not implemented, so the page has no buttons for them."
+E252,1,batch-1015,RECHECK,limitsHeading,通过,,,,读复检结果时,When reading a recheck result
+E253,1,batch-1015,RECHECK,sideModel,通过,,,,{side}模型,{side} model
+E254,1,batch-1015,RECHECK,detailsSummary,通过,,,,复检前后的比较明细：模型、事项、旧证据,"Before-and-after details: models, items, old evidence"
+E256,1,batch-1015,RECHECK,itemsHeading.one,通过,,,,复检前记录里的事项（{count} 个），现在的情况,"The item in the record before the recheck ({count}), and where it stands now"
+E257,1,batch-1015,RECHECK,itemsHeading.other,通过,,,,复检前记录里的事项（{count} 个），现在的情况,"The items in the record before the recheck ({count}), and where they stand now"
+E258,1,batch-1015,RECHECK,evidenceHeading.one,通过,,,,复检前引用的旧证据（{count} 条），和本次记录比较的结果,"The old evidence cited before the recheck ({count} row), compared with this record"
+E259,1,batch-1015,RECHECK,evidenceHeading.other,通过,,,,复检前引用的旧证据（{count} 条），和本次记录比较的结果,"The old evidence cited before the recheck ({count} rows), compared with this record"
+E260,1,batch-1015,RECHECK,kindsNote,通过,,,,检查结果和人工判定是两种证据，分开计数，不相加。,"Check results and human determinations are two kinds of evidence, counted apart and never added together."
+E261,1,batch-1015,RECHECK,traceSummary,通过,,,,追溯信息：记录标识、模型版本指纹、记录原码对照,"Tracing: record identity, model version fingerprints, record codes"
+E262,1,batch-1015,RECHECK,priorDigest,通过,,,,复检前记录的指纹（assessment digest）,Fingerprint of the record before the recheck (assessment digest)
+E263,1,batch-1015,RECHECK,currentDigest,通过,,,,本记录的指纹（assessment digest）,Fingerprint of this record (assessment digest)
+E264,1,batch-1015,RECHECK,noChange,通过,,,,（记录中为空列表：没有模型变化）,(an empty list in the record: no model changed)
+E265,1,batch-1015,RECHECK,versionColumns.side,通过,,,,,Side
+E266,1,batch-1015,RECHECK,versionColumns.prior,通过,,,,复检前记录,Record before the recheck
+E267,1,batch-1015,RECHECK,versionColumns.current,通过,,,,本记录,This record
+E268,1,batch-1015,RECHECK,versionNote,通过,,,,版本以内容指纹表示，不以文件名当版本。哪一侧变了取自记录的 changed_models，本页不比较指纹。,"A version is a content fingerprint, not a file name. Which side changed is taken from the record's changed_models; this page does not compare fingerprints."
+E269,1,batch-1015,RECHECK,glossaryDispositions,通过,,,,事项现在的情况：记录原码,Where items stand now: record codes
+E270,1,batch-1015,RECHECK,glossaryConditions,通过,,,,复检前留下的条件：状态原码（没有“整句条件已满足”）,"Conditions left before the recheck: state codes (there is no ""the whole condition is met"")"
+E271,1,batch-1015,RECHECK,glossaryStates,通过,,,,旧证据比较：状态原码,Old-evidence comparison: state codes
+E272,1,batch-1015,RECHECK,glossaryReasons,通过,,,,旧证据比较：原因原码,Old-evidence comparison: reason codes
+E273,1,batch-1015,RECHECK,glossaryAspects,通过,,,,变化方面：原码,Aspects that changed: codes
+E280,1,b-tier,RECHECK_ITEM,back,通过,,,,← 返回复检事项列表（回到这一项的位置）,← Back to the recheck items (to this item's place)
+E281,1,b-tier,RECHECK_ITEM,kicker,通过,,,,复检事项 · {count},Recheck item · {count}
+E284,1,b-tier,RECHECK_ITEM,actionHeading,通过,,,,二、要做什么、由谁处理、完成后拿什么复检,"2. What to do, who deals with it, what a recheck must show"
+E285,1,b-tier,RECHECK_ITEM,whichOne,通过,,,,三、是哪个构件,3. Which element
+E286,1,b-tier,RECHECK_ITEM,whichTwo,通过,,,,三、是哪两个构件,3. Which two elements
+E288,1,b-tier,RECHECK_ITEM,conditionHeading,通过,,,,四、复检前留下的结束条件，这次达到了吗,4. Was the exit condition left before the recheck reached this time?
+E289,1,b-tier,RECHECK_ITEM,priorCondition,措辞建议,W2,“复检前留下的结束条件”显示的是界面裁定句（W2 后为“这个构件……都通过”），而四节的机读状态是按记录里的 Pack 原条件（全范围每个构件 PASS）算的；两者义务不同。需要产品裁定。,二选一：显示记录自己的条件（中文释义）；或在这一行注明“本界面的说法，记录原条件见折叠”。,复检前留下的结束条件：{text}。,The exit condition left before the recheck: {text}
+E291,1,b-tier,RECHECK_ITEM,conditionNote,措辞建议,W3,#52 后它在第四节；结论变了（如 recheck/7/2 受阻→可以开始）时，“结论变了，不等于原条件已满足”是读法限制。,结论有变化时，在结论旁加一句，或把这句提到结论旁；四节保留。,这里只说复检前留下的结束条件被证明到了什么程度，与现在的结论分开读：结论变了，不等于原条件已满足。,This says only how far the exit condition left before the recheck has been shown to be reached; read it apart from the conclusion now. A changed conclusion does not mean the original condition is met.
+E292,1,b-tier,RECHECK_ITEM,originalSummary,通过,,,,来源原文（英文）与记录原码：供追溯，不是操作指令,"Source wording and record codes: for tracing, not an instruction"
+E293,1,b-tier,RECHECK_ITEM,conditionBasis,通过,,,,condition_basis（原文）,condition_basis (as written)
+E294,1,b-tier,RECHECK_ITEM,evidenceHeading,通过,,,,五、复检前的证据,5. The evidence before the recheck
+E295,1,b-tier,RECHECK_ITEM,evidenceCount.one,通过,,,,和这一项放在一起评估的旧证据共 {count} 条,{count} piece of old evidence was assessed together with this item
+E296,1,b-tier,RECHECK_ITEM,evidenceCount.other,通过,,,,和这一项放在一起评估的旧证据共 {count} 条,{count} pieces of old evidence were assessed together with this item
+E297,1,b-tier,RECHECK_ITEM,requirementChanged.one,通过,,,,，其中 {count} 条的检查要求变了,", and for {count} of them the check requirement changed"
+E298,1,b-tier,RECHECK_ITEM,requirementChanged.other,通过,,,,，其中 {count} 条的检查要求变了,", and for {count} of them the check requirement changed"
+E299,1,b-tier,RECHECK_ITEM,priorSources,通过,,,,复检前引用的证据，来源：,"Evidence cited before the recheck, by source: "
+E300,1,b-tier,RECHECK_ITEM,currentSources,通过,,,,本次记录引用的对应证据，来源：,"Corresponding evidence this record cites, by source: "
+E301,1,b-tier,RECHECK_ITEM,rowsSummary,通过,,,,逐条查看旧证据和比较结果,See each piece of old evidence and how it compared
+E302,1,b-tier,RECHECK_ITEM,shared.one,通过,,,,记录把放在一起评估的一组构件的旧证据存在一处，不按构件拆开：这一组的 {count} 个事项共用下面这些行。,"The record keeps the old evidence of a group of elements assessed together in one place, not split by element: the group's {count} item shares the rows below."
+E303,1,b-tier,RECHECK_ITEM,shared.other,通过,,,,记录把放在一起评估的一组构件的旧证据存在一处，不按构件拆开：这一组的 {count} 个事项共用下面这些行。,"The record keeps the old evidence of a group of elements assessed together in one place, not split by element: the group's {count} items share the rows below."
+E304,1,b-tier,RECHECK_ITEM,noEvidence,通过,,,,复检前这一组的证据路径没有引用任何证据。,The group's evidence path before the recheck cites no evidence.
+E305,1,b-tier,RECHECK_ITEM,priorOrdinal,通过,,,,复检前的内部分组编号,Internal group number before the recheck
+E306,1,b-tier,RECHECK_ITEM,currentLine,通过,,,,现在的内部分组编号、verdict 与终点 outcome,"Current internal group number, verdict and final outcome"
+E597,1,b-tier,RECHECK_MODEL,onlyRekeyed,通过,,,,{rekeyed}：证据内容和比较依据都没有变。,{rekeyed}: neither the evidence content nor the comparison basis changed.
+E598,1,b-tier,RECHECK_MODEL,producing,通过,,,,交出方,Handing-over side
+E599,1,b-tier,RECHECK_MODEL,consuming,通过,,,,接收方,Receiving side
+E327,1,batch-1015,REISSUE_CASES,none.headline,通过,,,,两侧模型都没有重新发布（版本未变）,Neither model was re-issued (versions unchanged)
+E328,1,batch-1015,REISSUE_CASES,none.detail,通过,,,,本次复检和原记录用的是同一对模型版本，所以下面的差异不来自模型改动。,"This recheck uses the same pair of model versions as the original record, so the differences below do not come from model edits."
+E343,1,batch-1015,REISSUE_NEUTRAL,,通过,,,,本页只说明哪一侧变了、记录证明了什么，不根据重新发布的方向预判好坏。,This page only says which side changed and what the record shows; it does not judge good or bad from the direction of a re-issue.
+E344,1,batch-1015,REQUIREMENT_CHANGED_NOTE,,通过,,,,记录同时显示：和这一项放在一起评估的旧证据里，有 {count} 条的检查要求变了；记录不说明是放宽还是收紧。读这个结论时要一并看，逐条见“复检前的证据”。,"The record also shows that, among the old evidence assessed together with this item, the check requirement changed for {count}; the record does not say whether it was relaxed or tightened. Read this conclusion with that in mind; row by row, see ""The evidence before the recheck""."
+E357,1,changed,RULE_NOTES,PV-001.passProves,措辞建议,W1,实测（IfcTester，合成 IFC4）：类型存在但什么也没说（NOTDEFINED，或 USERDEFINED 无文本）时，实例 USERDEFINED+ObjectType“LOUVRE”同样通过；新句只写“没有类型时”。BIM 10/8 的 W5 原话也写窄了。,把“没有类型时”改为“类型什么也没说（没有类型、NOTDEFINED，或 USERDEFINED 未写文本）时”。,检查器按它的读取顺序取到的那一个值（类型上的值优先；类型声明 USERDEFINED 时是它的自由文本；类型什么也没说时才读构件实例；没有类型时，实例声明 USERDEFINED 也是它的自由文本），逐字等于 DIFFUSER、GRILLE、LOUVRE、REGISTER 四个值之一。,"The one value the checker took in its reading order (the type's value first; a USERDEFINED type's free text; the element instance only when the type says nothing, and with no type, a USERDEFINED instance's free text too) is, character for character, one of DIFFUSER, GRILLE, LOUVRE and REGISTER."
+E360,1,changed,RULE_NOTES,PV-001.passDoesNotProve[2],措辞建议,W1,同 E357。Revit 导出的类型默认就是 NOTDEFINED（C2 基线全部如此），这种情形比“没有类型”更常见。,同 E357。,规则不接受的 USERDEFINED 没有出现：类型声明 USERDEFINED 时，检查器比较的是它的自由文本；没有类型时，构件实例声明 USERDEFINED 也按它的自由文本比较。比较逐字、区分大小写；文本恰好是 LOUVRE 会通过，写成 louvre、Louvre 或前后带空格则不通过。,"That no USERDEFINED, which the rule does not accept, is present: when the type declares USERDEFINED, the checker compares its free text; with no type, an element instance that declares USERDEFINED is compared by its free text as well. The comparison is character for character and case-sensitive; text that happens to be LOUVRE passes, while louvre, Louvre or text with leading or trailing spaces does not."
+E372,1,changed,RULE_NOTES,PV-001.reasonFreeText,措辞建议,W1,同 E357。,同 E357。,引号里不是预定义类型的枚举值，而是自由文本：类型声明 USERDEFINED 时，检查器拿它的自由文本来比较；没有类型时，构件实例声明 USERDEFINED 也是这样。,"What is in the quotation marks is not an enumeration value but free text: when the type declares USERDEFINED, the checker compares its free text; with no type, the same holds for an element instance that declares USERDEFINED."
+E373,1,batch-1015,RUN_LABELS,member-evidence,通过,,,,一次首次检查：交了模型，发现这些事项,"A first check: the model was handed over, and these items were found"
+E374,1,batch-1015,RUN_LABELS,pair-verdicts,通过,,,,同一份检查记录：成对构件的判断（模拟示例）,The same check record: conclusions on pairs of elements (simulated example)
+E375,1,batch-1015,RUN_LABELS,recheck-both-reissued,通过,,,,复检记录 1（模拟示例）,Recheck record 1 (simulated example)
+E376,1,batch-1015,RUN_LABELS,recheck-comparison,通过,,,,复检记录 2（模拟示例）,Recheck record 2 (simulated example)
+E377,1,batch-1015,RUN_LABELS,recheck-consuming-reissued,通过,,,,复检记录 3（模拟示例）,Recheck record 3 (simulated example)
+E378,1,batch-1015,RUN_LABELS,recheck-key-change-only,通过,,,,复检记录 4（模拟示例）,Recheck record 4 (simulated example)
+E379,1,batch-1015,RUN_LABELS,recheck-member-gone,通过,,,,复检记录 5（模拟示例）,Recheck record 5 (simulated example)
+E380,1,batch-1015,RUN_LABELS,recheck-prior-without-basis,通过,,,,复检记录 6（模拟示例）,Recheck record 6 (simulated example)
+E381,1,batch-1015,RUN_LABELS,recheck-producing-reissued,通过,,,,复检记录 7（模拟示例）,Recheck record 7 (simulated example)
+E382,1,batch-1015,RUN_LABELS,recheck-producing-reissued-content-changed,通过,,,,复检记录 8（模拟示例）,Recheck record 8 (simulated example)
+E383,1,batch-1015,RUN_LABELS,recheck-requirement-relaxed,通过,,,,模型未改，但交接判断发生变化,"The models did not change, but a handover conclusion did"
+E384,1,batch-1015,RUN_LABELS,recheck-semantics-changed,通过,,,,复检记录 10（模拟示例）,Recheck record 10 (simulated example)
+Q01,1,new,SOURCE_SUMMARY,lead,措辞建议,W5,摘要只点名“团队等”，展开的全文点名“处理团队安排、证据方法的接受等”；后者决定一条人工判定能否当证据，比团队更关键。低优先级。,改为“团队和证据方法的接受等项目设定为演示用……”。,随附的模拟示例，不是你的模型；团队等项目设定为演示用，不能用于正式项目决定。,"A simulated example shipped with the tool, not your model; project settings such as teams are for demonstration, not for formal project decisions."
+Q02,1,new,SOURCE_SUMMARY,cites,通过,,,,这份记录的结论引用了：{kinds}，逐条标在结论旁的“依据”一行。,"This record's conclusions cite {kinds}, labelled citation by citation on the ""Basis"" line beside each conclusion."
+Q04,1,new,SOURCE_SUMMARY,noRecord,通过,,,,结论引用的证据是真实的还是模拟的，逐条标在结论旁的“依据”一行。,"Whether the evidence a conclusion cites is real or simulated is labelled citation by citation on the ""Basis"" line beside it."
+Q05,1,new,SOURCE_SUMMARY,kinds.finding-real,通过,,,,真实检查输出,real check output
+Q06,1,new,SOURCE_SUMMARY,kinds.finding-fixture,通过,,,,模拟的检查结果,simulated check results
+Q07,1,new,SOURCE_SUMMARY,kinds.determination-fixture,通过,,,,模拟的人工判定,simulated human determinations
+Q08,1,new,SOURCE_SUMMARY,kinds.determination-unmarked,通过,,,,来源未标注的判定,determinations of unstated source
+Q11,1,new,SOURCE_SUMMARY,more,通过,,,,来源说明,About the sources
+E386,1,changed,TAG_WORDS,note,通过,,,,IFC Tag 是导出时写进 IFC 的标记；Revit 导出的通常是构件的 ElementId。核对：在 Revit 里用“按 ID 选择”选中这个 ID，看选中对象的名称和类别是否与本页相同；相同再按它处理，不同就不要按这个 Tag 去改：在 IFC 查看器里按 GlobalId 定位，读出名称、类型和位置，再在 Revit 里按这些找到对象并核对，然后在源模型里修改。,"The IFC Tag is a marker written into the IFC at export; what Revit writes is usually the element's ElementId. To check: in Revit, use ""Select by ID"" with this ID and see whether the selected object's name and class match this page; if they do, work from it; if they do not, do not change anything by this Tag: locate the object by its GlobalId in an IFC viewer, read its name, type and location, find the object in Revit by these and check it, then make the change in the source model."
+E600,1,b-tier,WORK,unchanged,通过,,,,{work}：{before} （{note}）,{work}: {before} ({note})
+E601,1,b-tier,WORK,changed,通过,,,,{work}：复检前 {before} → 现在 {now},{work}: before the recheck {before} → now {now}
+E503,1,b-tier,WORKSPACE_COMPARE,unchanged.one,通过,,,,两次结果相同的：{count} 条,Results that are the same in both runs: {count}
+E504,1,b-tier,WORKSPACE_COMPARE,unchanged.other,通过,,,,两次结果相同的：{count} 条,Results that are the same in both runs: {count}
+E508,1,b-tier,WORKSPACE_COMPARE,rows.one,通过,,,,{count} 条,{count} row
+E509,1,b-tier,WORKSPACE_COMPARE,rows.other,通过,,,,{count} 条,{count} rows
+E519,1,b-tier,WORKSPACE_COMPARE,inPrior.true,通过,,,,构件在前一次的构件清单里,The element is in the earlier run's list of elements
+E520,1,b-tier,WORKSPACE_COMPARE,inPrior.false,通过,,,,构件不在前一次的构件清单里,The element is not in the earlier run's list of elements
+E521,1,b-tier,WORKSPACE_COMPARE,inPrior.null,通过,,,,整个模型的一条结果，不针对构件,"A result for the whole model, not for an element"
+E531,1,b-tier,WORKSPACE_COMPARE,detailHeading,通过,,,,和前一次运行比,Compared with the earlier run
+E532,1,b-tier,WORKSPACE_COMPARE,detailPrior,通过,,,,前一次的结果,Earlier result
+E533,1,b-tier,WORKSPACE_COMPARE,detailCurrent,通过,,,,本次的结果,This result
+E534,1,b-tier,WORKSPACE_COMPARE,detailNewly,通过,,,,前一次运行没有这一条结果：它是新出现的。,The earlier run has no such result: it is newly appearing.
+E535,1,b-tier,WORKSPACE_COMPARE,detailNone,通过,,,,返回数据的对比里没有这一条。,The returned data's comparison does not include this result.
+E536,1,b-tier,WORKSPACE_COMPARE,priorReason,通过,,,,前一次的原因（原文）,Earlier reason (as written)
+E537,1,b-tier,WORKSPACE_COMPARE,currentReason,通过,,,,本次的原因（原文）,This reason (as written)
+E542,1,batch-1015,WORKSPACE_HOME,action,通过,,,,查看这次检查,See this check
+C01,2,changed,DIRECTORY,realNote,通过,,,,仓库随附一个样例项目，下面是对它的一次检查尝试。这个入口只看这个样例，不能换成别的模型；检查自己的 IFC4 文件，用首页的“检查自己的 IFC 模型”。Revit 文件本身不能导入。,"The repository comes with a sample project; below is a check attempt on it. This entry shows only that sample and cannot be switched to another model; to check your own IFC4 files, use ""Check your own IFC model"" on the home page. A Revit file itself cannot be imported."
+E025,3,changed,ACTIONS,mep-element-not-spatially-assigned.action,通过,,,,在源模型里把构件放到正确的标高上（项目要求空间归属时，再放进对应的空间），重新导出,"In the source model, place the element on its correct level (and, where the project requires spatial assignment, in its corresponding space), then re-export"
+E185,3,changed,HOME,status,通过,,,,当前为示例预览：Revit 文件本身（.rvt）不能导入，也不提供整体合规或可施工结论。,"This is an example preview: a Revit file itself (.rvt) cannot be imported, and it gives no overall compliance or ready-to-build conclusion."
+E186,3,changed,HOME,statusWithWorkspace,通过,,,,当前同时提供两样：启动服务器时指定的工作区里一次已经跑完的真实检查，以及模拟示例。工作区里的检查不能在页面上选择或更换模型；Revit 文件本身不能导入，也不提供整体合规或可施工结论。,"Two things are offered here: a real check already run in the workspace named when the server was started, and simulated examples. The workspace check cannot have its model chosen or changed on this page; a Revit file itself cannot be imported, and it gives no overall compliance or ready-to-build conclusion."
+E187,3,changed,HOME,statusWorkspaceUnknown,通过,,,,未能确认服务器是否指定了工作区，所以这里没有真实检查的入口；这不等于没有工作区，错误原文在下面。模拟示例照常可看。Revit 文件本身不能导入，也不提供整体合规或可施工结论。,"Could not confirm whether the server was started with a workspace, so there is no entry to a real check here; that does not mean there is no workspace — the error is below. The simulated examples are available as usual. A Revit file itself cannot be imported, and it gives no overall compliance or ready-to-build conclusion."
+E194,3,changed,HOME,cannot[0],通过,,,,导入 Revit 文件本身（.rvt），或在示例和工作区入口里选择、更换模型,"Import a Revit file itself (.rvt), or choose or change the model in the example and workspace entries"
+Z09,3,unindexed,IFC_CLASS_NAMES,IfcWall,通过,,,,墙,
+(补),1,new,HOME,recommended,通过,,推荐模拟示例作起点：它是唯一能看到交接判断、行动与复检全链的路径。,,推荐从这里开始,Start here

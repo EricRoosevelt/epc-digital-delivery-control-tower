@@ -40,7 +40,7 @@
 | `comparison-basis-incomplete` | 封存一方或当前一方缺少部分比较依据（模型版本、检查结果内容摘要或检查程序指纹）。 |
 | `determination-same-reference-same-content` | 同一份判定：引用相同，内容摘要也相同。 |
 | `determination-content-changed-under-the-same-reference` | 引用相同，但判定的内容已经不是原记录读到的那一份（被重新作出、重新归属或重新签署）。新判定照常作为证据读取，只是不能说它和原判定是同一份。 |
-| `determination-not-cited-by-this-record` | 模型版本没有变，本次记录没有再引用这份判定：它被别的判定取代了。 |
+| `determination-not-cited-by-this-record` | 模型版本没有变，本次记录没有再引用这份判定；记录没有说明原因。 |
 | `determination-not-attributable-to-this-context` | 模型版本已经变化，原判定是针对旧版本作出的，不能归到当前版本。不是证据不存在，也不是原判定错误；需要针对当前版本的判定。 |
 
 ## 3. “有变化”时，变的是什么（`changed_aspects`）
@@ -240,7 +240,7 @@ UNKNOWN 的五个都以“不是模型缺陷”开头，与 Pack 的 `next_actio
 | 记录里的代码 | 本界面的中文 |
 | --- | --- |
 | `work-cannot-start` | 这项工作不能开始 |
-| `work-suspended` | 这项工作暂缓，等有结论再定 |
+| `work-suspended` | 这项工作暂缓 |
 | `rework-risk` | 有返工风险 |
 | `re-identification-and-reissue-risk` | 有重新标识的风险：引用这些标识的文件届时也须重新出具（第 14 节） |
 
@@ -459,10 +459,10 @@ IFC 类别：`IfcAirTerminal` 风口、`IfcChimney` 烟囱、`IfcDuctSegment` �
 | --- | --- |
 | `PV-001.title` | 风口要声明四种预定义类型之一 |
 | `PV-001.predicate` | 每个适用的风口（IfcAirTerminal）都要声明预定义类型，取值是 DIFFUSER、GRILLE、LOUVRE、REGISTER 之一。IFC4 还允许 USERDEFINED 和 NOTDEFINED；不接受它们是这条规则自己的决定，用它们的模型仍是有效的 IFC4。 |
-| `PV-001.passProves` | 检查器按它的读取顺序取到的那一个值（类型上的值优先；类型声明 USERDEFINED 时是它的自由文本；类型什么也没说时才读构件实例；没有类型时，实例声明 USERDEFINED 也是它的自由文本），逐字等于 DIFFUSER、GRILLE、LOUVRE、REGISTER 四个值之一。 |
+| `PV-001.passProves` | 检查器按它的读取顺序取到的那一个值（类型上的值优先；类型声明 USERDEFINED 时是它的自由文本；类型什么也没说（没有类型、NOTDEFINED，或 USERDEFINED 没写文本）时才读构件实例，实例声明 USERDEFINED 时也是它的自由文本），逐字等于 DIFFUSER、GRILLE、LOUVRE、REGISTER 四个值之一。 |
 | `PV-001.passDoesNotProve[0]` | 取值正确：四个值中任何一个都会通过，写成 GRILLE 也会通过。 |
 | `PV-001.passDoesNotProve[1]` | 类型和构件实例的取值一致：类型上是四个值之一时，实例上写的值不参与比较；类型是 LOUVRE、实例是 DIFFUSER，也会通过。 |
-| `PV-001.passDoesNotProve[2]` | 规则不接受的 USERDEFINED 没有出现：类型声明 USERDEFINED 时，检查器比较的是它的自由文本；没有类型时，构件实例声明 USERDEFINED 也按它的自由文本比较。比较逐字、区分大小写；文本恰好是 LOUVRE 会通过，写成 louvre、Louvre 或前后带空格则不通过。 |
+| `PV-001.passDoesNotProve[2]` | 规则不接受的 USERDEFINED 没有出现：类型声明 USERDEFINED 时，检查器比较的是它的自由文本；类型什么也没说（没有类型、NOTDEFINED，或 USERDEFINED 没写文本）时，构件实例声明 USERDEFINED 也按它的自由文本比较。比较逐字、区分大小写；文本恰好是 LOUVRE 会通过，写成 louvre、Louvre 或前后带空格则不通过。 |
 | `PV-001.passDoesNotProve[3]` | 墙上有对应的洞口。 |
 | `PV-001.passDoesNotProve[4]` | 风口所在的模型与风口所在的墙所属的模型已经对齐。 |
 | `PV-001.passDoesNotProve[5]` | 任何工作可以开始，包括吊顶和开洞工作。 |
@@ -474,7 +474,7 @@ IFC 类别：`IfcAirTerminal` 风口、`IfcChimney` 烟囱、`IfcDuctSegment` �
 | `PV-001.gaps[0]` | 风口所在的墙上的洞口：需要对照风口所在的模型和这面墙所属的模型做协调评审判定；这项检查不比较两个模型的构件。 |
 | `PV-001.gaps[1]` | 风口所在的模型与风口所在的墙所属的模型是否对齐：需要一份对齐确认记录。 |
 | `PV-001.gaps[2]` | 取值是否选对：分类判断要另行记录；检查通过不能反过来证明分类判断正确。 |
-| `PV-001.reasonFreeText` | 引号里不是预定义类型的枚举值，而是自由文本：类型声明 USERDEFINED 时，检查器拿它的自由文本来比较；没有类型时，构件实例声明 USERDEFINED 也是这样。 |
+| `PV-001.reasonFreeText` | 引号里不是预定义类型的枚举值，而是自由文本：类型声明 USERDEFINED 时，检查器拿它的自由文本来比较；类型什么也没说（没有类型、NOTDEFINED，或 USERDEFINED 没写文本）时，构件实例声明 USERDEFINED 也是这样。 |
 
 **前后对比（`WORKSPACE_COMPARE`）**
 
@@ -740,3 +740,25 @@ W1（Pack 路由，C 通道）、W9（目前没有可达入口）不在本轮。
 - 首次和复检单项页：解释性的行（这项工作需要什么、模型、记录给出的原因）移到“二、要做什么…”之后；依据行、“这个结论依据的结果”、
   “无法判断”“可以开始”的说明、示例处理团队标签和复检的各条说明仍紧跟结论。
 - 本地检查起始页：规则卡与出处收进“要求从哪里来”，记录的细节收进“怎样清理”（与结果页相同）；范围、结果读法、保存位置常显。
+
+## 23. 2026-10-09 BIM T1 结论修正
+
+依据：BIM 10/9 逐条结论 [`2026-10-09-bim-review-t1-verdicts.csv`](2026-10-09-bim-review-t1-verdicts.csv) 与技术总监第 1 包。
+只如实表达既有含义，Pack、规则、评估和复检判定逻辑都没有改。W2（E289）等 PM 裁定，E021 留在 C 通道，均未改。
+中英义务对照见[T1 修正对照](2026-10-09-doctor-bim-t1-bilingual-parity.md)。
+
+| BIM | 位置 | 原句 | 现在 |
+| --- | --- | --- | --- |
+| E127 | `CONSEQUENCE_KINDS.work-suspended` | 这项工作暂缓，等有结论再定 | 这项工作暂缓 |
+| E079 | `CARRY_OVER_REASONS.determination-not-cited-by-this-record` | 模型版本没有变，本次记录没有再引用这份判定：它被别的判定取代了。 | 模型版本没有变，本次记录没有再引用这份判定；记录没有说明原因。 |
+| E357 | `RULE_NOTES.PV-001.passProves`（括号内后半） | 类型什么也没说时才读构件实例；没有类型时，实例声明 USERDEFINED 也是它的自由文本）， | 类型什么也没说（没有类型、NOTDEFINED，或 USERDEFINED 没写文本）时才读构件实例，实例声明 USERDEFINED 时也是它的自由文本）， |
+| E360 | `RULE_NOTES.PV-001.passDoesNotProve[2]`（中段） | 没有类型时，构件实例声明 USERDEFINED 也按它的自由文本比较。 | 类型什么也没说（没有类型、NOTDEFINED，或 USERDEFINED 没写文本）时，构件实例声明 USERDEFINED 也按它的自由文本比较。 |
+| E372 | `RULE_NOTES.PV-001.reasonFreeText`（后半） | 没有类型时，构件实例声明 USERDEFINED 也是这样。 | 类型什么也没说（没有类型、NOTDEFINED，或 USERDEFINED 没写文本）时，构件实例声明 USERDEFINED 也是这样。 |
+| Q01 | `SOURCE_SUMMARY.lead` | 随附的模拟示例，不是你的模型；团队等项目设定为演示用，不能用于正式项目决定。 | 随附的模拟示例，不是你的模型；团队和证据方法的接受等项目设定为演示用，不能用于正式项目决定。 |
+| E587 | `FIRST.problem`（首次结果卡片、单项页、复检单项页的标签） | 问题 | 情况 |
+| E291 | `RECHECK_ITEM.changedCondition`（新增：结论变化时，紧跟结论的一句） | （无） | 结论变了，不等于原条件已满足。 |
+
+- E127：“受阻”的结论已经给出，“等有结论再定”与之矛盾；这项后果也挂在 4 种“受阻”问题类型上。
+- E079：引擎只核对版本没变、本次记录没有再引用这份判定，不核对是否有替代判定。
+- E357／E360／E372：实测（IfcTester，合成 IFC4）类型存在但什么也没说时，实例的 USERDEFINED 自由文本同样参与比较。
+- E291：新键的文字是 `RECHECK_ITEM.conditionNote` 末句的原样摘出，不是新写的句子；第四节的原句不变。

@@ -264,7 +264,7 @@ export const LOCAL = bilingual(
         "The simulated examples and the local IFC product validation exercise work as usual. A Revit file itself cannot be imported, and there is no overall compliance or ready-to-build conclusion.",
       cannot: [
         "Import a Revit file itself (.rvt), or check your own model against rules other than the product validation exercise",
-        "Give an overall compliance, ready-to-build or \"can be handed over\" conclusion",
+        "Give an overall compliance, ready-to-build or \"ready to hand over\" conclusion",
         "Write back to a model, upload to the cloud, or open an element in Revit",
       ],
     },

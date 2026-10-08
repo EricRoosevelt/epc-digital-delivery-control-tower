@@ -1,6 +1,6 @@
 # Doctor 英文词表（主路径与真实工作区）
 
-日期：2026-10-03；第二部分（单项、复检）与第三部分（工作区的结果、详情、对比、拒绝、故障）同日补入；2026-10-04 补入行动与复检句（`ACTIONS`）；2026-10-05 补入首次结果卡片的三个标签（`FIRST.cardDetails`、`FIRST.cardElements`、`FIRST.openCard`），以及随附项目检查尝试的拒绝页（`REFUSAL_REASONS`、`REFUSAL_SCOPE_NOTE`、`REFUSAL_PAGE`、`REFUSAL_UNGLOSSED`）；同日删去与页首来源提示重复的 `DIRECTORY_NOTE`，复检单项页的标题序号随区块顺序调整。同日补入本地 IFC 检查的 `LOCAL_CHECK`（146 条，#29）。2026-10-08 补入页首来源提示的短摘要 `SOURCE_SUMMARY`（11 条；原 `DEMO_NOTICE` 不变，成为展开后的全文）和示例目录的一句简介 `DIRECTORY.exampleIntro`。2026-10-09 按 BIM 第二批修正 M1、W2–W8、W10 的中英文，并新增 `CONDITION_ENTRIES.no-recheck-condition.plainNotReady`（W4）。2026-10-09 首页补一句 `HOME.recommended`（简历版本 UI 主线整理）。负责：Product/UI Engineer。
+日期：2026-10-03；第二部分（单项、复检）与第三部分（工作区的结果、详情、对比、拒绝、故障）同日补入；2026-10-04 补入行动与复检句（`ACTIONS`）；2026-10-05 补入首次结果卡片的三个标签（`FIRST.cardDetails`、`FIRST.cardElements`、`FIRST.openCard`），以及随附项目检查尝试的拒绝页（`REFUSAL_REASONS`、`REFUSAL_SCOPE_NOTE`、`REFUSAL_PAGE`、`REFUSAL_UNGLOSSED`）；同日删去与页首来源提示重复的 `DIRECTORY_NOTE`，复检单项页的标题序号随区块顺序调整。同日补入本地 IFC 检查的 `LOCAL_CHECK`（146 条，#29）。2026-10-08 补入页首来源提示的短摘要 `SOURCE_SUMMARY`（11 条；原 `DEMO_NOTICE` 不变，成为展开后的全文）和示例目录的一句简介 `DIRECTORY.exampleIntro`。2026-10-09 按 BIM 第二批修正 M1、W2–W8、W10 的中英文，并新增 `CONDITION_ENTRIES.no-recheck-condition.plainNotReady`（W4）。2026-10-09 首页补一句 `HOME.recommended`（简历版本 UI 主线整理）。同日按 BIM T1 结论修正 E127、E079、E357／E360／E372、E587、Q01、L008，并新增 `RECHECK_ITEM.changedCondition`（E291）。负责：Product/UI Engineer。
 状态：**全部未经 BIM 复核**；有领域含义的条目进 10/15 BIM 批次。
 本文件由界面实际注册的词表生成，测试逐条核对英文与这里一致。中文一列是同一键在 `vocabulary.js` 里的原文。
 
@@ -25,9 +25,9 @@
 | 类别 | 表 | 条目 |
 | --- | --- | --- |
 | 原文（取自 Pack、记录或产品文档，未翻译） | 3 | 12 |
-| 有领域含义（判断、活动、问题类型、限制、来源），待 BIM | 55 | 710 |
+| 有领域含义（判断、活动、问题类型、限制、来源），待 BIM | 55 | 711 |
 | 界面用语 | 24 | 167 |
-| 合计 | 82 | 889 |
+| 合计 | 82 | 890 |
 
 ## 原文
 
@@ -155,7 +155,7 @@
 | `comparison-basis-incomplete` | 封存一方或当前一方缺少部分比较依据（模型版本、检查结果内容摘要或检查程序指纹）。 | The sealed side or the current side lacks part of the comparison basis (model version, check result content digest or checker fingerprint). |
 | `determination-same-reference-same-content` | 同一份判定：引用相同，内容摘要也相同。 | The same determination: the same reference and the same content digest. |
 | `determination-content-changed-under-the-same-reference` | 引用相同，但判定的内容已经不是原记录读到的那一份（被重新作出、重新归属或重新签署）。新判定照常作为证据读取，只是不能说它和原判定是同一份。 | The same reference, but the determination's content is no longer what the original record read (made again, re-attributed or re-signed). The new determination is read as evidence as usual; it just cannot be called the same determination as the original. |
-| `determination-not-cited-by-this-record` | 模型版本没有变，本次记录没有再引用这份判定：它被别的判定取代了。 | The model version did not change, and this record no longer cites this determination: another determination replaced it. |
+| `determination-not-cited-by-this-record` | 模型版本没有变，本次记录没有再引用这份判定；记录没有说明原因。 | The model version did not change, and this record no longer cites this determination; the record does not say why. |
 | `determination-not-attributable-to-this-context` | 模型版本已经变化，原判定是针对旧版本作出的，不能归到当前版本。不是证据不存在，也不是原判定错误；需要针对当前版本的判定。 | The model version has changed, and the original determination was made against the old version, so it cannot be attributed to the current one. The evidence is not missing and the original determination is not wrong; a determination against the current version is needed. |
 
 **`CARRY_OVER_STATES`**
@@ -239,7 +239,7 @@
 | 键 | 中文 | English |
 | --- | --- | --- |
 | `work-cannot-start` | 这项工作不能开始 | This work cannot start |
-| `work-suspended` | 这项工作暂缓，等有结论再定 | This work is held until decided |
+| `work-suspended` | 这项工作暂缓 | This work is on hold |
 | `rework-risk` | 有返工风险 | Risk of rework |
 | `re-identification-and-reissue-risk` | 有重新标识的风险：引用这些标识的文件届时也须重新出具 | Risk of re-identification: documents that cite these identifiers would then have to be reissued too |
 
@@ -515,6 +515,7 @@
 | `priorCondition` | 复检前留下的结束条件：{text}。 | The exit condition left before the recheck: {text} |
 | `end` | 。 | . |
 | `conditionNote` | 这里只说复检前留下的结束条件被证明到了什么程度，与现在的结论分开读：结论变了，不等于原条件已满足。 | This says only how far the exit condition left before the recheck has been shown to be reached; read it apart from the conclusion now. A changed conclusion does not mean the original condition is met. |
+| `changedCondition` | 结论变了，不等于原条件已满足。 | A changed conclusion does not mean the original condition is met. |
 | `originalSummary` | 来源原文（英文）与记录原码：供追溯，不是操作指令 | Source wording and record codes: for tracing, not an instruction |
 | `conditionBasis` | condition_basis（原文） | condition_basis (as written) |
 | `evidenceHeading` | 五、复检前的证据 | 5. The evidence before the recheck |
@@ -625,10 +626,10 @@
 | --- | --- | --- |
 | `PV-001.title` | 风口要声明四种预定义类型之一 | Air terminals declare one of four predefined types |
 | `PV-001.predicate` | 每个适用的风口（IfcAirTerminal）都要声明预定义类型，取值是 DIFFUSER、GRILLE、LOUVRE、REGISTER 之一。IFC4 还允许 USERDEFINED 和 NOTDEFINED；不接受它们是这条规则自己的决定，用它们的模型仍是有效的 IFC4。 | Every applicable air terminal (IfcAirTerminal) declares a predefined type of DIFFUSER, GRILLE, LOUVRE or REGISTER. IFC4 also admits USERDEFINED and NOTDEFINED; not accepting them is this rule's own decision, and a model using them is still valid IFC4. |
-| `PV-001.passProves` | 检查器按它的读取顺序取到的那一个值（类型上的值优先；类型声明 USERDEFINED 时是它的自由文本；类型什么也没说时才读构件实例；没有类型时，实例声明 USERDEFINED 也是它的自由文本），逐字等于 DIFFUSER、GRILLE、LOUVRE、REGISTER 四个值之一。 | The one value the checker took in its reading order (the type's value first; a USERDEFINED type's free text; the element instance only when the type says nothing, and with no type, a USERDEFINED instance's free text too) is, character for character, one of DIFFUSER, GRILLE, LOUVRE and REGISTER. |
+| `PV-001.passProves` | 检查器按它的读取顺序取到的那一个值（类型上的值优先；类型声明 USERDEFINED 时是它的自由文本；类型什么也没说（没有类型、NOTDEFINED，或 USERDEFINED 没写文本）时才读构件实例，实例声明 USERDEFINED 时也是它的自由文本），逐字等于 DIFFUSER、GRILLE、LOUVRE、REGISTER 四个值之一。 | The one value the checker took in its reading order (the type's value first; a USERDEFINED type's free text; the element instance only when the type says nothing (no type, NOTDEFINED, or USERDEFINED with no text), and then a USERDEFINED instance's free text too) is, character for character, one of DIFFUSER, GRILLE, LOUVRE and REGISTER. |
 | `PV-001.passDoesNotProve[0]` | 取值正确：四个值中任何一个都会通过，写成 GRILLE 也会通过。 | That the value is right: any of the four passes; GRILLE passes too. |
 | `PV-001.passDoesNotProve[1]` | 类型和构件实例的取值一致：类型上是四个值之一时，实例上写的值不参与比较；类型是 LOUVRE、实例是 DIFFUSER，也会通过。 | That the type and the element instance agree: when the type carries one of the four, the instance's value is not compared; type LOUVRE with instance DIFFUSER also passes. |
-| `PV-001.passDoesNotProve[2]` | 规则不接受的 USERDEFINED 没有出现：类型声明 USERDEFINED 时，检查器比较的是它的自由文本；没有类型时，构件实例声明 USERDEFINED 也按它的自由文本比较。比较逐字、区分大小写；文本恰好是 LOUVRE 会通过，写成 louvre、Louvre 或前后带空格则不通过。 | That no USERDEFINED, which the rule does not accept, is present: when the type declares USERDEFINED, the checker compares its free text; with no type, an element instance that declares USERDEFINED is compared by its free text as well. The comparison is character for character and case-sensitive; text that happens to be LOUVRE passes, while louvre, Louvre or text with leading or trailing spaces does not. |
+| `PV-001.passDoesNotProve[2]` | 规则不接受的 USERDEFINED 没有出现：类型声明 USERDEFINED 时，检查器比较的是它的自由文本；类型什么也没说（没有类型、NOTDEFINED，或 USERDEFINED 没写文本）时，构件实例声明 USERDEFINED 也按它的自由文本比较。比较逐字、区分大小写；文本恰好是 LOUVRE 会通过，写成 louvre、Louvre 或前后带空格则不通过。 | That no USERDEFINED, which the rule does not accept, is present: when the type declares USERDEFINED, the checker compares its free text; when the type says nothing (no type, NOTDEFINED, or USERDEFINED with no text), an element instance that declares USERDEFINED is compared by its free text as well. The comparison is character for character and case-sensitive; text that happens to be LOUVRE passes, while louvre, Louvre or text with leading or trailing spaces does not. |
 | `PV-001.passDoesNotProve[3]` | 墙上有对应的洞口。 | That the wall has a corresponding opening. |
 | `PV-001.passDoesNotProve[4]` | 风口所在的模型与风口所在的墙所属的模型已经对齐。 | That the air terminal's model and the model of the wall it sits in are aligned. |
 | `PV-001.passDoesNotProve[5]` | 任何工作可以开始，包括吊顶和开洞工作。 | That any work can start, including ceiling and opening work. |
@@ -640,7 +641,7 @@
 | `PV-001.gaps[0]` | 风口所在的墙上的洞口：需要对照风口所在的模型和这面墙所属的模型做协调评审判定；这项检查不比较两个模型的构件。 | The opening in the wall the air terminal sits in: a coordination-review determination is needed, made against the air terminal's model and the model of that wall; this check does not compare elements across the two models. |
 | `PV-001.gaps[1]` | 风口所在的模型与风口所在的墙所属的模型是否对齐：需要一份对齐确认记录。 | Whether the air terminal's model and the model of the wall it sits in are aligned: an alignment confirmation record is needed. |
 | `PV-001.gaps[2]` | 取值是否选对：分类判断要另行记录；检查通过不能反过来证明分类判断正确。 | Whether the value chosen is right: the classification decision has to be recorded separately; a pass cannot prove in reverse that the classification is right. |
-| `PV-001.reasonFreeText` | 引号里不是预定义类型的枚举值，而是自由文本：类型声明 USERDEFINED 时，检查器拿它的自由文本来比较；没有类型时，构件实例声明 USERDEFINED 也是这样。 | What is in the quotation marks is not an enumeration value but free text: when the type declares USERDEFINED, the checker compares its free text; with no type, the same holds for an element instance that declares USERDEFINED. |
+| `PV-001.reasonFreeText` | 引号里不是预定义类型的枚举值，而是自由文本：类型声明 USERDEFINED 时，检查器拿它的自由文本来比较；类型什么也没说（没有类型、NOTDEFINED，或 USERDEFINED 没写文本）时，构件实例声明 USERDEFINED 也是这样。 | What is in the quotation marks is not an enumeration value but free text: when the type declares USERDEFINED, the checker compares its free text; when the type says nothing (no type, NOTDEFINED, or USERDEFINED with no text), the same holds for an element instance that declares USERDEFINED. |
 
 **`RUN_LABELS`**
 
@@ -664,7 +665,7 @@
 
 | 键 | 中文 | English |
 | --- | --- | --- |
-| `lead` | 随附的模拟示例，不是你的模型；团队等项目设定为演示用，不能用于正式项目决定。 | A simulated example shipped with the tool, not your model; project settings such as teams are for demonstration, not for formal project decisions. |
+| `lead` | 随附的模拟示例，不是你的模型；团队和证据方法的接受等项目设定为演示用，不能用于正式项目决定。 | A simulated example shipped with the tool, not your model; project settings such as teams and the acceptance of evidence methods are for demonstration, not for formal project decisions. |
 | `cites` | 这份记录的结论引用了：{kinds}，逐条标在结论旁的“依据”一行。 | This record's conclusions cite {kinds}, labelled citation by citation on the "Basis" line beside each conclusion. |
 | `citesNone` | 这份记录的结论没有引用证据。 | This record's conclusions cite no evidence. |
 | `noRecord` | 结论引用的证据是真实的还是模拟的，逐条标在结论旁的“依据”一行。 | Whether the evidence a conclusion cites is real or simulated is labelled citation by citation on the "Basis" line beside it. |
@@ -907,7 +908,7 @@
 | `home.statusWithWorkspace` | 当前提供：启动服务器时指定的工作区里一次已经跑完的真实检查、模拟示例，以及对自己 IFC4 文件的一项有限产品验证练习；不能导入 Revit 文件本身，也不提供整体合规或可施工结论。 | Available now: a real check already run in the workspace named when the server was started, simulated examples, and one limited product validation exercise on your own IFC4 files. A Revit file itself cannot be imported, and there is no overall compliance or ready-to-build conclusion. |
 | `home.statusWorkspaceUnknown` | 未能确认服务器是否指定了工作区，所以这里没有工作区检查的入口；这不等于没有工作区，错误原文在下面。模拟示例和本地 IFC 产品验证练习照常可用；不能导入 Revit 文件本身，也不提供整体合规或可施工结论。 | Could not tell whether the server was started with a workspace, so there is no entry for a workspace check here; that does not mean there is none, and the error is below. The simulated examples and the local IFC product validation exercise work as usual. A Revit file itself cannot be imported, and there is no overall compliance or ready-to-build conclusion. |
 | `home.cannot[0]` | 导入 Revit 文件本身（.rvt），或用产品验证练习以外的规则检查自己的模型 | Import a Revit file itself (.rvt), or check your own model against rules other than the product validation exercise |
-| `home.cannot[1]` | 给出整体合规、可施工或“可以交付”的结论 | Give an overall compliance, ready-to-build or "can be handed over" conclusion |
+| `home.cannot[1]` | 给出整体合规、可施工或“可以交付”的结论 | Give an overall compliance, ready-to-build or "ready to hand over" conclusion |
 | `home.cannot[2]` | 写回模型、上传到云端，或在 Revit 里打开构件 | Write back to a model, upload to the cloud, or open an element in Revit |
 | `start.back` | ← 返回首页 | ← Back to the home page |
 | `start.title` | 检查自己的 IFC 模型 | Check your own IFC model |
@@ -1206,7 +1207,7 @@
 | `elementsLine.one` | {unit}这份记录共涉及 {count} 个不同的构件。 | {unit} This record involves {count} element. |
 | `elementsLine.other` | {unit}这份记录共涉及 {count} 个不同的构件。 | {unit} This record involves {count} different elements. |
 | `action` | 要做什么 | What to do |
-| `problem` | 问题 | Problem |
+| `problem` | 情况 | Situation |
 | `openItem` | 查看这一项：具体对象、要做什么、由谁处理、拿什么复检 | See this item: the element, what to do, who deals with it, what a recheck must show |
 | `cardDetails` | 构件信息和要做什么 | Element details and what to do |
 | `cardElements` | 构件信息 | Element details |

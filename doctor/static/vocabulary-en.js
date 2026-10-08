@@ -228,7 +228,7 @@ export const DEMO_NOTICE =
   "Not for formal project decisions, and no formal check record can be exported.";
 
 export const SOURCE_SUMMARY = {
-  lead: "A simulated example shipped with the tool, not your model; project settings such as teams are for demonstration, not for formal project decisions.",
+  lead: "A simulated example shipped with the tool, not your model; project settings such as teams and the acceptance of evidence methods are for demonstration, not for formal project decisions.",
   cites: "This record's conclusions cite {kinds}, labelled citation by citation on the \"Basis\" line beside each conclusion.",
   citesNone: "This record's conclusions cite no evidence.",
   noRecord: "Whether the evidence a conclusion cites is real or simulated is labelled citation by citation on the \"Basis\" line beside it.",
@@ -420,7 +420,7 @@ export const FIRST = {
     other: "{unit} This record involves {count} different elements.",
   },
   action: "What to do",
-  problem: "Problem",
+  problem: "Situation",
   openItem: "See this item: the element, what to do, who deals with it, what a recheck must show",
   cardDetails: "Element details and what to do",
   cardElements: "Element details",
@@ -540,7 +540,7 @@ export const ELEMENT_CARD = {
 
 export const CONSEQUENCE_KINDS = {
   "work-cannot-start": "This work cannot start",
-  "work-suspended": "This work is held until decided",
+  "work-suspended": "This work is on hold",
   "rework-risk": "Risk of rework",
   "re-identification-and-reissue-risk":
     "Risk of re-identification: documents that cite these identifiers would then have to be reissued too",
@@ -700,6 +700,7 @@ export const RECHECK_ITEM = {
   end: ".",
   conditionNote:
     "This says only how far the exit condition left before the recheck has been shown to be reached; read it apart from the conclusion now. A changed conclusion does not mean the original condition is met.",
+  changedCondition: "A changed conclusion does not mean the original condition is met.",
   originalSummary: "Source wording and record codes: for tracing, not an instruction",
   conditionBasis: "condition_basis (as written)",
   evidenceHeading: "5. The evidence before the recheck",
@@ -810,7 +811,7 @@ export const CARRY_OVER_REASONS = {
   "determination-content-changed-under-the-same-reference":
     "The same reference, but the determination's content is no longer what the original record read (made again, re-attributed or re-signed). The new determination is read as evidence as usual; it just cannot be called the same determination as the original.",
   "determination-not-cited-by-this-record":
-    "The model version did not change, and this record no longer cites this determination: another determination replaced it.",
+    "The model version did not change, and this record no longer cites this determination; the record does not say why.",
   "determination-not-attributable-to-this-context":
     "The model version has changed, and the original determination was made against the old version, so it cannot be attributed to the current one. The evidence is not missing and the original determination is not wrong; a determination against the current version is needed.",
 };
@@ -1104,11 +1105,11 @@ export const RULE_NOTES = {
       "Every applicable air terminal (IfcAirTerminal) declares a predefined type of DIFFUSER, GRILLE, LOUVRE or REGISTER. " +
       "IFC4 also admits USERDEFINED and NOTDEFINED; not accepting them is this rule's own decision, and a model using them is still valid IFC4.",
     passProves:
-      "The one value the checker took in its reading order (the type's value first; a USERDEFINED type's free text; the element instance only when the type says nothing, and with no type, a USERDEFINED instance's free text too) is, character for character, one of DIFFUSER, GRILLE, LOUVRE and REGISTER.",
+      "The one value the checker took in its reading order (the type's value first; a USERDEFINED type's free text; the element instance only when the type says nothing (no type, NOTDEFINED, or USERDEFINED with no text), and then a USERDEFINED instance's free text too) is, character for character, one of DIFFUSER, GRILLE, LOUVRE and REGISTER.",
     passDoesNotProve: [
       "That the value is right: any of the four passes; GRILLE passes too.",
       "That the type and the element instance agree: when the type carries one of the four, the instance's value is not compared; type LOUVRE with instance DIFFUSER also passes.",
-      "That no USERDEFINED, which the rule does not accept, is present: when the type declares USERDEFINED, the checker compares its free text; with no type, an element instance that declares USERDEFINED is compared by its free text as well. The comparison is character for character and case-sensitive; text that happens to be LOUVRE passes, while louvre, Louvre or text with leading or trailing spaces does not.",
+      "That no USERDEFINED, which the rule does not accept, is present: when the type declares USERDEFINED, the checker compares its free text; when the type says nothing (no type, NOTDEFINED, or USERDEFINED with no text), an element instance that declares USERDEFINED is compared by its free text as well. The comparison is character for character and case-sensitive; text that happens to be LOUVRE passes, while louvre, Louvre or text with leading or trailing spaces does not.",
       "That the wall has a corresponding opening.",
       "That the air terminal's model and the model of the wall it sits in are aligned.",
       "That any work can start, including ceiling and opening work.",
@@ -1131,7 +1132,7 @@ export const RULE_NOTES = {
       "Whether the value chosen is right: the classification decision has to be recorded separately; a pass cannot prove in reverse that the classification is right.",
     ],
     reasonFreeText:
-      "What is in the quotation marks is not an enumeration value but free text: when the type declares USERDEFINED, the checker compares its free text; with no type, the same holds for an element instance that declares USERDEFINED.",
+      "What is in the quotation marks is not an enumeration value but free text: when the type declares USERDEFINED, the checker compares its free text; when the type says nothing (no type, NOTDEFINED, or USERDEFINED with no text), the same holds for an element instance that declares USERDEFINED.",
   },
 };
 
