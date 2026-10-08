@@ -20,9 +20,9 @@
 | 档 | 条目 | **待核** | 待核·去重句数 | 档内全部·去重句数 | 其中公开路线上不出现（条件出现） | D6 未列、待确认（单列，不在待核里） |
 |---|---:|---:|---:|---:|---:|---:|
 | T1 示例主线与 C2 必需 | 445 | **219** | 210 | 420 | 37 | 8 |
-| T2 本地 IFC 与第二入口 | 90 | **86** | 86 | 88 | 16 | 0 |
+| T2 本地 IFC 与第二入口 | 90 | **86** | 86 | 88 | 10 | 0 |
 | T3 其余 | 52 | **35** | 35 | 52 | 11 | 1 |
-| **合计（子集）** | **587** | **340** | 331 | 560 | 64 | 9 |
+| **合计（子集）** | **587** | **340** | 331 | 560 | 58 | 9 |
 
 **去重怎么算**：按（中文原句，英文原句）这一对去重，同一句出现在几个键下只算一次；只有中文的条目按中文句。去重只用来估工作量，不改变条目数。CSV 的 `reuse_en`／`reuse_zh` 列标了重复的组。
 
@@ -35,7 +35,7 @@
 | 全做（T3） | 340 | 331 |
 
 **那 11 条中文单语释义**（`REASON_GLOSSES` 4 条、`IFC_CLASS_NAMES` 6 条、`CITATION_GLOSSES` 1 条；英文页显示原文）已按页面归档，计入总数：T1 10、T2 0、T3 1。它们的状态：1 条是 W10 改过的（计入待核）；1 条 D6 索引已列且 10/8 已核（`REASON_GLOSSES` 里的 E565，不在待核里）；9 条是“是否已核待 BIM 确认”（D6 索引当时没有逐条列），**不计入待核数**，单列在上表最后一列。10/8 BIM 读过 `REASON_GLOSSES`（W10 出自它），但哪几条已核我没有记录。
-**英文页上的事实**：渲染的 362 个英文页里，这 11 条中文释义有 0 条出现；英文页显示的是记录或规则的英文原文，没有中文释义。英文页上没有任何别的中文字符（语言切换按钮上的“中文”除外）。（这是事实记录，本 PR 不修。）
+**英文页上的事实**：渲染的 369 个英文页里，这 11 条中文释义有 0 条出现；英文页显示的是记录或规则的英文原文，没有中文释义。英文页上没有任何别的中文字符（语言切换按钮上的“中文”除外）。（这是事实记录，本 PR 不修。）
 
 不进子集（X）：117 条，原因见第 8 节；它们在公开路线上渲染不到、也不被本地结果页的代码引用，不计入上表。
 
@@ -59,12 +59,12 @@
 | 示例目录 | `#/fixture` | 1 | 1 |
 | 示例主线 | `member-evidence`（首次结果、单项）、`recheck-requirement-relaxed`（复检、复检单项） | 43 | 43 |
 | 本地结果页 | `#/local/<检查号>` 及其检查结果详情 | 16 | 16 |
-| 本地检查（选文件至运行） | `#/local` 与本地检查各状态（见下） | 19 | 19 |
+| 本地检查（选文件至运行） | `#/local` 与本地检查各状态（见下） | 26 | 26 |
 | 第二入口 | `#/real`、`#/real/real-refusal` | 2 | 2 |
 | 其他示例 | 目录里其余示例的各页 | 138 | 138 |
 | 次要明细页 | 记录、活动、成员明细页 | 299 | 142 |
 
-本地检查按真实界面逐状态走了一遍（中英各一遍）：`check-architecture:planned`、`check-architecture:result`、`check-architecture:running`、`check-both:planned`、`check-both:result`、`check-both:running`、`check-garbled:after-run`、`check-garbled:planned`、`check-garbled:running`、`check-hvac:planned`、`check-hvac:result`、`check-hvac:running`、`check-mixed:planned`、`check-mixed:result`、`check-mixed:running`、`local:chosen`、`local:file-refused-not-an-ifc`、`local:plan-refused-discipline-not-declared`、`local:plan-refused-unsupported-schema`、`local:result-missing`、`local:start`、`local:start-with-earlier-checks`。输入是仓库里的公开样例 `Building-Hvac.ifc`、`Building-Architecture.ifc`，加三个小文件：一个 IFC2x3 头的、一个根本不是 IFC 的、一个文件头对但内容坏的（触发“程序故障”），以及把 HVAC 样例里一个类型改成 DIFFUSER 的变体（得到 PASS 与 FAIL 并存）。
+本地检查按真实界面逐状态走了一遍（中英各一遍）：`check-architecture:planned`、`check-architecture:result`、`check-architecture:running`、`check-both:planned`、`check-both:result`、`check-both:running`、`check-garbled:after-run`、`check-garbled:planned`、`check-garbled:running`、`check-hvac:planned`、`check-hvac:result`、`check-hvac:running`、`check-mixed:planned`、`check-mixed:result`、`check-mixed:running`、`fresh:chosen-file-removed`、`fresh:file-refused-name-invalid`、`fresh:file-refused-too-large`、`fresh:plan-refused-no-model`、`fresh:plan-same-name-twice`、`fresh:same-name-twice-chosen`、`fresh:start-nothing-kept`、`local:chosen`、`local:file-refused-not-an-ifc`、`local:plan-refused-discipline-not-declared`、`local:plan-refused-unsupported-schema`、`local:result-missing`、`local:start`、`local:start-with-earlier-checks`。其中 `fresh:` 开头的几个状态是在记录目录为空、`--max-model-bytes 100000` 的第二个服务器上走的：首次访问（还没有任何记录）、选文件时被拒（文件太大、文件名不合规）、不选文件就确认范围、两个同名文件。输入是仓库里的公开样例 `Building-Hvac.ifc`、`Building-Architecture.ifc`，加三个小文件：一个 IFC2x3 头的、一个根本不是 IFC 的、一个文件头对但内容坏的（触发“程序故障”），以及把 HVAC 样例里一个类型改成 DIFFUSER 的变体（得到 PASS 与 FAIL 并存）。
 
 ## 4. M1 包（#50）改过的句子
 
@@ -138,11 +138,12 @@
 
 ## 6. 没覆盖到的、没核验的
 
-- **条件出现、本次没触发**：64 条在子集里，但本次渲染没看到它们（取决于用户自己的模型、拒绝或故障状态等）。CSV 的 `conditional` 列写了原因；它们的页面列为空。是否触发过，以“本地检查各状态”那一行为准。
+- **条件出现、本次没触发**：58 条在子集里，但本次渲染没看到它们（取决于用户自己的模型、拒绝或故障状态等）。CSV 的 `conditional` 列写了原因；它们的页面列为空。是否触发过，以“本地检查各状态”那一行为准。
 - **英文未译的页面**：142 个路由在英文里显示“This page has not been translated yet”（记录、活动、成员明细页；每份记录各有若干个）。这些页面在英文里是死胡同，主线不经过它们；单项页上的“在明细页查看完整的证据路径”链接指向其中一个，英文里旁注“Chinese only”。
 - **C2 工作区专用页**（对比页、拒绝页）不在公开路线上，没有渲染；这部分句子不进子集。C2 走查按 `577620e` 做过，之后这些页面的文字没有变。
 - **UI 包 2（任务书 §3，10/10–12）**：首页和示例目录的措辞可能还会改。CSV 的 `ui_pkg2_watch` 标了只出现在首页／目录上的条目，它们的复核最好排在包 2 的措辞冻结之后。
 - **本地检查的异常状态**：任务书 §3 要求走通的五个状态里，成功、没有适用对象、不支持 schema、运行失败（程序故障）都在界面里走通了；“无几何对象”在界面里没有单独的状态（没有形体的构件照常显示检查结果，页面只有一句静态说明 `scope.geometryText`）。Framework 待命补异常状态；如果补了，会有新句子，需要追加。
+- **选了超过上限的文件时，页面没有显示“文件太大”的拒绝（L059），而是“没有收到服务器的回答：服务器可能已经停止”（L068）**：在 `--max-model-bytes 100000` 的服务器上选一个 179 KB 的文件，无头 Edge 里就是这样。服务器按文件大小拒绝时不读剩下的请求体并关闭连接（`doctor/serve.py` 的 `_local_post`），浏览器可能还在上传，就报网络错误。默认上限是 4 GB，只有超过它的文件会碰到。这是观察，不是结论，没有在其他浏览器里试；本 PR 不修。
 - **匹配方法的限制**：条目靠文字匹配到页面。长句按固定文字的子串匹配；短标签只算整块或整个元素相等；极短的模板（如 `{label}：{meaning}。`）无法按文字找到，按所在表其余条目出现的页面继承（CSV 的 `inherited_pages` 列）。短标签按文字匹配，会把页面别处的同一个词也算进页数（例如 Q2 的 `kinds.*` 与图例里的同一个词），页数只是“出现过”的粗指标。一个词条只写在代码里、不在词表里的页面文字（词表测试保证这种情况不应有）不在本清单内。
 - **与第一阶段（5b64b42，用 `0f4300b` 上渲染的页面）相比**：在 `2e6eafc` 上重新渲染后，爬到的页面数变化：en 示例主线 42→43；en 次要明细页 141→142。条目变化 6 条（原因是匹配方法，不是页面变了：中文单语释义现在按“和它注释的原文在同一页”匹配，第一阶段没有这条规则）：
 - **没有私有内容**：渲染只用仓库里的公开样例和随附示例；没有用 C2 的私有工作区、模型或路径。
@@ -619,7 +620,7 @@
 | ID | 键 | English | 中文 | 状态 | 页面 |
 |---|---|---|---|---|---|
 | E227 | `verdictWords` | The three conclusion words | 三个判断词 | 10/8 已核 | zh 181｜en 181｜示例主线、其他示例 |
-| E228 | `verdictLine` | {label}: {meaning}. | {label}：{meaning}。 | 10/8 已核 | zh 181｜en 361｜首页、示例目录、示例主线、本地结果页、本地检查（选文件至运行）、第二入口、其他示例、次要明细页 |
+| E228 | `verdictLine` | {label}: {meaning}. | {label}：{meaning}。 | 10/8 已核 | zh 181｜en 368｜首页、示例目录、示例主线、本地结果页、本地检查（选文件至运行）、第二入口、其他示例、次要明细页 |
 | E229 | `provenance` | How the source of evidence is labelled | 证据来源的标注 | 10/8 已核 | zh 181｜en 181｜示例主线、其他示例 |
 | E230 | `teams` | Handling team and default handling role | 处理团队与默认处理角色 | 10/8 已核 | zh 181｜en 181｜示例主线、其他示例 |
 | E231 | `teamsBody` | The handling team is taken from the staffing in the record; the default handling role is the rule's default, an input to the staffing, not an assignment. The two are sho… | 处理团队取自记录里的人员安排；默认处理角色是规则给出的默认，是安排的输入，不是指派。两者分开显示。 | 10/8 已核 | zh 181｜en 181｜示例主线、其他示例 |
@@ -641,7 +642,7 @@
 | E240 | `summary.other` | This result: {count} items | 本次结果：共 {count} 个事项 | 10/15 批，未核 | zh 24｜en 18｜示例主线、其他示例；复用 G023 |
 | E241 | `groupLine.one` | {count} item | {count} 个事项 | 10/15 批，未核 | zh 24｜en 6｜示例主线、其他示例；复用 G024 |
 | E242 | `groupLine.other` | {count} items | {count} 个事项 | 10/15 批，未核 | zh 24｜en 183｜首页、示例目录、示例主线、其他示例；复用 G024 |
-| E243 | `groupSummary` | : {summary} | ：{summary} | 10/15 批，未核 | zh 474｜en 361｜首页、示例目录、示例主线、本地结果页、本地检查（选文件至运行）、第二入口、其他示例、次要明细页 |
+| E243 | `groupSummary` | : {summary} | ：{summary} | 10/15 批，未核 | zh 474｜en 368｜首页、示例目录、示例主线、本地结果页、本地检查（选文件至运行）、第二入口、其他示例、次要明细页 |
 | E244 | `models` | Models: {headline}. | 模型：{headline}。 | 10/15 批，未核 | zh 20｜en 20｜示例主线、其他示例 |
 | E245 | `moved.one` | {count} item's conclusion differs from before the recheck: | {count} 个事项的结论和复检前不同： | 10/15 批，未核 | zh 12｜en 2｜示例主线、其他示例；复用 G025 |
 | E246 | `moved.other` | {count} items' conclusions differ from before the recheck: | {count} 个事项的结论和复检前不同： | 10/15 批，未核 | zh 12｜en 10｜示例主线、其他示例；复用 G025 |
@@ -651,7 +652,7 @@
 | E250 | `cannotHeading` | What this preview cannot do | 本预览做不了的事 | 10/15 批，未核 | zh 151｜en 151｜示例主线、其他示例 |
 | E251 | `cannotNote` | These actions are not implemented, so the page has no buttons for them. | 这些动作没有实现，所以页面上没有对应的按钮。 | 10/15 批，未核 | zh 20｜en 20｜示例主线、其他示例 |
 | E252 | `limitsHeading` | When reading a recheck result | 读复检结果时 | 10/15 批，未核 | zh 151｜en 151｜示例主线、其他示例 |
-| E253 | `sideModel` | {side} model | {side}模型 | 10/15 批，未核 | zh 474｜en 361｜首页、示例目录、示例主线、本地结果页、本地检查（选文件至运行）、第二入口、其他示例、次要明细页 |
+| E253 | `sideModel` | {side} model | {side}模型 | 10/15 批，未核 | zh 474｜en 368｜首页、示例目录、示例主线、本地结果页、本地检查（选文件至运行）、第二入口、其他示例、次要明细页 |
 | E254 | `detailsSummary` | Before-and-after details: models, items, old evidence | 复检前后的比较明细：模型、事项、旧证据 | 10/15 批，未核 | zh 20｜en 20｜示例主线、其他示例 |
 | E255 | `modelsHeading` | Models | 模型 | 同句已核 | zh 336｜en 177｜示例主线、本地结果页、本地检查（选文件至运行）、其他示例、次要明细页；复用 G027、G028 |
 | E256 | `itemsHeading.one` | The item in the record before the recheck ({count}), and where it stands now | 复检前记录里的事项（{count} 个），现在的情况 | 10/15 批，未核 | zh 20｜en 2｜示例主线、其他示例；复用 G029 |
@@ -833,8 +834,8 @@
 
 | ID | 键 | English | 中文 | 状态 | 页面 |
 |---|---|---|---|---|---|
-| E355 | `PV-001.title` | Air terminals declare one of four predefined types | 风口要声明四种预定义类型之一 | 10/8 已核 | zh 34｜en 34｜本地结果页、本地检查（选文件至运行） |
-| E356 | `PV-001.predicate` | Every applicable air terminal (IfcAirTerminal) declares a predefined type of DIFFUSER, GRILLE, LOUVRE or REGISTER. IFC4 also admits USERDEFINED and NOTDEFINED; not accep… | 每个适用的风口（IfcAirTerminal）都要声明预定义类型，取值是 DIFFUSER、GRILLE、LOUVRE、REGISTER 之一。IFC4 还允许 USERDEFINED 和 NOTDEFINED；不接受… | 10/8 已核 | zh 34｜en 34｜本地结果页、本地检查（选文件至运行） |
+| E355 | `PV-001.title` | Air terminals declare one of four predefined types | 风口要声明四种预定义类型之一 | 10/8 已核 | zh 41｜en 41｜本地结果页、本地检查（选文件至运行） |
+| E356 | `PV-001.predicate` | Every applicable air terminal (IfcAirTerminal) declares a predefined type of DIFFUSER, GRILLE, LOUVRE or REGISTER. IFC4 also admits USERDEFINED and NOTDEFINED; not accep… | 每个适用的风口（IfcAirTerminal）都要声明预定义类型，取值是 DIFFUSER、GRILLE、LOUVRE、REGISTER 之一。IFC4 还允许 USERDEFINED 和 NOTDEFINED；不接受… | 10/8 已核 | zh 41｜en 41｜本地结果页、本地检查（选文件至运行） |
 | E357 | `PV-001.passProves` | The one value the checker took in its reading order (the type's value first; a USERDEFINED type's free text; the element instance only when the type says nothing, and wi… | 检查器按它的读取顺序取到的那一个值（类型上的值优先；类型声明 USERDEFINED 时是它的自由文本；类型什么也没说时才读构件实例；没有类型时，实例声明 USERDEFINED 也是它的自由文本），逐字等于 DIFF… | 10/8 后改句，需重核 | zh 1｜en 1｜本地结果页 |
 | E358 | `PV-001.passDoesNotProve[0]` | That the value is right: any of the four passes; GRILLE passes too. | 取值正确：四个值中任何一个都会通过，写成 GRILLE 也会通过。 | 10/8 已核 | zh 1｜en 1｜本地结果页 |
 | E359 | `PV-001.passDoesNotProve[1]` | That the type and the element instance agree: when the type carries one of the four, the instance's value is not compared; type LOUVRE with instance DIFFUSER also passes. | 类型和构件实例的取值一致：类型上是四个值之一时，实例上写的值不参与比较；类型是 LOUVRE、实例是 DIFFUSER，也会通过。 | 10/8 已核 | zh 1｜en 1｜本地结果页 |
@@ -929,7 +930,7 @@
 
 | ID | 键 | English | 中文 | 状态 | 页面 |
 |---|---|---|---|---|---|
-| E416 | `back` | ← Back to the home page | ← 返回首页 | 10/8 已核 | zh 35｜en 35｜本地结果页、本地检查（选文件至运行） |
+| E416 | `back` | ← Back to the home page | ← 返回首页 | 10/8 已核 | zh 42｜en 42｜本地结果页、本地检查（选文件至运行） |
 | E420 | `resultTitle` | Results of a real check | 一次真实检查的结果 | 10/8 已核 | zh 16｜en 16｜本地结果页 |
 | E421 | `noJudgement` | These are the results of a check, not a handover judgement: the page says only whether each element passed, failed or was not applicable under each requirement, and conc… | 这是一次检查的结果，不是交接判断：页面只说每个构件在每条要求下通过、不通过还是不适用，不对任何工作能否开始下结论。 | 10/8 已核 | zh 16｜en 16｜本地结果页 |
 | E422 | `summary.one` | This result: {count} check result | 本次结果：共 {count} 条检查结果 | 10/8 已核 | zh 16｜en 16｜本地结果页；复用 G039 |
@@ -990,7 +991,7 @@
 | E477 | `identity.models` | Models | 模型 | 10/8 已核 | zh 336｜en 177｜示例主线、本地结果页、本地检查（选文件至运行）、其他示例、次要明细页；复用 G027、G028 |
 | E478 | `identity.modelId` | Model | 模型 | 10/8 已核 | zh 336｜en 193｜示例主线、本地结果页、本地检查（选文件至运行）、其他示例、次要明细页；复用 G044、G028 |
 | E479 | `identity.declaredDiscipline` | Discipline declared in the project manifest | 项目清单声明的专业 | 10/8 已核 | zh 16｜en 16｜本地结果页 |
-| E480 | `identity.filename` | File | 文件 | 10/8 已核 | zh 30｜en 30｜本地结果页、本地检查（选文件至运行） |
+| E480 | `identity.filename` | File | 文件 | 10/8 已核 | zh 32｜en 32｜本地结果页、本地检查（选文件至运行） |
 | E481 | `identity.digest` | File content digest (SHA-256) | 文件内容摘要（SHA-256） | 10/8 已核 | zh 16｜en 16｜本地结果页 |
 | E482 | `identity.tagSource` | Where the IFC Tag comes from | IFC Tag 的来源 | 10/8 已核 | zh 16｜en 16｜本地结果页 |
 | E483 | `identity.elementKey` | Internal key for tracing | 追溯用内部键 | 10/8 已核 | zh 165｜en 165｜示例主线、本地结果页、其他示例 |
@@ -1173,8 +1174,8 @@
 | L007 | `home.cannot[0]` | Import a Revit file itself (.rvt), or check your own model against rules other than the product validation exercise | 导入 Revit 文件本身（.rvt），或用产品验证练习以外的规则检查自己的模型 | 新增，未核 | zh 1｜en 1｜首页 |
 | L008 | `home.cannot[1]` | Give an overall compliance, ready-to-build or "can be handed over" conclusion | 给出整体合规、可施工或“可以交付”的结论 | 新增，未核 | zh 1｜en 1｜首页；复用 G020 |
 | L009 | `home.cannot[2]` | Write back to a model, upload to the cloud, or open an element in Revit | 写回模型、上传到云端，或在 Revit 里打开构件 | 同句已核 | zh 1｜en 1｜首页；复用 G021 |
-| L050 | `disciplines.Architecture` | Architecture | 建筑（Architecture） | 新增，未核 | zh 22｜en 349｜示例主线、本地结果页、本地检查（选文件至运行）、其他示例、次要明细页 |
-| L052 | `disciplines.MEP` | MEP | 机电（MEP） | 新增，未核 | zh 14｜en 34｜示例主线、本地检查（选文件至运行）、其他示例 |
+| L050 | `disciplines.Architecture` | Architecture | 建筑（Architecture） | 新增，未核 | zh 24｜en 351｜示例主线、本地结果页、本地检查（选文件至运行）、其他示例、次要明细页 |
+| L052 | `disciplines.MEP` | MEP | 机电（MEP） | 新增，未核 | zh 16｜en 36｜示例主线、本地检查（选文件至运行）、其他示例 |
 
 页面上下文（只列待核的条目；前后各一块，‹ › 里是匹配到的那一块）：
 
@@ -1224,7 +1225,7 @@
 
 | ID | 键 | English | 中文 | 状态 | 页面 |
 |---|---|---|---|---|---|
-| Z04 | `IfcAirTerminal` |  | 风口 | D6 未列，是否已核待确认 | zh 128｜en 0｜示例主线、本地结果页、本地检查（选文件至运行）、其他示例 |
+| Z04 | `IfcAirTerminal` |  | 风口 | D6 未列，是否已核待确认 | zh 135｜en 0｜示例主线、本地结果页、本地检查（选文件至运行）、其他示例 |
 | Z05 | `IfcChimney` |  | 烟囱 | D6 未列，是否已核待确认 | zh 73｜en 0｜示例主线、其他示例 |
 | Z06 | `IfcDuctSegment` |  | 风管段 | D6 未列，是否已核待确认 | zh 56｜en 0｜示例主线、其他示例 |
 | Z07 | `IfcRoof` |  | 屋顶 | D6 未列，是否已核待确认 | zh 37｜en 0｜示例主线、其他示例 |
@@ -1234,7 +1235,7 @@
 
 | ID | 键 | English | 中文 | 状态 | 页面 |
 |---|---|---|---|---|---|
-| Z10 | `Product validation rule of this repository; not a project, owner, statutory or buildingSMART requirement. Values from IFC4 ADD2 TC1 IfcAirTerminalTypeEnum.` |  | 本仓库的产品验证规则；不是项目、业主、法规或 buildingSMART 的要求。取值来自 IFC4 ADD2 TC1 的 IfcAirTerminalTypeEnum。 | D6 未列，是否已核待确认 | zh 34｜en 0｜本地结果页、本地检查（选文件至运行） |
+| Z10 | `Product validation rule of this repository; not a project, owner, statutory or buildingSMART requirement. Values from IFC4 ADD2 TC1 IfcAirTerminalTypeEnum.` |  | 本仓库的产品验证规则；不是项目、业主、法规或 buildingSMART 的要求。取值来自 IFC4 ADD2 TC1 的 IfcAirTerminalTypeEnum。 | D6 未列，是否已核待确认 | zh 41｜en 0｜本地结果页、本地检查（选文件至运行） |
 
 ### T2 本地 IFC 与第二入口（90 条，待核 86）
 
@@ -1351,68 +1352,68 @@
 
 | ID | 键 | English | 中文 | 状态 | 页面 |
 |---|---|---|---|---|---|
-| L001 | `mode` | Local check · product validation exercise | 本地检查 · 产品验证练习 | 新增，未核 | zh 35｜en 35｜本地结果页、本地检查（选文件至运行） |
+| L001 | `mode` | Local check · product validation exercise | 本地检查 · 产品验证练习 | 新增，未核 | zh 42｜en 42｜本地结果页、本地检查（选文件至运行） |
 | L005 | `home.statusWithWorkspace` | Available now: a real check already run in the workspace named when the server was started, simulated examples, and one limited product validation exercise on your own I… | 当前提供：启动服务器时指定的工作区里一次已经跑完的真实检查、模拟示例，以及对自己 IFC4 文件的一项有限产品验证练习；不能导入 Revit 文件本身，也不提供整体合规或可施工结论。 | 新增，未核 | zh 0｜en 0｜（本次渲染未触发） |
 | L006 | `home.statusWorkspaceUnknown` | Could not tell whether the server was started with a workspace, so there is no entry for a workspace check here; that does not mean there is none, and the error is below… | 未能确认服务器是否指定了工作区，所以这里没有工作区检查的入口；这不等于没有工作区，错误原文在下面。模拟示例和本地 IFC 产品验证练习照常可用；不能导入 Revit 文件本身，也不提供整体合规或可施工结论。 | 新增，未核 | zh 0｜en 0｜（本次渲染未触发） |
-| L010 | `start.lede` | Four steps: first see what this checks and what this computer keeps; choose files; declare disciplines and confirm the rule set; look at the scope, then run. | 四步：先看清这次只检查什么和本机会留下的记录；选择文件；声明专业并确认规则；看清范围后运行。 | 新增，未核 | zh 18｜en 18｜本地检查（选文件至运行） |
+| L010 | `start.lede` | Four steps: first see what this checks and what this computer keeps; choose files; declare disciplines and confirm the rule set; look at the scope, then run. | 四步：先看清这次只检查什么和本机会留下的记录；选择文件；声明专业并确认规则；看清范围后运行。 | 新增，未核 | zh 25｜en 25｜本地检查（选文件至运行） |
 | L011 | `start.noRuleset` | This checkout does not carry the product-validation 1.0 rule set, so the local check cannot run. No other rule set is offered here. | 这个检出没有提供 product-validation 1.0 规则集，所以本地检查不能运行。其他规则集不在本地检查里提供。 | 新增，未核 | zh 0｜en 0｜（本次渲染未触发） |
-| L012 | `exercise.what` | This is a product validation exercise. It checks one thing with this repository's product validation rule set: whether each applicable air terminal (IfcAirTerminal) in a… | 这是一项产品验证练习：只用本仓库的产品验证规则集检查一件事——IFC4 模型里适用的风口（IfcAirTerminal）是否声明了 DIFFUSER、GRILLE、LOUVRE、REGISTER 四种预定义类型之一。它… | 新增，未核 | zh 18｜en 18｜本地检查（选文件至运行） |
-| L013 | `exercise.source` | A product validation rule written for this repository; not a project, owner, statutory or buildingSMART requirement. The four values are from IFC4 ADD2 TC1 IfcAirTermina… | 本仓库自己写的产品验证规则，不是项目、业主、法规或 buildingSMART 的要求；四个取值来自 IFC4 ADD2 TC1 的 IfcAirTerminalTypeEnum，只接受这四个是这条规则自己的决定。规则… | 新增，未核 | zh 18｜en 18｜本地检查（选文件至运行） |
-| L014 | `exercise.notes` | Whether the checker reads the value from the type or the occurrence, and how free text is compared, is in this rule's notes on the result page. | 检查器从类型还是实例读取取值、自由文本怎样比较，写在结果页这条规则的说明里。 | 新增，未核 | zh 18｜en 18｜本地检查（选文件至运行） |
-| L015 | `declare.rulesetLegend` | Rule set (the only one the local check offers) | 规则集（本地检查只提供这一个） | 新增，未核 | zh 18｜en 18｜本地检查（选文件至运行） |
+| L012 | `exercise.what` | This is a product validation exercise. It checks one thing with this repository's product validation rule set: whether each applicable air terminal (IfcAirTerminal) in a… | 这是一项产品验证练习：只用本仓库的产品验证规则集检查一件事——IFC4 模型里适用的风口（IfcAirTerminal）是否声明了 DIFFUSER、GRILLE、LOUVRE、REGISTER 四种预定义类型之一。它… | 新增，未核 | zh 25｜en 25｜本地检查（选文件至运行） |
+| L013 | `exercise.source` | A product validation rule written for this repository; not a project, owner, statutory or buildingSMART requirement. The four values are from IFC4 ADD2 TC1 IfcAirTermina… | 本仓库自己写的产品验证规则，不是项目、业主、法规或 buildingSMART 的要求；四个取值来自 IFC4 ADD2 TC1 的 IfcAirTerminalTypeEnum，只接受这四个是这条规则自己的决定。规则… | 新增，未核 | zh 25｜en 25｜本地检查（选文件至运行） |
+| L014 | `exercise.notes` | Whether the checker reads the value from the type or the occurrence, and how free text is compared, is in this rule's notes on the result page. | 检查器从类型还是实例读取取值、自由文本怎样比较，写在结果页这条规则的说明里。 | 新增，未核 | zh 25｜en 25｜本地检查（选文件至运行） |
+| L015 | `declare.rulesetLegend` | Rule set (the only one the local check offers) | 规则集（本地检查只提供这一个） | 新增，未核 | zh 25｜en 25｜本地检查（选文件至运行） |
 | L016 | `refusal.reasons.unknown-ruleset` | The local check offers product-validation 1.0 only. Choose it. | 本地检查只提供 product-validation 1.0。请选择它。 | 新增，未核 | zh 0｜en 0｜（本次渲染未触发） |
 | L017 | `result.exercise` | This is the result of a product validation exercise: it only checks whether air terminals declare one of four predefined types. A FAIL does not mean the original project… | 这是产品验证练习的结果：只检查风口是否声明了四种预定义类型之一。不通过不等于原项目有缺陷；通过不证明分类正确、洞口存在、模型已对齐或任何工作可以开始。 | 新增，未核 | zh 16｜en 16｜本地结果页 |
-| L018 | `exercise.read[0]` | FAIL: the model does not meet this exercise rule. It does not mean the original project has a defect. | 不通过（FAIL）：不满足这条练习规则，不等于原项目有缺陷。 | 新增，未核 | zh 18｜en 18｜本地检查（选文件至运行） |
-| L019 | `exercise.read[1]` | PASS: only that the value the checker read is one of the four. It does not prove the classification is right, that openings exist or that models are aligned, and it does… | 通过（PASS）：只说明检查器读到的值是四个之一；不证明分类正确、洞口存在、模型已对齐，也不说明任何工作可以开始。 | 新增，未核 | zh 18｜en 18｜本地检查（选文件至运行） |
+| L018 | `exercise.read[0]` | FAIL: the model does not meet this exercise rule. It does not mean the original project has a defect. | 不通过（FAIL）：不满足这条练习规则，不等于原项目有缺陷。 | 新增，未核 | zh 25｜en 25｜本地检查（选文件至运行） |
+| L019 | `exercise.read[1]` | PASS: only that the value the checker read is one of the four. It does not prove the classification is right, that openings exist or that models are aligned, and it does… | 通过（PASS）：只说明检查器读到的值是四个之一；不证明分类正确、洞口存在、模型已对齐，也不说明任何工作可以开始。 | 新增，未核 | zh 25｜en 25｜本地检查（选文件至运行） |
 | L020 | `fault.lede` | This is a fault of the program, not a conclusion about the model. The check's directory has been removed and no partial result is left; the model copies chosen before ar… | 这是程序故障，不是对模型的结论。这次检查的目录已经删除，没有留下半份结果；之前选择的模型副本仍在 uploads\ 里。 | 新增，未核 | zh 1｜en 1｜本地检查（选文件至运行） |
 | L021 | `fault.todo[2]` | Send the original text below to the maintainer; it only says where the program stopped, not anything about the model's quality. | 把下面的原文发给维护者；原文只描述程序在哪里停下，不说明模型的质量。 | 新增，未核 | zh 1｜en 1｜本地检查（选文件至运行） |
-| L022 | `exercise.read[2]` | No air terminal in the chosen model: shown as "nothing applicable". That is not a pass, and this check produced no passing result for anything applicable. | 所选模型里没有风口：显示“没有适用对象”。这不是通过，此次也没有得到任何适用检查的通过结果。 | 新增，未核 | zh 18｜en 18｜本地检查（选文件至运行） |
+| L022 | `exercise.read[2]` | No air terminal in the chosen model: shown as "nothing applicable". That is not a pass, and this check produced no passing result for anything applicable. | 所选模型里没有风口：显示“没有适用对象”。这不是通过，此次也没有得到任何适用检查的通过结果。 | 新增，未核 | zh 25｜en 25｜本地检查（选文件至运行） |
 | L023 | `result.nothingHeading` | Nothing applicable | 没有适用对象 | 新增，未核 | zh 8｜en 8｜本地结果页 |
 | L024 | `result.nothing` | {file}: this rule has nothing to apply to in this model. That is not a pass — this check produced no passing result for anything applicable, and it says nothing about th… | {file}：这条规则在这个模型里没有适用对象。这不是通过——此次没有得到任何适用检查的通过结果，也不说明模型质量。 | 新增，未核 | zh 8｜en 8｜本地结果页 |
-| L025 | `records.lede` | The check runs on this computer and uploads nothing anywhere. Everything is kept in this directory, fixed before anything runs: | 检查在这台电脑上运行，不上传到任何地方。下面这个目录保存所有记录，运行前就定好： | 新增，未核 | zh 34｜en 34｜本地结果页、本地检查（选文件至运行） |
+| L025 | `records.lede` | The check runs on this computer and uploads nothing anywhere. Everything is kept in this directory, fixed before anything runs: | 检查在这台电脑上运行，不上传到任何地方。下面这个目录保存所有记录，运行前就定好： | 新增，未核 | zh 41｜en 41｜本地结果页、本地检查（选文件至运行） |
 | L026 | `records.redirected` | The server is running inside a packaged (MSIX) app, and Windows has moved what is written under %LOCALAPPDATA% into the app's own folder. In File Explorer, look in the l… | 服务器运行在打包应用（MSIX）里，Windows 把写到 %LOCALAPPDATA% 下的文件转到了应用自己的文件夹。在资源管理器里要找上面这个“实际位置”；按目录名去找会找不到。想避免这种转移，用下面的命令在 A… | 新增，未核 | zh 0｜en 0｜（本次渲染未触发） |
-| L027 | `records.notYet` | Nothing is kept yet: the directory is created when the first file is chosen. | 目前还没有任何记录：选择第一个文件时才会创建这个目录。 | 新增，未核 | zh 0｜en 0｜（本次渲染未触发） |
-| L028 | `records.kept` | Kept now: {uploads} model copies, {checks} checks. | 目前保留：{uploads} 个模型副本，{checks} 次检查。 | 新增，未核 | zh 34｜en 34｜本地结果页、本地检查（选文件至运行） |
-| L029 | `records.what[0]` | A copy of every file you choose: uploads\<content digest>.ifc. It is kept as soon as the file is chosen, even if no check is run. | 你选择的每个文件的副本：uploads\<内容摘要>.ifc。选择文件时就会保留，即使最后没有运行检查。 | 新增，未核 | zh 34｜en 34｜本地结果页、本地检查（选文件至运行） |
-| L030 | `records.what[1]` | One directory per check: checks\<check id>\, holding the model copies, a copy of the rule set, the result (data\processed\canonical\run.json), the artifact manifest, the… | 每次检查一个目录：checks\<检查号>\，里面有模型副本、规则集副本、检查结果（data\processed\canonical\run.json）、产物清单、本次检查的范围（check.json）和覆盖记录（co… | 新增，未核 | zh 34｜en 34｜本地结果页、本地检查（选文件至运行） |
-| L031 | `records.what[3]` | Nothing is written outside this directory: the repository checkout does not change, and the shared coverage record directory used by the epc-ct run command gains nothing. | 这个目录以外不写任何文件：仓库检出不变，命令行 epc-ct run 使用的共享覆盖记录目录也不增加。 | 新增，未核 | zh 34｜en 34｜本地结果页、本地检查（选文件至运行） |
-| L032 | `records.what[4]` | Closing the page or stopping the server deletes nothing. | 关闭页面或停止服务器都不会删除记录。 | 新增，未核 | zh 34｜en 34｜本地结果页、本地检查（选文件至运行） |
-| L033 | `records.clean[0]` | Stop the server: press Ctrl+C in the terminal running it. | 停止服务器：在运行它的终端里按 Ctrl+C。 | 新增，未核 | zh 34｜en 34｜本地结果页、本地检查（选文件至运行） |
-| L034 | `records.clean[1]` | Open the location above in File Explorer (where the location differs from the directory name, use the location). | 在资源管理器里打开上面的位置（实际位置与目录名不同时，用实际位置）。 | 新增，未核 | zh 34｜en 34｜本地结果页、本地检查（选文件至运行） |
-| L035 | `records.clean[2]` | Delete the whole directory to remove every record; to remove one check, delete checks\<check id>\. The model copies it used are in uploads\, named by content digest; the… | 删除整个目录，就清除了全部记录；只想删一次检查，删除 checks\<检查号>\。它用过的模型副本在 uploads\ 里，按内容摘要命名；摘要写在检查结果页的追溯信息里。 | 新增，未核 | zh 34｜en 34｜本地结果页、本地检查（选文件至运行） |
-| L036 | `records.start` | From the repository directory, start the server in your own terminal with a folder outside AppData, for example: | 在仓库目录里，用自己的终端启动服务器，并指定 AppData 以外的文件夹，例如： | 新增，未核 | zh 34｜en 34｜本地结果页、本地检查（选文件至运行） |
-| L037 | `records.startNote` | The server prints the directory when it starts. It exists once the first file is chosen; if Windows keeps it somewhere else, this page shows where. | 服务器启动时会打印目录。第一次选择文件后目录才存在；如果 Windows 把它放到了别处，这一页会显示实际位置。 | 新增，未核 | zh 34｜en 34｜本地结果页、本地检查（选文件至运行） |
-| L038 | `choose.removed` | Taken out of this selection; its copy is still in uploads\. Delete it with the clean-up steps above. | 已从本次选择中去掉；它的副本仍在 uploads\ 里，按上面的清理步骤删除。 | 新增，未核 | zh 0｜en 0｜（本次渲染未触发） |
-| L039 | `earlier.note` | Kept in the directory above until you delete them. | 保存在上面的目录里，直到你删除它们。 | 新增，未核 | zh 18｜en 18｜本地检查（选文件至运行） |
+| L027 | `records.notYet` | Nothing is kept yet: the directory is created when the first file is chosen. | 目前还没有任何记录：选择第一个文件时才会创建这个目录。 | 新增，未核 | zh 4｜en 4｜本地检查（选文件至运行） |
+| L028 | `records.kept` | Kept now: {uploads} model copies, {checks} checks. | 目前保留：{uploads} 个模型副本，{checks} 次检查。 | 新增，未核 | zh 37｜en 37｜本地结果页、本地检查（选文件至运行） |
+| L029 | `records.what[0]` | A copy of every file you choose: uploads\<content digest>.ifc. It is kept as soon as the file is chosen, even if no check is run. | 你选择的每个文件的副本：uploads\<内容摘要>.ifc。选择文件时就会保留，即使最后没有运行检查。 | 新增，未核 | zh 41｜en 41｜本地结果页、本地检查（选文件至运行） |
+| L030 | `records.what[1]` | One directory per check: checks\<check id>\, holding the model copies, a copy of the rule set, the result (data\processed\canonical\run.json), the artifact manifest, the… | 每次检查一个目录：checks\<检查号>\，里面有模型副本、规则集副本、检查结果（data\processed\canonical\run.json）、产物清单、本次检查的范围（check.json）和覆盖记录（co… | 新增，未核 | zh 41｜en 41｜本地结果页、本地检查（选文件至运行） |
+| L031 | `records.what[3]` | Nothing is written outside this directory: the repository checkout does not change, and the shared coverage record directory used by the epc-ct run command gains nothing. | 这个目录以外不写任何文件：仓库检出不变，命令行 epc-ct run 使用的共享覆盖记录目录也不增加。 | 新增，未核 | zh 41｜en 41｜本地结果页、本地检查（选文件至运行） |
+| L032 | `records.what[4]` | Closing the page or stopping the server deletes nothing. | 关闭页面或停止服务器都不会删除记录。 | 新增，未核 | zh 41｜en 41｜本地结果页、本地检查（选文件至运行） |
+| L033 | `records.clean[0]` | Stop the server: press Ctrl+C in the terminal running it. | 停止服务器：在运行它的终端里按 Ctrl+C。 | 新增，未核 | zh 41｜en 41｜本地结果页、本地检查（选文件至运行） |
+| L034 | `records.clean[1]` | Open the location above in File Explorer (where the location differs from the directory name, use the location). | 在资源管理器里打开上面的位置（实际位置与目录名不同时，用实际位置）。 | 新增，未核 | zh 41｜en 41｜本地结果页、本地检查（选文件至运行） |
+| L035 | `records.clean[2]` | Delete the whole directory to remove every record; to remove one check, delete checks\<check id>\. The model copies it used are in uploads\, named by content digest; the… | 删除整个目录，就清除了全部记录；只想删一次检查，删除 checks\<检查号>\。它用过的模型副本在 uploads\ 里，按内容摘要命名；摘要写在检查结果页的追溯信息里。 | 新增，未核 | zh 41｜en 41｜本地结果页、本地检查（选文件至运行） |
+| L036 | `records.start` | From the repository directory, start the server in your own terminal with a folder outside AppData, for example: | 在仓库目录里，用自己的终端启动服务器，并指定 AppData 以外的文件夹，例如： | 新增，未核 | zh 41｜en 41｜本地结果页、本地检查（选文件至运行） |
+| L037 | `records.startNote` | The server prints the directory when it starts. It exists once the first file is chosen; if Windows keeps it somewhere else, this page shows where. | 服务器启动时会打印目录。第一次选择文件后目录才存在；如果 Windows 把它放到了别处，这一页会显示实际位置。 | 新增，未核 | zh 41｜en 41｜本地结果页、本地检查（选文件至运行） |
+| L038 | `choose.removed` | Taken out of this selection; its copy is still in uploads\. Delete it with the clean-up steps above. | 已从本次选择中去掉；它的副本仍在 uploads\ 里，按上面的清理步骤删除。 | 新增，未核 | zh 1｜en 1｜本地检查（选文件至运行） |
+| L039 | `earlier.note` | Kept in the directory above until you delete them. | 保存在上面的目录里，直到你删除它们。 | 新增，未核 | zh 25｜en 25｜本地检查（选文件至运行） |
 | L040 | `result.missing` | There is no such check: it may have been cleaned up (its directory deleted), or the link is wrong. After cleaning up, result links stop opening. | 没有这次检查：它可能已被清理（目录被删除），或者链接不对。清理之后，结果页链接就打不开了。 | 新增，未核 | zh 1｜en 1｜本地检查（选文件至运行） |
-| L041 | `records.after[0]` | A deleted check's result link stops opening; the page says there is no such check. | 已删除检查的结果页链接打不开，页面会说没有这次检查。 | 新增，未核 | zh 34｜en 34｜本地结果页、本地检查（选文件至运行） |
-| L042 | `records.after[1]` | It can no longer be compared with a later check. | 不能再拿它和以后的检查对比。 | 新增，未核 | zh 34｜en 34｜本地结果页、本地检查（选文件至运行） |
-| L043 | `records.after[2]` | Its coverage record goes with it, so nothing can say afterwards which elements and requirements that check covered. | 它的覆盖记录一起删除，之后无法再说明那次检查覆盖了哪些构件和要求。 | 新增，未核 | zh 34｜en 34｜本地结果页、本地检查（选文件至运行） |
-| L044 | `records.after[3]` | Once a model copy is deleted, the file has to be chosen again to check it. | 删除模型副本后，要再检查就得重新选择文件。 | 新增，未核 | zh 34｜en 34｜本地结果页、本地检查（选文件至运行） |
-| L045 | `records.again` | Checking the same file again, declared as the same discipline, with the same rule set version and the same logical date, gives the same check id and byte-identical resul… | 用同一个文件、同样声明的专业、同一规则集版本和同一逻辑日期重新检查，会得到同一个检查号和逐字节相同的结果。 | 新增，未核 | zh 34｜en 34｜本地结果页、本地检查（选文件至运行） |
-| L046 | `declare.disciplineNote` | You declare the discipline; it is not guessed from the file name, and it is written into the check's record. It does not narrow the check now: the rule checks every air… | 专业由你声明，不从文件名猜测，写进本次检查的记录。它目前不缩小检查范围：规则会检查所选文件里的全部风口，不论声明的是哪个专业（规则自己声明适用于 {scope} 模型）。 | 新增，未核 | zh 18｜en 18｜本地检查（选文件至运行） |
+| L041 | `records.after[0]` | A deleted check's result link stops opening; the page says there is no such check. | 已删除检查的结果页链接打不开，页面会说没有这次检查。 | 新增，未核 | zh 41｜en 41｜本地结果页、本地检查（选文件至运行） |
+| L042 | `records.after[1]` | It can no longer be compared with a later check. | 不能再拿它和以后的检查对比。 | 新增，未核 | zh 41｜en 41｜本地结果页、本地检查（选文件至运行） |
+| L043 | `records.after[2]` | Its coverage record goes with it, so nothing can say afterwards which elements and requirements that check covered. | 它的覆盖记录一起删除，之后无法再说明那次检查覆盖了哪些构件和要求。 | 新增，未核 | zh 41｜en 41｜本地结果页、本地检查（选文件至运行） |
+| L044 | `records.after[3]` | Once a model copy is deleted, the file has to be chosen again to check it. | 删除模型副本后，要再检查就得重新选择文件。 | 新增，未核 | zh 41｜en 41｜本地结果页、本地检查（选文件至运行） |
+| L045 | `records.again` | Checking the same file again, declared as the same discipline, with the same rule set version and the same logical date, gives the same check id and byte-identical resul… | 用同一个文件、同样声明的专业、同一规则集版本和同一逻辑日期重新检查，会得到同一个检查号和逐字节相同的结果。 | 新增，未核 | zh 41｜en 41｜本地结果页、本地检查（选文件至运行） |
+| L046 | `declare.disciplineNote` | You declare the discipline; it is not guessed from the file name, and it is written into the check's record. It does not narrow the check now: the rule checks every air… | 专业由你声明，不从文件名猜测，写进本次检查的记录。它目前不缩小检查范围：规则会检查所选文件里的全部风口，不论声明的是哪个专业（规则自己声明适用于 {scope} 模型）。 | 新增，未核 | zh 25｜en 25｜本地检查（选文件至运行） |
 | L047 | `result.declared` | {file} (discipline you declared: {discipline}) | {file}（你声明的专业：{discipline}） | 新增，未核 | zh 16｜en 16｜本地结果页 |
 | L048 | `refusal.reasons.discipline-not-declared` | No discipline is declared. Choose one for this file. | 还没有声明专业。为这个文件选择一个专业。 | 新增，未核 | zh 1｜en 1｜本地检查（选文件至运行） |
 | L049 | `refusal.reasons.unknown-discipline` | The declared discipline is not in the list here. Choose one from the list. | 声明的专业不在这里的专业列表里。请从列表里选择。 | 新增，未核 | zh 0｜en 0｜（本次渲染未触发） |
-| L051 | `disciplines.HVAC` | HVAC | 暖通（HVAC） | 新增，未核 | zh 14｜en 27｜本地结果页、本地检查（选文件至运行） |
-| L053 | `disciplines.Plumbing` | Plumbing | 给排水（Plumbing） | 新增，未核 | zh 14｜en 14｜本地检查（选文件至运行） |
-| L054 | `disciplines.Structural` | Structural | 结构（Structural） | 新增，未核 | zh 14｜en 14｜本地检查（选文件至运行） |
-| L055 | `choose.note` | Only IFC-SPF text (.ifc) is accepted, not .ifczip, .ifcxml or Revit files; at most {max} per file. The rule set reads IFC4 only; an IFC2x3 file is refused, with how to e… | 只接受 IFC-SPF 文本（.ifc），不接受 .ifczip、.ifcxml 或 Revit 文件；单个文件最大 {max}。规则集只读取 IFC4，IFC2x3 文件会被拒绝，并告诉你怎样重新导出。 | 新增，未核 | zh 18｜en 18｜本地检查（选文件至运行） |
-| L056 | `refusal.lede` | No check was run and there is no result. Each reason, and what to do: | 没有运行任何检查，也没有产生结果。每个原因和要做的事： | 新增，未核 | zh 2｜en 2｜本地检查（选文件至运行） |
+| L051 | `disciplines.HVAC` | HVAC | 暖通（HVAC） | 新增，未核 | zh 16｜en 29｜本地结果页、本地检查（选文件至运行） |
+| L053 | `disciplines.Plumbing` | Plumbing | 给排水（Plumbing） | 新增，未核 | zh 16｜en 16｜本地检查（选文件至运行） |
+| L054 | `disciplines.Structural` | Structural | 结构（Structural） | 新增，未核 | zh 16｜en 16｜本地检查（选文件至运行） |
+| L055 | `choose.note` | Only IFC-SPF text (.ifc) is accepted, not .ifczip, .ifcxml or Revit files; at most {max} per file. The rule set reads IFC4 only; an IFC2x3 file is refused, with how to e… | 只接受 IFC-SPF 文本（.ifc），不接受 .ifczip、.ifcxml 或 Revit 文件；单个文件最大 {max}。规则集只读取 IFC4，IFC2x3 文件会被拒绝，并告诉你怎样重新导出。 | 新增，未核 | zh 25｜en 25｜本地检查（选文件至运行） |
+| L056 | `refusal.lede` | No check was run and there is no result. Each reason, and what to do: | 没有运行任何检查，也没有产生结果。每个原因和要做的事： | 新增，未核 | zh 4｜en 4｜本地检查（选文件至运行） |
 | L057 | `refusal.reasons.unsupported-schema` | The rule set's checker reads IFC4 only, and this file is not IFC4 (IFC2x3, for example). To recover: in Revit's IFC export dialog, set the IFC version to IFC4 Reference… | 规则集的检查程序只读取 IFC4，这个文件不是 IFC4（例如 IFC2x3）。恢复办法：在 Revit 的 IFC 导出对话框里，把 IFC 版本选为 IFC4 Reference View，重新导出后选择新文件。原… | 新增，未核 | zh 1｜en 1｜本地检查（选文件至运行） |
 | L058 | `refusal.reasons.not-an-ifc` | This is not an IFC-SPF text file: it does not begin with an ISO-10303-21 header. Choose the .ifc file Revit exported, not an .ifczip, .ifcxml or .rvt. | 这不是 IFC-SPF 文本文件：开头没有 ISO-10303-21 文件头。请选择 Revit 导出的 .ifc 文件，不是 .ifczip、.ifcxml 或 .rvt。 | 新增，未核 | zh 1｜en 1｜本地检查（选文件至运行） |
 | L059 | `refusal.reasons.model-too-large` | The file is over this server's limit and was not read. Export a smaller model, or restart the server with a larger --max-model-bytes. | 文件超过这台服务器接受的上限，没有读取。可以导出范围更小的模型，或用更大的 --max-model-bytes 重新启动服务器。 | 新增，未核 | zh 0｜en 0｜（本次渲染未触发） |
 | L060 | `refusal.reasons.model-incomplete` | The file did not reach the server in full and was not kept. Choose the file again. | 文件没有完整传到服务器，没有保留。请重新选择这个文件。 | 新增，未核 | zh 0｜en 0｜（本次渲染未触发） |
-| L061 | `refusal.reasons.model-name-invalid` | The file name cannot name a model: it must end in .ifc, not start with ".", and have no path or any of < > : " / \ \| ? *. Rename it and choose it again. | 文件名不能用作模型名：要以 .ifc 结尾，不以“.”开头，不含路径或 < > : " / \ \| ? *。请改名后重新选择。 | 新增，未核 | zh 0｜en 0｜（本次渲染未触发） |
+| L061 | `refusal.reasons.model-name-invalid` | The file name cannot name a model: it must end in .ifc, not start with ".", and have no path or any of < > : " / \ \| ? *. Rename it and choose it again. | 文件名不能用作模型名：要以 .ifc 结尾，不以“.”开头，不含路径或 < > : " / \ \| ? *。请改名后重新选择。 | 新增，未核 | zh 1｜en 0｜本地检查（选文件至运行） |
 | L062 | `refusal.reasons.unknown-model` | The server holds no copy of this file (it may have been cleaned up). Choose the file again. | 服务器上没有这个文件的副本（可能已被清理）。请重新选择这个文件。 | 新增，未核 | zh 0｜en 0｜（本次渲染未触发） |
-| L063 | `refusal.reasons.duplicate-model` | The same file, a file of the same name, or one with the same content was chosen twice. Choose each model once. | 同一个文件、同名文件或内容相同的文件选了两次。每个模型只选一次。 | 新增，未核 | zh 0｜en 0｜（本次渲染未触发） |
-| L064 | `refusal.reasons.no-model` | No file has been chosen. Choose at least one .ifc file. | 还没有选择文件。至少选择一个 .ifc 文件。 | 新增，未核 | zh 0｜en 0｜（本次渲染未触发） |
+| L063 | `refusal.reasons.duplicate-model` | The same file, a file of the same name, or one with the same content was chosen twice. Choose each model once. | 同一个文件、同名文件或内容相同的文件选了两次。每个模型只选一次。 | 新增，未核 | zh 1｜en 1｜本地检查（选文件至运行） |
+| L064 | `refusal.reasons.no-model` | No file has been chosen. Choose at least one .ifc file. | 还没有选择文件。至少选择一个 .ifc 文件。 | 新增，未核 | zh 1｜en 1｜本地检查（选文件至运行） |
 | L065 | `refusal.reasons.busy` | Another check is running; one runs at a time. Wait for it to finish, then run this one. | 另一次检查正在运行，一次只运行一个。等它完成后再运行这一次。 | 新增，未核 | zh 0｜en 0｜（本次渲染未触发） |
 | L066 | `fault.todo[0]` | Make sure the file is an IFC4 file exported from Revit, and run again. | 确认文件是从 Revit 导出的 IFC4 文件，再运行一次。 | 新增，未核 | zh 1｜en 1｜本地检查（选文件至运行） |
 | L067 | `fault.todo[1]` | If the same file fails here every time, export it again and choose the new file. | 如果同一个文件每次都在这里失败，重新导出后再选择新文件。 | 新增，未核 | zh 1｜en 1｜本地检查（选文件至运行） |
-| L068 | `fault.network` | No answer came from the server: it may have stopped. Start the server, then reload this page. | 没有收到服务器的回答：服务器可能已经停止。启动服务器后，刷新这一页。 | 新增，未核 | zh 0｜en 0｜（本次渲染未触发） |
+| L068 | `fault.network` | No answer came from the server: it may have stopped. Start the server, then reload this page. | 没有收到服务器的回答：服务器可能已经停止。启动服务器后，刷新这一页。 | 新增，未核 | zh 1｜en 2｜本地检查（选文件至运行） |
 | L069 | `scope.geometryText` | No geometry is computed. An element without a shape does not stop the check from finishing; its check result, identity and next step are shown as usual. There is no 3D v… | 不计算几何。没有形体的构件不会让整次检查中断，它的检查结果、标识和下一步照常显示；本次结果也没有 3D 视图。 | 新增，未核 | zh 26｜en 26｜本地结果页、本地检查（选文件至运行） |
-| L070 | `records.what[2]` | 3D geometry cache: none is made now. When a 3D view is added, its cache will be kept in this directory too and cleaned up the same way. | 3D 几何缓存：现在不生成。以后加入 3D 查看时，它的缓存也放在这个目录里，按下面同样的步骤清理。 | 新增，未核 | zh 34｜en 34｜本地结果页、本地检查（选文件至运行） |
+| L070 | `records.what[2]` | 3D geometry cache: none is made now. When a 3D view is added, its cache will be kept in this directory too and cleaned up the same way. | 3D 几何缓存：现在不生成。以后加入 3D 查看时，它的缓存也放在这个目录里，按下面同样的步骤清理。 | 新增，未核 | zh 41｜en 41｜本地结果页、本地检查（选文件至运行） |
 | L071 | `scope.ready` | The server will run this check with the scope below; confirm it, then run. | 服务器按下面的范围运行这次检查；确认后再运行。 | 新增，未核 | zh 10｜en 10｜本地检查（选文件至运行） |
 | L072 | `scope.checkId` | Check id (decided by the rule set, the logical date, and each file's name, discipline and content) | 检查号（由规则集、逻辑日期和每个文件的名称、专业、内容决定） | 新增，未核 | zh 10｜en 10｜本地检查（选文件至运行） |
 | L073 | `scope.asOfNote` | (set by the run configuration, not today's date) | （运行配置给定，不是今天的日期） | 新增，未核 | zh 10｜en 10｜本地检查（选文件至运行） |
@@ -1437,6 +1438,7 @@
 - `L023` zh `flow:check-both:result`：这是产品验证练习的结果：只检查风口是否声明了四种预定义类型之一。不通过不等于原项目有缺陷；通过不证明分类正确、洞口存在、模型已对齐或任何工作 ‹ 没有适用对象 › Building-Architecture.ifc：这条规则在这个模型里没有适用对象。这不是通过——此次没有得到任何适用检查的通过结果，也不；en `flow:check-both:result`：This is the result of a product validation exercise: it only checks wh ‹ Nothing applicable › Building-Architecture.ifc: this rule has nothing to apply to in this m
 - `L024` zh `flow:check-both:result`：没有适用对象 ‹ Building-Architecture.ifc：这条规则在这个模型里没有适用对象。这不是通过——此次没有得到任何适用检查的通过结果，也不说明模型质量。 › 这次检查的范围；en `flow:check-both:result`：Nothing applicable ‹ Building-Architecture.ifc: this rule has nothing to apply to in this model. That is not a pass — this check pr › The scope of this check
 - `L025` zh `flow:check-both:result`：这次检查的记录在哪里，怎样清理 ‹ 检查在这台电脑上运行，不上传到任何地方。下面这个目录保存所有记录，运行前就定好： › 目录；en `flow:check-both:result`：Where this check's records are, and how to clean up ‹ The check runs on this computer and uploads nothing anywhere. Everything is kept in this directory, fixed befo › Directory
+- `L027` zh `flow:fresh:start-nothing-kept`：C:\Users\ericr\AppData\Local\Temp\ep-subset-checks-b复制 ‹ 目前还没有任何记录：选择第一个文件时才会创建这个目录。 › 会留下什么；en `flow:fresh:start-nothing-kept`：C:\Users\ericr\AppData\Local\Temp\ep-subset-checks-cCopy ‹ Nothing is kept yet: the directory is created when the first file is chosen. › What is kept
 - `L028` zh `flow:check-both:result`：C:\Users\ericr\AppData\Local\Temp\ep-subset-checks\checks\c653c7e0bb67 ‹ 目前保留：5 个模型副本，4 次检查。 › 怎样清理；en `flow:check-both:result`：C:\Users\ericr\AppData\Local\Temp\ep-subset-checks\checks\c653c7e0bb67 ‹ Kept now: 5 model copies, 4 checks. › How to clean up
 - `L029` zh `flow:check-both:result`：会留下什么 ‹ 你选择的每个文件的副本：uploads\<内容摘要>.ifc。选择文件时就会保留，即使最后没有运行检查。 › 每次检查一个目录：checks\<检查号>\，里面有模型副本、规则集副本、检查结果（data\processed\canonical\run；en `flow:check-both:result`：What is kept ‹ A copy of every file you choose: uploads\<content digest>.ifc. It is kept as soon as the file is chosen, even  › One directory per check: checks\<check id>\, holding the model copies,
 - `L030` zh `flow:check-both:result`：你选择的每个文件的副本：uploads\<内容摘要>.ifc。选择文件时就会保留，即使最后没有运行检查。 ‹ 每次检查一个目录：checks\<检查号>\，里面有模型副本、规则集副本、检查结果（data\processed\canonical\run.json）、产物清单、本次检查的范围（check.json）和覆盖记录（cov › 3D 几何缓存：现在不生成。以后加入 3D 查看时，它的缓存也放在这个目录里，按下面同样的步骤清理。；en `flow:check-both:result`：A copy of every file you choose: uploads\<content digest>.ifc. It is k ‹ One directory per check: checks\<check id>\, holding the model copies, a copy of the rule set, the result (dat › 3D geometry cache: none is made now. When a 3D view is added, its cach
@@ -1447,6 +1449,7 @@
 - `L035` zh `flow:check-both:result`：在资源管理器里打开上面的位置（实际位置与目录名不同时，用实际位置）。 ‹ 删除整个目录，就清除了全部记录；只想删一次检查，删除 checks\<检查号>\。它用过的模型副本在 uploads\ 里，按内容摘要命名；摘要写在检查结果页的追溯信息里。 › 清理之后不能再依赖什么；en `flow:check-both:result`：Open the location above in File Explorer (where the location differs f ‹ Delete the whole directory to remove every record; to remove one check, delete checks\<check id>\. The model c › What you can no longer rely on after cleaning up
 - `L036` zh `flow:check-both:result`：怎样把记录放在别的文件夹 ‹ 在仓库目录里，用自己的终端启动服务器，并指定 AppData 以外的文件夹，例如： › python doctor/serve.py --checks-dir "%USERPROFILE%\Documents\BIM Docto；en `flow:check-both:result`：How to keep the records in another folder ‹ From the repository directory, start the server in your own terminal with a folder outside AppData, for exampl › python doctor/serve.py --checks-dir "%USERPROFILE%\Documents\BIM Docto
 - `L037` zh `flow:check-both:result`：python doctor/serve.py --checks-dir "%USERPROFILE%\Documents\BIM Docto ‹ 服务器启动时会打印目录。第一次选择文件后目录才存在；如果 Windows 把它放到了别处，这一页会显示实际位置。 › 检查另一个模型；en `flow:check-both:result`：python doctor/serve.py --checks-dir "%USERPROFILE%\Documents\BIM Docto ‹ The server prints the directory when it starts. It exists once the first file is chosen; if Windows keeps it s › Check another model
+- `L038` zh `flow:fresh:chosen-file-removed`：选择一个或多个 .ifc 文件 ‹ 已从本次选择中去掉；它的副本仍在 uploads\ 里，按上面的清理步骤删除。 › 已选择的文件；en `flow:fresh:chosen-file-removed`：Choose one or more .ifc files ‹ Taken out of this selection; its copy is still in uploads\. Delete it with the clean-up steps above. › Chosen files
 - `L039` zh `#/local`：以前的检查 ‹ 保存在上面的目录里，直到你删除它们。 › Building-Architecture.ifc、Building-Hvac.ifc · product-validation 1.0 ·；en `#/local`：Earlier checks ‹ Kept in the directory above until you delete them. › Building-Architecture.ifc, Building-Hvac.ifc · product-validation 1.0
 - `L040` zh `flow:local:result-missing`：检查自己的 IFC 模型 ‹ 没有这次检查：它可能已被清理（目录被删除），或者链接不对。清理之后，结果页链接就打不开了。 › 检查另一个模型；en `flow:local:result-missing`：Check your own IFC model ‹ There is no such check: it may have been cleaned up (its directory deleted), or the link is wrong. After clean › Check another model
 - `L041` zh `flow:check-both:result`：清理之后不能再依赖什么 ‹ 已删除检查的结果页链接打不开，页面会说没有这次检查。 › 不能再拿它和以后的检查对比。；en `flow:check-both:result`：What you can no longer rely on after cleaning up ‹ A deleted check's result link stops opening; the page says there is no such check. › It can no longer be compared with a later check.
@@ -1461,11 +1464,15 @@
 - `L053` zh `flow:local:chosen`：机电（MEP） ‹ 给排水（Plumbing） › 结构（Structural）；en `flow:local:chosen`：MEP ‹ Plumbing › Structural
 - `L054` zh `flow:local:chosen`：给排水（Plumbing） ‹ 结构（Structural） › 专业由你声明，不从文件名猜测，写进本次检查的记录。它目前不缩小检查范围：规则会检查所选文件里的全部风口，不论声明的是哪个专业（规则自己声明适；en `flow:local:chosen`：Plumbing ‹ Structural › You declare the discipline; it is not guessed from the file name, and
 - `L055` zh `#/local`：1. 选择 IFC 文件 ‹ 只接受 IFC-SPF 文本（.ifc），不接受 .ifczip、.ifcxml 或 Revit 文件；单个文件最大 4.3 GB。规则集只读取 IFC4，IFC2x3 文件会被拒绝，并告诉你怎样重新导出。 › 选择一个或多个 .ifc 文件；en `#/local`：1. Choose IFC files ‹ Only IFC-SPF text (.ifc) is accepted, not .ifczip, .ifcxml or Revit files; at most 4.3 GB per file. The rule s › Choose one or more .ifc files
-- `L056` zh `flow:local:plan-refused-unsupported-schema`：这次检查不能开始 ‹ 没有运行任何检查，也没有产生结果。每个原因和要做的事： › old-schema.ifc：规则集的检查程序只读取 IFC4，这个文件不是 IFC4（例如 IFC2x3）。恢复办法：在 Revit 的；en `flow:local:plan-refused-unsupported-schema`：This check cannot start ‹ No check was run and there is no result. Each reason, and what to do: › old-schema.ifc: The rule set's checker reads IFC4 only, and this file
+- `L056` zh `flow:fresh:plan-same-name-twice`：这次检查不能开始 ‹ 没有运行任何检查，也没有产生结果。每个原因和要做的事： › same.ifc：同一个文件、同名文件或内容相同的文件选了两次。每个模型只选一次。 duplicate-model；en `flow:fresh:plan-same-name-twice`：This check cannot start ‹ No check was run and there is no result. Each reason, and what to do: › same.ifc: The same file, a file of the same name, or one with the same
 - `L057` zh `flow:local:plan-refused-unsupported-schema`：没有运行任何检查，也没有产生结果。每个原因和要做的事： ‹ old-schema.ifc：规则集的检查程序只读取 IFC4，这个文件不是 IFC4（例如 IFC2x3）。恢复办法：在 Revit 的 IFC 导出对话框里，把 IFC 版本选为 IFC4 Reference Vie › 系统返回的原文（英文）；en `flow:local:plan-refused-unsupported-schema`：No check was run and there is no result. Each reason, and what to do: ‹ old-schema.ifc: The rule set's checker reads IFC4 only, and this file is not IFC4 (IFC2x3, for example). To re › What the system returned (English original)
 - `L058` zh `flow:local:file-refused-not-an-ifc`：这个文件没有被接受：not-an-ifc.ifc ‹ not-an-ifc.ifc：这不是 IFC-SPF 文本文件：开头没有 ISO-10303-21 文件头。请选择 Revit 导出的 .ifc 文件，不是 .ifczip、.ifcxml 或 .rvt。 not-an- › 系统返回的原文（英文）；en `flow:local:file-refused-not-an-ifc`：This file was not accepted: not-an-ifc.ifc ‹ not-an-ifc.ifc: This is not an IFC-SPF text file: it does not begin with an ISO-10303-21 header. Choose the .i › What the system returned (English original)
+- `L061` zh `flow:fresh:file-refused-name-invalid`：这个文件没有被接受：.hidden.ifc ‹ .hidden.ifc：文件名不能用作模型名：要以 .ifc 结尾，不以“.”开头，不含路径或 < > : " / \ \| ? *。请改名后重新选择。 model-name-invalid › 系统返回的原文（英文）
+- `L063` zh `flow:fresh:plan-same-name-twice`：没有运行任何检查，也没有产生结果。每个原因和要做的事： ‹ same.ifc：同一个文件、同名文件或内容相同的文件选了两次。每个模型只选一次。 duplicate-model › 系统返回的原文（英文）；en `flow:fresh:plan-same-name-twice`：No check was run and there is no result. Each reason, and what to do: ‹ same.ifc: The same file, a file of the same name, or one with the same content was chosen twice. Choose each m › What the system returned (English original)
+- `L064` zh `flow:fresh:plan-refused-no-model`：没有运行任何检查，也没有产生结果。每个原因和要做的事： ‹ 还没有选择文件。至少选择一个 .ifc 文件。 no-model › 系统返回的原文（英文）；en `flow:fresh:plan-refused-no-model`：No check was run and there is no result. Each reason, and what to do: ‹ No file has been chosen. Choose at least one .ifc file. no-model › What the system returned (English original)
 - `L066` zh `flow:check-garbled:after-run`：可以怎么做 ‹ 确认文件是从 Revit 导出的 IFC4 文件，再运行一次。 › 如果同一个文件每次都在这里失败，重新导出后再选择新文件。；en `flow:check-garbled:after-run`：What you can do ‹ Make sure the file is an IFC4 file exported from Revit, and run again. › If the same file fails here every time, export it again and choose the
 - `L067` zh `flow:check-garbled:after-run`：确认文件是从 Revit 导出的 IFC4 文件，再运行一次。 ‹ 如果同一个文件每次都在这里失败，重新导出后再选择新文件。 › 把下面的原文发给维护者；原文只描述程序在哪里停下，不说明模型的质量。；en `flow:check-garbled:after-run`：Make sure the file is an IFC4 file exported from Revit, and run again. ‹ If the same file fails here every time, export it again and choose the new file. › Send the original text below to the maintainer; it only says where the
+- `L068` zh `flow:fresh:file-refused-too-large`：检查没有完成 ‹ 没有收到服务器的回答：服务器可能已经停止。启动服务器后，刷新这一页。 › 以前的检查；en `flow:fresh:file-refused-too-large`：The check did not finish ‹ No answer came from the server: it may have stopped. Start the server, then reload this page. › Earlier checks
 - `L069` zh `flow:check-both:result`：进度计划：规则集的阶段 Coordination 由本次检查代填，没有到期日；本页不显示到期、逾期或优先级。 ‹ 不计算几何。没有形体的构件不会让整次检查中断，它的检查结果、标识和下一步照常显示；本次结果也没有 3D 视图。 › 这是一次检查的结果，不是交接判断：页面只说每个构件在每条要求下通过、不通过还是不适用，不对任何工作能否开始下结论。；en `flow:check-both:result`：Programme: the rule set's stages Coordination were filled in by this c ‹ No geometry is computed. An element without a shape does not stop the check from finishing; its check result,  › These are the results of a check, not a handover judgement: the page s
 - `L070` zh `flow:check-both:result`：每次检查一个目录：checks\<检查号>\，里面有模型副本、规则集副本、检查结果（data\processed\canonical\run ‹ 3D 几何缓存：现在不生成。以后加入 3D 查看时，它的缓存也放在这个目录里，按下面同样的步骤清理。 › 这个目录以外不写任何文件：仓库检出不变，命令行 epc-ct run 使用的共享覆盖记录目录也不增加。；en `flow:check-both:result`：One directory per check: checks\<check id>\, holding the model copies, ‹ 3D geometry cache: none is made now. When a 3D view is added, its cache will be kept in this directory too and › Nothing is written outside this directory: the repository checkout doe
 - `L071` zh `flow:check-both:planned`：3. 运行前确认范围 ‹ 服务器按下面的范围运行这次检查；确认后再运行。 › 检查号（由规则集、逻辑日期和每个文件的名称、专业、内容决定）；en `flow:check-both:planned`：3. Confirm the scope before running ‹ The server will run this check with the scope below; confirm it, then run. › Check id (decided by the rule set, the logical date, and each file's n
