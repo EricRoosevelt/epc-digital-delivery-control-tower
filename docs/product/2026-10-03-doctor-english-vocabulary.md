@@ -1,6 +1,6 @@
 # Doctor 英文词表（主路径与真实工作区）
 
-日期：2026-10-03；第二部分（单项、复检）与第三部分（工作区的结果、详情、对比、拒绝、故障）同日补入；2026-10-04 补入行动与复检句（`ACTIONS`）；2026-10-05 补入首次结果卡片的三个标签（`FIRST.cardDetails`、`FIRST.cardElements`、`FIRST.openCard`），以及随附项目检查尝试的拒绝页（`REFUSAL_REASONS`、`REFUSAL_SCOPE_NOTE`、`REFUSAL_PAGE`、`REFUSAL_UNGLOSSED`）；同日删去与页首来源提示重复的 `DIRECTORY_NOTE`，复检单项页的标题序号随区块顺序调整。同日补入本地 IFC 检查的 `LOCAL_CHECK`（146 条，#29）。负责：Product/UI Engineer。
+日期：2026-10-03；第二部分（单项、复检）与第三部分（工作区的结果、详情、对比、拒绝、故障）同日补入；2026-10-04 补入行动与复检句（`ACTIONS`）；2026-10-05 补入首次结果卡片的三个标签（`FIRST.cardDetails`、`FIRST.cardElements`、`FIRST.openCard`），以及随附项目检查尝试的拒绝页（`REFUSAL_REASONS`、`REFUSAL_SCOPE_NOTE`、`REFUSAL_PAGE`、`REFUSAL_UNGLOSSED`）；同日删去与页首来源提示重复的 `DIRECTORY_NOTE`，复检单项页的标题序号随区块顺序调整。同日补入本地 IFC 检查的 `LOCAL_CHECK`（146 条，#29）。2026-10-08 补入页首来源提示的短摘要 `SOURCE_SUMMARY`（11 条；原 `DEMO_NOTICE` 不变，成为展开后的全文）和示例目录的一句简介 `DIRECTORY.exampleIntro`。负责：Product/UI Engineer。
 状态：**全部未经 BIM 复核**；有领域含义的条目进 10/15 BIM 批次。
 本文件由界面实际注册的词表生成，测试逐条核对英文与这里一致。中文一列是同一键在 `vocabulary.js` 里的原文。
 
@@ -25,9 +25,9 @@
 | 类别 | 表 | 条目 |
 | --- | --- | --- |
 | 原文（取自 Pack、记录或产品文档，未翻译） | 3 | 12 |
-| 有领域含义（判断、活动、问题类型、限制、来源），待 BIM | 54 | 697 |
-| 界面用语 | 24 | 166 |
-| 合计 | 81 | 875 |
+| 有领域含义（判断、活动、问题类型、限制、来源），待 BIM | 55 | 708 |
+| 界面用语 | 24 | 167 |
+| 合计 | 82 | 887 |
 
 ## 原文
 
@@ -658,6 +658,22 @@
 | `recheck-semantics-changed` | 复检记录 10（模拟示例） | Recheck record 10 (simulated example) |
 | `real-refusal` | 对随附样例项目的一次检查尝试 | A check attempt on the bundled sample project |
 
+**`SOURCE_SUMMARY`** —— 示例页页首的短摘要，`DEMO_NOTICE` 是展开后的全文。`cites` 只列这份记录的引用里实际出现的来源种类（逐条引用自己判定），所以混合来源不会被说成“全部真实”或“全部模拟”
+
+| 键 | 中文 | English |
+| --- | --- | --- |
+| `lead` | 随附的模拟示例，不是你的模型；团队等项目设定为演示用，不能用于正式项目决定。 | A simulated example shipped with the tool, not your model; project settings such as teams are for demonstration, not for formal project decisions. |
+| `cites` | 这份记录的结论引用了：{kinds}，逐条标在结论旁的“依据”一行。 | This record's conclusions cite {kinds}, labelled citation by citation on the "Basis" line beside each conclusion. |
+| `citesNone` | 这份记录的结论没有引用证据。 | This record's conclusions cite no evidence. |
+| `noRecord` | 结论引用的证据是真实的还是模拟的，逐条标在结论旁的“依据”一行。 | Whether the evidence a conclusion cites is real or simulated is labelled citation by citation on the "Basis" line beside it. |
+| `kinds.finding-real` | 真实检查输出 | real check output |
+| `kinds.finding-fixture` | 模拟的检查结果 | simulated check results |
+| `kinds.determination-fixture` | 模拟的人工判定 | simulated human determinations |
+| `kinds.determination-unmarked` | 来源未标注的判定 | determinations of unstated source |
+| `join` | `、` | `, `（逗号加空格） |
+| `lastJoin` | `、` | ` and `（前后各一个空格） |
+| `more` | 来源说明 | About the sources |
+
 **`TAG_WORDS`**
 
 | 键 | 中文 | English |
@@ -1107,6 +1123,7 @@
 | --- | --- | --- |
 | `realNote` | 仓库随附一个样例项目，下面是对它的一次检查尝试。这个入口只看这个样例，不能换成别的模型；检查自己的 IFC4 文件，用首页的“检查自己的 IFC 模型”。Revit 文件本身不能导入。 | The repository comes with a sample project; below is a check attempt on it. This entry shows only that sample and cannot be switched to another model; to check your own IFC4 files, use "Check your own IFC model" on the home page. A Revit file itself cannot be imported. |
 | `exampleTitle` | 选择一个模拟示例 | Choose a simulated example |
+| `exampleIntro` | 每个示例是一份检查记录。 | Each example is one check record. |
 | `empty` | 这个入口下目前没有可以查看的内容。 | There is nothing to look at under this entry yet. |
 | `exampleTag` | 示例说明 | About this example |
 | `open` | 打开这个示例的结果 | Open this example's result |

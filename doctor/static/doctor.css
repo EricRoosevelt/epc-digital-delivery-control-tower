@@ -92,6 +92,12 @@ a { color: var(--accent); }
   color: var(--demo-ink);
   font-weight: 600;
 }
+/* An example page's notice: the short line stays, the full notice is one fold
+   away. Same size of type as before; only the fold is new. */
+.source-notice { font-weight: 400; }
+.source-notice summary { cursor: pointer; }
+.source-notice .more { text-decoration: underline; white-space: nowrap; }
+.source-notice > p { margin: 8px 0 0; }
 
 main { max-width: 1200px; margin: 0 auto; padding: 16px; min-width: 0; }
 main:focus, h1[tabindex="-1"]:focus { outline: none; }

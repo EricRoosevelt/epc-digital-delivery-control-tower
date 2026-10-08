@@ -44,22 +44,25 @@ STATIC = PROJECT_ROOT / "doctor" / "static"
 
 _DRIVER = """
 import { readFileSync } from "node:fs";
-import { firstCheckModel } from "./first-check-model.js";
+import { firstCheckModel, recordCitations } from "./first-check-model.js";
 import { recheckModel } from "./recheck-model.js";
 import * as vocabulary from "./vocabulary.js";
 
 const cases = JSON.parse(readFileSync(0, "utf8"));
 const models = {};
 const first = {};
+const citations = {};
 for (const [name, document] of Object.entries(cases)) {
   models[name] = recheckModel(document);
   if (!document.successor) first[name] = firstCheckModel(document);
+  citations[name] = recordCitations(document);
 }
 const keys = (name) => Object.keys(vocabulary[name]);
 process.stdout.write(
   JSON.stringify({
     models,
     first,
+    citations,
     vocabulary: {
       states: keys("CARRY_OVER_STATES"),
       reasons: keys("CARRY_OVER_REASONS"),
@@ -88,6 +91,9 @@ process.stdout.write(
       beside: vocabulary.BESIDE,
       readyNotes: vocabulary.READY_NOTES,
       refusalReasons: vocabulary.REFUSAL_REASONS,
+      sourceSummary: vocabulary.SOURCE_SUMMARY,
+      citationProvenance: vocabulary.CITATION_PROVENANCE,
+      directory: vocabulary.DIRECTORY,
     },
   }),
 );
@@ -2100,6 +2106,157 @@ class AdapterScenarioTests(unittest.TestCase):
         ):
             with self.subTest(run=name):
                 self.assertIn(name, named)
+
+
+#: Where a record keeps a citation. Every other marked string in a record is an
+#: identifier of a run, model or content, not evidence a conclusion cites.
+_CITATION_KEYS = {"finding_keys", "finding_key", "reference", "citation", "current_citation"}
+
+
+def _marked_citations(value, key=None, under_context=False):
+    """Every fixture-marked citation in a record, found without the screens' walk."""
+
+    if isinstance(value, dict):
+        for inner_key, inner in value.items():
+            yield from _marked_citations(
+                inner, inner_key, under_context or inner_key == "context_citations"
+            )
+    elif isinstance(value, list):
+        for inner in value:
+            yield from _marked_citations(inner, key, under_context)
+    elif (
+        isinstance(value, str)
+        and value.startswith("fixture")
+        and key in _CITATION_KEYS
+        and not under_context
+    ):
+        yield value
+
+
+class SourceSummaryTests(unittest.TestCase):
+    """The short line at the head of an example page (PM Q2, 2026-10-08).
+
+    It names the kinds of evidence one record's conclusions cite. If the walk
+    behind it missed a simulated citation, the line would call a record real
+    that is not, so it is checked against every record the adapter offers.
+    """
+
+    @classmethod
+    def setUpClass(cls):
+        from internal.doctor_adapter import scenario_envelope, scenario_index
+
+        cls.records = {}
+        for item in scenario_index():
+            if item["mode"] != "fixture":
+                continue
+            envelope = scenario_envelope(item["name"])
+            if "record" in envelope:
+                cls.records[item["name"]] = envelope["record"]
+        output = _run_model(cls.records)
+        cls.citations = output["citations"]
+        cls.vocabulary = output["vocabulary"]
+
+    def kinds(self, name):
+        found = self.citations[name]
+        marked = lambda citation: citation.startswith("fixture")  # noqa: E731
+        kinds = set()
+        for citation in found["findings"]:
+            kinds.add("finding-fixture" if marked(citation) else "finding-real")
+        for citation in found["determinations"]:
+            kinds.add("determination-fixture" if marked(citation) else "determination-unmarked")
+        return kinds
+
+    def test_every_example_record_is_walked(self):
+        self.assertGreaterEqual(len(self.records), 12)
+
+    def test_no_simulated_citation_is_missed(self):
+        for name, document in self.records.items():
+            found = self.citations[name]
+            walked = set(found["findings"]) | set(found["determinations"])
+            with self.subTest(record=name):
+                missed = set(_marked_citations(document)) - walked
+                self.assertEqual(missed, set())
+
+    def test_every_cited_key_and_reference_is_walked(self):
+        for name, document in self.records.items():
+            found = self.citations[name]
+            with self.subTest(record=name):
+                text = json.dumps(found)
+                for activity in document.get("activities", []):
+                    for subscope in activity["subscopes"]:
+                        for step in subscope["path"]:
+                            for reading in step["readings"]:
+                                for key in reading.get("finding_keys", []):
+                                    self.assertIn(key, found["findings"])
+                                for cited in reading.get("cited_determinations", []):
+                                    self.assertIn(cited["reference"], found["determinations"])
+                self.assertNotIn('""', text)
+
+    def test_context_citations_are_not_a_conclusions_basis(self):
+        for name, document in self.records.items():
+            context = set()
+            for activity in document.get("activities", []):
+                for subscope in activity["subscopes"]:
+                    for step in subscope["path"]:
+                        context |= set(step.get("context_citations", []))
+            cited = set()
+            for activity in document.get("activities", []):
+                for subscope in activity["subscopes"]:
+                    for step in subscope["path"]:
+                        for reading in step["readings"]:
+                            cited |= set(reading.get("finding_keys", []))
+            only_context = context - cited
+            with self.subTest(record=name):
+                self.assertEqual(only_context & set(self.citations[name]["findings"]), set())
+
+    def test_the_examples_mix_sources_so_no_record_wide_word_would_be_true(self):
+        """The counterfactual: one word for a whole record would be wrong here."""
+
+        kinds = {name: self.kinds(name) for name in self.records}
+        mixed = [
+            name
+            for name, found in kinds.items()
+            if "finding-real" in found
+            and {"finding-fixture", "determination-fixture"} & found
+        ]
+        self.assertIn("member-evidence", mixed)
+        self.assertEqual(kinds["member-evidence"], {"finding-real", "determination-fixture"})
+        self.assertTrue(any(len(found) >= 3 for found in kinds.values()))
+
+    def test_the_summary_names_each_kind_as_the_tag_beside_a_conclusion_does(self):
+        summary = self.vocabulary["sourceSummary"]
+        provenance = self.vocabulary["citationProvenance"]
+        self.assertEqual(sorted(summary["kinds"]), sorted(provenance))
+        for name, entry in provenance.items():
+            with self.subTest(kind=name):
+                self.assertEqual(summary["kinds"][name], entry["short"])
+        self.assertIn("{kinds}", summary["cites"])
+        self.assertIn("随附的模拟示例，不是你的模型", summary["lead"])
+        self.assertIn("项目设定为演示用", summary["lead"])
+        self.assertIn("不能用于正式项目决定", summary["lead"])
+        for text in (summary["lead"], summary["cites"], summary["noRecord"]):
+            with self.subTest(text=text):
+                self.assertIn("依据" if text is not summary["lead"] else "模拟", text)
+                for blanket in ("全部", "都是", "均为", "既有", "也有"):
+                    self.assertNotIn(blanket, text)
+
+    def test_the_directory_says_each_example_is_one_check_record(self):
+        self.assertEqual(
+            self.vocabulary["directory"]["exampleIntro"], "每个示例是一份检查记录。"
+        )
+        screens = (STATIC / "screens.js").read_text(encoding="utf-8")
+        self.assertIn("note(DIRECTORY.exampleIntro)", screens)
+
+    def test_the_full_notice_is_one_fold_away_and_the_summary_outside_it(self):
+        screens = (STATIC / "screens.js").read_text(encoding="utf-8")
+        body = screens[screens.index("function sourceNotice(") :]
+        body = body[: body.index("\n}\n")]
+        self.assertIn('"details"', body)
+        self.assertIn('"summary"', body)
+        self.assertIn("SOURCE_SUMMARY.lead", body)
+        self.assertIn("recordCitations(envelope.record)", body)
+        self.assertLess(body.index('"summary"'), body.index("DEMO_NOTICE"))
+        self.assertNotIn("open", re.sub(r"//.*", "", body).replace("SOURCE_SUMMARY", ""))
 
 
 if __name__ == "__main__":
