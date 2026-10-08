@@ -65,15 +65,23 @@ demonstrations**. If you want to see it anyway, open any address with `?lang=en`
 or use the switch at the top of every screen. In English the record, activity and
 member pages say "This page has not been translated yet".
 
-![BIM Doctor home, Chinese interface: two entries, and a strip saying you cannot import your own Revit model and it gives no overall compliance conclusion](docs/evidence/doctor-first-minute-2026-10-03/zh-01-home.png)
+![BIM Doctor home as at commit 577620e, Chinese interface: two entries, and a strip saying you cannot yet import your own Revit model and it gives no overall compliance conclusion](docs/evidence/doctor-first-minute-2026-10-03/zh-01-home.png)
 
-*Home.* Two entries: **选择模拟示例** (choose a simulated example) and **查看这次检查尝试**
-(view the check attempt on the bundled sample project, which did not start an
-assessment and says why). The strip and the list at the foot say what it cannot do
-yet: import, choose or change a model on the page, including your own Revit or IFC
-model; give an overall compliance, constructability or "can be delivered"
-conclusion; write back to a model, upload to the cloud, or open an element in
-Revit.
+*Home, as at `577620e`.* Two entries: **选择模拟示例** (choose a simulated example) and
+**查看这次检查尝试** (view the check attempt on the bundled sample project, which did
+not start an assessment and says why). In this capture the strip and the list at the
+foot say what it could not do yet: import, choose or change a model on the page,
+including your own Revit or IFC model; give an overall compliance, constructability or
+"can be delivered" conclusion; write back to a model, upload to the cloud, or open an
+element in Revit.
+
+**The home page has changed since this capture.** It now has a third entry,
+**检查自己的 IFC 模型（产品验证练习）** (check your own IFC model, a product validation
+exercise): IFC4 files only, one rule (PV-001), not a general quality check, and a Revit
+file itself still cannot be imported (see
+[the local check](doctor/README.md#a-fourth-entry-a-local-check-of-your-own-ifc)). The
+capture is kept as it was, and the wording of the new entry has not been reviewed by
+a BIM domain specialist.
 
 ![First-check result of the simulated example, Chinese interface: 13 items, 8 to handle, grouped by handling team](docs/evidence/doctor-first-minute-2026-10-03/zh-02-first-check-result.png)
 
