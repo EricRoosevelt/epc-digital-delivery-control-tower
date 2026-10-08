@@ -111,8 +111,13 @@ def build_bundle(
     manifests: Sequence[ProjectManifest] | None = None,
     reports_dir: Path | None = None,
     verify: bool = True,
+    with_geometry: bool = True,
 ) -> PipelineResult:
-    """Run every stage up to and including grouping, and return the bundle."""
+    """Run every stage up to and including grouping, and return the bundle.
+
+    ``with_geometry=False`` leaves :attr:`RunBundle.geometry` empty, for a run
+    whose exporters read none of it; see :func:`execute`.
+    """
 
     registry = registry if registry is not None else default_registry(config)
     manifests = tuple(manifests) if manifests is not None else load_manifests(config)
@@ -219,7 +224,14 @@ def build_bundle(
             if finding.is_issue and finding.element_key
         }
     )
-    geometry = compute_geometry(geometry_keys, elements=elements, model_paths=paths)
+    #
+    # A run may also say it wants none: tessellation is what fails on an element
+    # IFC allows to have no shape, and only a viewpoint needs the box.
+    geometry = (
+        compute_geometry(geometry_keys, elements=elements, model_paths=paths)
+        if with_geometry
+        else ()
+    )
 
     run = ValidationRun(
         validation_run_id=validation_run_id,
@@ -328,6 +340,7 @@ def execute(
     exporter_ids: Sequence[str] | None = None,
     registry: Registry | None = None,
     coverage_root: Path | None = None,
+    with_geometry: bool = True,
 ) -> RunResult:
     """Validate, group, and write — the whole thing, in order.
 
@@ -341,9 +354,29 @@ def execute(
     published refers to it. When given, the record is kept there once the
     validation is complete and before any exporter runs, so it exists for a
     validation whose export then fails.
+
+    ``with_geometry=False`` computes no bounding box. Only a viewpoint needs
+    one, and an element IFC allows to have no shape cannot be tessellated, so
+    a run that writes no viewpoint should not fail on it. The run is refused
+    before anything is read if an enabled exporter does not declare
+    ``reads_geometry = False``: an exporter that says nothing is taken to need
+    geometry.
     """
 
-    result = build_bundle(config, registry=registry)
+    registry = registry if registry is not None else default_registry(config)
+    enabled = tuple(exporter_ids) if exporter_ids is not None else config.exporters
+    if not with_geometry:
+        reading = sorted(
+            exporter_id
+            for exporter_id in enabled
+            if getattr(registry.exporter(exporter_id), "reads_geometry", True) is not False
+        )
+        if reading:
+            raise ValueError(
+                f"A run without geometry cannot export with {reading}: "
+                "they read bounding boxes the run would not compute."
+            )
+    result = build_bundle(config, registry=registry, with_geometry=with_geometry)
     roots = output_roots(config)
 
     coverage_record_path: Path | None = None
@@ -357,7 +390,6 @@ def execute(
             coverage_root,
         )
 
-    enabled = tuple(exporter_ids) if exporter_ids is not None else config.exporters
     exported = export(
         result.bundle,
         registry=result.registry,

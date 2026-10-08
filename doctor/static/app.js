@@ -11,10 +11,13 @@
 // One first-check item is #/<mode>/<run_id>/item/<activity index>/<group>/<member index>.
 // A workspace run is #/workspace/workspace, one of its results is
 // …/finding/<finding_key>, and its comparison with the earlier run …/compare.
+// The local check is #/local, and one finished check #/local/<check_id>[/finding/<key>]
+// (local-check.js, which makes its own requests).
 
 import { h, note } from "./dom.js";
 import { LANG, LANGUAGES, fill } from "./i18n.js";
 import { languageSwitch, untranslated } from "./language.js";
+import { localEntry, localScreen } from "./local-check.js";
 import { renderContext, screens } from "./screens.js";
 import { APP, ENVELOPE_WORDS, FAULT_WORDS, PAGE } from "./words.js";
 
@@ -116,7 +119,7 @@ export function clearResults(mode) {
 
 // What is wrong with an envelope, or null. Only presence and type: the values
 // themselves are the Framework's and are shown as they are.
-function envelopeProblem(envelope, mode) {
+export function envelopeProblem(envelope, mode) {
   if (!envelope || typeof envelope !== "object") return APP.notObject;
   if (envelope.mode !== mode) {
     return fill(APP.modeMismatch, { got: JSON.stringify(envelope.mode), want: JSON.stringify(mode) });
@@ -156,6 +159,7 @@ async function fetchJson(url) {
     const detail = body && body.error ? body.error : `HTTP ${response.status}`;
     const error = new Error(detail);
     error.unavailable = response.status === 503;
+    error.status = response.status;
     throw error;
   }
   return body;
@@ -211,6 +215,16 @@ async function render() {
   // The language is on every screen, whatever the screen.
   document.getElementById("language").replaceChildren(languageSwitch());
 
+  if (mode === "local") {
+    if (state.mode !== mode) clearResults(mode);
+    main.replaceChildren(h("p", { role: "status" }, APP.loading));
+    const local = await localScreen(runId ?? null, screen ?? null, rest);
+    if (token !== rendering) return;
+    header.replaceChildren(...local.context);
+    main.replaceChildren(local.content);
+    focusMain(main);
+    return;
+  }
   if (!mode || !MODES.includes(mode)) {
     clearResults(null);
     header.replaceChildren();
@@ -223,8 +237,17 @@ async function render() {
     } catch (problem) {
       workspace = { error: problem.message };
     }
+    // The local check's card, when this server offers one.
+    let local;
+    try {
+      local = localEntry(await fetchJson("/api/local"));
+    } catch (problem) {
+      local = localEntry({ error: problem.message, status: problem.status });
+    }
     if (token !== rendering) return;
-    main.replaceChildren(inLanguage("entry") ? screens.entry(workspace) : untranslated(href(), token > 1));
+    main.replaceChildren(
+      inLanguage("entry") ? screens.entry(workspace, local) : untranslated(href(), token > 1),
+    );
     focusMain(main);
     return;
   }

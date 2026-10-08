@@ -134,13 +134,13 @@ export const HOME = {
     "For a BIM manager: what a pre-handover check found; after a recheck, which conclusions changed, " +
     "which items still need dealing with, which elements each one involves, what it rests on, and what to do next.",
   status:
-    "This is an example preview: you cannot import your own Revit model yet, and it gives no overall compliance or ready-to-build conclusion.",
+    "This is an example preview: a Revit file itself (.rvt) cannot be imported, and it gives no overall compliance or ready-to-build conclusion.",
   statusWithWorkspace:
     "Two things are offered here: a real check already run in the workspace named when the server was started, and simulated examples. " +
-    "You cannot import, choose or change a model on this page, and it gives no overall compliance or ready-to-build conclusion.",
+    "The workspace check cannot have its model chosen or changed on this page; a Revit file itself cannot be imported, and it gives no overall compliance or ready-to-build conclusion.",
   statusWorkspaceUnknown:
     "Could not confirm whether the server was started with a workspace, so there is no entry to a real check here; that does not mean there is no workspace — the error is below. " +
-    "The simulated examples are available as usual. You cannot import, choose or change a model on this page, and it gives no overall compliance or ready-to-build conclusion.",
+    "The simulated examples are available as usual. A Revit file itself cannot be imported, and it gives no overall compliance or ready-to-build conclusion.",
   example: {
     title: "Look at a simulated example",
     body:
@@ -152,11 +152,11 @@ export const HOME = {
     title: "See the check attempt on the bundled project",
     body:
       "The repository comes with a sample project. The check attempt on it did not start an assessment; this explains why. " +
-      "It is not an import, and you cannot swap in your own model.",
+      "This entry is not an import: it shows only this sample project, and you cannot swap in another model.",
     action: "See this check attempt",
   },
   cannot: [
-    "Import, choose or change a model on the page, including your own Revit or IFC model",
+    "Import a Revit file itself (.rvt), or choose or change the model in the example and workspace entries",
     "Give an overall compliance, ready-to-build or \"ready to hand over\" conclusion",
     "Write back to a model, upload to the cloud, or open an element in Revit",
   ],
@@ -379,7 +379,7 @@ export const CONTEXT = {
 
 export const DIRECTORY = {
   realNote:
-    "The repository comes with a sample project; below is a check attempt on it. You cannot choose another model yet, nor import your own.",
+    "The repository comes with a sample project; below is a check attempt on it. This entry shows only that sample and cannot be switched to another model; to check your own IFC4 files, use \"Check your own IFC model\" on the home page. A Revit file itself cannot be imported.",
   exampleTitle: "Choose a simulated example",
   empty: "There is nothing to look at under this entry yet.",
   exampleTag: "About this example",

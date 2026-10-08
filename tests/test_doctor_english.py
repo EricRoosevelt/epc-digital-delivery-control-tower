@@ -112,6 +112,7 @@ globalThis.location = { search: process.argv[2] };
 const i18n = await import("./i18n.js");
 const words = await import("./words.js");
 await import("./language.js");
+await import("./local-words.js");
 const registry = {};
 for (const [name, pair] of i18n.REGISTRY) {
   registry[name] = {
@@ -249,7 +250,8 @@ class ParityTests(_Loaded):
 
     def test_the_english_tables_are_vocabulary_en_and_the_modules_own(self):
         self.assertEqual(
-            set(self.english), _exports(STATIC / "vocabulary-en.js") | {"LANGUAGE"}
+            set(self.english),
+            _exports(STATIC / "vocabulary-en.js") | {"LANGUAGE", "LOCAL_CHECK"},
         )
         self.assertEqual(
             {name for name, pair in self.registry.items() if pair["same"]}, NEUTRAL
@@ -416,7 +418,8 @@ class ScreenTests(unittest.TestCase):
         self.assertEqual(set(re.findall(r'"([^"]+)"', declared)), TRANSLATED)
         render = _functions(app)["render"]
         self.assertIn(
-            'inLanguage("entry") ? screens.entry(workspace) : untranslated(href(), token > 1)',
+            'inLanguage("entry") ? screens.entry(workspace, local) : '
+            "untranslated(href(), token > 1)",
             render,
         )
         self.assertIn(
@@ -518,6 +521,8 @@ class ScreenTests(unittest.TestCase):
             "words.js",
             "vocabulary-en.js",
             "recheck-model.js",
+            # The local check's screens: their words are local-words.js.
+            "local-check.js",
         ):
             with self.subTest(file=name):
                 code = _code((STATIC / name).read_text(encoding="utf-8"))
@@ -539,6 +544,79 @@ class RecordTests(_Loaded):
             for key, text in _flat(pair["en"]):
                 with self.subTest(table=name, key=key):
                     self.assertIn(text.replace("|", "\\|"), record)
+
+
+class LocalCheckWordsTests(_Loaded):
+    """What the local check must say, in both languages (PM decision 2026-10-03, §1–2)."""
+
+    def setUp(self):
+        self.pair = self.registry["LOCAL_CHECK"]
+
+    def test_the_home_no_longer_says_your_own_model_cannot_be_checked(self):
+        for language, says in (
+            ("zh", ("产品验证练习", "不能导入 Revit 文件本身", "整体合规或可施工结论")),
+            ("en", ("product validation exercise", "A Revit file itself cannot be imported")),
+        ):
+            home = self.pair[language]["home"]
+            for key in ("status", "statusWithWorkspace", "statusWorkspaceUnknown"):
+                for said in says:
+                    with self.subTest(language=language, key=key, said=said):
+                        self.assertIn(said, home[key])
+        # The workspace sentences keep what the central ones say about it.
+        self.assertIn("不等于没有工作区", self.pair["zh"]["home"]["statusWorkspaceUnknown"])
+
+    def test_a_fail_is_not_a_defect_and_nothing_applicable_is_not_a_pass(self):
+        zh, en = self.pair["zh"], self.pair["en"]
+        self.assertIn("不等于原项目有缺陷", zh["exercise"]["read"][0])
+        self.assertIn(
+            "does not mean the original project has a defect", en["exercise"]["read"][0]
+        )
+        self.assertIn("这不是通过", zh["result"]["nothing"])
+        self.assertIn("That is not a pass", en["result"]["nothing"])
+        self.assertIn("没有适用对象", zh["result"]["nothingHeading"])
+
+    def test_the_records_say_where_what_and_how_to_clean_up_before_a_run(self):
+        records = self.pair["zh"]["records"]
+        what = "".join(records["what"])
+        for said in ("uploads", "checks", "coverage", "3D 几何缓存", "不会删除"):
+            with self.subTest(said=said):
+                self.assertIn(said, what)
+        self.assertEqual(len(records["clean"]), 3)
+        self.assertTrue(records["after"])
+        self.assertIn("--checks-dir", records["command"])
+
+    def test_every_refusal_code_has_what_to_do_in_both_languages(self):
+        from internal.doctor_adapter.local_check import REFUSAL_CODES
+
+        for language in ("zh", "en"):
+            with self.subTest(language=language):
+                self.assertEqual(
+                    set(self.pair[language]["refusal"]["reasons"]), set(REFUSAL_CODES)
+                )
+        reasons = self.pair["zh"]["refusal"]["reasons"]
+        self.assertIn("IFC4 Reference View", reasons["unsupported-schema"])
+
+    def test_no_table_says_your_own_model_cannot_be_checked(self):
+        # With the local check, "you cannot import your own model" is no
+        # longer true anywhere; what stays true is that a Revit file itself
+        # cannot be imported. Every registered table, both languages.
+        absolute = re.compile(
+            r"导入自己的|不能导入自己|导入、选择或更换模型|import your own|"
+            r"nor import|import, choose or change",
+            re.I,
+        )
+        for name, pair in self.registry.items():
+            for language in ("zh", "en"):
+                if pair[language] is None:
+                    continue
+                for key, text in _flat(pair[language]):
+                    with self.subTest(table=name, language=language, key=key):
+                        self.assertIsNone(absolute.search(text), text)
+
+    def test_the_local_screens_read_their_words_from_their_own_table(self):
+        source = (STATIC / "local-check.js").read_text(encoding="utf-8")
+        self.assertIn('import { LOCAL } from "./local-words.js";', source)
+        self.assertNotIn("vocabulary.js", source)
 
 
 _MODEL_DRIVER = """

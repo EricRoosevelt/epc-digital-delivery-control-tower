@@ -4,6 +4,7 @@ Run from the repository root::
 
     python doctor/serve.py            # http://127.0.0.1:8765/
     python doctor/serve.py --workspace <dir> [--prior <dir>]
+    python doctor/serve.py --checks-dir <dir>
 
 Nothing here evaluates anything. The server hands the browser the envelopes the
 internal adapter (A1) returns — unchanged — and the static files that lay them
@@ -11,6 +12,17 @@ out. It writes no file itself, reads no clock, and binds to the loopback
 interface, because this is an internal preview and not a service. The adapter
 it calls validates against a scratch copy of the rule library that it makes
 outside this checkout and removes afterwards; nothing in the checkout is written.
+
+The local check (``/api/local/…``) is the one place the browser sends anything:
+a model file, and the choice of rule set and disciplines. What arrives is handed
+to :class:`internal.doctor_adapter.local_check.LocalChecks`, which keeps it — and
+every check run on it — under a checks directory outside any checkout, named at
+start-up and reported in every answer. Because a page on any other site can
+also make a browser send a request to this machine, every ``/api/`` request must
+name this server's own loopback address as its ``Host``, and a request that
+sends anything must carry a JSON or binary body (which a cross-site page cannot
+send without asking first, and nothing here answers that question) and, if it
+says where it comes from, come from this server's own origin.
 
 The one seam is :class:`Source`: which runs a mode offers, and the envelope for
 one of them. :func:`adapter_source` is the only implementation that ships, and
@@ -41,6 +53,20 @@ MODES = ("fixture", "real", "workspace")
 
 #: The one run the workspace mode offers: the workspace named at start-up.
 WORKSPACE_RUN = "workspace"
+
+#: The ``Host`` names a request may use: this server's own loopback addresses.
+LOOPBACK_NAMES = ("127.0.0.1", "localhost", "[::1]")
+
+#: The body type each endpoint that is sent something takes. Neither can be
+#: sent cross-site without the browser asking first, and nothing here answers.
+POSTED_TYPES = {
+    "/api/local/models": "application/octet-stream",
+    "/api/local/plan": "application/json",
+    "/api/local/checks": "application/json",
+}
+
+#: A plan or check request is a few model choices, not a model.
+MAX_REQUEST_BYTES = 1 << 20
 
 #: Extensions served, with explicit types. Not ``mimetypes``: on Windows it reads
 #: the registry and can hand ES modules to the browser as ``text/plain``.
@@ -120,6 +146,18 @@ def adapter_source(workspace: Path | None = None, prior: Path | None = None) -> 
     return AdapterSource(doctor_adapter, workspace, prior)
 
 
+def local_checks(checks_dir: Path | None = None, max_model_bytes: int | None = None):
+    """The adapter's local checks, kept in ``checks_dir`` or where it says by default."""
+
+    if str(REPOSITORY_ROOT) not in sys.path:
+        sys.path.insert(0, str(REPOSITORY_ROOT))
+    from internal.doctor_adapter.local_check import LocalChecks, resolve_checks_root
+
+    root = checks_dir if checks_dir is not None else resolve_checks_root(REPOSITORY_ROOT)
+    options = {} if max_model_bytes is None else {"max_model_bytes": max_model_bytes}
+    return LocalChecks(root, repository_root=REPOSITORY_ROOT, **options)
+
+
 def _json(handler: BaseHTTPRequestHandler, status: HTTPStatus, body: object) -> None:
     payload = json.dumps(body, ensure_ascii=False).encode("utf-8")
     handler.send_response(status)
@@ -130,19 +168,150 @@ def _json(handler: BaseHTTPRequestHandler, status: HTTPStatus, body: object) -> 
     handler.wfile.write(payload)
 
 
-def make_handler(source_factory: Callable[[], Source]) -> type[BaseHTTPRequestHandler]:
+def make_handler(
+    source_factory: Callable[[], Source],
+    local_factory: Callable[[], object] | None = None,
+) -> type[BaseHTTPRequestHandler]:
+    """The request handler; ``local_factory`` enables the local check endpoints."""
+
     class Handler(BaseHTTPRequestHandler):
         server_version = "epc-doctor-preview"
 
         def log_message(self, format: str, *args: object) -> None:
             return None
 
+        def _own_host(self) -> str | None:
+            """This request's ``Host`` if it names this server on loopback, else ``None``."""
+
+            host = self.headers.get("Host", "")
+            port = self.server.server_address[1]
+            allowed = {f"{name}:{port}" for name in LOOPBACK_NAMES}
+            return host if host in allowed else None
+
         def do_GET(self) -> None:
             parts = urlsplit(self.path)
             if parts.path.startswith("/api/"):
+                if self._own_host() is None:
+                    _json(self, HTTPStatus.FORBIDDEN, {"error": "not this server's address"})
+                    return
+                if parts.path == "/api/local" or parts.path.startswith("/api/local/"):
+                    self._local_get(parts.path, parse_qs(parts.query))
+                    return
                 self._api(parts.path, parse_qs(parts.query))
                 return
             self._static(parts.path)
+
+        def do_POST(self) -> None:
+            parts = urlsplit(self.path)
+            # Whatever is refused here, its body is not read, so the connection
+            # cannot be reused.
+            host = self._own_host()
+            if host is None:
+                self.close_connection = True
+                _json(self, HTTPStatus.FORBIDDEN, {"error": "not this server's address"})
+                return
+            origin = self.headers.get("Origin")
+            if origin is not None and origin != f"http://{host}":
+                self.close_connection = True
+                _json(self, HTTPStatus.FORBIDDEN, {"error": f"not accepted from {origin!r}"})
+                return
+            wanted = POSTED_TYPES.get(parts.path)
+            if wanted is None:
+                self.close_connection = True
+                _json(self, HTTPStatus.NOT_FOUND, {"error": f"no such endpoint {parts.path!r}"})
+                return
+            given = self.headers.get("Content-Type", "").split(";")[0].strip().lower()
+            if given != wanted:
+                self.close_connection = True
+                _json(
+                    self,
+                    HTTPStatus.UNSUPPORTED_MEDIA_TYPE,
+                    {"error": f"{parts.path} takes {wanted}, not {given or 'nothing'}"},
+                )
+                return
+            try:
+                length = int(self.headers.get("Content-Length", ""))
+            except ValueError:
+                self.close_connection = True
+                _json(self, HTTPStatus.LENGTH_REQUIRED, {"error": "Content-Length is required"})
+                return
+            self._local_post(parts.path, parse_qs(parts.query), length)
+
+        def _local(self):
+            if local_factory is None:
+                raise SourceUnavailable("This server was started without local checks.")
+            return local_factory()
+
+        def _local_get(self, path: str, query: dict[str, list[str]]) -> None:
+            try:
+                local = self._local()
+                if path == "/api/local":
+                    _json(self, HTTPStatus.OK, local.describe())
+                    return
+                if path == "/api/local/checks":
+                    _json(self, HTTPStatus.OK, {"checks": local.checks()})
+                    return
+                if path == "/api/local/envelope":
+                    run_id = (query.get("run") or [""])[0]
+                    prior = (query.get("prior") or [None])[0]
+                    try:
+                        envelope = local.envelope(run_id, prior)
+                    except KeyError as missing:
+                        _json(self, HTTPStatus.NOT_FOUND, {"error": str(missing)})
+                        return
+                    _json(self, HTTPStatus.OK, envelope)
+                    return
+            except SourceUnavailable as unavailable:
+                _json(self, HTTPStatus.SERVICE_UNAVAILABLE, {"error": str(unavailable)})
+                return
+            except Exception as failure:  # reported, never swallowed
+                _json(
+                    self,
+                    HTTPStatus.INTERNAL_SERVER_ERROR,
+                    {"error": f"{type(failure).__name__}: {failure}"},
+                )
+                return
+            _json(self, HTTPStatus.NOT_FOUND, {"error": f"no such endpoint {path!r}"})
+
+        def _local_post(self, path: str, query: dict[str, list[str]], length: int) -> None:
+            try:
+                local = self._local()
+                if path == "/api/local/models":
+                    filename = (query.get("filename") or [""])[0]
+                    answer = local.stage_model(filename, self.rfile, length)
+                    if answer["outcome"] != "staged":
+                        # Refused before or while reading: what is left of the
+                        # body is not read.
+                        self.close_connection = True
+                    _json(self, HTTPStatus.OK, answer)
+                    return
+                if length > MAX_REQUEST_BYTES:
+                    self.close_connection = True
+                    too_large = HTTPStatus.REQUEST_ENTITY_TOO_LARGE
+                    _json(self, too_large, {"error": "request too large"})
+                    return
+                try:
+                    request = json.loads(self.rfile.read(length).decode("utf-8"))
+                except (UnicodeDecodeError, json.JSONDecodeError) as malformed:
+                    _json(self, HTTPStatus.BAD_REQUEST, {"error": f"not JSON: {malformed}"})
+                    return
+                handler = local.plan if path == "/api/local/plan" else local.run
+                try:
+                    answer = handler(request)
+                except local.MalformedRequest as malformed:
+                    _json(self, HTTPStatus.BAD_REQUEST, {"error": str(malformed)})
+                    return
+                _json(self, HTTPStatus.OK, answer)
+            except SourceUnavailable as unavailable:
+                self.close_connection = True
+                _json(self, HTTPStatus.SERVICE_UNAVAILABLE, {"error": str(unavailable)})
+            except Exception as failure:  # reported, never swallowed
+                self.close_connection = True
+                _json(
+                    self,
+                    HTTPStatus.INTERNAL_SERVER_ERROR,
+                    {"error": f"{type(failure).__name__}: {failure}"},
+                )
 
         def _api(self, path: str, query: dict[str, list[str]]) -> None:
             mode = (query.get("mode") or [""])[0]
@@ -206,14 +375,34 @@ def main(argv: list[str] | None = None) -> int:
         default=None,
         help="An earlier run of the same scope, to compare the workspace's run with.",
     )
+    parser.add_argument(
+        "--checks-dir",
+        type=Path,
+        default=None,
+        help=(
+            "Where local checks keep the models they are given and their results; "
+            "outside any checkout. Defaults to $EPC_DOCTOR_CHECKS_DIR, or "
+            "epc-control-tower/doctor-checks in the user's state directory."
+        ),
+    )
+    parser.add_argument(
+        "--max-model-bytes",
+        type=int,
+        default=None,
+        help="The largest model file a local check accepts.",
+    )
     arguments = parser.parse_args(argv)
     if arguments.prior is not None and arguments.workspace is None:
         parser.error("--prior needs --workspace")
     if str(REPOSITORY_ROOT) not in sys.path:
         sys.path.insert(0, str(REPOSITORY_ROOT))
     source = functools.partial(adapter_source, arguments.workspace, arguments.prior)
-    server = ThreadingHTTPServer(("127.0.0.1", arguments.port), make_handler(source))
+    local = local_checks(arguments.checks_dir, arguments.max_model_bytes)
+    server = ThreadingHTTPServer(
+        ("127.0.0.1", arguments.port), make_handler(source, lambda: local)
+    )
     print(f"BIM Doctor preview: http://127.0.0.1:{arguments.port}/")
+    print(f"Local checks are kept in {local.root}")
     try:
         server.serve_forever()
     except KeyboardInterrupt:
