@@ -195,18 +195,24 @@ function exerciseBlock(described) {
     { class: "block" },
     h("h2", {}, LOCAL.exercise.heading),
     h("p", { class: "callout" }, LOCAL.exercise.what),
-    ruleset
-      ? [
-          h("p", {}, code(`${ruleset.id} ${ruleset.version}`), " ", ruleset.title),
-          requirementRows(ruleset),
-        ]
-      : null,
-    h("h3", {}, LOCAL.exercise.sourceHeading),
-    h("p", {}, LOCAL.exercise.source),
-    ruleset ? h("p", { class: "sub prose" }, ruleset.description) : null,
+    // How to read a result stays in view; the rule's own words and where the
+    // requirement comes from are one fold away, under their own heading.
     h("h3", {}, LOCAL.exercise.readHeading),
     h("ul", { class: "caveats" }, LOCAL.exercise.read.map((text) => h("li", {}, text))),
     note(LOCAL.exercise.notes),
+    h(
+      "details",
+      { class: "evidence-details" },
+      h("summary", {}, LOCAL.exercise.sourceHeading),
+      ruleset
+        ? [
+            h("p", {}, code(`${ruleset.id} ${ruleset.version}`), " ", ruleset.title),
+            requirementRows(ruleset),
+          ]
+        : null,
+      h("p", {}, LOCAL.exercise.source),
+      ruleset ? h("p", { class: "sub prose" }, ruleset.description) : null,
+    ),
   );
 }
 
@@ -245,7 +251,9 @@ function recordsBlock(described, location = null, open = true) {
     { class: "block", id: "local-records" },
     h("h2", {}, open ? words.heading : LOCAL.result.recordsHeading),
     where,
-    open ? body : h("details", { class: "evidence-details" }, h("summary", {}, words.cleanHeading), body),
+    // Where the records are and how many are kept stay in view; what is kept,
+    // how to clean up and what cannot be relied on afterwards are one fold away.
+    h("details", { class: "evidence-details" }, h("summary", {}, words.cleanHeading), body),
   );
 }
 

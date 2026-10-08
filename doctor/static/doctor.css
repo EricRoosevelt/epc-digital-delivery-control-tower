@@ -15,6 +15,9 @@
   --callout-bg: #eef2f7;
   --focus: #1f5fbf;
   color-scheme: light dark;
+  /* The page body's column (main: 1200px wide, 16px inside). The bars above it
+     line their content up with it instead of running to the window's edges. */
+  --gutter: max(16px, calc((100% - 1200px) / 2 + 16px));
 }
 
 @media (prefers-color-scheme: dark) {
@@ -66,7 +69,7 @@ a { color: var(--accent); }
   gap: 4px 8px;
   align-items: center;
   justify-content: flex-end;
-  padding: 4px 16px;
+  padding: 4px var(--gutter);
   font-size: 14px;
 }
 .language-switch button { padding: 2px 10px; }
@@ -78,16 +81,28 @@ a { color: var(--accent); }
   flex-wrap: wrap;
   gap: 4px 16px;
   align-items: center;
-  padding: 8px 16px;
+  padding: 8px var(--gutter);
   font-size: 14px;
 }
-.context-bar > span { overflow-wrap: anywhere; }
-.context-bar button { margin-left: auto; }
+/* What this page is wraps within itself. The way home keeps the first row
+   when it leaves the facts at least 220px; a longer label (English) goes to a
+   row of its own rather than squeezing the facts into a narrow column. */
+.context-facts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 16px;
+  align-items: center;
+  flex: 1 1 220px;
+  min-width: 0;
+}
+.mode { white-space: nowrap; }
+.context-facts > span { overflow-wrap: anywhere; }
+.context-bar > button { flex: none; margin-left: auto; }
 .mode { font-weight: 700; padding: 2px 8px; border: 2px solid var(--ink); }
 .mode-fixture { border-style: dashed; }
 .demo-notice {
   margin: 0;
-  padding: 8px 16px;
+  padding: 8px var(--gutter);
   background: var(--demo-bg);
   color: var(--demo-ink);
   font-weight: 600;
@@ -130,6 +145,14 @@ button {
   cursor: pointer;
 }
 button.quiet { border-color: var(--line); }
+/* The one action a page recommends. */
+button.primary-action {
+  background: var(--ink);
+  color: var(--surface);
+  border-color: var(--ink);
+  font-weight: 600;
+  padding: 8px 16px;
+}
 button.copy { font-size: 12px; padding: 0 6px; margin-left: 4px; }
 
 code.ident, code {
@@ -306,9 +329,16 @@ a.run {
 /* The path a manager walks: what this is for, an example with a name, what is
    left to do, which elements, and the next step. */
 .home .lede { max-width: 46rem; }
-.home .demo-notice { margin: 12px 0; }
+.home .demo-notice { margin: 12px 0; padding: 8px 16px; }
 .entry-card h3 { font-size: 1.1rem; margin: 0 0 6px; }
-.entry-card.primary { border: 2px solid var(--ink); }
+.entry-card.primary { border: 2px solid var(--ink); padding: 16px 20px; margin-bottom: 16px; }
+.entry-card.primary h3 { font-size: 1.25rem; }
+.entry-card.primary .kicker { margin: 0 0 4px; }
+.entry-card p { max-width: 46rem; }
+/* An entry that is there but not where a first visit should start. */
+.other-entry { margin-top: 16px; padding-top: 12px; border-top: 1px solid var(--line); }
+.other-entry h3 { font-size: 1rem; margin: 0 0 4px; }
+.other-entry p { margin: 0 0 8px; max-width: 46rem; }
 .example-list { list-style: none; padding: 0; margin: 12px 0; }
 .example-card { background: var(--surface); border: 2px solid var(--ink); padding: 12px 16px; margin: 12px 0; }
 .example-card h2 { font-size: 1.25rem; }
@@ -395,3 +425,13 @@ button.filter[aria-pressed="true"] { border-color: var(--ink); border-width: 2px
 .pass-limits { border: 2px dashed var(--line); padding: 6px 12px; margin: 8px 0; }
 .pass-limits h4 { margin: 4px 0; }
 .tag code { font-size: 1.1rem; font-weight: 700; }
+
+/* Narrow screens: less vertical space between the parts of a page, the same
+   type size. The first screen of an item page should reach its next step. */
+@media (max-width: 640px) {
+  main { padding: 8px 16px 16px; }
+  main > div > p:first-child { margin: 4px 0; }
+  h1 { margin: 4px 0 8px; }
+  .block { margin: 8px 0; padding: 10px 12px; }
+  .context-bar, .demo-notice { padding-top: 6px; padding-bottom: 6px; }
+}

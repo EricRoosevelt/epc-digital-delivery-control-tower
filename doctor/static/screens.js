@@ -201,18 +201,17 @@ export function short(value) {
 export function renderContext(state) {
   const parts = [];
   const mode = state.envelope ? state.envelope.mode : state.mode;
-  const bar = h(
-    "div",
-    { class: "context-bar" },
-    h("span", { class: `mode mode-${mode}` }, modeLabel(mode)),
-  );
+  // What this page is, in one wrapping group; the way home sits beside it, so
+  // on a narrow screen it stays on the first row instead of taking its own.
+  const facts = h("span", { class: "context-facts" }, h("span", { class: `mode mode-${mode}` }, modeLabel(mode)));
+  const bar = h("div", { class: "context-bar" }, facts);
   const record = state.envelope && state.envelope.record;
   if (record) {
     const request = record.request;
     const context = request.model_version_context;
     // Who hands what to whom, and nothing else: version fingerprints are on
     // the record's own page and in each screen's tracing details.
-    bar.append(
+    facts.append(
       h("span", {}, fill(CONTEXT.project, { project: request.project_id })),
       h(
         "span",
@@ -226,12 +225,12 @@ export function renderContext(state) {
     );
   } else if (state.envelope && state.envelope.outcome === "validation") {
     // A workspace run: which run, and that it is a check and nothing more.
-    bar.append(
+    facts.append(
       h("span", {}, `${CONTEXT.workspaceRun} `, field(state.envelope.run, "validation_run_id", code)),
       h("span", { class: "no-judgement" }, CONTEXT.noJudgement),
     );
   } else if (state.envelope && state.envelope.outcome === "refusal") {
-    bar.append(h("span", {}, CONTEXT.noResult));
+    facts.append(h("span", {}, CONTEXT.noResult));
   }
   bar.append(
     h(
@@ -413,24 +412,18 @@ function locate(state, subscopeMembers, activity, memberIndex) {
 // `local` is the local check's card and the home sentences that are true when
 // it is offered (local-check.js), or null when this server has no local check.
 function entry(workspace = { runs: [] }, local = null) {
-  const card = (mode, words, primary, runId = null) =>
+  const open = (mode, runId = null) => () => {
+    clearResults(mode);
+    if (runId === null) go(mode);
+    else go(mode, runId);
+  };
+  const card = (mode, words, runId = null) =>
     h(
       "article",
-      { class: primary ? "entry-card primary" : "entry-card" },
+      { class: "entry-card" },
       h("h3", {}, words.title),
       h("p", {}, words.body),
-      h(
-        "button",
-        {
-          type: "button",
-          onclick: () => {
-            clearResults(mode);
-            if (runId === null) go(mode);
-            else go(mode, runId);
-          },
-        },
-        words.action,
-      ),
+      h("button", { type: "button", onclick: open(mode, runId) }, words.action),
     );
   const workspaceRun = carries(workspace, "runs") && workspace.runs.length ? workspace.runs[0] : null;
   const said = local ? local.words : HOME;
@@ -453,17 +446,35 @@ function entry(workspace = { runs: [] }, local = null) {
       "section",
       { class: "block" },
       h("h2", {}, HOME.canHeading),
+      // One recommended start: the examples. The other entries sit beside it,
+      // smaller, and the bundled project's attempt below them, each still with
+      // everything it said before.
       h(
-        "div",
-        { class: "entry-grid" },
-        workspaceRun ? card("workspace", WORKSPACE_HOME, true, workspaceRun.run_id) : null,
-        card("fixture", HOME.example, !workspaceRun),
-        local ? local.card : null,
-        card("real", HOME.attempt, false),
+        "article",
+        { class: "entry-card primary" },
+        h("p", { class: "kicker" }, HOME.recommended),
+        h("h3", {}, HOME.example.title),
+        h("p", {}, HOME.example.body),
+        h("button", { type: "button", class: "primary-action", onclick: open("fixture") }, HOME.example.action),
       ),
+      local || workspaceRun
+        ? h(
+            "div",
+            { class: "entry-grid" },
+            local ? local.card : null,
+            workspaceRun ? card("workspace", WORKSPACE_HOME, workspaceRun.run_id) : null,
+          )
+        : null,
       carries(workspace, "error")
         ? h("p", { class: "problem" }, WORKSPACE_HOME.unknown, workspace.error)
         : null,
+      h(
+        "div",
+        { class: "other-entry" },
+        h("h3", {}, HOME.attempt.title),
+        h("p", { class: "sub" }, HOME.attempt.body),
+        h("button", { type: "button", class: "quiet", onclick: open("real") }, HOME.attempt.action),
+      ),
     ),
     h(
       "section",
@@ -1687,17 +1698,27 @@ function firstItem(state, activityIndex, ordinal, memberIndex) {
       h("p", { class: "headline conclusion" }, workVerdict(item.activity, item.verdict)),
       basisLine(item.basis),
       besideVerdict(item.activity, item.verdict),
+      // The result the conclusion rests on stays beside it: a reading such as
+      // "not evaluated — this is not 'no problem'" is itself how to read it.
       definitions([
         item.kind === undefined ? null : [FIRST.problem, problemName(item.kind)],
         [LEAF_READING_WORDS.label, leafName(item.leaf)],
-        [
-          ITEM.needs,
-          Object.hasOwn(ACTIVITY_NAMES, item.activity)
-            ? ACTIVITY_NAMES[item.activity].needs
-            : missing(NOT_CARRIED),
-        ],
       ]),
     ),
+  );
+  // What the work needs explains the conclusion without changing how it reads,
+  // so it follows the next step rather than push it down.
+  const explained = h(
+    "section",
+    { class: "block conclusion-more" },
+    definitions([
+      [
+        ITEM.needs,
+        Object.hasOwn(ACTIVITY_NAMES, item.activity)
+          ? ACTIVITY_NAMES[item.activity].needs
+          : missing(NOT_CARRIED),
+      ],
+    ]),
   );
 
   // What to do comes before which element it is: the action is what the
@@ -1710,6 +1731,7 @@ function firstItem(state, activityIndex, ordinal, memberIndex) {
         h("h2", {}, ITEM.actionHeading),
         actionBlock(item.subscope, request, envelope.mode),
       ),
+      explained,
     );
   } else {
     content.append(
@@ -1719,6 +1741,7 @@ function firstItem(state, activityIndex, ordinal, memberIndex) {
         h("h2", {}, ITEM.followUpHeading),
         h("p", {}, ITEM.noFollowUp),
       ),
+      explained,
     );
   }
   content.append(
@@ -2577,20 +2600,9 @@ function recheckItem(state, subscopeIndex, memberIndex) {
             RECHECK_ITEM.pairNote,
           )
         : null,
-      definitions([
-        problemRow(item),
-        readingRow(item),
-        dispositionRow(item),
-        [RECHECK_ITEM.model, model.reissue.headline],
-      ]),
-      carries(item.entry, "cause")
-        ? h(
-            "div",
-            {},
-            EVIDENCE.recordCause,
-            field(item.entry, "cause", (text) => h("blockquote", {}, text)),
-          )
-        : null,
+      // The result read and what became of the member stay: either can change
+      // how the conclusion reads ("not evaluated", "gone").
+      definitions([problemRow(item), readingRow(item), dispositionRow(item)]),
     ),
     // What is left to do comes before the element's particulars, as on the
     // first check's item page: the action is what this page is for.
@@ -2604,6 +2616,21 @@ function recheckItem(state, subscopeIndex, memberIndex) {
       item.current
         ? item.current.map((current) => currentSubscopeBlock(state, item, current))
         : note(RECHECK_ITEM.noCurrent),
+    ),
+    // The models and the record's own cause explain the conclusion; they follow
+    // the next step, as on the first check's item page.
+    h(
+      "section",
+      { class: "block conclusion-more" },
+      definitions([[RECHECK_ITEM.model, model.reissue.headline]]),
+      carries(item.entry, "cause")
+        ? h(
+            "div",
+            {},
+            EVIDENCE.recordCause,
+            field(item.entry, "cause", (text) => h("blockquote", {}, text)),
+          )
+        : null,
     ),
     h(
       "section",
