@@ -1,0 +1,78 @@
+# Does candidate C (IfcOpenShell pre-tessellation) write the same geometry bytes on every
+# runner? A measurement, not a gate: it runs only on its own branch and changes nothing that
+# main's CI does. Inputs are the public CC BY 4.0 buildingSMART samples already in this
+# repository; private models never go to a runner. No secrets are used.
+name: Geometry determinism (candidate C)
+
+on:
+  push:
+    branches:
+      - chore/3d-geometry-determinism
+
+permissions:
+  contents: read
+
+env:
+  MODELS: >-
+    data/raw/Building-Architecture.ifc
+    data/raw/Building-Hvac.ifc
+    data/raw/Building-Structural.ifc
+    projects/iso-reference-view/basin-tessellation.ifc
+    projects/iso-reference-view/column-straight-rectangle-tessellation.ifc
+    projects/iso-reference-view/wall-with-opening-and-window.ifc
+
+jobs:
+  tessellate:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        threads: [1, 4]
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.14"
+      # numpy is pinned as well: it only carries arrays here, but an unpinned transitive
+      # version is exactly how two runners end up comparing different code.
+      - name: Install the pinned tessellator
+        run: python -m pip install ifcopenshell==0.8.5 numpy==2.5.2
+      - name: Tessellate twice on this runner
+        run: |
+          set -e
+          python tools/geometry_determinism/geom_canon.py out/a --threads ${{ matrix.threads }} $MODELS > a.json
+          python tools/geometry_determinism/geom_canon.py out/b --threads ${{ matrix.threads }} $MODELS > b.json
+          cp a.json out/a/report.json
+      - name: Same runner, same bytes
+        run: python tools/geometry_determinism/geom_compare.py out/a out/b
+      - uses: actions/upload-artifact@v4
+        with:
+          name: geom-${{ matrix.os }}-t${{ matrix.threads }}
+          path: out/a
+
+  compare:
+    needs: tessellate
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.14"
+      - uses: actions/download-artifact@v4
+        with:
+          path: geoms
+      - name: Every runner against the Windows single-thread runner, and against a local machine
+        run: python tools/geometry_determinism/summarise.py geoms tools/geometry_determinism/expected-local-windows-t1.json >> "$GITHUB_STEP_SUMMARY"
+      - name: Element-level detail for any runner that differs
+        run: |
+          rc=0
+          for d in geoms/*; do
+            echo "== $d"
+            python tools/geometry_determinism/geom_compare.py geoms/geom-windows-latest-t1 "$d" || rc=1
+          done
+          exit $rc

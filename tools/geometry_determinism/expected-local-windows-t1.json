@@ -1,0 +1,40 @@
+{
+ "ifcopenshell": "0.8.5",
+ "machine": "AMD64",
+ "models": {
+  "Building-Architecture": {
+   "canon_sha256": "96051f9e158baeee27a821b284a8bd565100119189e1d271d6679a9e3081f758",
+   "elements": 14,
+   "raw_sha256": "da0fe93d4de48c69c1ee63db8692692547171ae83f30c205dcf97249bf46b13a"
+  },
+  "Building-Hvac": {
+   "canon_sha256": "5cf0f3d18d84ef8e66fc8b47f02901afe6680d0ea39cecc8769cbb2f273a7166",
+   "elements": 5,
+   "raw_sha256": "c6295c1288a5c3087f44b3c6617d7d120455bc7288129bfce59070b879ba6e76"
+  },
+  "Building-Structural": {
+   "canon_sha256": "76425c066f9a2c0ffadb31f0686cb3d97fcbe4b4ea789403c85fbc2132a93774",
+   "elements": 16,
+   "raw_sha256": "66260533e943e972e6143913af4c23a9a0260f3534cb3aebfe60084154bbf1e2"
+  },
+  "basin-tessellation": {
+   "canon_sha256": "66ee4bda45169bcb2e372b72f89ee1267d22b45b3cf2b09db8095d0a4b6642c3",
+   "elements": 1,
+   "raw_sha256": "5b0bff93db9d5ce273e3366fdf72f2e2d6c2c3e1dd508b4b29c9d2d230c631bf"
+  },
+  "column-straight-rectangle-tessellation": {
+   "canon_sha256": "8a1a98a0926fe41d9c3e3ca00d9bed11b033b31274fbd04dea0e1480ba3237ce",
+   "elements": 1,
+   "raw_sha256": "50ee80b911e831c2e3fce2d2e48c4b4e3702adfda2a1cc6caedc10489ca75039"
+  },
+  "wall-with-opening-and-window": {
+   "canon_sha256": "07b1f6941fe44c57201c25958caa9ef9b8491c5d2066cbd5b9bb83181a4293cf",
+   "elements": 3,
+   "raw_sha256": "e2ccabb95932bfe75b9dcf67fab17c4251b8af5de13ca3b425d4df92ff757684"
+  }
+ },
+ "numpy": "2.5.2",
+ "platform": "Windows-11-10.0.26200-SP0",
+ "python": "3.14.7",
+ "threads": 1
+}
