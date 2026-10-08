@@ -1,8 +1,11 @@
 # EPC Digital Delivery Control Tower
 
-**BIM Doctor** shows a BIM manager, before an IFC model is handed from one
-discipline to the next, what is still open: which elements, what to do, who does
-it, and what a recheck must show. After a recheck, it shows what changed.
+**BIM Doctor** is a personal open-source project about the check before an IFC
+model is handed from one discipline to the next, and the recheck after it. Its
+preview demonstrates, on a simulated example, what a BIM manager would see: which
+elements are still open, what to do, who does it, what a recheck must show, and
+what changed after a recheck. On your own IFC4 file it runs one rule only (see
+below).
 
 [![CI](https://github.com/EricRoosevelt/epc-digital-delivery-control-tower/actions/workflows/ci.yml/badge.svg)](https://github.com/EricRoosevelt/epc-digital-delivery-control-tower/actions/workflows/ci.yml)
 
@@ -11,10 +14,9 @@ it, and what a recheck must show. After a recheck, it shows what changed.
 [What is real, what is simulated](#what-is-real-and-what-is-simulated) ·
 [For engineers](#for-engineers-the-framework)
 
-A personal open-source project. It runs on your own machine and listens on
-`127.0.0.1` only. It is a preview, not a release and not a production
-deployment. It uses public buildingSMART sample models (CC BY 4.0; see
-[Data Source and Attribution](#data-source-and-attribution)).
+It runs on your own machine and listens on `127.0.0.1` only. It is a preview, not a
+release and not a production deployment. It uses public buildingSMART sample models
+(CC BY 4.0; see [Data Source and Attribution](#data-source-and-attribution)).
 
 ## Two things you can try
 
@@ -123,9 +125,10 @@ The page explains how to clean the records up. More in
 
 ## 中文快速开始
 
-BIM Doctor 是本机预览：只监听 `127.0.0.1`，不是正式发布，也不是生产部署。界面默认
-是中文。它帮 BIM 经理在模型从一个专业交给下一个专业之前，看清还有什么没处理：涉及哪些
-构件、要做什么、由谁处理、复检要拿什么证明；复检之后，看清什么变了。
+BIM Doctor 是个人开源项目，讲的是 IFC 模型从一个专业交给下一个专业之前的检查，以及
+之后的复检。本机预览只监听 `127.0.0.1`，不是正式发布，也不是生产部署，界面默认是中文。
+它用一个模拟示例演示 BIM 经理会看到什么：哪些构件还没处理、要做什么、由谁处理、复检要
+拿什么证明，复检之后什么变了。对你自己的 IFC4 文件，目前只做一条规则（见下面第 7 条）。
 
 1. 需要：Python 3.11 或更新；Git（或下载 ZIP）；浏览器；首次安装要联网，下载约 80 MB，
    虚拟环境约占 280 MB。下面的命令在 Windows 11 的 PowerShell、Python 3.14.7 下，从全新
