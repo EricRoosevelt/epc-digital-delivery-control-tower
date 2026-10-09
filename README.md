@@ -23,7 +23,7 @@ release and not a production deployment. It uses public buildingSMART sample mod
 | | **Start with the example** | **Check your own IFC4 file** |
 | --- | --- | --- |
 | What it is | A simulated handover: a first check with 13 items (8 to handle), then a recheck in which one conclusion changes although neither model was reissued. | A real run of one rule on a file you choose: each air terminal must declare one of four predefined types (rule PV-001). |
-| What you see | For an item: the element, what to do, who handles it, what a recheck must show. | For each air terminal: pass or fail, with the element's name, IFC Tag and GlobalId. |
+| What you see | For an item: the element, what to do, who handles it, what a recheck must show. | For each air terminal: pass or fail, with the element's name, floor and IFC Tag; its GlobalId and what to change are in the detail you open from the list. |
 | Limits | The team arrangement and the human determinations are the example's own settings, marked on the page. | IFC4 only. One rule. Not a general quality check, and it does not give the handover conclusions the example shows. A Revit file itself cannot be imported. |
 
 ## Quick start
@@ -41,12 +41,21 @@ Needed before you install anything:
   virtual environment takes about 280 MB. Installing took about a minute here.
 
 ```powershell
-git clone https://github.com/EricRoosevelt/epc-digital-delivery-control-tower.git
+git clone -c core.longpaths=true https://github.com/EricRoosevelt/epc-digital-delivery-control-tower.git
 cd epc-digital-delivery-control-tower
 py -m venv .venv
 .\.venv\Scripts\python.exe -m pip install -r requirements.txt
 .\.venv\Scripts\python.exe doctor/serve.py
 ```
+
+`-c core.longpaths=true` is there because the repository holds a file whose path is
+176 characters long (a buildingSMART test file under `third_party/`). On Windows,
+without it, `git clone` stops part-way with "Filename too long" whenever the full
+path of the clone (the folder name `epc-digital-delivery-control-tower` included) is
+longer than about 80 characters, which a synced folder such as
+`C:\Users\<name>\OneDrive - <organisation>\Documents\GitHub\` can easily cause.
+Cloning into a short folder such as `C:\src` avoids it too. Unpacking the ZIP file
+instead has not been tried against this.
 
 The server prints its address and the folder where local checks are kept. Open
 **<http://127.0.0.1:8765/>**. The interface opens in Chinese. **Stop the server with
@@ -55,18 +64,22 @@ the last command. The server changes no file that Git tracks.
 
 ### What you will see
 
-1. On the home page, click **选择模拟示例** (choose a simulated example), the card
-   marked as the recommended start.
+1. On the home page, click **选择模拟示例** (choose a simulated example), the first
+   button on the page, under the card marked **推荐从这里开始** (start here).
 2. In the catalogue, under **第一步** (step one), click **打开这个示例的结果**
    (open this example's result): the first-check result, 13 items, 8 to handle.
-3. On any card, click **查看这一项** (see this item). The item page gives the
-   conclusion, what to do, the handling team, and what a recheck must show; the
-   element's identity and exactly what is missing follow.
+3. On any card, click **查看这一项** (see this item). The item page has four numbered
+   parts: **一、结论** (the conclusion), **二、下一步** (next step: what to do, the
+   handling team, what a recheck must show), **三、是哪个构件** (which element) and
+   **四、具体缺什么** (exactly what is missing). The button **跳到下一步** (jump to the
+   next step), under the element's name, takes you to part two.
 4. Lower on the item page, click **在示例“模型未改，但交接判断发生变化”里看这一项**
    (see this item in the example "models unchanged, but the handover judgement
-   changed"): the recheck of the same record. Neither model is republished. The item
-   you came from stays blocked; one other item (*building element*) moves from
-   **受阻** (blocked) to **可以开始** (can start). The page says that a check
+   changed"): the recheck of the same record. Neither model is republished. Exactly
+   one of the 13 items changes: *building element*, under room data sheets and
+   equipment schedules, moves from **受阻** (blocked) to **可以开始** (can start). On
+   the other seven cards the page marks the conclusion **复检前后未变** (unchanged by
+   the recheck). The page says that a check
    requirement it was judged against changed, and does not say whether it was
    relaxed or tightened.
 
@@ -84,11 +97,14 @@ example shows.
 1. On the home page click **开始本地检查** (start a local check). Before you choose
    anything, the page says what is checked, where the requirement comes from, how to
    read a result, and what this computer keeps.
-2. Choose one or more `.ifc` files (IFC4 text files only: the page says it does not
-   accept `.ifczip`, `.ifcxml` or Revit files, and an IFC2x3 file is refused with how
-   to export it again), declare each file's discipline, click **查看检查范围** (view
-   the scope), then **运行检查** (run the check).
-3. The result opens on its own page.
+2. Click **选择一个或多个 .ifc 文件** (choose one or more .ifc files) and pick them
+   (IFC4 text files only: the page says it does not accept `.ifczip`, `.ifcxml` or
+   Revit files, and an IFC2x3 file is refused with how to export it again). Declare
+   each file's discipline, click **查看检查范围** (view the scope), check the scope the
+   page shows, then click **运行检查** (run the check).
+3. The result opens on its own page: a list with one row per result, giving the
+   element's name, category, model, floor and IFC Tag. Click a row to see its
+   GlobalId and what would have to change.
 
 To try it without a model of your own, use a public sample from the clone:
 `data/raw/Building-Hvac.ifc`, declared as HVAC. It runs in about a second and gives
@@ -137,22 +153,29 @@ BIM Doctor 是个人开源项目，讲的是 IFC 模型从一个专业交给下�
 2. 安装并启动：
 
    ```powershell
-   git clone https://github.com/EricRoosevelt/epc-digital-delivery-control-tower.git
+   git clone -c core.longpaths=true https://github.com/EricRoosevelt/epc-digital-delivery-control-tower.git
    cd epc-digital-delivery-control-tower
    py -m venv .venv
    .\.venv\Scripts\python.exe -m pip install -r requirements.txt
    .\.venv\Scripts\python.exe doctor/serve.py
    ```
 
+   克隆命令里的 `-c core.longpaths=true` 不能省：仓库里有一个文件的路径长 176 个字符。
+   在 Windows 上，克隆目录的完整路径（含 `epc-digital-delivery-control-tower` 这一层）
+   超过约 80 个字符时，不加这个参数，`git clone` 会在中途报 “Filename too long” 而停下。
+   克隆到 `C:\src` 这样的短路径也可以避开。
 3. 浏览器打开 <http://127.0.0.1:8765/>。端口被占用时，在最后一条命令后加
    `--port 8770`。在终端里按 Ctrl+C 停止。
-4. 点 **选择模拟示例**；在 **第一步** 下点 **打开这个示例的结果**：共 13 个事项，其中
-   8 个需要处理。
-5. 在任一卡片上点 **查看这一项**，看结论、要做什么、处理团队、完成后拿什么复检。
+4. 点 **选择模拟示例**（首页的第一个按钮）；在 **第一步** 下点 **打开这个示例的结果**：
+   共 13 个事项，其中 8 个需要处理。
+5. 在任一卡片上点 **查看这一项**。单项页分四部分：一、结论；二、下一步（要做什么、处理团队、
+   完成后拿什么复检）；三、是哪个构件；四、具体缺什么。标题下的 **跳到下一步** 直达第二部分。
 6. 想看复检之后的变化：在单项页下方点
    **在示例“模型未改，但交接判断发生变化”里看这一项**；也可以回到示例目录，打开
-   **第二步**。
-7. 检查自己的模型：首页点 **开始本地检查**。只接受 IFC4 文件，只做 PV-001 一条规则
+   **第二步**。13 个事项里只有一个变了结论：building element（房间数据表与设备明细表），
+   从受阻变为可以开始；其余七张卡片对应的页面写着“复检前后未变”。
+7. 检查自己的模型：首页点 **开始本地检查**，点 **选择一个或多个 .ifc 文件** 选文件，声明
+   专业，点 **查看检查范围**，再点 **运行检查**。只接受 IFC4 文件，只做 PV-001 一条规则
    （风口须声明四种预定义类型之一），不是通用质量检查，也不给示例里的交接结论；Revit
    文件本身不能导入。可以先用克隆里的公开样例 `data/raw/Building-Hvac.ifc`（专业选暖通）试。
    文件只复制到本机，不上传；记录所在的文件夹在服务器启动时会打印出来。
