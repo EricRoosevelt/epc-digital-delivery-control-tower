@@ -146,24 +146,32 @@ function requirementBlock(run, requirement) {
 }
 
 /** One element in the words its returned fields allow, for a table row. */
+/** The columns of a result row, in reading order: what identifies the object
+ * first, the long IFC Tag last (it is still searched, shown in full and copied
+ * from the detail). `cells[1]` is the name. */
+export const RESULT_COLUMNS = ["status", "name", "class", "model", "storey", "tag"];
+
 function workspaceCells(state, finding, element, run) {
   const model = modelOf(run, finding.model_key);
   const tag = tagReading(element, model);
+  // Each cell carries its column's name, so a narrow screen can show the row
+  // as a card with the names beside the values (doctor.css).
+  const cell = (column, ...content) =>
+    h("td", { class: `c-${column}`, "data-label": WORKSPACE.columns[column] }, ...content);
   return [
-    h("td", {}, statusWord(carried(finding, "status"))),
-    h("td", {}, tag.kind === "tag" ? code(tag.value) : missing(tagAbsence(tag, true))),
-    h(
-      "td",
-      {},
+    cell("status", statusWord(carried(finding, "status"))),
+    cell(
+      "name",
       element === null
         ? WORKSPACE.wholeModel
         : named(element)
           ? element.name
           : missing(ELEMENT_WORDS.unnamed),
     ),
-    h("td", {}, element === null ? missing(NOT_CARRIED) : field(element, "ifc_class", className)),
-    h("td", {}, element === null ? missing(NOT_CARRIED) : storeyOf(element)),
-    h("td", {}, modelName(model)),
+    cell("class", element === null ? missing(NOT_CARRIED) : field(element, "ifc_class", className)),
+    cell("model", modelName(model)),
+    cell("storey", element === null ? missing(NOT_CARRIED) : storeyOf(element)),
+    cell("tag", tag.kind === "tag" ? code(tag.value) : missing(tagAbsence(tag, true))),
   ];
 }
 
@@ -438,7 +446,7 @@ function workspaceList(state, selected) {
       const isSelected = selected !== null && finding.finding_key === selected.finding_key;
       const cells = workspaceCells(state, finding, element, envelope.run);
       // The name cell is the link: one keyboard stop per row.
-      const nameCell = cells[2];
+      const nameCell = cells[1];
       nameCell.replaceChildren(
         h(
           "a",
@@ -516,7 +524,7 @@ function workspaceList(state, selected) {
     tableWrap(
       table(
         null,
-        [columns.status, columns.tag, columns.name, columns.class, columns.storey, columns.model],
+        RESULT_COLUMNS.map((column) => columns[column]),
         body,
       ),
     ),
@@ -586,9 +594,11 @@ export function workspaceCheck(state, selectedKey) {
       h("h2", {}, WORKSPACE.checkedHeading),
       requirementKeys.map((key) => requirementBlock(run, envelope.requirements[key])),
     ),
+    // With nothing chosen, the list has the width to itself; the detail takes
+    // its half only once there is something in it.
     h(
       "div",
-      { class: "ws-workbench" },
+      { class: selectedKey === null ? "ws-workbench no-pick" : "ws-workbench" },
       workspaceList(state, selected),
       h(
         "section",
@@ -627,12 +637,12 @@ function comparisonRows(state, rows, side) {
   return tableWrap(
     table(
       null,
-      [columns.status, columns.tag, columns.name, columns.class, columns.storey, columns.model, ""],
+      [...RESULT_COLUMNS.map((column) => columns[column]), ""],
       rows.map((row) => {
         const { element, run, missing: gone } = comparisonElement(envelope, row);
         const finding = row[side];
         const cells = workspaceCells(state, { ...finding, model_key: row.model_key }, element, run);
-        if (gone) cells[2].replaceChildren(missing(WORKSPACE_COMPARE.elementMissing));
+        if (gone) cells[1].replaceChildren(missing(WORKSPACE_COMPARE.elementMissing));
         const current = side === "current" ? row.current.finding_key : null;
         return h(
           "tr",

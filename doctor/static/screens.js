@@ -432,30 +432,20 @@ function entry(workspace = { runs: [] }, local = null) {
     { class: "home" },
     h("h1", {}, HOME.title),
     h("p", { class: "lede" }, HOME.lede),
-    // What it cannot do is said beside what it is for, not at the foot.
-    h(
-      "p",
-      { class: "demo-notice", role: "note" },
-      workspaceRun
-        ? said.statusWithWorkspace
-        : carries(workspace, "error")
-          ? said.statusWorkspaceUnknown
-          : said.status,
-    ),
     h(
       "section",
       { class: "block" },
       h("h2", {}, HOME.canHeading),
-      // One recommended start: the examples. The other entries sit beside it,
-      // smaller, and the bundled project's attempt below them, each still with
-      // everything it said before.
+      // One recommended start, and its button straight after its name: a first
+      // visit can act before reading the tour, which follows the button. The
+      // other entries sit below, smaller, each with everything it said before.
       h(
         "article",
         { class: "entry-card primary" },
         h("p", { class: "kicker" }, HOME.recommended),
         h("h3", {}, HOME.example.title),
-        h("p", {}, HOME.example.body),
         h("button", { type: "button", class: "primary-action", onclick: open("fixture") }, HOME.example.action),
+        h("p", {}, HOME.example.body),
       ),
       local || workspaceRun
         ? h(
@@ -476,9 +466,20 @@ function entry(workspace = { runs: [] }, local = null) {
         h("button", { type: "button", class: "quiet", onclick: open("real") }, HOME.attempt.action),
       ),
     ),
+    // What is available now and what is not, together, after the entries: the
+    // same limits the entry cards state, said once more as a whole.
     h(
       "section",
       { class: "block" },
+      h(
+        "p",
+        { class: "home-status", role: "note" },
+        workspaceRun
+          ? said.statusWithWorkspace
+          : carries(workspace, "error")
+            ? said.statusWorkspaceUnknown
+            : said.status,
+      ),
       h("h2", {}, HOME.cannotHeading),
       h("ul", {}, said.cannot.map((text) => h("li", {}, text))),
       note(HOME.cannotNote),

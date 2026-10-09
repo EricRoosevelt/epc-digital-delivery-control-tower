@@ -334,6 +334,9 @@ a.run {
 .entry-card.primary { border: 2px solid var(--ink); padding: 16px 20px; margin-bottom: 16px; }
 .entry-card.primary h3 { font-size: 1.25rem; }
 .entry-card.primary .kicker { margin: 0 0 4px; }
+.entry-card.primary .primary-action { margin: 4px 0 8px; }
+/* What is available now: a plain note beside the limits, not a warning. */
+.home-status { margin: 0 0 12px; padding: 8px 12px; border-left: 4px solid var(--line); background: var(--bg); }
 .entry-card p { max-width: 46rem; }
 /* An entry that is there but not where a first visit should start. */
 .other-entry { margin-top: 16px; padding-top: 12px; border-top: 1px solid var(--line); }
@@ -415,7 +418,21 @@ h3.team { margin-top: 18px; padding-top: 10px; border-top: 2px solid var(--ink);
   .ws-detail { order: -1; position: static; max-height: none; }
 }
 .ws-list td { font-size: 0.92rem; }
-.ws-list td:nth-child(2) code { white-space: nowrap; }
+.ws-workbench.no-pick { grid-template-columns: minmax(0, 1fr); }
+/* The IFC Tag is the long one: it wraps rather than widening the table. */
+.ws-list td.c-tag code { white-space: normal; overflow-wrap: anywhere; word-break: break-all; }
+.ws-list td.c-class code { overflow-wrap: normal; word-break: normal; }
+/* A narrow screen shows each result as a card: the column names beside the
+   values, nothing to scroll sideways. */
+@media (max-width: 640px) {
+  .ws-list thead { position: absolute; left: -9999px; }
+  .ws-list table, .ws-list tbody, .ws-list tr, .ws-list td { display: block; width: 100%; }
+  .ws-list tr { border: 1px solid var(--line); margin: 8px 0; padding: 4px 8px; }
+  .ws-list td { border: 0; padding: 2px 0; }
+  .ws-list td::before { content: attr(data-label) "  "; color: var(--muted); }
+  .ws-list td.c-status::before, .ws-list td.c-name::before { content: none; }
+  .ws-list td.c-name { font-size: 1rem; font-weight: 600; }
+}
 .ws-list tr.selected td { background: var(--callout-bg); }
 .ws-list tr.selected a { font-weight: 700; }
 .filters { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 8px; }
