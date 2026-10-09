@@ -635,6 +635,59 @@ export const ACTIONS = {
   },
 };
 
+// The exit condition a record left before its recheck, as the record wrote it
+// (`prior_recheck_condition`, copied from the Pack's route) and paraphrased.
+// These are not ACTIONS' recheck sentences: those say what this item needs now
+// and may be narrower; these say what the original record asked for, keeping
+// its whole scope, the model versions it names, the requirements it binds and
+// what counts as met. Each key is the Pack's own English, word for word, under
+// ACTION_PACK's id and version only; any other wording, Pack or version is
+// shown as written, labelled, and never paraphrased from this table.
+// `scope: "whole-scope"` is declared by an entry whose condition covers every
+// element in the assessed scope; only then does the page add the scope note.
+// The spatial-assignment route's condition names its rule by id, which no file
+// of this interface may carry; it has no entry and is shown as written.
+export const PRIOR_CONDITIONS = {
+  "Every requirement_key bound to asset-identity evaluates PASS for every element in the assessed scope, with no element left uncovered, on the reissued model.":
+    {
+      scope: "whole-scope",
+      text: "在重新发布的模型上，评估范围内的每一个构件，在资产标识所绑定的每一条要求下都评估为通过，没有一个构件漏评",
+    },
+  "Every element in the assessed scope is covered by an evaluation under the bound requirement_key(s) -- no element is left with no finding at all.":
+    {
+      scope: "whole-scope",
+      text: "评估范围内的每一个构件，在所绑定的要求下都被评估到：没有一个构件完全没有检查结果",
+    },
+  "Every element in the assessed scope is covered by a finding under the bound requirement_key(s).": {
+    scope: "whole-scope",
+    text: "评估范围内的每一个构件，在所绑定的要求下都有检查结果",
+  },
+  "A recorded coordination-review determination exists for the named model versions, naming either no penetration or the architectural elements penetrated.":
+    {
+      text: "针对所列模型版本，有一份已记录的协调评审判定，写明不穿过，或写明穿过了哪些建筑构件",
+    },
+  "The opening-status evaluation is re-run and reports the opening modelled and cross-referenced (outcome = cross-referenced) for this pair, for the named model versions.":
+    {
+      text: "针对所列模型版本，重新运行开洞情况评估，这一对的结果为洞口已建且已关联",
+    },
+  "The alignment-confirmation method is performed and reports the models aligned, against the specific model versions named.":
+    {
+      text: "针对所列的具体模型版本，按对齐确认方法做一次确认，结果为模型已对齐",
+    },
+  "The alignment-confirmation method is re-run against the reissued model versions and reports the models aligned (outcome = confirmed).":
+    {
+      text: "针对重新发布的模型版本，按对齐确认方法重新确认，结果为模型已对齐（已确认）",
+    },
+  "The opening-cross-reference-check method is re-run and reports the opening cross-referenced to the penetrating element, for the pair.":
+    {
+      text: "针对这一对，重新运行开洞关联核查，结果为洞口已关联到穿过它的构件",
+    },
+  "The opening-cross-reference-check method is performed and reports a definite result (cross-referenced, modelled-not-cross-referenced, or not-modelled) for the named model versions.":
+    {
+      text: "针对所列模型版本，运行开洞关联核查，并给出明确结果（已关联、已建未关联或未建）",
+    },
+};
+
 // What a cited check result required and found comes only from the returned
 // data's `finding_details`, which copies eight fields out of the validation run
 // the citing record names. The page shows them as they came. It reads no rule
@@ -1491,7 +1544,19 @@ export const RECHECK_ITEM = {
     "记录没有给出这一项的当前情况，所以本页没有处理动作、处理团队或默认处理角色可以显示。" +
     "复检前记录里的这些信息也没有随复检记录返回。",
   conditionHeading: "四、复检前留下的结束条件，这次达到了吗",
-  priorCondition: "复检前留下的结束条件：{text}。",
+  priorCondition: "原记录在复检前留下的结束条件（释义）：{text}。",
+  // No paraphrase holds for this wording, Pack or version: the record's own words.
+  priorConditionOriginal: "原记录在复检前留下的结束条件（原文照录，本界面没有可靠的释义）：",
+  priorConditionMissing: "原记录没有携带复检前留下的结束条件；本页不拿本项的建议补写它。",
+  conditionBoundary: "上面的状态说的是原记录的这个结束条件：不是本项构件自己的通过状态，也不是本项的结论。",
+  // Only where the paraphrase declares the condition whole-scope: this item
+  // now meets its own requirements, or (scopeWhole) may later.
+  scopeMet:
+    "本项的要求已满足；但原记录的这个结束条件覆盖评估范围内的全部构件，不只这一项，" +
+    "所以不能据此宣布原全范围结束条件满足。",
+  scopeWhole:
+    "原记录的这个结束条件覆盖评估范围内的全部构件，不只这一项：" +
+    "即使本项的要求满足了，也不能据此宣布原全范围结束条件满足。",
   end: "。",
   conditionNote: "这里只说复检前留下的结束条件被证明到了什么程度，与现在的结论分开读：结论变了，不等于原条件已满足。",
   // conditionNote's last clause, word for word, said beside a changed conclusion.

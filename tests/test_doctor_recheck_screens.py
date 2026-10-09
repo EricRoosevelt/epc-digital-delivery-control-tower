@@ -87,6 +87,8 @@ process.stdout.write(
       verdictLabels: vocabulary.VERDICT_LABELS,
       actions: vocabulary.ACTIONS,
       actionPack: vocabulary.ACTION_PACK,
+      priorConditions: vocabulary.PRIOR_CONDITIONS,
+      recheckItem: vocabulary.RECHECK_ITEM,
       followUp: vocabulary.FOLLOW_UP,
       beside: vocabulary.BESIDE,
       readyNotes: vocabulary.READY_NOTES,
@@ -2332,6 +2334,184 @@ class NoRecheckConditionTests(unittest.TestCase):
         for said in ("也不需要改模型", "does not need changing", "范围内没有构件漏评"):
             with self.subTest(said=said):
                 self.assertNotIn(said, static)
+
+
+class PriorConditionTests(unittest.TestCase):
+    """W2 (E289), PM ruling 2026-10-09: the prior condition is the record's own.
+
+    The recheck item page used to put this interface's recheck sentence for the
+    prior problem type where the record's exit condition belongs. For an
+    asset-identity item that sentence is about one element; the record's
+    condition is about every element in the assessed scope. The counterexample
+    below is the one the ruling asks for: this element passes now, the
+    original whole-scope condition is not shown met, and the page says both.
+
+    Everything here is built from the adapter's ``recheck-comparison`` record
+    with its one outcome edited; no rule, Pack or published file is touched.
+    """
+
+    ASSET = (
+        "Every requirement_key bound to asset-identity evaluates PASS for every element "
+        "in the assessed scope, with no element left uncovered, on the reissued model."
+    )
+    PAIR = (
+        "The opening-status evaluation is re-run and reports the opening modelled and "
+        "cross-referenced (outcome = cross-referenced) for this pair, for the named model versions."
+    )
+    SPATIAL = "The R-004-bound requirement_key(s) evaluate PASS for the element on the reissued model."
+
+    @classmethod
+    def setUpClass(cls):
+        from internal.doctor_adapter import scenario_envelope
+
+        base = scenario_envelope("recheck-comparison")["record"]
+
+        def variant(
+            kind,
+            condition,
+            status,
+            verdicts=("READY",),
+            pack_version=None,
+            prior_verdict="BLOCKED",
+        ):
+            document = json.loads(json.dumps(base))
+            if pack_version is not None:
+                document["request"]["pack_version"] = pack_version
+            outcome = document["successor"]["subscopes"][0]
+            outcome["prior_verdict"] = prior_verdict
+            outcome["prior_resolution_kind"] = kind
+            if condition is None:
+                outcome.pop("prior_recheck_condition", None)
+            else:
+                outcome["prior_recheck_condition"] = condition
+            outcome["condition_status"] = status
+            member = outcome["dispositions"][0]
+            member["disposition"] = "present"
+            member.pop("cause", None)
+            member["current_ordinals"] = [outcome["subscope_ordinal"]] * len(verdicts)
+            member["current_verdicts"] = list(verdicts)
+            return document
+
+        kind = "missing-project-asset-identity"
+        cls.documents = {
+            # The counterexample: this element READY now, the whole-scope
+            # condition not machine-checkable.
+            "passes": variant(kind, cls.ASSET, "no-machine-checkable-part"),
+            "partial": variant(kind, cls.ASSET, "named-outcome-observed"),
+            "unknown": variant(kind, cls.ASSET, "fixture-unknown-status"),
+            "still-blocked": variant(kind, cls.ASSET, "no-machine-checkable-part", ("BLOCKED",)),
+            "pair": variant("missing-corresponding-opening", cls.PAIR, "named-outcome-not-observed"),
+            "other-version": variant(kind, cls.ASSET, "no-machine-checkable-part", pack_version="0.2.0"),
+            "other-wording": variant(kind, cls.ASSET.replace("every element", "each element"), "not-comparable"),
+            "spatial": variant("mep-element-not-spatially-assigned", cls.SPATIAL, "no-machine-checkable-part"),
+            "missing": variant(kind, None, "not-comparable"),
+            "none": variant(None, "", "no-recheck-condition", prior_verdict="READY"),
+        }
+        output = _run_model(cls.documents)
+        cls.items = {name: model["subscopes"][0]["items"][0] for name, model in output["models"].items()}
+        cls.vocabulary = output["vocabulary"]
+        cls.words = output["vocabulary"]["recheckItem"]
+        cls.paraphrases = output["vocabulary"]["priorConditions"]
+
+    def test_the_counterexample_says_both_things_at_once(self):
+        item = self.items["passes"]
+        self.assertEqual(item["verdictChange"]["to"], ["READY"])
+        # The record's condition, whole scope kept: not the one-element suggestion.
+        self.assertEqual(item["prior"]["kind"], "paraphrase")
+        self.assertIn("评估范围内的每一个构件", item["prior"]["sentence"])
+        self.assertIn("没有一个构件漏评", item["prior"]["sentence"])
+        suggestion = self.vocabulary["actions"]["missing-project-asset-identity"]["recheck"]
+        self.assertNotIn(suggestion, item["prior"]["sentence"])
+        # This item met; the original condition not, and the page says so.
+        self.assertIn("本项的要求已满足", item["scopeNote"])
+        self.assertIn("不能据此宣布原全范围结束条件满足", item["scopeNote"])
+        # The machine status exactly as recorded, with its own boundary.
+        self.assertEqual(item["condition"]["code"], "no-machine-checkable-part")
+        self.assertIn("记录对它不下结论", item["condition"]["plain"])
+
+    def test_the_status_keeps_its_boundary_whatever_it_is(self):
+        for name, code, said in (
+            ("partial", "named-outcome-observed", "这不是“整句条件已满足”"),
+            ("unknown", "fixture-unknown-status", None),
+        ):
+            with self.subTest(status=code):
+                item = self.items[name]
+                self.assertEqual(item["condition"]["code"], code)
+                if said is None:
+                    self.assertFalse(item["condition"]["known"])
+                    self.assertEqual(item["condition"]["plain"], self.vocabulary["unrecognised"])
+                else:
+                    self.assertIn(said, item["condition"]["plain"])
+                self.assertIn("不能据此宣布原全范围结束条件满足", item["scopeNote"])
+
+    def test_met_is_said_only_when_every_current_verdict_is_ready(self):
+        self.assertEqual(self.items["passes"]["scopeNote"], self.words["scopeMet"])
+        self.assertEqual(self.items["still-blocked"]["scopeNote"], self.words["scopeWhole"])
+        self.assertNotIn("已满足", self.words["scopeWhole"].replace("要求满足了", ""))
+
+    def test_no_scope_note_where_the_scopes_do_not_differ(self):
+        item = self.items["pair"]
+        self.assertEqual(item["prior"]["kind"], "paraphrase")
+        self.assertIsNone(item["prior"]["scope"])
+        self.assertIsNone(item["scopeNote"])
+
+    def test_another_version_or_wording_is_shown_as_written_without_a_scope_note(self):
+        for name in ("other-version", "other-wording", "spatial"):
+            with self.subTest(case=name):
+                item = self.items[name]
+                outcome = self.documents[name]["successor"]["subscopes"][0]
+                self.assertEqual(item["prior"]["kind"], "original")
+                self.assertEqual(item["prior"]["original"], outcome["prior_recheck_condition"])
+                self.assertEqual(item["prior"]["sentence"], self.words["priorConditionOriginal"])
+                self.assertIsNone(item["scopeNote"])
+
+    def test_a_missing_condition_is_said_missing_and_none_is_left_to_the_status(self):
+        self.assertEqual(self.items["missing"]["prior"]["kind"], "missing")
+        self.assertEqual(self.items["missing"]["prior"]["sentence"], self.words["priorConditionMissing"])
+        self.assertEqual(self.items["none"]["prior"]["kind"], "none")
+        self.assertIsNone(self.items["none"]["prior"]["sentence"])
+
+    def test_every_paraphrase_keeps_the_four_parts_of_its_original(self):
+        """Scope, model versions, requirements and what counts as met, per entry."""
+
+        pack = tomllib.loads(
+            (
+                PROJECT_ROOT / "purpose-packs" / "interdisciplinary-coordination-readiness" / "pack.toml"
+            ).read_text(encoding="utf-8")
+        )
+        originals = {route["recheck_condition"] for route in pack["resolution_routes"]}
+        self.assertEqual(set(self.paraphrases), originals - {self.SPATIAL})
+        for original, entry in self.paraphrases.items():
+            with self.subTest(original=original[:50]):
+                whole = "every element in the assessed scope" in original.lower()
+                self.assertEqual(entry.get("scope") == "whole-scope", whole)
+                if whole:
+                    self.assertIn("评估范围内的每一个构件", entry["text"])
+                if "named model versions" in original or "model versions named" in original:
+                    self.assertIn("所列", entry["text"])
+                    self.assertIn("模型版本", entry["text"])
+                if "reissued" in original:
+                    self.assertIn("重新发布的模型", entry["text"])
+                if "pair" in original:
+                    self.assertIn("这一对", entry["text"])
+                self.assertNotIn(entry["text"], [pair["recheck"] for pair in self.vocabulary["actions"].values()])
+
+    def test_the_page_draws_the_records_condition_not_the_suggestion(self):
+        """Without this fix the section used ACTIONS' recheck sentence; that must stay gone."""
+
+        screens = (STATIC / "screens.js").read_text(encoding="utf-8")
+        item = screens[screens.index("function recheckItem(") :]
+        item = item[: item.index("\n}\n")]
+        self.assertNotIn('actionSentences(carried(outcome, "prior_resolution_kind")', item)
+        section = item[item.index("RECHECK_ITEM.conditionHeading") : item.index("RECHECK_ITEM.originalSummary")]
+        self.assertNotIn(".recheck", section)
+        self.assertIn("prior.sentence", section)
+        self.assertIn("prior.original", section)
+        self.assertIn("RECHECK_ITEM.conditionBoundary", section)
+        self.assertIn("item.scopeNote", section)
+        # The condition, then its status, then what the status is not.
+        self.assertLess(section.index("prior.sentence"), section.index("item.condition.plain"))
+        self.assertLess(section.index("item.condition.plain"), section.index("RECHECK_ITEM.conditionBoundary"))
 
 
 if __name__ == "__main__":
