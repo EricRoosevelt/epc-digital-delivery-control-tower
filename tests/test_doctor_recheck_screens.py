@@ -2356,9 +2356,13 @@ class PriorConditionTests(unittest.TestCase):
     )
     PAIR = (
         "The opening-status evaluation is re-run and reports the opening modelled and "
-        "cross-referenced (outcome = cross-referenced) for this pair, for the named model versions."
+        "cross-referenced (outcome = cross-referenced) for this pair, "
+        "for the named model versions."
     )
-    SPATIAL = "The R-004-bound requirement_key(s) evaluate PASS for the element on the reissued model."
+    SPATIAL = (
+        "The R-004-bound requirement_key(s) evaluate PASS for the element "
+        "on the reissued model."
+    )
 
     @classmethod
     def setUpClass(cls):
@@ -2399,16 +2403,28 @@ class PriorConditionTests(unittest.TestCase):
             "passes": variant(kind, cls.ASSET, "no-machine-checkable-part"),
             "partial": variant(kind, cls.ASSET, "named-outcome-observed"),
             "unknown": variant(kind, cls.ASSET, "fixture-unknown-status"),
-            "still-blocked": variant(kind, cls.ASSET, "no-machine-checkable-part", ("BLOCKED",)),
-            "pair": variant("missing-corresponding-opening", cls.PAIR, "named-outcome-not-observed"),
-            "other-version": variant(kind, cls.ASSET, "no-machine-checkable-part", pack_version="0.2.0"),
-            "other-wording": variant(kind, cls.ASSET.replace("every element", "each element"), "not-comparable"),
-            "spatial": variant("mep-element-not-spatially-assigned", cls.SPATIAL, "no-machine-checkable-part"),
+            "still-blocked": variant(
+                kind, cls.ASSET, "no-machine-checkable-part", ("BLOCKED",)
+            ),
+            "pair": variant(
+                "missing-corresponding-opening", cls.PAIR, "named-outcome-not-observed"
+            ),
+            "other-version": variant(
+                kind, cls.ASSET, "no-machine-checkable-part", pack_version="0.2.0"
+            ),
+            "other-wording": variant(
+                kind, cls.ASSET.replace("every element", "each element"), "not-comparable"
+            ),
+            "spatial": variant(
+                "mep-element-not-spatially-assigned", cls.SPATIAL, "no-machine-checkable-part"
+            ),
             "missing": variant(kind, None, "not-comparable"),
             "none": variant(None, "", "no-recheck-condition", prior_verdict="READY"),
         }
         output = _run_model(cls.documents)
-        cls.items = {name: model["subscopes"][0]["items"][0] for name, model in output["models"].items()}
+        cls.items = {
+            name: model["subscopes"][0]["items"][0] for name, model in output["models"].items()
+        }
         cls.vocabulary = output["vocabulary"]
         cls.words = output["vocabulary"]["recheckItem"]
         cls.paraphrases = output["vocabulary"]["priorConditions"]
@@ -2439,7 +2455,9 @@ class PriorConditionTests(unittest.TestCase):
                 self.assertEqual(item["condition"]["code"], code)
                 if said is None:
                     self.assertFalse(item["condition"]["known"])
-                    self.assertEqual(item["condition"]["plain"], self.vocabulary["unrecognised"])
+                    self.assertEqual(
+                        item["condition"]["plain"], self.vocabulary["unrecognised"]
+                    )
                 else:
                     self.assertIn(said, item["condition"]["plain"])
                 self.assertIn("不能据此宣布原全范围结束条件满足", item["scopeNote"])
@@ -2462,12 +2480,16 @@ class PriorConditionTests(unittest.TestCase):
                 outcome = self.documents[name]["successor"]["subscopes"][0]
                 self.assertEqual(item["prior"]["kind"], "original")
                 self.assertEqual(item["prior"]["original"], outcome["prior_recheck_condition"])
-                self.assertEqual(item["prior"]["sentence"], self.words["priorConditionOriginal"])
+                self.assertEqual(
+                    item["prior"]["sentence"], self.words["priorConditionOriginal"]
+                )
                 self.assertIsNone(item["scopeNote"])
 
     def test_a_missing_condition_is_said_missing_and_none_is_left_to_the_status(self):
         self.assertEqual(self.items["missing"]["prior"]["kind"], "missing")
-        self.assertEqual(self.items["missing"]["prior"]["sentence"], self.words["priorConditionMissing"])
+        self.assertEqual(
+            self.items["missing"]["prior"]["sentence"], self.words["priorConditionMissing"]
+        )
         self.assertEqual(self.items["none"]["prior"]["kind"], "none")
         self.assertIsNone(self.items["none"]["prior"]["sentence"])
 
@@ -2476,7 +2498,10 @@ class PriorConditionTests(unittest.TestCase):
 
         pack = tomllib.loads(
             (
-                PROJECT_ROOT / "purpose-packs" / "interdisciplinary-coordination-readiness" / "pack.toml"
+                PROJECT_ROOT
+                / "purpose-packs"
+                / "interdisciplinary-coordination-readiness"
+                / "pack.toml"
             ).read_text(encoding="utf-8")
         )
         originals = {route["recheck_condition"] for route in pack["resolution_routes"]}
@@ -2494,7 +2519,10 @@ class PriorConditionTests(unittest.TestCase):
                     self.assertIn("重新发布的模型", entry["text"])
                 if "pair" in original:
                     self.assertIn("这一对", entry["text"])
-                self.assertNotIn(entry["text"], [pair["recheck"] for pair in self.vocabulary["actions"].values()])
+                self.assertNotIn(
+                    entry["text"],
+                    [pair["recheck"] for pair in self.vocabulary["actions"].values()],
+                )
 
     def test_the_page_draws_the_records_condition_not_the_suggestion(self):
         """Without this fix the section used ACTIONS' recheck sentence; that must stay gone."""
@@ -2503,7 +2531,11 @@ class PriorConditionTests(unittest.TestCase):
         item = screens[screens.index("function recheckItem(") :]
         item = item[: item.index("\n}\n")]
         self.assertNotIn('actionSentences(carried(outcome, "prior_resolution_kind")', item)
-        section = item[item.index("RECHECK_ITEM.conditionHeading") : item.index("RECHECK_ITEM.originalSummary")]
+        section = item[
+            item.index("RECHECK_ITEM.conditionHeading") : item.index(
+                "RECHECK_ITEM.originalSummary"
+            )
+        ]
         self.assertNotIn(".recheck", section)
         self.assertIn("prior.sentence", section)
         self.assertIn("prior.original", section)
@@ -2511,7 +2543,10 @@ class PriorConditionTests(unittest.TestCase):
         self.assertIn("item.scopeNote", section)
         # The condition, then its status, then what the status is not.
         self.assertLess(section.index("prior.sentence"), section.index("item.condition.plain"))
-        self.assertLess(section.index("item.condition.plain"), section.index("RECHECK_ITEM.conditionBoundary"))
+        self.assertLess(
+            section.index("item.condition.plain"),
+            section.index("RECHECK_ITEM.conditionBoundary"),
+        )
 
 
 if __name__ == "__main__":
