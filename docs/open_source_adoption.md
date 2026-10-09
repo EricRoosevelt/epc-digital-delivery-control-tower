@@ -23,7 +23,7 @@ here does not mean its source code has been copied into this project.
 
 | Project | Version or reference | License | Adoption and boundary |
 |---|---|---|---|
-| [IfcOpenShell](https://github.com/IfcOpenShell/IfcOpenShell) | 0.8.5 | LGPL-3.0-or-later | Direct Python dependency for IFC parsing; no upstream source is copied. |
+| [IfcOpenShell](https://github.com/IfcOpenShell/IfcOpenShell) | 0.8.5 | Upstream source and wheel metadata: LGPL-3.0-or-later. The binary wheel's native extension also contains type names and strings from third-party geometry libraries, including CGAL packages whose source files are GPL-3.0-or-later or LGPL-3.0-or-later (each also commercially licensable); see [IfcOpenShell binary wheel](#ifcopenshell-binary-wheel) | Direct Python dependency for IFC parsing, installed from PyPI by pip; no upstream source is copied and no wheel or binary is redistributed. The default geometry library (OpenCASCADE) is used; the CGAL-based geometry library is not selected. |
 | [IfcTester](https://github.com/IfcOpenShell/IfcOpenShell) | 0.8.5 | LGPL-3.0-or-later | Direct Python dependency for IDS processing; reports are generated project artifacts. |
 | [IfcOpenShell BCF library (`bcf-client`)](https://github.com/IfcOpenShell/IfcOpenShell) | 0.8.5 | Wheel classifier: GPLv3; upstream source metadata: LGPL; unresolved conflict | Installed only as an IfcTester transitive dependency. The normative BCF generator and validator do not import it; an optional non-gating interoperability smoke test may use it when already installed. |
 | [pandas](https://github.com/pandas-dev/pandas) | 3.0.5 | BSD-3-Clause | Direct Python dependency for deterministic CSV products. |
@@ -39,6 +39,45 @@ here does not mean its source code has been copied into this project.
 If BCF 3.0 test cases are added later, they must be copied unmodified from the
 same pinned BCF-XML revision, placed below the third-party namespace, and
 accompanied by their source paths and SHA-256 values.
+
+### IfcOpenShell binary wheel
+
+The licence column above is not the whole record for IfcOpenShell. What the
+installed 0.8.5 wheel contains was inspected on 2026-10-09; the evidence, and
+what remains unverified, is in
+[`docs/evidence/ifcopenshell-0.8.5-wheel-licensing-2026-10-09/`](evidence/ifcopenshell-0.8.5-wheel-licensing-2026-10-09/README.md).
+In short:
+
+- Verified for `ifcopenshell-0.8.5-py314-none-win_amd64.whl` (SHA-256
+  `13a5992dc07e69c0c78df5479e1ff9635e6ce9fa70c841d9ce2931e8481eabb9`, equal to
+  PyPI's published digest):
+  - its metadata names only LGPL-3.0-or-later, through a classifier;
+  - it ships no licence or notice files;
+  - its single native extension contains CGAL type names, including
+    `Polyhedron_3`, `Polygon_mesh_processing` and `Nef_polyhedron_3`, and Open
+    CASCADE strings;
+  - in CGAL, the headers for those packages are marked
+    `GPL-3.0-or-later OR LicenseRef-Commercial`.
+- Inferred from upstream build scripts, not verified in the binary:
+  - CGAL v5.5.5 on Windows and v5.6.3 elsewhere;
+  - OCCT 7.8.1;
+  - MPIR or GMP, and MPFR.
+- Not inspected: the other platform wheels, including the Linux wheel CI
+  installs.
+- Open, and not answered here: which terms govern that binary as distributed,
+  and what would follow for source-only distribution or for any bundle. Those
+  are questions for the user, and for legal advice if sought.
+
+**Distribution scope (product decision, 2026-10-09).** For the résumé
+release the project distributes source code only. Each user obtains
+dependencies, including this wheel, with their own `pip install` from PyPI. No
+installer, container image or offline package containing third-party binaries
+is produced. This is a scoping decision, not a legal conclusion. Producing any
+such bundle requires a new review against the evidence record first.
+
+The CGAL-based geometry library (`hybrid-cgal-simple-opencascade`) was
+measured during 3D research and is **not adopted**. Selecting it would be a
+separate Review Gate decision.
 
 ## External Tools and Reference Implementations
 
