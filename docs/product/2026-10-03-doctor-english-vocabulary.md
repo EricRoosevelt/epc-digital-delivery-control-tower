@@ -1,6 +1,6 @@
 # Doctor 英文词表（主路径与真实工作区）
 
-日期：2026-10-03；第二部分（单项、复检）与第三部分（工作区的结果、详情、对比、拒绝、故障）同日补入；2026-10-04 补入行动与复检句（`ACTIONS`）；2026-10-05 补入首次结果卡片的三个标签（`FIRST.cardDetails`、`FIRST.cardElements`、`FIRST.openCard`），以及随附项目检查尝试的拒绝页（`REFUSAL_REASONS`、`REFUSAL_SCOPE_NOTE`、`REFUSAL_PAGE`、`REFUSAL_UNGLOSSED`）；同日删去与页首来源提示重复的 `DIRECTORY_NOTE`，复检单项页的标题序号随区块顺序调整。同日补入本地 IFC 检查的 `LOCAL_CHECK`（146 条，#29）。2026-10-08 补入页首来源提示的短摘要 `SOURCE_SUMMARY`（11 条；原 `DEMO_NOTICE` 不变，成为展开后的全文）和示例目录的一句简介 `DIRECTORY.exampleIntro`。2026-10-09 按 BIM 第二批修正 M1、W2–W8、W10 的中英文，并新增 `CONDITION_ENTRIES.no-recheck-condition.plainNotReady`（W4）。2026-10-09 首页补一句 `HOME.recommended`（简历版本 UI 主线整理）。同日按 BIM T1 结论修正 E127、E079、E357／E360／E372、E587、Q01、L008，并新增 `RECHECK_ITEM.changedCondition`（E291）。同日并入 BIM T2/T3 的 E282、E161、L017、L018。负责：Product/UI Engineer。
+日期：2026-10-03；第二部分（单项、复检）与第三部分（工作区的结果、详情、对比、拒绝、故障）同日补入；2026-10-04 补入行动与复检句（`ACTIONS`）；2026-10-05 补入首次结果卡片的三个标签（`FIRST.cardDetails`、`FIRST.cardElements`、`FIRST.openCard`），以及随附项目检查尝试的拒绝页（`REFUSAL_REASONS`、`REFUSAL_SCOPE_NOTE`、`REFUSAL_PAGE`、`REFUSAL_UNGLOSSED`）；同日删去与页首来源提示重复的 `DIRECTORY_NOTE`，复检单项页的标题序号随区块顺序调整。同日补入本地 IFC 检查的 `LOCAL_CHECK`（146 条，#29）。2026-10-08 补入页首来源提示的短摘要 `SOURCE_SUMMARY`（11 条；原 `DEMO_NOTICE` 不变，成为展开后的全文）和示例目录的一句简介 `DIRECTORY.exampleIntro`。2026-10-09 按 BIM 第二批修正 M1、W2–W8、W10 的中英文，并新增 `CONDITION_ENTRIES.no-recheck-condition.plainNotReady`（W4）。2026-10-09 首页补一句 `HOME.recommended`（简历版本 UI 主线整理）。同日按 BIM T1 结论修正 E127、E079、E357／E360／E372、E587、Q01、L008，并新增 `RECHECK_ITEM.changedCondition`（E291）。同日并入 BIM T2/T3 的 E282、E161、L017、L018。同日按 PM U2 新增 `SOURCE_SUMMARY.short`、`ITEM.jumpNext`，下一步标题改为“二、下一步”。同日按 PM U4 新增 `LOCAL_CHECK.scope.trace`（本地检查确认范围的追溯折叠）。负责：Product/UI Engineer。
 状态：**全部未经 BIM 复核**；有领域含义的条目进 10/15 BIM 批次。
 本文件由界面实际注册的词表生成，测试逐条核对英文与这里一致。中文一列是同一键在 `vocabulary.js` 里的原文。
 
@@ -25,9 +25,9 @@
 | 类别 | 表 | 条目 |
 | --- | --- | --- |
 | 原文（取自 Pack、记录或产品文档，未翻译） | 3 | 12 |
-| 有领域含义（判断、活动、问题类型、限制、来源），待 BIM | 55 | 711 |
-| 界面用语 | 24 | 167 |
-| 合计 | 82 | 890 |
+| 有领域含义（判断、活动、问题类型、限制、来源），待 BIM | 55 | 713 |
+| 界面用语 | 24 | 168 |
+| 合计 | 82 | 893 |
 
 ## 原文
 
@@ -507,7 +507,7 @@
 | `kicker` | 复检事项 · {count} | Recheck item · {count} |
 | `pairNote` | 这两个构件已不再被配成一对检查：穿透判定现在不再把它们配对（现在的判定情况见下方记录给出的原因）。这不等于开洞已建成，也不等于开洞缺陷已修复。 | These two elements are no longer paired for checking: the penetration determination no longer pairs them (its current reading is in the reason the record gives below). This does not mean the opening has been built, nor that the opening defect has been fixed. |
 | `model` | 模型 | Models |
-| `actionHeading` | 二、要做什么、由谁处理、完成后拿什么复检 | 2. What to do, who deals with it, what a recheck must show |
+| `actionHeading` | 二、下一步 | 2. Next step |
 | `whichOne` | 三、是哪个构件 | 3. Which element |
 | `whichTwo` | 三、是哪两个构件 | 3. Which two elements |
 | `noCurrent` | 记录没有给出这一项的当前情况，所以本页没有处理动作、处理团队或默认处理角色可以显示。复检前记录里的这些信息也没有随复检记录返回。 | The record does not give this item's current place, so this page has no action, handling team or default handling role to show. Those details from the record before the recheck did not come back with the recheck record either. |
@@ -665,6 +665,7 @@
 
 | 键 | 中文 | English |
 | --- | --- | --- |
+| `short` | 随附示例，含模拟的项目设定，不是你的模型；证据来源逐条标在各结论的“依据”一行。 | A bundled example with simulated project settings, not your model; each conclusion's "Basis" line labels where its evidence comes from. |
 | `lead` | 随附的模拟示例，不是你的模型；团队和证据方法的接受等项目设定为演示用，不能用于正式项目决定。 | A simulated example shipped with the tool, not your model; project settings such as teams and the acceptance of evidence methods are for demonstration, not for formal project decisions. |
 | `cites` | 这份记录的结论引用了：{kinds}，逐条标在结论旁的“依据”一行。 | This record's conclusions cite {kinds}, labelled citation by citation on the "Basis" line beside each conclusion. |
 | `citesNone` | 这份记录的结论没有引用证据。 | This record's conclusions cite no evidence. |
@@ -992,6 +993,7 @@
 | `scope.modelColumns.digest` | 内容摘要 | Content digest |
 | `scope.asOf` | 逻辑日期 | Logical date |
 | `scope.asOfNote` | （运行配置给定，不是今天的日期） | (set by the run configuration, not today's date) |
+| `scope.trace` | 追溯信息：检查号、摘要与运行字段 | Tracing: check number, digests and run fields |
 | `scope.programme` | 进度计划 | Programme |
 | `scope.programmeText` | 你的模型不带进度计划。规则集的规则写了阶段 {stages}，所以本次检查代填了这些阶段，没有到期日；结果页不显示到期、逾期或优先级。 | Your model brings no programme. The rule set's rules name the stages {stages}, so this check fills those stages in, with no due date; the result page shows no due date, overdue state or priority. |
 | `scope.geometry` | 几何 | Geometry |
@@ -1251,8 +1253,9 @@
 | `back` | ← 返回事项列表（回到这一项的位置） | ← Back to the list of items (to this item's place) |
 | `kicker` | 首次检查事项 · {count} | First-check item · {count} |
 | `conclusion` | 一、结论 | 1. Conclusion |
+| `jumpNext` | 跳到下一步 | Jump to the next step |
 | `needs` | 这项工作需要什么 | What this work needs |
-| `actionHeading` | 二、要做什么、由谁处理、完成后拿什么复检 | 2. What to do, who deals with it, what a recheck must show |
+| `actionHeading` | 二、下一步 | 2. Next step |
 | `followUpHeading` | 二、后续 | 2. Follow-up |
 | `noFollowUp` | 记录没有为这一项给出后续处理动作、处理团队或默认处理角色。 | The record gives no follow-up action, handling team or default handling role for this item. |
 | `whichOne` | 三、是哪个构件 | 3. Which element |
