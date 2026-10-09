@@ -1,6 +1,6 @@
 # 拟公开路线的 BIM 待审子集
 
-日期：2026-10-09（新加坡）。负责：README 会话。基线：`origin/main` = `2e6eafc372d4f62fe01e12731cc83bd57db1b03a`（含 #49、#50）。状态：**清单，不是复核**；本文件不判断任何条目的含义对错，不改任何词条。
+日期：2026-10-09（新加坡）。负责：README 会话。基线：`origin/main` = `62a63697f7701a4340be3354885dc800582b4e70`（含 #49、#50、#52）。状态：**清单，不是复核**；本文件不判断任何条目的含义对错，不改任何词条。
 
 依据：技术总监 10/9 的任务，出自 PM 的[简历版本与 UI 优化任务书](2026-10-08-pm-resume-release-ui-brief.md)第 5 节；档次沿用技术总监的顺序“C2 和公开主路径必需 → 本地 IFC → 其余”。在 D6 索引（[总览](2026-10-05-bim-batch-index.md)，基线 `d59dee0`）的基础上，补入 #29（本地 IFC）、#48（Q2）、#50（M1 等）之后的增量。CSV 是全表，含每条的页面与上下文：[`2026-10-09-bim-review-subset-public-route.csv`](2026-10-09-bim-review-subset-public-route.csv)。
 
@@ -10,19 +10,19 @@
 
 | 档 | 10/8 已核 | 10/8 后改句，需重核 | 10/8 已核；C 通道待裁 | 新增，未核 | B 层，10/8 未核 | 10/15 批，未核 | 同句已核 | 分隔符，无需判断 | D6 未列，待 BIM 确认 | 其他 | 合计 | 校验 |
 |---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
-| T1 示例主线与 C2 必需 | 214 | 11 | 1 | 16 | 74 | 118 | 3 | 0 | 8 | 0 | **445** | 445 |
+| T1 示例主线与 C2 必需 | 214 | 11 | 1 | 17 | 74 | 118 | 3 | 0 | 8 | 0 | **446** | 446 |
 | T2 本地 IFC 与第二入口 | 2 | 1 | 0 | 68 | 1 | 16 | 2 | 0 | 0 | 0 | **90** | 90 |
 | T3 其余 | 13 | 5 | 1 | 2 | 7 | 21 | 0 | 2 | 1 | 0 | **52** | 52 |
-| **合计（子集）** | 229 | 17 | 2 | 86 | 82 | 155 | 5 | 2 | 9 | 0 | **587** | 587 |
+| **合计（子集）** | 229 | 17 | 2 | 87 | 82 | 155 | 5 | 2 | 9 | 0 | **588** | 588 |
 
 再看待核与去重：
 
 | 档 | 条目 | **待核** | 待核·去重句数 | 档内全部·去重句数 | 其中公开路线上不出现（条件出现） | D6 未列、待确认（单列，不在待核里） |
 |---|---:|---:|---:|---:|---:|---:|
-| T1 示例主线与 C2 必需 | 445 | **219** | 210 | 420 | 37 | 8 |
+| T1 示例主线与 C2 必需 | 446 | **220** | 211 | 421 | 37 | 8 |
 | T2 本地 IFC 与第二入口 | 90 | **86** | 86 | 88 | 10 | 0 |
 | T3 其余 | 52 | **35** | 35 | 52 | 11 | 1 |
-| **合计（子集）** | **587** | **340** | 331 | 560 | 58 | 9 |
+| **合计（子集）** | **588** | **341** | 332 | 561 | 58 | 9 |
 
 **去重怎么算**：按（中文原句，英文原句）这一对去重，同一句出现在几个键下只算一次；只有中文的条目按中文句。去重只用来估工作量，不改变条目数。CSV 的 `reuse_en`／`reuse_zh` 列标了重复的组。
 
@@ -30,9 +30,9 @@
 
 | 做到哪一档 | 待核条目 | 待核·去重 |
 |---|---:|---:|
-| 只做 T1 | 219 | 210 |
-| 做到 T2 | 305 | 296 |
-| 全做（T3） | 340 | 331 |
+| 只做 T1 | 220 | 211 |
+| 做到 T2 | 306 | 297 |
+| 全做（T3） | 341 | 332 |
 
 **那 11 条中文单语释义**（`REASON_GLOSSES` 4 条、`IFC_CLASS_NAMES` 6 条、`CITATION_GLOSSES` 1 条；英文页显示原文）已按页面归档，计入总数：T1 10、T2 0、T3 1。它们的状态：1 条是 W10 改过的（计入待核）；1 条 D6 索引已列且 10/8 已核（`REASON_GLOSSES` 里的 E565，不在待核里）；9 条是“是否已核待 BIM 确认”（D6 索引当时没有逐条列），**不计入待核数**，单列在上表最后一列。10/8 BIM 读过 `REASON_GLOSSES`（W10 出自它），但哪几条已核我没有记录。
 **英文页上的事实**：渲染的 369 个英文页里，这 11 条中文释义有 0 条出现；英文页显示的是记录或规则的英文原文，没有中文释义。英文页上没有任何别的中文字符（语言切换按钮上的“中文”除外）。（这是事实记录，本 PR 不修。）
@@ -51,7 +51,7 @@
 
 ## 3. 渲染了哪些页面
 
-页面是真的渲染出来的：用 `2e6eafc` 这棵树起默认的 `python doctor/serve.py`（带一个临时的 `--checks-dir`），在无头 Edge 里按中文和英文各从首页起，沿页面上的链接广度遍历，并逐状态走完本地检查（见下）。读出每页的文字块，再按条目文字匹配。
+页面是真的渲染出来的：用 `2e6eafc` 这棵树起默认的 `python doctor/serve.py`（#52 之后只多了首页的一句 `HOME.recommended`，所以首页按 `62a6369` 重读，其余页面按 `2e6eafc`）（带一个临时的 `--checks-dir`），在无头 Edge 里按中文和英文各从首页起，沿页面上的链接广度遍历，并逐状态走完本地检查（见下）。读出每页的文字块，再按条目文字匹配。
 
 | 页面种类 | 含什么 | 中文页数 | 英文页数 |
 |---|---|---:|---:|
@@ -143,16 +143,16 @@
 - **C2 工作区专用页**（对比页、拒绝页）不在公开路线上，没有渲染；这部分句子不进子集。C2 走查按 `577620e` 做过，之后这些页面的文字没有变。
 - **UI 包 2（任务书 §3，10/10–12）**：首页和示例目录的措辞可能还会改。CSV 的 `ui_pkg2_watch` 标了只出现在首页／目录上的条目，它们的复核最好排在包 2 的措辞冻结之后。
 - **本地检查的异常状态**：任务书 §3 要求走通的五个状态里，成功、没有适用对象、不支持 schema、运行失败（程序故障）都在界面里走通了；“无几何对象”在界面里没有单独的状态（没有形体的构件照常显示检查结果，页面只有一句静态说明 `scope.geometryText`）。Framework 待命补异常状态；如果补了，会有新句子，需要追加。
-- **选了超过上限的文件时，页面没有显示“文件太大”的拒绝（L059），而是“没有收到服务器的回答：服务器可能已经停止”（L068）**：在 `--max-model-bytes 100000` 的服务器上选一个 179 KB 的文件，无头 Edge 里就是这样。服务器按文件大小拒绝时不读剩下的请求体并关闭连接（`doctor/serve.py` 的 `_local_post`），浏览器可能还在上传，就报网络错误。默认上限是 4 GB，只有超过它的文件会碰到。这是观察，不是结论，没有在其他浏览器里试；本 PR 不修。
+- **选了超过上限的文件时，页面没有显示“文件太大”的拒绝（L059），而是“没有收到服务器的回答：服务器可能已经停止”（L068）**：在 `--max-model-bytes 100000` 的服务器上选一个 179 KB 的文件，无头 Edge 里就是这样。服务器按文件大小拒绝时不读剩下的请求体并关闭连接（`doctor/serve.py` 的 `_local_post`），浏览器可能还在上传，就报网络错误。默认上限是 4 GB，只有超过它的文件会碰到。这是当时的观察，没有在其他浏览器里试；#53 已修：超过上限的文件现在由页面按“文件太大”拒绝，不再发出请求，本条留作记录。
 - **匹配方法的限制**：条目靠文字匹配到页面。长句按固定文字的子串匹配；短标签只算整块或整个元素相等；极短的模板（如 `{label}：{meaning}。`）无法按文字找到，按所在表其余条目出现的页面继承（CSV 的 `inherited_pages` 列）。短标签按文字匹配，会把页面别处的同一个词也算进页数（例如 Q2 的 `kinds.*` 与图例里的同一个词），页数只是“出现过”的粗指标。一个词条只写在代码里、不在词表里的页面文字（词表测试保证这种情况不应有）不在本清单内。
-- **与第一阶段（5b64b42，用 `0f4300b` 上渲染的页面）相比**：在 `2e6eafc` 上重新渲染后，爬到的页面数变化：en 示例主线 42→43；en 次要明细页 141→142。条目变化 6 条（原因是匹配方法，不是页面变了：中文单语释义现在按“和它注释的原文在同一页”匹配，第一阶段没有这条规则）：
+- **与第一阶段（5b64b42，用 `0f4300b` 上渲染的页面）相比**：在 `2e6eafc` 上重新渲染后，爬到的页面数变化：en 示例主线 42→43；en 次要明细页 141→142。第一阶段之后 #52 新增了 H01（首页的“推荐从这里开始”），它不算在这次比较里。条目变化 6 条（原因是匹配方法，不是页面变了：中文单语释义现在按“和它注释的原文在同一页”匹配，第一阶段没有这条规则）：
 - **没有私有内容**：渲染只用仓库里的公开样例和随附示例；没有用 C2 的私有工作区、模型或路径。
 
 ## 7. 清单
 
-列：ID 沿用 D6 索引的 `E###`；`L###` 是 #29 的 76 条，`Q##` 是 #48 的 12 条，`N01` 是 #50 新增的一条，`C01` 是 #29 改了但 D6 索引没列的一条。页面列是“中文页数｜英文页数｜在哪些页面”。
+列：ID 沿用 D6 索引的 `E###`；`L###` 是 #29 的 76 条，`Q##` 是 #48 的 12 条，`N01` 是 #50 新增的一条，`H01` 是 #52 新增的一条（首页的“推荐从这里开始”），`C01` 是 #29 改了但 D6 索引没列的一条。页面列是“中文页数｜英文页数｜在哪些页面”。
 
-### T1 示例主线与 C2 必需（445 条，待核 219）
+### T1 示例主线与 C2 必需（446 条，待核 220）
 
 #### ACTIVITY_NAMES（6 条，待核 0）
 
@@ -506,7 +506,7 @@
 | E181 | `producing` | the handing-over side's model in this handover | 本次交接中交出方的模型 | 10/8 已核 | zh 0｜en 157｜示例主线、其他示例 |
 | E182 | `consuming` | the receiving side's model in this handover | 本次交接中接收方的模型 | 10/8 已核 | zh 0｜en 25｜示例主线、其他示例 |
 
-#### HOME（13 条，待核 10）
+#### HOME（14 条，待核 11）
 
 | ID | 键 | English | 中文 | 状态 | 页面 |
 |---|---|---|---|---|---|
@@ -523,19 +523,21 @@
 | E197 | `canHeading` | What you can do now | 现在可以做什么 | 10/15 批，未核 | zh 1｜en 1｜首页 |
 | E198 | `cannotHeading` | What you cannot do yet | 现在还不能做什么 | 10/15 批，未核 | zh 1｜en 1｜首页 |
 | E199 | `cannotNote` | These are not implemented, so the page has no entry for them. | 这些功能没有实现，所以页面上没有对应的入口。 | 10/8 已核 | zh 1｜en 1｜首页 |
+| H01 | `recommended` | Start here | 推荐从这里开始 | 新增，未核 | zh 1｜en 1｜首页 |
 
 页面上下文（只列待核的条目；前后各一块，‹ › 里是匹配到的那一块）：
 
 - `E183` zh `#/`：English ‹ 查看模型交接中仍需处理的事项 › 帮助 BIM 经理了解：一次交接前检查发现了什么；复检之后，哪些判断变了、哪些事项仍需处理、每一项涉及哪些构件、依据是什么、下一步做什么。；en `#/`：English ‹ Items still to be dealt with in a model handover › For a BIM manager: what a pre-handover check found; after a recheck, w
 - `E184` zh `#/`：查看模型交接中仍需处理的事项 ‹ 帮助 BIM 经理了解：一次交接前检查发现了什么；复检之后，哪些判断变了、哪些事项仍需处理、每一项涉及哪些构件、依据是什么、下一步做什么。 › 当前提供模拟示例，以及对自己 IFC4 文件的一项有限产品验证练习；不能导入 Revit 文件本身，也不提供整体合规或可施工结论。；en `#/`：Items still to be dealt with in a model handover ‹ For a BIM manager: what a pre-handover check found; after a recheck, which conclusions changed, which items st › Available now: simulated examples, and one limited product validation
-- `E188` zh `#/`：现在可以做什么 ‹ 看一个模拟示例 › 从一次首次检查出发：找到需要处理的事项，看清涉及的构件、要做什么、由谁处理、完成后拿什么复检；然后再看同一事项复检后的变化。示例里模拟的内容；en `#/`：What you can do now ‹ Look at a simulated example › Start from a first check: find the items that need dealing with, and s
+- `E188` zh `#/`：推荐从这里开始 ‹ 看一个模拟示例 › 从一次首次检查出发：找到需要处理的事项，看清涉及的构件、要做什么、由谁处理、完成后拿什么复检；然后再看同一事项复检后的变化。示例里模拟的内容；en `#/`：Start here ‹ Look at a simulated example › Start from a first check: find the items that need dealing with, and s
 - `E189` zh `#/`：看一个模拟示例 ‹ 从一次首次检查出发：找到需要处理的事项，看清涉及的构件、要做什么、由谁处理、完成后拿什么复检；然后再看同一事项复检后的变化。示例里模拟的内容，页面上逐处标明。 › 选择模拟示例；en `#/`：Look at a simulated example ‹ Start from a first check: find the items that need dealing with, and see which elements they involve, what to  › Choose a simulated example
 - `E190` zh `#/`：从一次首次检查出发：找到需要处理的事项，看清涉及的构件、要做什么、由谁处理、完成后拿什么复检；然后再看同一事项复检后的变化。示例里模拟的内容 ‹ 选择模拟示例 › 检查自己的 IFC 模型（产品验证练习）；en `#/`：Start from a first check: find the items that need dealing with, and s ‹ Choose a simulated example › Check your own IFC model (product validation exercise)
 - `E191` zh `#/`：开始本地检查 ‹ 查看随附项目的检查尝试 › 仓库随附一个样例项目。对它的检查尝试没有开始评估；这里说明原因。这个入口不是导入入口：只看这个样例项目，不能换成别的模型。；en `#/`：Start a local check ‹ See the check attempt on the bundled project › The repository comes with a sample project. The check attempt on it di
 - `E192` zh `#/`：查看随附项目的检查尝试 ‹ 仓库随附一个样例项目。对它的检查尝试没有开始评估；这里说明原因。这个入口不是导入入口：只看这个样例项目，不能换成别的模型。 › 查看这次检查尝试；en `#/`：See the check attempt on the bundled project ‹ The repository comes with a sample project. The check attempt on it did not start an assessment; this explains › See this check attempt
 - `E193` zh `#/`：仓库随附一个样例项目。对它的检查尝试没有开始评估；这里说明原因。这个入口不是导入入口：只看这个样例项目，不能换成别的模型。 ‹ 查看这次检查尝试 › 现在还不能做什么；en `#/`：The repository comes with a sample project. The check attempt on it di ‹ See this check attempt › What you cannot do yet
-- `E197` zh `#/`：当前提供模拟示例，以及对自己 IFC4 文件的一项有限产品验证练习；不能导入 Revit 文件本身，也不提供整体合规或可施工结论。 ‹ 现在可以做什么 › 看一个模拟示例；en `#/`：Available now: simulated examples, and one limited product validation  ‹ What you can do now › Look at a simulated example
+- `E197` zh `#/`：当前提供模拟示例，以及对自己 IFC4 文件的一项有限产品验证练习；不能导入 Revit 文件本身，也不提供整体合规或可施工结论。 ‹ 现在可以做什么 › 推荐从这里开始；en `#/`：Available now: simulated examples, and one limited product validation  ‹ What you can do now › Start here
 - `E198` zh `#/`：查看这次检查尝试 ‹ 现在还不能做什么 › 导入 Revit 文件本身（.rvt），或用产品验证练习以外的规则检查自己的模型；en `#/`：See this check attempt ‹ What you cannot do yet › Import a Revit file itself (.rvt), or check your own model against rul
+- `H01` zh `#/`：现在可以做什么 ‹ 推荐从这里开始 › 看一个模拟示例；en `#/`：What you can do now ‹ Start here › Look at a simulated example
 
 #### ITEM_UNIT（1 条，待核 0）
 
@@ -1723,7 +1725,7 @@ D6 索引里的条目，在公开路线上渲染不到，也没有被本地结�
 
 ## 9. 方法与复现
 
-1. 词表：用 `tests/test_doctor_english.py` 里同一套 Node 驱动，把 `doctor/static` 里所有登记的词表（中英）导出，按 `表.键`（数组 `[i]`、单复数 `.one`/`.other`）展平。在 `d59dee0` 上这样展平的结果与 D6 索引的 605 行逐键、逐字一致，所以条目 ID 沿用 D6 的 `E###`。`2e6eafc` 相对 `d59dee0` 的差别：新增 `LOCAL_CHECK` 146 条（其中领域含义 76 条，按[对照表](2026-10-08-doctor-local-check-bilingual-parity.md)第一至九节取，另 70 条界面用语不列入）、`SOURCE_SUMMARY` 11 条、`DIRECTORY.exampleIntro` 1 条、`CONDITION_ENTRIES.no-recheck-condition.plainNotReady` 1 条；改句 16 条（#29 的 6 条中央句子，#50 的 10 条）；没有删去的。
+1. 词表：用 `tests/test_doctor_english.py` 里同一套 Node 驱动，把 `doctor/static` 里所有登记的词表（中英）导出，按 `表.键`（数组 `[i]`、单复数 `.one`/`.other`）展平。在 `d59dee0` 上这样展平的结果与 D6 索引的 605 行逐键、逐字一致，所以条目 ID 沿用 D6 的 `E###`。`2e6eafc` 相对 `d59dee0` 的差别：新增 `LOCAL_CHECK` 146 条（其中领域含义 76 条，按[对照表](2026-10-08-doctor-local-check-bilingual-parity.md)第一至九节取，另 70 条界面用语不列入）、`SOURCE_SUMMARY` 11 条、`DIRECTORY.exampleIntro` 1 条、`CONDITION_ENTRIES.no-recheck-condition.plainNotReady` 1 条、`HOME.recommended` 1 条；改句 16 条（#29 的 6 条中央句子，#50 的 10 条）；没有删去的。
 2. 页面：见第 3 节。每页读出文字块和短元素文本，匹配方法见第 6 节。
 3. 档次：T1＝出现在首页、目录、示例主线页，或出现在本地结果页但不属于 `LOCAL_CHECK` 表（结果页复用工作区的结果画面，C2 走查看的也是这些画面）；T2＝其余出现在本地检查页或第二入口页上的，以及 `LOCAL_CHECK` 表里在首页以外的；T3＝其余只出现在其他示例、次要明细页上的，加条件出现的句子。
 4. 条件出现：本次没渲染到的条目，若本地结果页的代码（经调用图）能引用到它所在的表和键，就按条件出现收进子集；只被示例页引用、而随附 12 份记录都没有触发的，不进子集。
@@ -1731,7 +1733,7 @@ D6 索引里的条目，在公开路线上渲染不到，也没有被本地结�
    - **10/8 已核**：D6 的 A 层（299 条，BIM 10/8 已核完）且句子自 `d59dee0` 起没变。不再审。
    - **10/8 后改句，需重核**：10/8 已核或已列入 D6 的条目，句子在 10/8 之后改过（#29 的 6 条中央句子、#50 的 10 条）或显示条件改了（W4）。**待核**。
    - **10/8 已核；C 通道待裁**：W1 的两条，本轮不改。不再审。
-   - **新增，未核**：#29（`L###`）、#48（`Q##`）、#50（`N01`）新增的句子。**待核**。
+   - **新增，未核**：#29（`L###`）、#48（`Q##`）、#50（`N01`）、#52（`H01`）新增的句子。**待核**。
    - **B 层，10/8 未核**、**10/15 批，未核**：D6 里原本排在 10/8 之后的条目，在公开页上出现，所以收进来。**待核**。
    - **同句已核**：句子与某条 10/8 已核且未改的条目中英都逐字相同。不再审。
    - **分隔符，无需判断**：Q2 的列举分隔符 `join`／`lastJoin`。

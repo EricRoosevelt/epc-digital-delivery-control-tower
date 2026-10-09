@@ -1,191 +1,194 @@
 # EPC Digital Delivery Control Tower
 
-**From BIM Model Data to Delivery Decisions**
+**BIM Doctor** is a personal open-source project about the check before an IFC
+model is handed from one discipline to the next, and the recheck after it. Its
+preview demonstrates, on a simulated example, what a BIM manager would see: which
+elements are still open, what to do, who does it, what a recheck must show, and
+what changed after a recheck. On your own IFC4 file it runs one rule only (see
+below).
 
 [![CI](https://github.com/EricRoosevelt/epc-digital-delivery-control-tower/actions/workflows/ci.yml/badge.svg)](https://github.com/EricRoosevelt/epc-digital-delivery-control-tower/actions/workflows/ci.yml)
 
-**[Try it](#try-it)** · **[中文快速开始](#中文快速开始)** ·
-[BIM Doctor today](#bim-doctor-today) · [Build on the framework](#other-entry-points)
+**[Start with the example · 先体验示例](#quick-start)** · [中文快速开始](#中文快速开始) ·
+[Check your own IFC4 file](#check-your-own-ifc4-file-limited) ·
+[What is real, what is simulated](#what-is-real-and-what-is-simulated) ·
+[For engineers](#for-engineers-the-framework)
 
-This portfolio prototype lays out, for a BIM manager about to hand a model from
-one discipline to the next, what a check of the IFC models found and what a
-recheck must show. **BIM Doctor**, the local preview in [`doctor/`](doctor/),
-shows it in Chinese; underneath is `epc-ct`, a deterministic framework that turns
-multidisciplinary IFC model data and project-authored information requirements
-into traceable findings, issues and BCF.
+It runs on your own machine and listens on `127.0.0.1` only. It is a preview, not a
+release and not a production deployment. It uses public buildingSMART sample models
+(CC BY 4.0; see [Data Source and Attribution](#data-source-and-attribution)).
 
-It uses public buildingSMART sample models and clearly identifies
-project-specific assumptions. It is not presented as a production deployment.
+## Two things you can try
 
-## Who it is for
+| | **Start with the example** | **Check your own IFC4 file** |
+| --- | --- | --- |
+| What it is | A simulated handover: a first check with 13 items (8 to handle), then a recheck in which one conclusion changes although neither model was reissued. | A real run of one rule on a file you choose: each air terminal must declare one of four predefined types (rule PV-001). |
+| What you see | For an item: the element, what to do, who handles it, what a recheck must show. | For each air terminal: pass or fail, with the element's name, IFC Tag and GlobalId. |
+| Limits | The team arrangement and the human determinations are the example's own settings, marked on the page. | IFC4 only. One rule. Not a general quality check, and it does not give the handover conclusions the example shows. A Revit file itself cannot be imported. |
 
-* **BIM managers** who hand models from one discipline to the next and want to
-  see what a pre-handover check found without reading JSON or using a command
-  line. **BIM Doctor**, the local preview in [`doctor/`](doctor/), is for them.
-* **BIM and digital-delivery engineers** who want a deterministic, extensible
-  way to check IFC models against project-authored requirements and export the
-  findings as issues and BCF. This repository is meant to be forked and adapted;
-  start at [`AGENTS.md`](AGENTS.md).
+## Quick start
 
-## What it addresses
+Needed before you install anything:
 
-Before a model is handed from one discipline to another, a manager has to answer
-a few plain questions: what is still open, which elements it concerns, what has
-to change, who does it, and what a recheck must show. After a recheck: what
-changed, and what is still open.
-
-BIM Doctor lays those answers out for a check of IFC models against
-project-authored requirements. It is careful about what it does not say. It gives
-no overall compliance or constructability conclusion, a result that "cannot be
-decided" is not a clean bill, and a change between two runs is never called a fix.
-Underneath is the deterministic validation framework, `epc-ct`, described
-[below](#two-layers-and-which-numbers-belong-to-which).
-
-## BIM Doctor today
-
-An internal, local preview: it runs on your machine, listens on `127.0.0.1` only,
-and is not a release or a public interface. By default it shows a simulated
-example and the bundled sample project, and its home page has a "check your own
-IFC model" entry: IFC4 files only, one product validation exercise on one rule
-(PV-001, `product-validation` 1.0), not a general quality check. A Revit file
-itself cannot be imported, and the wording of this part has not been reviewed by a
-BIM domain specialist; see [the local check](doctor/README.md#a-fourth-entry-a-local-check-of-your-own-ifc)
-in `doctor/README.md`.
-
-**Language.** The interface opens in Chinese, and the Chinese interface is what the
-screenshots below show and what this README recommends you try. An English wording
-exists as a development trial and **has not been accepted**: it has not been
-reviewed by a BIM domain specialist (see the status line of the
-[English vocabulary](docs/product/2026-10-03-doctor-english-vocabulary.md)). The
-English "what to do" and "what a recheck must show" sentences now line up with the
-Chinese ones problem type for problem type, so the next step on the example's
-first-check path means the same in both languages. That alignment is not a review:
-the English wording as a whole is still unreviewed, so **it is not recommended for
-demonstrations**. If you want to see it anyway, open any address with `?lang=en`,
-or use the switch at the top of every screen. In English the record, activity and
-member pages say "This page has not been translated yet".
-
-![BIM Doctor home as at commit 577620e, Chinese interface: two entries, and a strip saying you cannot yet import your own Revit model and it gives no overall compliance conclusion](docs/evidence/doctor-first-minute-2026-10-03/zh-01-home.png)
-
-*Home, as at `577620e`.* Two entries: **选择模拟示例** (choose a simulated example) and
-**查看这次检查尝试** (view the check attempt on the bundled sample project, which did
-not start an assessment and says why). In this capture the strip and the list at the
-foot say what it could not do yet: import, choose or change a model on the page,
-including your own Revit or IFC model; give an overall compliance, constructability or
-"can be delivered" conclusion; write back to a model, upload to the cloud, or open an
-element in Revit.
-
-**The home page has changed since this capture.** It now has a third entry,
-**检查自己的 IFC 模型（产品验证练习）** (check your own IFC model, a product validation
-exercise): IFC4 files only, one rule (PV-001), not a general quality check, and a Revit
-file itself still cannot be imported (see
-[the local check](doctor/README.md#a-fourth-entry-a-local-check-of-your-own-ifc)). The
-capture is kept as it was, and the wording of the new entry has not been reviewed by
-a BIM domain specialist.
-
-![First-check result of the simulated example, Chinese interface: 13 items, 8 to handle, grouped by handling team](docs/evidence/doctor-first-minute-2026-10-03/zh-02-first-check-result.png)
-
-*First-check result of the simulated example.* 13 items, 8 of which need handling:
-4 **受阻** (blocked) and 4 **无法判断** (cannot be decided), involving 6 different
-elements. An item is the conclusion for one element, or a pair assessed together,
-on one piece of the receiving side's work, so the number of items is not a number
-of defects. "Cannot be decided" means whether the work can start cannot be decided;
-the page says it does not mean the element has no problem. Items are grouped by
-handling team.
-
-![One item, Chinese interface: an air terminal named "chimney cover", blocked because the project's required asset identity is missing](docs/evidence/doctor-first-minute-2026-10-03/zh-03-one-item.png)
-
-*One item.* An air terminal named "chimney cover" in the `hvac` sample model is
-**受阻** (blocked) for the work 房间数据表与设备明细表 (room data sheets and equipment
-schedules): the project's required asset identity is missing (rule R-005B). Under
-the conclusion the page gives what to do, the handling team, what it means for the
-work (the work cannot start) and what a recheck must show. The element's class,
-storey, model and GlobalId, and exactly which requirement is not met, follow
-further down. The failing check is a real run of the shipped rule; the handling
-team is the example's own setting and is marked as such. R-005 is a
-project-specific assumption, not a defect of the public sample.
-
-The screenshots use the bundled public sample only and were captured at commit
-`577620e`; see [their provenance](docs/evidence/doctor-first-minute-2026-10-03/README.md).
-
-## Try it
-
-Python 3.11 or newer (`pyproject.toml`; CI runs 3.14). There is no other install
-step: `doctor/serve.py` imports the checkout directly.
+* **Python 3.11 or newer** (`pyproject.toml`). The commands below were run with
+  Python 3.14.7 on Windows 11 in PowerShell, from a fresh clone and a new virtual
+  environment. They have not been run on macOS or Linux; the same steps should work
+  with `python3 -m venv .venv` and `.venv/bin/python` in place of the Windows
+  paths. CI runs the test suite on Linux and Windows.
+* **Git**, or download the repository as a ZIP file.
+* **A web browser**, and internet access for the one-time install: about 80 MB is
+  downloaded (IfcOpenShell, IfcTester, pandas and their dependencies) and the
+  virtual environment takes about 280 MB. Installing took about a minute here.
 
 ```powershell
 git clone https://github.com/EricRoosevelt/epc-digital-delivery-control-tower.git
 cd epc-digital-delivery-control-tower
 py -m venv .venv
-.\.venv\Scripts\Activate.ps1
-python -m pip install -r requirements.txt
-python doctor/serve.py
+.\.venv\Scripts\python.exe -m pip install -r requirements.txt
+.\.venv\Scripts\python.exe doctor/serve.py
 ```
 
-On macOS or Linux, create and activate the environment with
-`python3 -m venv .venv` and `source .venv/bin/activate`; the other lines are the
-same.
+The server prints its address and the folder where local checks are kept. Open
+**<http://127.0.0.1:8765/>**. The interface opens in Chinese. **Stop the server with
+Ctrl+C** in the terminal. If the port is taken, add `--port 8770` (any free port) to
+the last command. The server changes no file that Git tracks.
 
-1. Open <http://127.0.0.1:8765/>. The interface opens in Chinese.
-2. Click **选择模拟示例** (choose a simulated example). In the catalogue, under
-   **第一步** (step one), **一次首次检查：交了模型，发现这些事项** (a first check:
-   models handed over, these items found), click **打开这个示例的结果** (open this
-   example's result). You land on the first-check result: 13 items, 8 to handle.
-3. Each item is a card. On one of them, click **查看这一项** (see this item); the
-   screenshot above is the fourth card, *chimney cover*, **房间数据表与设备明细表：受阻**.
-   The item page gives the conclusion, what to do, the handling team, and what a
-   recheck must show.
-4. The item page links back to the list, not to the catalogue (its other exit is
-   **返回首页**, back to the home page). So go back in two hops:
-   **← 返回事项列表（回到这一项的位置）** (back to the list of items), then, on the
-   list, **← 返回示例目录** (back to the example catalogue). Under **第二步** (step
-   two), **模型未改，但交接判断发生变化** (models unchanged, but the handover
-   judgement changed), click **打开这个示例的结果**. This is the same record after
-   a recheck, in a simulated scenario: neither model is republished, and one item
-   (*building element*, 房间数据表与设备明细表) moves from **受阻** (blocked) to
-   **可以开始** (can start) because a requirement it was judged against changed.
+### What you will see
 
-   A shortcut from step 3: lower on the item page, under **然后：这一项复检后的变化**
-   (then: what changed for this item after the recheck), the link
-   **在示例“模型未改，但交接判断发生变化”里看这一项** opens that same item in the
-   recheck example directly.
+1. On the home page, click **选择模拟示例** (choose a simulated example), the card
+   marked as the recommended start.
+2. In the catalogue, under **第一步** (step one), click **打开这个示例的结果**
+   (open this example's result): the first-check result, 13 items, 8 to handle.
+3. On any card, click **查看这一项** (see this item). The item page gives the
+   conclusion, what to do, the handling team, and what a recheck must show; the
+   element's identity and exactly what is missing follow.
+4. Lower on the item page, click **在示例“模型未改，但交接判断发生变化”里看这一项**
+   (see this item in the example "models unchanged, but the handover judgement
+   changed"): the recheck of the same record. Neither model is republished. The item
+   you came from stays blocked; one other item (*building element*) moves from
+   **受阻** (blocked) to **可以开始** (can start). The page says that a check
+   requirement it was judged against changed, and does not say whether it was
+   relaxed or tightened.
 
-The English interface (`?lang=en`) is an unaccepted development trial, not
-recommended for demonstrations, and is not part of this walk; see *Language* above.
+The same example is also in the catalogue as **第二步** (step two).
 
-Stop the server with Ctrl+C; `--port` changes the port. The first result you open
-in a session runs the shipped rules on the sample models once, in a scratch copy
-under the system temporary directory that is removed afterwards; nothing is
-written into the checkout.
+## Check your own IFC4 file (limited)
+
+This is a product validation exercise, not a quality check of your model. It
+applies one rule, PV-001: every air terminal (`IfcAirTerminal`) must declare one of
+the predefined types `DIFFUSER`, `GRILLE`, `LOUVRE` or `REGISTER`. A fail does
+not mean your project has a defect, and a pass does not say the classification is
+right or that any work can start. It gives none of the handover conclusions the
+example shows.
+
+1. On the home page click **开始本地检查** (start a local check). Before you choose
+   anything, the page says what is checked, where the requirement comes from, how to
+   read a result, and what this computer keeps.
+2. Choose one or more `.ifc` files (IFC4 text files only: the page says it does not
+   accept `.ifczip`, `.ifcxml` or Revit files, and an IFC2x3 file is refused with how
+   to export it again), declare each file's discipline, click **查看检查范围** (view
+   the scope), then **运行检查** (run the check).
+3. The result opens on its own page.
+
+To try it without a model of your own, use a public sample from the clone:
+`data/raw/Building-Hvac.ifc`, declared as HVAC. It runs in about a second and gives
+2 results, both fails. `data/raw/Building-Architecture.ifc`, declared as
+Architecture, has no air terminals; the page says "nothing applicable" and says that
+is not a pass.
+
+Your files are copied to a folder on your own machine and nothing is uploaded. The
+server prints the folder when it starts; it is never inside the checkout. To choose
+it yourself, start the server with
+`.\.venv\Scripts\python.exe doctor/serve.py --checks-dir "<a folder you choose>"`.
+The page explains how to clean the records up. More in
+[`doctor/README.md`](doctor/README.md#a-fourth-entry-a-local-check-of-your-own-ifc).
+
+## What is real and what is simulated
+
+* **The example is a simulation of a handover.** The team arrangement, the accepted
+  evidence methods and the human determinations (for example "does the opening pass
+  through the receiving model's element") are the example's own settings, marked
+  where they appear. It cannot be used for a project decision and offers no export.
+  In the first-check example the check results beside them come from a real run of
+  the shipped rules; elsewhere a conclusion can also rest on a simulated check
+  result, and each conclusion says which kind it cites.
+* **Your own file gets a real run**, of one rule only (see above).
+* **Not built:** importing a Revit file itself, an overall compliance or "can be
+  delivered" conclusion, writing back to a model, uploading, opening an element in
+  Revit, starting a recheck from the page, marking an item resolved, and assigning or
+  notifying anyone.
+* **Status of the wording.** The interface opens in Chinese, and an English wording
+  is available (`?lang=en` on any address). The wording of the main path, in both
+  languages, has been through this project's own domain-wording review; the
+  corrections that review asked for are still being applied. So this is a preview,
+  not a reviewed release. The record, activity and member pages are not translated
+  and say so.
 
 ## 中文快速开始
 
-BIM Doctor 是本机预览：只监听 `127.0.0.1`，不是正式发布。首页有“检查自己的 IFC
-模型”入口，只接受 IFC4 文件，只做 `product-validation` 1.0 一条规则（PV-001）的
-产品验证练习，不是通用质量检查；Revit 文件本身不能导入；这部分界面文字还没有经过
-BIM 复核，详见 [doctor/README.md 的本地检查一节](doctor/README.md#a-fourth-entry-a-local-check-of-your-own-ifc)。
-下面的步骤走的是模拟示例：界面默认是中文，页面上逐处标明哪些内容是模拟的、哪些来自
-真实运行的检查。
+BIM Doctor 是个人开源项目，讲的是 IFC 模型从一个专业交给下一个专业之前的检查，以及
+之后的复检。本机预览只监听 `127.0.0.1`，不是正式发布，也不是生产部署，界面默认是中文。
+它用一个模拟示例演示 BIM 经理会看到什么：哪些构件还没处理、要做什么、由谁处理、复检要
+拿什么证明，复检之后什么变了。对你自己的 IFC4 文件，目前只做一条规则（见下面第 7 条）。
 
-1. 安装并启动：需要 Python 3.11 或更新。克隆、建虚拟环境、
-   `pip install -r requirements.txt`、`python doctor/serve.py`，命令见上面的
-   [Try it](#try-it)（Windows 用 PowerShell 那一段，macOS 或 Linux 见紧随其后的说明）。
-   `--port` 可改端口，Ctrl+C 停止。
-2. 浏览器打开 <http://127.0.0.1:8765/>。
-3. 点 **选择模拟示例**，在 **第一步** 的 **一次首次检查：交了模型，发现这些事项**
-   下点 **打开这个示例的结果**：共 13 个事项，其中 8 个需要处理。
-4. 在任一卡片上点 **查看这一项**，看这个构件的结论、要做什么、处理团队、完成后拿
-   什么复检。
-5. 想看复检之后的变化：在单项页点 **← 返回事项列表（回到这一项的位置）**，在列表页
-   点 **← 返回示例目录**，再在 **第二步** 的 **模型未改，但交接判断发生变化** 下点
-   **打开这个示例的结果**。单项页下方也有直达链接：**在示例“模型未改，但交接判断发生变化”里看这一项**。
+1. 需要：Python 3.11 或更新；Git（或下载 ZIP）；浏览器；首次安装要联网，下载约 80 MB，
+   虚拟环境约占 280 MB。下面的命令在 Windows 11 的 PowerShell、Python 3.14.7 下，从全新
+   克隆和新建的虚拟环境实测过；macOS 和 Linux 没有实测。
+2. 安装并启动：
 
-读结果时记住三点，页面上都有对应的说明：事项数不是缺陷数；“无法判断”不等于这个构件没有
-问题；处理团队是示例里的安排，不代表已经派发。英文界面（`?lang=en`）还没有经过
-BIM 复核，不推荐用来演示，详见上面的 *Language*。
+   ```powershell
+   git clone https://github.com/EricRoosevelt/epc-digital-delivery-control-tower.git
+   cd epc-digital-delivery-control-tower
+   py -m venv .venv
+   .\.venv\Scripts\python.exe -m pip install -r requirements.txt
+   .\.venv\Scripts\python.exe doctor/serve.py
+   ```
 
-三张中文截图在 [BIM Doctor today](#bim-doctor-today)，出处和哈希在
-[截图说明](docs/evidence/doctor-first-minute-2026-10-03/README.md)。
+3. 浏览器打开 <http://127.0.0.1:8765/>。端口被占用时，在最后一条命令后加
+   `--port 8770`。在终端里按 Ctrl+C 停止。
+4. 点 **选择模拟示例**；在 **第一步** 下点 **打开这个示例的结果**：共 13 个事项，其中
+   8 个需要处理。
+5. 在任一卡片上点 **查看这一项**，看结论、要做什么、处理团队、完成后拿什么复检。
+6. 想看复检之后的变化：在单项页下方点
+   **在示例“模型未改，但交接判断发生变化”里看这一项**；也可以回到示例目录，打开
+   **第二步**。
+7. 检查自己的模型：首页点 **开始本地检查**。只接受 IFC4 文件，只做 PV-001 一条规则
+   （风口须声明四种预定义类型之一），不是通用质量检查，也不给示例里的交接结论；Revit
+   文件本身不能导入。可以先用克隆里的公开样例 `data/raw/Building-Hvac.ifc`（专业选暖通）试。
+   文件只复制到本机，不上传；记录所在的文件夹在服务器启动时会打印出来。
+
+读结果时记住三点，页面上都有对应的说明：事项数不是缺陷数；“无法判断”不等于这个构件
+没有问题；处理团队是示例里的安排，不代表已经派发。主路径的中英措辞经过本项目自己的领域
+措辞复核，复核提出的修正还在落实，所以这仍是预览，不是已复核的发布版；记录、活动、成员
+等明细页没有翻译。英文界面在任一地址后加 `?lang=en` 即可。
+
+## For engineers: the framework
+
+Underneath BIM Doctor is `epc-ct`, a deterministic validation framework. It checks
+IFC models against project-authored requirements (IDS, plus a cross-model
+completeness check) and writes findings, issues and a BCF 3.0 archive. CI
+regenerates every published artifact on Linux and Windows and fails if one byte
+moves. In the same environment as above, each of these ran in a few seconds:
+
+```powershell
+.\.venv\Scripts\python.exe -m epc_control_tower.cli check      # validate, write nothing
+.\.venv\Scripts\python.exe -m epc_control_tower.cli run        # write every enabled exporter's artifacts
+.\.venv\Scripts\python.exe -m epc_control_tower.cli snapshot   # does the published contract still match?
+```
+
+After `run` the checkout is unchanged (the output is byte-identical), apart from an
+internal coverage record kept in your user state folder. To build on it, start at
+[`AGENTS.md`](AGENTS.md#where-to-extend): three extension points (`Checker`,
+`GroupingPolicy`, `Exporter`), a rule is one TOML file under `rules/<ruleset>/`, and
+a project is a directory under `projects/`. The published contract is described in
+[`docs/data_contract.md`](docs/data_contract.md) and [`CHANGELOG.md`](CHANGELOG.md).
+
+## Reference
+
+Everything below is longer reference: what is built and what is not, the two data
+layers, the frozen Power BI / Speckle showcase and its numbers, the data contract,
+the Purpose design, and limitations. Each number belongs to the layer its section
+names.
 
 ## What works today
 
@@ -204,10 +207,11 @@ never read as an accepted one.
   `recheck` that succeeds a sealed record
   ([below](#purpose-packs-and-project-overlays)). A library: there is no
   `epc-ct` command for it.
-* The BIM Doctor preview software shown above: a local server and screens for the
-  first check, one item and a recheck, in Chinese. An English wording exists as an
-  unaccepted development trial.
-* The frozen Power BI / Speckle showcase (below, under *Other entry points*).
+* The BIM Doctor preview ([Quick start](#quick-start)): a local server and screens
+  for the first check, one item and a recheck, and the limited check of your own
+  IFC4 file, in Chinese and English (status of the wording: see
+  [What is real and what is simulated](#what-is-real-and-what-is-simulated)).
+* The frozen Power BI / Speckle showcase (below, under *Other entry points*; it is separate from BIM Doctor).
 
 **2. Shown only in simulation**
 
@@ -233,8 +237,8 @@ never read as an accepted one.
   assessment, names no team and never says anything was fixed. It is built on the
   isolated `product-validation` rule set 1.0 ([`rules/product-validation/`](rules/product-validation/README.md)),
   and the interface is described in [`doctor/README.md`](doctor/README.md). Its
-  screens are in Chinese; an English wording exists as an unaccepted development
-  trial.
+  screens are in Chinese and English (status of the wording: see
+  [What is real and what is simulated](#what-is-real-and-what-is-simulated)).
   It has been exercised privately on one real IFC model under controlled
   conditions; that model is not in this repository. It has had one round of
   BIM-domain review. It is not yet accepted as a product feature: a
@@ -576,7 +580,7 @@ python doctor\serve.py
 ```
 
 Then open <http://127.0.0.1:8765/>. The walk-through is under
-[Try it](#try-it). To look at the result of a real `epc-ct run` held in a
+[Quick start](#quick-start). To look at the result of a real `epc-ct run` held in a
 workspace outside this checkout, add `--workspace <dir>` and, to compare it with an
 earlier run, `--prior <dir>`; both are described in
 [`doctor/README.md`](doctor/README.md).

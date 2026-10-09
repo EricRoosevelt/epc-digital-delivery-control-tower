@@ -1,11 +1,19 @@
-# BIM Doctor screenshots used by the root README
+# BIM Doctor screenshots taken at 577620e (no longer shown by the root README)
 
-Three captures of the BIM Doctor local preview, in the Chinese interface, taken
-for the "BIM Doctor today" section of the root [`README.md`](../../../README.md).
-They are illustrations of what the interface looks like. They are not
-acceptance evidence for the preview, and nothing validates them: unlike
-[`../stage_3b/`](../stage_3b/README.md), no manifest or test pins this
-directory.
+Three captures of the BIM Doctor local preview, in the Chinese interface, taken at
+`577620e` for the root [`README.md`](../../../README.md). **The root README no longer
+shows them.** None of the three matches the current interface: the layout of the
+home page and the item page was changed in PR #52, and the item-page capture shows
+the sentence "no element in the scope is left unevaluated" under "what a recheck must
+show", which BIM asked to change (W2) and which PR #50 changed. They are kept here as
+a record of what the interface looked like at `577620e`, and nothing displays them.
+
+A screenshot goes back into the root README only after every visible sentence in it
+has been reviewed (the subset of wording to review is in
+[`docs/product/2026-10-09-bim-review-subset-public-route.md`](../../product/2026-10-09-bim-review-subset-public-route.md)).
+They are illustrations of what the interface looked like. They are not acceptance
+evidence for the preview, and nothing validates them: unlike
+[`../stage_3b/`](../stage_3b/README.md), no manifest or test pins this directory.
 
 | File | Route | Shows |
 |---|---|---|
