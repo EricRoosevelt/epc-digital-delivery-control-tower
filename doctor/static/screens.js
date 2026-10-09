@@ -281,16 +281,36 @@ function sourceNotice(envelope) {
   return h(
     "details",
     { class: "demo-notice source-notice" },
-    h(
-      "summary",
-      {},
-      h("strong", {}, SOURCE_SUMMARY.lead),
-      " ",
-      cites,
-      " ",
-      h("span", { class: "more" }, SOURCE_SUMMARY.more),
-    ),
+    h("summary", {}, h("strong", {}, SOURCE_SUMMARY.short), " ", h("span", { class: "more" }, SOURCE_SUMMARY.more)),
+    // One fold away: the full settings sentence, which kinds of evidence this
+    // record cites, and the whole notice.
+    h("p", {}, SOURCE_SUMMARY.lead),
+    h("p", {}, cites),
     h("p", {}, DEMO_NOTICE),
+  );
+}
+
+/** A jump from the top of an item page to its next step, which takes the focus
+ * there visibly (doctor.css: .next-step h2). */
+function jumpToNextStep() {
+  return h(
+    "p",
+    { class: "jump" },
+    h(
+      "button",
+      {
+        type: "button",
+        class: "quiet jump-next",
+        onclick: (event) => {
+          const heading = event.target.closest("main").querySelector(".next-step h2");
+          if (!heading) return;
+          heading.setAttribute("tabindex", "-1");
+          heading.focus({ preventScroll: true });
+          heading.scrollIntoView({ block: "start" });
+        },
+      },
+      ITEM.jumpNext,
+    ),
   );
 }
 
@@ -1692,6 +1712,7 @@ function firstItem(state, activityIndex, ordinal, memberIndex) {
     back(),
     h("p", { class: "kicker" }, fill(ITEM.kicker, { count: countWord(item.keys) })),
     h("h1", {}, itemTitle(state, item.keys)),
+    item.todo ? jumpToNextStep() : null,
     h(
       "section",
       { class: "block" },
@@ -2580,6 +2601,7 @@ function recheckItem(state, subscopeIndex, memberIndex) {
     backToList(),
     h("p", { class: "kicker" }, fill(RECHECK_ITEM.kicker, { count: countWord(keys) })),
     h("h1", {}, itemTitle(state, keys)),
+    jumpToNextStep(),
     h(
       "section",
       { class: "block" },

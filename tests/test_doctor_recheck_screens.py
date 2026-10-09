@@ -563,7 +563,7 @@ class FirstCheckTests(_Modelled):
         )
         vocabulary = (STATIC / "vocabulary.js").read_text(encoding="utf-8")
         for said in (
-            'actionHeading: "二、要做什么、由谁处理、完成后拿什么复检"',
+            'actionHeading: "二、下一步"',
             'followUpHeading: "二、后续"',
             'whichOne: "三、是哪个构件"',
             'details: "四、{heading}"',
@@ -630,7 +630,7 @@ class FirstCheckTests(_Modelled):
         recheck = vocabulary[vocabulary.index("export const RECHECK_ITEM = {") :]
         recheck = recheck[: recheck.index("\n};\n")]
         for said in (
-            'actionHeading: "二、要做什么、由谁处理、完成后拿什么复检"',
+            'actionHeading: "二、下一步"',
             'whichOne: "三、是哪个构件"',
             'whichTwo: "三、是哪两个构件"',
             'conditionHeading: "四、复检前留下的结束条件，这次达到了吗"',
@@ -1304,8 +1304,12 @@ class ScreenStructureTests(unittest.TestCase):
         entry = screens[
             screens.index("function entry(") : screens.index("function runLink(")
         ]
-        self.assertLess(entry.index("HOME.lede"), entry.index("said.status"))
-        self.assertLess(entry.index("said.status"), entry.index("entry-grid"))
+        # PM U1 (2026-10-09): the recommended action comes straight after the
+        # purpose; what is available and what is not is said after the entries.
+        self.assertLess(entry.index("HOME.lede"), entry.index("primary-action"))
+        self.assertLess(entry.index("primary-action"), entry.index("HOME.example.body"))
+        self.assertLess(entry.index("entry-grid"), entry.index("said.status"))
+        self.assertLess(entry.index("said.status"), entry.index("HOME.cannotHeading"))
         self.assertNotIn("details", entry)
 
     def test_an_element_is_described_from_what_was_handed_over_and_nothing_else(self):

@@ -206,6 +206,10 @@ export const DEMO_NOTICE =
 // real" or "all simulated" of a record that mixes them. Which kind one
 // conclusion rests on stays on the "依据" line beside that conclusion.
 export const SOURCE_SUMMARY = {
+  // The line every example page shows (PM U2): what this is, that its settings
+  // are simulated, and where each conclusion's sources are. `lead` and the
+  // record's own source list are one fold away, with DEMO_NOTICE.
+  short: "随附示例，含模拟的项目设定，不是你的模型；证据来源逐条标在各结论的“依据”一行。",
   lead: "随附的模拟示例，不是你的模型；团队和证据方法的接受等项目设定为演示用，不能用于正式项目决定。",
   cites: "这份记录的结论引用了：{kinds}，逐条标在结论旁的“依据”一行。",
   citesNone: "这份记录的结论没有引用证据。",
@@ -1356,8 +1360,10 @@ export const ITEM = {
   back: "← 返回事项列表（回到这一项的位置）",
   kicker: "首次检查事项 · {count}",
   conclusion: "一、结论",
+  // A jump from the top of an item page to its next step (PM U2).
+  jumpNext: "跳到下一步",
   needs: "这项工作需要什么",
-  actionHeading: "二、要做什么、由谁处理、完成后拿什么复检",
+  actionHeading: "二、下一步",
   followUpHeading: "二、后续",
   noFollowUp: "记录没有为这一项给出后续处理动作、处理团队或默认处理角色。",
   whichOne: "三、是哪个构件",
@@ -1478,7 +1484,7 @@ export const RECHECK_ITEM = {
     "这两个构件已不再被配成一对检查：穿透判定现在不再把它们配对（现在的判定情况见下方记录给出的原因）。" +
     "这不等于开洞已建成，也不等于开洞缺陷已修复。",
   model: "模型",
-  actionHeading: "二、要做什么、由谁处理、完成后拿什么复检",
+  actionHeading: "二、下一步",
   whichOne: "三、是哪个构件",
   whichTwo: "三、是哪两个构件",
   noCurrent:

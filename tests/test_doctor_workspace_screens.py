@@ -590,9 +590,10 @@ class WordingTests(_Modelled):
         # and what it adds (tests/test_doctor_english.py, LocalCheckWordsTests).
         self.assertIn("const said = local ? local.words : HOME;", entry)
         self.assertIn(
-            "workspaceRun\n        ? said.statusWithWorkspace\n"
-            '        : carries(workspace, "error")\n          ? said.statusWorkspaceUnknown\n'
-            "          : said.status",
+            "workspaceRun\n          ? said.statusWithWorkspace\n"
+            '          : carries(workspace, "error")\n'
+            "            ? said.statusWorkspaceUnknown\n"
+            "            : said.status",
             entry,
         )
 

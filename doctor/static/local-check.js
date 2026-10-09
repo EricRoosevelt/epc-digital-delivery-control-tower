@@ -427,9 +427,7 @@ function chooseStep(steps, described) {
     { class: "block" },
     h("h2", {}, words.heading),
     note(fill(words.note, { max: size(described.max_model_bytes) })),
-    h("label", { for: "local-files" }, words.label),
-    " ",
-    input,
+    h("span", { class: "file-pick" }, input, h("label", { for: "local-files" }, words.label)),
     h("p", { class: "sub status", role: "status", id: "local-copying" }),
     session.fileRefusals.map(({ filename, refusal }) => [
       h(
@@ -602,35 +600,29 @@ function scopeStep(steps, described) {
   const running = h("p", { class: "sub status", role: "status" });
   container.append(
     h("p", { tabindex: "-1", "data-local-focus": session.focus === "scope", class: "headline" }, words.ready),
-    definitions([
-      [words.checkId, code(plan.check_id)],
-      [words.ruleset, [code(`${plan.ruleset.id} ${plan.ruleset.version}`), " ", plan.ruleset.title]],
-      [words.digest, copyable(plan.ruleset.normalized_digest)],
-      [words.requirement, requirementRows({ ...plan.ruleset, requirements: plan.requirements })],
-      [words.asOf, [code(plan.as_of), " ", h("span", { class: "sub" }, words.asOfNote)]],
-      [words.programme, fill(words.programmeText, { stages: joined(stages) })],
-      [words.geometry, words.geometryText],
-      [words.location, copyable(onDisk(described, plan.location) ?? plan.location)],
-    ]),
     h("h3", {}, words.models),
     tableWrap(
       table(
         null,
-        Object.values(words.modelColumns),
+        [words.modelColumns.file, words.modelColumns.discipline, words.modelColumns.schema, words.modelColumns.size],
         plan.models.map((model) =>
           h(
             "tr",
             {},
             h("td", {}, code(model.filename)),
-            h("td", {}, code(model.model_id)),
             h("td", {}, disciplineName(model.discipline)),
             h("td", {}, code(model.ifc_schema)),
             h("td", {}, size(model.byte_count)),
-            h("td", {}, copyable(model.content_sha256)),
           ),
         ),
       ),
     ),
+    definitions([
+      [words.ruleset, [code(`${plan.ruleset.id} ${plan.ruleset.version}`), " ", plan.ruleset.title]],
+      [words.requirement, requirementRows({ ...plan.ruleset, requirements: plan.requirements })],
+      [words.location, copyable(onDisk(described, plan.location) ?? plan.location)],
+      [words.geometry, words.geometryText],
+    ]),
     h(
       "p",
       { class: "actions" },
@@ -664,6 +656,32 @@ function scopeStep(steps, described) {
       ),
     ),
     running,
+    h(
+      "details",
+      { class: "evidence-details" },
+      h("summary", {}, words.trace),
+      definitions([
+        [words.checkId, code(plan.check_id)],
+        [words.digest, copyable(plan.ruleset.normalized_digest)],
+        [words.asOf, [code(plan.as_of), " ", h("span", { class: "sub" }, words.asOfNote)]],
+        [words.programme, fill(words.programmeText, { stages: joined(stages) })],
+      ]),
+      tableWrap(
+        table(
+          null,
+          [words.modelColumns.file, words.modelColumns.code, words.modelColumns.digest],
+          plan.models.map((model) =>
+            h(
+              "tr",
+              {},
+              h("td", {}, code(model.filename)),
+              h("td", {}, code(model.model_id)),
+              h("td", {}, copyable(model.content_sha256)),
+            ),
+          ),
+        ),
+      ),
+    ),
   );
   return container;
 }

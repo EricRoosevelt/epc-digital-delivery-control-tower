@@ -457,7 +457,23 @@ function workspaceList(state, selected) {
           ...nameCell.childNodes,
         ),
       );
-      const row = h("tr", { class: isSelected ? "selected" : null }, cells);
+      // A click anywhere on the row opens it, as the name does: measured, a click
+      // on the Tag or the class did nothing, and the Tag filled most of a row.
+      // The keyboard keeps one stop per row, the name; a drag that selects text
+      // (to copy a Tag) does not open anything.
+      const target = href(state.mode, state.runId, "finding", finding.finding_key);
+      const row = h(
+        "tr",
+        {
+          class: isSelected ? "selected" : null,
+          onclick: (event) => {
+            if (event.target.closest("a, button, input")) return;
+            if (String(globalThis.getSelection?.() ?? "") !== "") return;
+            location.hash = target;
+          },
+        },
+        cells,
+      );
       rows.push({ node: row, finding, element });
       body.push(row);
     }

@@ -228,6 +228,7 @@ export const DEMO_NOTICE =
   "Not for formal project decisions, and no formal check record can be exported.";
 
 export const SOURCE_SUMMARY = {
+  short: "A bundled example with simulated project settings, not your model; each conclusion's \"Basis\" line labels where its evidence comes from.",
   lead: "A simulated example shipped with the tool, not your model; project settings such as teams and the acceptance of evidence methods are for demonstration, not for formal project decisions.",
   cites: "This record's conclusions cite {kinds}, labelled citation by citation on the \"Basis\" line beside each conclusion.",
   citesNone: "This record's conclusions cite no evidence.",
@@ -501,8 +502,9 @@ export const ITEM = {
   back: "← Back to the list of items (to this item's place)",
   kicker: "First-check item · {count}",
   conclusion: "1. Conclusion",
+  jumpNext: "Jump to the next step",
   needs: "What this work needs",
-  actionHeading: "2. What to do, who deals with it, what a recheck must show",
+  actionHeading: "2. Next step",
   followUpHeading: "2. Follow-up",
   noFollowUp: "The record gives no follow-up action, handling team or default handling role for this item.",
   whichOne: "3. Which element",
@@ -689,7 +691,7 @@ export const RECHECK_ITEM = {
     "These two elements are no longer paired for checking: the penetration determination no longer pairs them (its current reading is in the reason the record gives below). " +
     "This does not mean the opening has been built, nor that the opening defect has been fixed.",
   model: "Models",
-  actionHeading: "2. What to do, who deals with it, what a recheck must show",
+  actionHeading: "2. Next step",
   whichOne: "3. Which element",
   whichTwo: "3. Which two elements",
   noCurrent:

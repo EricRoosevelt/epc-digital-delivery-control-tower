@@ -162,6 +162,8 @@ export const LOCAL = bilingual(
       },
       asOf: "逻辑日期",
       asOfNote: "（运行配置给定，不是今天的日期）",
+      // The fold for what only tracing needs (PM U4): ids, digests, run fields.
+      trace: "追溯信息：检查号、摘要与运行字段",
       programme: "进度计划",
       programmeText:
         "你的模型不带进度计划。规则集的规则写了阶段 {stages}，所以本次检查代填了这些阶段，没有到期日；" +
@@ -391,6 +393,7 @@ export const LOCAL = bilingual(
       },
       asOf: "Logical date",
       asOfNote: "(set by the run configuration, not today's date)",
+      trace: "Tracing: check number, digests and run fields",
       programme: "Programme",
       programmeText:
         "Your model brings no programme. The rule set's rules name the stages {stages}, so this check fills those stages in, with no due date; " +
