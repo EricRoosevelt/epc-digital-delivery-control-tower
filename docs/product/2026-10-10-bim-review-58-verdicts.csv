@@ -1,0 +1,18 @@
+﻿kind,key,verdict,reason,suggestion
+释义1,missing-project-asset-identity（全范围）,通过,四项齐全：评估范围内每一个构件、在重新发布的模型上、资产标识所绑定的每一条要求、评估为通过，另有“没有一个构件漏评”。,
+释义2,asset-identity-not-evaluated（全范围）,通过,覆盖条件（不是 PASS）译对了；原文没写模型版本，不补写，正确。构件级 N/A 不存在，所以“有检查结果”等于 PASS 或 FAIL。,
+释义3,in-model-position-not-evaluated（全范围）,通过,同释义 2。,
+释义4,penetration-not-determined,通过,忠实于 Pack。“写明穿过了哪些建筑构件”照原文写“建筑构件”。00487 的穿越会落到结构构件，这一问题仍在册（C 通道），不是释义的缺陷。,
+释义5,missing-corresponding-opening,通过,这一对、所列模型版本、重新运行、已建且已关联，四项都在。,
+释义6,cross-model-alignment-not-confirmed,措辞建议,Pack 0.1.0 里 next_action 指明这个方法是“本项目 Overlay 接受的”方法，原条件里的定冠词 The 指的就是它；ACTIONS 的中文也写“按项目接受的方法”。释义把它译成泛称的“方法”，读者可能理解为任何方法都行。,"“按项目接受的对齐确认方法做一次确认”／""by the alignment-confirmation method the project accepts""。"
+释义7,cross-model-misalignment,措辞建议,Pack 0.1.0 里 next_action 指明这个方法是“本项目 Overlay 接受的”方法，原条件里的定冠词 The 指的就是它；ACTIONS 的中文也写“按项目接受的方法”。释义把它译成泛称的“方法”，读者可能理解为任何方法都行。,“按项目接受的对齐确认方法重新确认”。
+释义8,opening-not-verifiably-linked,措辞建议,同释义 6：Pack 的 next_action 写的是 the link the accepted method checks for。,“重新运行项目接受的开洞关联核查”。低优先级。
+释义9,opening-status-not-determined,措辞建议,同释义 6：Pack 的 next_action 写的是 the opening-status review this project's Overlay accepts。,“运行项目接受的开洞关联核查”。低优先级。
+释义范围,第 4、5、6、7、8、9 条不加范围说明,通过,4、5、8、9 的对象就是本项这一个构件或这一对。6、7 的对象是两侧模型这一件事，一次确认要么成立、要么不成立，不存在“本项满足、全范围没满足”的情形，所以不需要范围说明。,
+原文照录,mep-element-not-spatially-assigned（不写释义）,通过,可以接受：标注了“原文照录，本界面没有可靠的释义”，示例里也不出现。可选改进：Pack 0.1.0 里 R-004-bound 正好等于 in-model-position 证据要求所绑定的 R-004A、R-004B；释义已经限定在 0.1.0，所以写“这个构件在楼层或空间归属所绑定的要求下评估为通过（在重新发布的模型上）”是忠实的，不需要出现规则编号。,（可选）照上句写一条释义。
+改句,RECHECK_ITEM.priorCondition,通过,标明了“原记录的”和“释义”。,
+新句,RECHECK_ITEM.priorConditionOriginal,通过,,
+新句,RECHECK_ITEM.priorConditionMissing,通过,“本页不拿本项的建议补写它”正好是 W2 要防的事。,
+新句,RECHECK_ITEM.conditionBoundary,通过,,
+新句,RECHECK_ITEM.scopeMet,含义错误,实测反例页 #/fixture/recheck-requirement-relaxed/recheck/7/2 第四节写“本项的要求已满足”。但原条件要求的是“在重新发布的模型上、资产标识所绑定的每一条要求下评估为通过”。这一页上，第一，两侧模型都没有重新发布，同页写着“版本未变”；第二，同组 6 条旧证据里有 2 条的检查要求被修改过，同页也写着。所以本项现在 READY 是在原版本、改过的要求下得到的，“本项满足原条件里属于它的那部分”没有被证明。按 READY 推断“要求已满足”：对两条覆盖类路线（asset-identity-not-evaluated、in-model-position-not-evaluated）成立，因为 READY 说明这个构件确实被评估到；对 missing-project-asset-identity 不成立，因为原条件还限定了模型版本和要求集合。,删掉“本项的要求已满足”，一律用 scopeWhole；或改为陈述判定本身：“本项现在的结论是可以开始；但原记录的这个结束条件……”。不要从 READY 推出原条件的任何部分已满足。
+新句,RECHECK_ITEM.scopeWhole,通过,只作假设（“即使……满足了”），不断言本项已满足，在任何情况下都成立。,

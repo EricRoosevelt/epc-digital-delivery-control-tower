@@ -672,19 +672,19 @@ export const PRIOR_CONDITIONS = {
     },
   "The alignment-confirmation method is performed and reports the models aligned, against the specific model versions named.":
     {
-      text: "针对所列的具体模型版本，按对齐确认方法做一次确认，结果为模型已对齐",
+      text: "针对所列的具体模型版本，按项目接受的对齐确认方法做一次确认，结果为模型已对齐",
     },
   "The alignment-confirmation method is re-run against the reissued model versions and reports the models aligned (outcome = confirmed).":
     {
-      text: "针对重新发布的模型版本，按对齐确认方法重新确认，结果为模型已对齐（已确认）",
+      text: "针对重新发布的模型版本，按项目接受的对齐确认方法重新确认，结果为模型已对齐（已确认）",
     },
   "The opening-cross-reference-check method is re-run and reports the opening cross-referenced to the penetrating element, for the pair.":
     {
-      text: "针对这一对，重新运行开洞关联核查，结果为洞口已关联到穿过它的构件",
+      text: "针对这一对，重新运行项目接受的开洞关联核查，结果为洞口已关联到穿过它的构件",
     },
   "The opening-cross-reference-check method is performed and reports a definite result (cross-referenced, modelled-not-cross-referenced, or not-modelled) for the named model versions.":
     {
-      text: "针对所列模型版本，运行开洞关联核查，并给出明确结果（已关联、已建未关联或未建）",
+      text: "针对所列模型版本，运行项目接受的开洞关联核查，并给出明确结果（已关联、已建未关联或未建）",
     },
 };
 
@@ -1549,11 +1549,9 @@ export const RECHECK_ITEM = {
   priorConditionOriginal: "原记录在复检前留下的结束条件（原文照录，本界面没有可靠的释义）：",
   priorConditionMissing: "原记录没有携带复检前留下的结束条件；本页不拿本项的建议补写它。",
   conditionBoundary: "上面的状态说的是原记录的这个结束条件：不是本项构件自己的通过状态，也不是本项的结论。",
-  // Only where the paraphrase declares the condition whole-scope: this item
-  // now meets its own requirements, or (scopeWhole) may later.
-  scopeMet:
-    "本项的要求已满足；但原记录的这个结束条件覆盖评估范围内的全部构件，不只这一项，" +
-    "所以不能据此宣布原全范围结束条件满足。",
+  // Only where the paraphrase declares the condition whole-scope. Said as a
+  // supposition, never that this item meets anything: a READY verdict does
+  // not show the original condition's share for this item met (BIM, #58).
   scopeWhole:
     "原记录的这个结束条件覆盖评估范围内的全部构件，不只这一项：" +
     "即使本项的要求满足了，也不能据此宣布原全范围结束条件满足。",
