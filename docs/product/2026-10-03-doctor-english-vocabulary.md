@@ -1,6 +1,6 @@
 # Doctor 英文词表（主路径与真实工作区）
 
-日期：2026-10-03；第二部分（单项、复检）与第三部分（工作区的结果、详情、对比、拒绝、故障）同日补入；2026-10-04 补入行动与复检句（`ACTIONS`）；2026-10-05 补入首次结果卡片的三个标签（`FIRST.cardDetails`、`FIRST.cardElements`、`FIRST.openCard`），以及随附项目检查尝试的拒绝页（`REFUSAL_REASONS`、`REFUSAL_SCOPE_NOTE`、`REFUSAL_PAGE`、`REFUSAL_UNGLOSSED`）；同日删去与页首来源提示重复的 `DIRECTORY_NOTE`，复检单项页的标题序号随区块顺序调整。同日补入本地 IFC 检查的 `LOCAL_CHECK`（146 条，#29）。2026-10-08 补入页首来源提示的短摘要 `SOURCE_SUMMARY`（11 条；原 `DEMO_NOTICE` 不变，成为展开后的全文）和示例目录的一句简介 `DIRECTORY.exampleIntro`。2026-10-09 按 BIM 第二批修正 M1、W2–W8、W10 的中英文，并新增 `CONDITION_ENTRIES.no-recheck-condition.plainNotReady`（W4）。2026-10-09 首页补一句 `HOME.recommended`（简历版本 UI 主线整理）。同日按 BIM T1 结论修正 E127、E079、E357／E360／E372、E587、Q01、L008，并新增 `RECHECK_ITEM.changedCondition`（E291）。负责：Product/UI Engineer。
+日期：2026-10-03；第二部分（单项、复检）与第三部分（工作区的结果、详情、对比、拒绝、故障）同日补入；2026-10-04 补入行动与复检句（`ACTIONS`）；2026-10-05 补入首次结果卡片的三个标签（`FIRST.cardDetails`、`FIRST.cardElements`、`FIRST.openCard`），以及随附项目检查尝试的拒绝页（`REFUSAL_REASONS`、`REFUSAL_SCOPE_NOTE`、`REFUSAL_PAGE`、`REFUSAL_UNGLOSSED`）；同日删去与页首来源提示重复的 `DIRECTORY_NOTE`，复检单项页的标题序号随区块顺序调整。同日补入本地 IFC 检查的 `LOCAL_CHECK`（146 条，#29）。2026-10-08 补入页首来源提示的短摘要 `SOURCE_SUMMARY`（11 条；原 `DEMO_NOTICE` 不变，成为展开后的全文）和示例目录的一句简介 `DIRECTORY.exampleIntro`。2026-10-09 按 BIM 第二批修正 M1、W2–W8、W10 的中英文，并新增 `CONDITION_ENTRIES.no-recheck-condition.plainNotReady`（W4）。2026-10-09 首页补一句 `HOME.recommended`（简历版本 UI 主线整理）。同日按 BIM T1 结论修正 E127、E079、E357／E360／E372、E587、Q01、L008，并新增 `RECHECK_ITEM.changedCondition`（E291）。同日并入 BIM T2/T3 的 E282、E161、L017、L018。负责：Product/UI Engineer。
 状态：**全部未经 BIM 复核**；有领域含义的条目进 10/15 BIM 批次。
 本文件由界面实际注册的词表生成，测试逐条核对英文与这里一致。中文一列是同一键在 `vocabulary.js` 里的原文。
 
@@ -293,7 +293,7 @@
 | `element-out-of-subject-class.text` | 已不属于此活动对象类别，不等于修复 | No longer of this activity's subject classes; that is not a fix |
 | `element-out-of-subject-class.next` | 记录没有为它给出下一步。请核对构件的类别（导出映射）是不是有意改变；类别变了只说明本活动不再检查它。 | The record gives no next step for it. Check whether the element's class (the export mapping) was changed on purpose; a changed class only means this activity no longer checks it. |
 | `pairing-no-longer-derived.text` | 这两个构件现在不再被配成一对来检查，不等于开洞已补 | These two elements are no longer paired for checking; that does not mean the opening was added |
-| `pairing-no-longer-derived.next` | 记录没有为这一对构件给出下一步。请核对让它不再被配对的那份依据（见“记录给出的原因”）是不是你认可的结论；原来的问题没有被证明已修复。 | The record gives no next step for this pair. Check whether the basis that stopped them being paired (see "the reason the record gives") is a conclusion you accept; the original problem has not been shown to be fixed. |
+| `pairing-no-longer-derived.next` | 记录没有为这一对构件给出下一步。请核对让它不再被配对的原因（见“记录给出的原因”）；没有判定时，需要先作出针对当前版本的判定。原来的问题没有被证明已修复。 | The record gives no next step for this pair. Check the reason they are no longer paired (see "the reason the record gives"); where there is no determination, one against the current version has to be made first. The original problem has not been shown to be fixed. |
 | `outside-declared-scope.text` | 本次未声明该范围，不等于问题解除 | This scope was not declared this time; that does not mean the problem is gone |
 | `outside-declared-scope.next` | 这个构件本次没有被重新检查。需要结论时，要重新发起一次包含它的复检；本预览不能发起。 | This element was not checked again this time. For a conclusion, a new recheck that includes it is needed; this preview cannot start one. |
 
@@ -505,7 +505,7 @@
 | `missing` | 复检记录中没有这一项 | The recheck record has no such item |
 | `back` | ← 返回复检事项列表（回到这一项的位置） | ← Back to the recheck items (to this item's place) |
 | `kicker` | 复检事项 · {count} | Recheck item · {count} |
-| `pairNote` | 这两个构件已不再被配成一对检查：穿透判定现为“不穿透”（见下方记录给出的原因）。这不等于开洞已建成，也不等于开洞缺陷已修复。 | These two elements are no longer paired for checking: the penetration determination is now "no penetration" (see the reason the record gives below). This does not mean the opening has been built, nor that the opening defect has been fixed. |
+| `pairNote` | 这两个构件已不再被配成一对检查：穿透判定现在不再把它们配对（现在的判定情况见下方记录给出的原因）。这不等于开洞已建成，也不等于开洞缺陷已修复。 | These two elements are no longer paired for checking: the penetration determination no longer pairs them (its current reading is in the reason the record gives below). This does not mean the opening has been built, nor that the opening defect has been fixed. |
 | `model` | 模型 | Models |
 | `actionHeading` | 二、要做什么、由谁处理、完成后拿什么复检 | 2. What to do, who deals with it, what a recheck must show |
 | `whichOne` | 三、是哪个构件 | 3. Which element |
@@ -920,7 +920,7 @@
 | `exercise.sourceHeading` | 要求从哪里来 | Where the requirement comes from |
 | `exercise.source` | 本仓库自己写的产品验证规则，不是项目、业主、法规或 buildingSMART 的要求；四个取值来自 IFC4 ADD2 TC1 的 IfcAirTerminalTypeEnum，只接受这四个是这条规则自己的决定。规则集的说明原文（英文）： | A product validation rule written for this repository; not a project, owner, statutory or buildingSMART requirement. The four values are from IFC4 ADD2 TC1 IfcAirTerminalTypeEnum; accepting only these four is this rule's own decision. The rule set's description, as written: |
 | `exercise.readHeading` | 结果怎么读 | How to read the result |
-| `exercise.read[0]` | 不通过（FAIL）：不满足这条练习规则，不等于原项目有缺陷。 | FAIL: the model does not meet this exercise rule. It does not mean the original project has a defect. |
+| `exercise.read[0]` | 不通过（FAIL）：不满足这条练习规则，不等于你的模型有交付缺陷。 | FAIL: the model does not meet this exercise rule. It does not mean your model has a delivery defect. |
 | `exercise.read[1]` | 通过（PASS）：只说明检查器读到的值是四个之一；不证明分类正确、洞口存在、模型已对齐，也不说明任何工作可以开始。 | PASS: only that the value the checker read is one of the four. It does not prove the classification is right, that openings exist or that models are aligned, and it does not say any work can start. |
 | `exercise.read[2]` | 所选模型里没有风口：显示“没有适用对象”。这不是通过，此次也没有得到任何适用检查的通过结果。 | No air terminal in the chosen model: shown as "nothing applicable". That is not a pass, and this check produced no passing result for anything applicable. |
 | `exercise.notes` | 检查器从类型还是实例读取取值、自由文本怎样比较，写在结果页这条规则的说明里。 | Whether the checker reads the value from the type or the occurrence, and how free text is compared, is in this rule's notes on the result page. |
@@ -1028,7 +1028,7 @@
 | `earlier.note` | 保存在上面的目录里，直到你删除它们。 | Kept in the directory above until you delete them. |
 | `earlier.none` | 还没有完成的检查。 | No finished check yet. |
 | `earlier.item` | {files} · {ruleset} · 检查号 {id} | {files} · {ruleset} · check {id} |
-| `result.exercise` | 这是产品验证练习的结果：只检查风口是否声明了四种预定义类型之一。不通过不等于原项目有缺陷；通过不证明分类正确、洞口存在、模型已对齐或任何工作可以开始。 | This is the result of a product validation exercise: it only checks whether air terminals declare one of four predefined types. A FAIL does not mean the original project has a defect; a PASS does not prove the classification is right, that openings exist, that models are aligned or that any work can start. |
+| `result.exercise` | 这是产品验证练习的结果：只检查风口是否声明了四种预定义类型之一。不通过不等于你的模型有交付缺陷；通过不证明分类正确、洞口存在、模型已对齐或任何工作可以开始。 | This is the result of a product validation exercise: it only checks whether air terminals declare one of four predefined types. A FAIL does not mean your model has a delivery defect; a PASS does not prove the classification is right, that openings exist, that models are aligned or that any work can start. |
 | `result.nothingHeading` | 没有适用对象 | Nothing applicable |
 | `result.nothing` | {file}：这条规则在这个模型里没有适用对象。这不是通过——此次没有得到任何适用检查的通过结果，也不说明模型质量。 | {file}: this rule has nothing to apply to in this model. That is not a pass — this check produced no passing result for anything applicable, and it says nothing about the model's quality. |
 | `result.scopeHeading` | 这次检查的范围 | The scope of this check |

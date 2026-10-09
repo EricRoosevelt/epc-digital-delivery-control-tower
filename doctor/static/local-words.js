@@ -59,7 +59,7 @@ export const LOCAL = bilingual(
         "IfcAirTerminalTypeEnum，只接受这四个是这条规则自己的决定。规则集的说明原文（英文）：",
       readHeading: "结果怎么读",
       read: [
-        "不通过（FAIL）：不满足这条练习规则，不等于原项目有缺陷。",
+        "不通过（FAIL）：不满足这条练习规则，不等于你的模型有交付缺陷。",
         "通过（PASS）：只说明检查器读到的值是四个之一；不证明分类正确、洞口存在、模型已对齐，也不说明任何工作可以开始。",
         "所选模型里没有风口：显示“没有适用对象”。这不是通过，此次也没有得到任何适用检查的通过结果。",
       ],
@@ -220,7 +220,7 @@ export const LOCAL = bilingual(
     },
     result: {
       exercise:
-        "这是产品验证练习的结果：只检查风口是否声明了四种预定义类型之一。不通过不等于原项目有缺陷；" +
+        "这是产品验证练习的结果：只检查风口是否声明了四种预定义类型之一。不通过不等于你的模型有交付缺陷；" +
         "通过不证明分类正确、洞口存在、模型已对齐或任何工作可以开始。",
       nothingHeading: "没有适用对象",
       nothing:
@@ -288,7 +288,7 @@ export const LOCAL = bilingual(
         "IfcAirTerminalTypeEnum; accepting only these four is this rule's own decision. The rule set's description, as written:",
       readHeading: "How to read the result",
       read: [
-        "FAIL: the model does not meet this exercise rule. It does not mean the original project has a defect.",
+        "FAIL: the model does not meet this exercise rule. It does not mean your model has a delivery defect.",
         "PASS: only that the value the checker read is one of the four. It does not prove the classification is right, that openings exist or that models are aligned, and it does not say any work can start.",
         "No air terminal in the chosen model: shown as \"nothing applicable\". That is not a pass, and this check produced no passing result for anything applicable.",
       ],
@@ -449,7 +449,7 @@ export const LOCAL = bilingual(
     },
     result: {
       exercise:
-        "This is the result of a product validation exercise: it only checks whether air terminals declare one of four predefined types. A FAIL does not mean the original project has a defect; " +
+        "This is the result of a product validation exercise: it only checks whether air terminals declare one of four predefined types. A FAIL does not mean your model has a delivery defect; " +
         "a PASS does not prove the classification is right, that openings exist, that models are aligned or that any work can start.",
       nothingHeading: "Nothing applicable",
       nothing:

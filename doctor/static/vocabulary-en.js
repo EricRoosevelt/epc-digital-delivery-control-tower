@@ -686,7 +686,7 @@ export const RECHECK_ITEM = {
   back: "← Back to the recheck items (to this item's place)",
   kicker: "Recheck item · {count}",
   pairNote:
-    "These two elements are no longer paired for checking: the penetration determination is now \"no penetration\" (see the reason the record gives below). " +
+    "These two elements are no longer paired for checking: the penetration determination no longer pairs them (its current reading is in the reason the record gives below). " +
     "This does not mean the opening has been built, nor that the opening defect has been fixed.",
   model: "Models",
   actionHeading: "2. What to do, who deals with it, what a recheck must show",
@@ -904,7 +904,7 @@ export const DISPOSITION_ENTRIES = {
   "pairing-no-longer-derived": {
     text: "These two elements are no longer paired for checking; that does not mean the opening was added",
     next:
-      "The record gives no next step for this pair. Check whether the basis that stopped them being paired (see \"the reason the record gives\") is a conclusion you accept; the original problem has not been shown to be fixed.",
+      "The record gives no next step for this pair. Check the reason they are no longer paired (see \"the reason the record gives\"); where there is no determination, one against the current version has to be made first. The original problem has not been shown to be fixed.",
   },
   "outside-declared-scope": {
     text: "This scope was not declared this time; that does not mean the problem is gone",
