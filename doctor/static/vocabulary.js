@@ -206,7 +206,7 @@ export const DEMO_NOTICE =
 // real" or "all simulated" of a record that mixes them. Which kind one
 // conclusion rests on stays on the "依据" line beside that conclusion.
 export const SOURCE_SUMMARY = {
-  lead: "随附的模拟示例，不是你的模型；团队等项目设定为演示用，不能用于正式项目决定。",
+  lead: "随附的模拟示例，不是你的模型；团队和证据方法的接受等项目设定为演示用，不能用于正式项目决定。",
   cites: "这份记录的结论引用了：{kinds}，逐条标在结论旁的“依据”一行。",
   citesNone: "这份记录的结论没有引用证据。",
   noRecord: "结论引用的证据是真实的还是模拟的，逐条标在结论旁的“依据”一行。",
@@ -254,8 +254,8 @@ export const DISPOSITION_ENTRIES = {
   "pairing-no-longer-derived": {
     text: "这两个构件现在不再被配成一对来检查，不等于开洞已补",
     next:
-      "记录没有为这一对构件给出下一步。请核对让它不再被配对的那份依据（见“记录给出的原因”）" +
-      "是不是你认可的结论；原来的问题没有被证明已修复。",
+      "记录没有为这一对构件给出下一步。请核对让它不再被配对的原因（见“记录给出的原因”）；" +
+      "没有判定时，需要先作出针对当前版本的判定。原来的问题没有被证明已修复。",
   },
   "outside-declared-scope": {
     text: "本次未声明该范围，不等于问题解除",
@@ -358,7 +358,7 @@ export const CARRY_OVER_REASONS = {
     "引用相同，但判定的内容已经不是原记录读到的那一份（被重新作出、重新归属或重新签署）。" +
     "新判定照常作为证据读取，只是不能说它和原判定是同一份。",
   "determination-not-cited-by-this-record":
-    "模型版本没有变，本次记录没有再引用这份判定：它被别的判定取代了。",
+    "模型版本没有变，本次记录没有再引用这份判定；记录没有说明原因。",
   "determination-not-attributable-to-this-context":
     "模型版本已经变化，原判定是针对旧版本作出的，不能归到当前版本。" +
     "不是证据不存在，也不是原判定错误；需要针对当前版本的判定。",
@@ -816,7 +816,7 @@ export const RESOLUTION_KINDS = {
 // names it. Shown beside the code; one not listed is shown as it came.
 export const CONSEQUENCE_KINDS = {
   "work-cannot-start": "这项工作不能开始",
-  "work-suspended": "这项工作暂缓，等有结论再定",
+  "work-suspended": "这项工作暂缓",
   "rework-risk": "有返工风险",
   // Not a re-issue of the model: Checkpoint B's consequence is that rows keyed
   // to a placeholder have to be re-identified and the documents quoting them
@@ -1084,12 +1084,12 @@ export const RULE_NOTES = {
       "IFC4 还允许 USERDEFINED 和 NOTDEFINED；不接受它们是这条规则自己的决定，用它们的模型仍是有效的 IFC4。",
     passProves:
       "检查器按它的读取顺序取到的那一个值（类型上的值优先；类型声明 USERDEFINED 时是它的自由文本；" +
-      "类型什么也没说时才读构件实例；没有类型时，实例声明 USERDEFINED 也是它的自由文本），逐字等于 DIFFUSER、GRILLE、LOUVRE、REGISTER 四个值之一。",
+      "类型什么也没说（没有类型、NOTDEFINED，或 USERDEFINED 没写文本）时才读构件实例，实例声明 USERDEFINED 时也是它的自由文本），逐字等于 DIFFUSER、GRILLE、LOUVRE、REGISTER 四个值之一。",
     passDoesNotProve: [
       "取值正确：四个值中任何一个都会通过，写成 GRILLE 也会通过。",
       "类型和构件实例的取值一致：类型上是四个值之一时，实例上写的值不参与比较；类型是 LOUVRE、实例是 DIFFUSER，也会通过。",
       "规则不接受的 USERDEFINED 没有出现：类型声明 USERDEFINED 时，检查器比较的是它的自由文本；" +
-        "没有类型时，构件实例声明 USERDEFINED 也按它的自由文本比较。比较逐字、区分大小写；" +
+        "类型什么也没说（没有类型、NOTDEFINED，或 USERDEFINED 没写文本）时，构件实例声明 USERDEFINED 也按它的自由文本比较。比较逐字、区分大小写；" +
         "文本恰好是 LOUVRE 会通过，写成 louvre、Louvre 或前后带空格则不通过。",
       "墙上有对应的洞口。",
       "风口所在的模型与风口所在的墙所属的模型已经对齐。",
@@ -1119,7 +1119,7 @@ export const RULE_NOTES = {
     // enumeration's values: the checker compared a USERDEFINED type's text.
     reasonFreeText:
       "引号里不是预定义类型的枚举值，而是自由文本：类型声明 USERDEFINED 时，检查器拿它的自由文本来比较；" +
-      "没有类型时，构件实例声明 USERDEFINED 也是这样。",
+      "类型什么也没说（没有类型、NOTDEFINED，或 USERDEFINED 没写文本）时，构件实例声明 USERDEFINED 也是这样。",
   },
 };
 
@@ -1280,7 +1280,7 @@ export const FIRST = {
     other: "{unit}这份记录共涉及 {count} 个不同的构件。",
   },
   action: "要做什么",
-  problem: "问题",
+  problem: "情况",
   openItem: "查看这一项：具体对象、要做什么、由谁处理、拿什么复检",
   // The fold on a first-check card. Closed by default; what it holds is also on
   // the item's own page, where what to do comes first.
@@ -1475,7 +1475,7 @@ export const RECHECK_ITEM = {
   back: "← 返回复检事项列表（回到这一项的位置）",
   kicker: "复检事项 · {count}",
   pairNote:
-    "这两个构件已不再被配成一对检查：穿透判定现为“不穿透”（见下方记录给出的原因）。" +
+    "这两个构件已不再被配成一对检查：穿透判定现在不再把它们配对（现在的判定情况见下方记录给出的原因）。" +
     "这不等于开洞已建成，也不等于开洞缺陷已修复。",
   model: "模型",
   actionHeading: "二、要做什么、由谁处理、完成后拿什么复检",
@@ -1488,6 +1488,8 @@ export const RECHECK_ITEM = {
   priorCondition: "复检前留下的结束条件：{text}。",
   end: "。",
   conditionNote: "这里只说复检前留下的结束条件被证明到了什么程度，与现在的结论分开读：结论变了，不等于原条件已满足。",
+  // conditionNote's last clause, word for word, said beside a changed conclusion.
+  changedCondition: "结论变了，不等于原条件已满足。",
   originalSummary: "来源原文（英文）与记录原码：供追溯，不是操作指令",
   conditionBasis: "condition_basis（原文）",
   evidenceHeading: "五、复检前的证据",

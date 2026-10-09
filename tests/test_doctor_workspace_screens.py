@@ -355,7 +355,10 @@ class RuleNotesTests(_Modelled):
         # A pass shows no "检查器读哪里" row (only a failure does), so the pass
         # says the reading order itself rather than pointing at that row.
         self.assertNotIn("检查器读哪里", notes["passProves"])
-        self.assertIn("类型什么也没说时才读构件实例", notes["passProves"])
+        self.assertIn("时才读构件实例", notes["passProves"])
+        # E357: "says nothing" is no type, NOTDEFINED, or USERDEFINED with no text,
+        # as measured with IfcTester; not "no type" alone.
+        self.assertIn("没有类型、NOTDEFINED，或 USERDEFINED 没写文本", notes["passProves"])
         # A type and an instance that disagree still pass, as measured with
         # IfcTester: type LOUVRE, instance DIFFUSER -> PASS.
         self.assertIn("类型是 LOUVRE、实例是 DIFFUSER，也会通过", said)
