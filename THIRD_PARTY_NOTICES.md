@@ -11,7 +11,7 @@ vendored in this repository.
 
 | Component | Version | License | Use |
 |---|---:|---|---|
-| [IfcOpenShell](https://github.com/IfcOpenShell/IfcOpenShell) | 0.8.5 | LGPL-3.0-or-later | IFC parsing and model inspection |
+| [IfcOpenShell](https://github.com/IfcOpenShell/IfcOpenShell) | 0.8.5 | LGPL-3.0-or-later (upstream source and wheel metadata); the binary wheel contains further components, see note below | IFC parsing and model inspection |
 | [IfcTester](https://github.com/IfcOpenShell/IfcOpenShell) | 0.8.5 | LGPL-3.0-or-later | IDS authoring, validation, and reporting |
 | [BCF library (`bcf-client`)](https://github.com/IfcOpenShell/IfcOpenShell) | 0.8.5 | Conflicting metadata; see note below | Transitive dependency of IfcTester; not imported by the normative BCF generator or validator |
 | [pandas](https://github.com/pandas-dev/pandas) | 3.0.5 | BSD-3-Clause | Normalized tabular data products |
@@ -20,6 +20,24 @@ vendored in this repository.
 
 Each distribution may include additional transitive dependencies. Their own
 metadata and license files remain authoritative.
+
+The IfcOpenShell 0.8.5 wheel is installed from PyPI and is not
+redistributed by this project. Its metadata names only LGPL-3.0-or-later and it
+ships no licence or notice files. In the Windows x86-64 wheel, its native
+extension contains type names and strings from third-party geometry libraries:
+
+- CGAL packages whose source headers are marked `GPL-3.0-or-later OR
+  LicenseRef-Commercial` (for example Polyhedron, Polygon Mesh Processing,
+  Nef_3) or `LGPL-3.0-or-later OR LicenseRef-Commercial` (for example the
+  kernel);
+- Open CASCADE Technology.
+
+Upstream build scripts also pin MPIR or GMP and MPFR. CGAL licensing is
+described at <https://www.cgal.org/license.html>. Neither that page nor
+IfcOpenShell's own licence statement determines the complete licensing
+boundary of this specific binary. This project records the difference; it does
+not resolve it. The evidence, what is unverified, and the open questions are in
+`docs/evidence/ifcopenshell-0.8.5-wheel-licensing-2026-10-09/README.md`.
 
 The installed `bcf-client` 0.8.5 wheel declares the PyPI classifier
 `GNU General Public License v3 (GPLv3)`, while its source project is distributed
