@@ -2593,9 +2593,10 @@ function recheckItem(state, subscopeIndex, memberIndex) {
       rows.filter((row) => row.citation_kind === "determination" && carries(row, key)).map((row) => row[key]),
     ),
   ];
-  // The recheck condition left before, as the reviewed sentence for the prior
-  // problem type; the record's own words for it stay in the source fold below.
-  const priorSentences = actionSentences(carried(outcome, "prior_resolution_kind"), request);
+  // The exit condition left before the recheck is the record's own, paraphrased
+  // or shown as written (recheck-model.js). It is never this interface's
+  // suggestion for the prior problem type, which can be narrower.
+  const prior = item.prior;
 
   content.replaceChildren(
     backToList(),
@@ -2671,6 +2672,13 @@ function recheckItem(state, subscopeIndex, memberIndex) {
       "section",
       { class: "block condition" },
       h("h2", {}, RECHECK_ITEM.conditionHeading),
+      // What the original record asked for, then how far the record shows it
+      // reached, then what that status is not: one area, so none is read alone.
+      prior.kind === "original"
+        ? h("div", {}, h("p", {}, prior.sentence), h("blockquote", {}, prior.original))
+        : prior.sentence
+          ? h("p", {}, prior.sentence)
+          : null,
       h(
         "p",
         { class: "headline" },
@@ -2678,7 +2686,8 @@ function recheckItem(state, subscopeIndex, memberIndex) {
           ? unrecognised(item.condition.code)
           : item.condition.plain,
       ),
-      priorSentences ? h("p", {}, compose(RECHECK_ITEM.priorCondition, { text: priorSentences.recheck })) : null,
+      h("p", { class: "beside" }, RECHECK_ITEM.conditionBoundary),
+      item.scopeNote ? h("p", { class: "beside caveat" }, item.scopeNote) : null,
       note(RECHECK_ITEM.conditionNote),
       h(
         "details",
