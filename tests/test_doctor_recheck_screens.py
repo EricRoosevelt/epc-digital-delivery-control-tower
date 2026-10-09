@@ -2344,10 +2344,12 @@ class PriorConditionTests(unittest.TestCase):
     asset-identity item that sentence is about one element; the record's
     condition is about every element in the assessed scope. The counterexample
     below is the one the ruling asks for: this element passes now, the
-    original whole-scope condition is not shown met, and the page says both.
+    original whole-scope condition is not shown met, and the page says so —
+    without claiming, from READY, that this item met anything (BIM, #58).
 
-    Everything here is built from the adapter's ``recheck-comparison`` record
-    with its one outcome edited; no rule, Pack or published file is touched.
+    The cases are built from the adapter's ``recheck-comparison`` record with
+    its one outcome edited, plus the bundled ``recheck-requirement-relaxed``
+    record read as it is; no rule, Pack or published file is touched.
     """
 
     ASSET = (
@@ -2421,7 +2423,9 @@ class PriorConditionTests(unittest.TestCase):
             "missing": variant(kind, None, "not-comparable"),
             "none": variant(None, "", "no-recheck-condition", prior_verdict="READY"),
         }
-        output = _run_model(cls.documents)
+        bundled = scenario_envelope("recheck-requirement-relaxed")["record"]
+        output = _run_model({**cls.documents, "relaxed": bundled})
+        cls.relaxed = output["models"].pop("relaxed")
         cls.items = {
             name: model["subscopes"][0]["items"][0] for name, model in output["models"].items()
         }
@@ -2429,7 +2433,7 @@ class PriorConditionTests(unittest.TestCase):
         cls.words = output["vocabulary"]["recheckItem"]
         cls.paraphrases = output["vocabulary"]["priorConditions"]
 
-    def test_the_counterexample_says_both_things_at_once(self):
+    def test_the_counterexample_keeps_the_whole_scope_and_claims_nothing(self):
         item = self.items["passes"]
         self.assertEqual(item["verdictChange"]["to"], ["READY"])
         # The record's condition, whole scope kept: not the one-element suggestion.
@@ -2438,9 +2442,13 @@ class PriorConditionTests(unittest.TestCase):
         self.assertIn("没有一个构件漏评", item["prior"]["sentence"])
         suggestion = self.vocabulary["actions"]["missing-project-asset-identity"]["recheck"]
         self.assertNotIn(suggestion, item["prior"]["sentence"])
-        # This item met; the original condition not, and the page says so.
-        self.assertIn("本项的要求已满足", item["scopeNote"])
+        # The original whole-scope condition is not shown met; and nothing says
+        # this item met its share of it either — READY does not show that (BIM,
+        # review of #58: the models need not have been reissued, a cited
+        # requirement may have been edited).
+        self.assertEqual(item["scopeNote"], self.words["scopeWhole"])
         self.assertIn("不能据此宣布原全范围结束条件满足", item["scopeNote"])
+        self.assertNotIn("本项的要求已满足", item["scopeNote"])
         # The machine status exactly as recorded, with its own boundary.
         self.assertEqual(item["condition"]["code"], "no-machine-checkable-part")
         self.assertIn("记录对它不下结论", item["condition"]["plain"])
@@ -2462,10 +2470,29 @@ class PriorConditionTests(unittest.TestCase):
                     self.assertIn(said, item["condition"]["plain"])
                 self.assertIn("不能据此宣布原全范围结束条件满足", item["scopeNote"])
 
-    def test_met_is_said_only_when_every_current_verdict_is_ready(self):
-        self.assertEqual(self.items["passes"]["scopeNote"], self.words["scopeMet"])
-        self.assertEqual(self.items["still-blocked"]["scopeNote"], self.words["scopeWhole"])
-        self.assertNotIn("已满足", self.words["scopeWhole"].replace("要求满足了", ""))
+    def test_no_verdict_makes_the_page_say_this_item_met_its_requirements(self):
+        """BIM, review of #58: from READY, "本项的要求已满足" does not follow."""
+
+        for name in ("passes", "still-blocked", "partial", "unknown"):
+            with self.subTest(case=name):
+                self.assertEqual(self.items[name]["scopeNote"], self.words["scopeWhole"])
+        self.assertNotIn("scopeMet", self.words)
+        for key, sentence in self.words.items():
+            with self.subTest(key=key):
+                self.assertNotIn("本项的要求已满足", json.dumps(sentence, ensure_ascii=False))
+        # scopeWhole only supposes it: "even once ... met".
+        self.assertIn("即使本项的要求满足了", self.words["scopeWhole"])
+
+    def test_the_bundled_page_bim_walked_says_no_more_than_scope_whole(self):
+        """#/fixture/recheck-requirement-relaxed/recheck/7/2: READY now, neither
+        model reissued, two of the group's old evidence rows with an edited
+        requirement. The page supposes; it never says the item met anything."""
+
+        item = self.relaxed["subscopes"][7]["items"][2]
+        self.assertEqual(item["verdictChange"]["to"], ["READY"])
+        self.assertEqual(item["prior"]["scope"], "whole-scope")
+        self.assertEqual(item["requirementChanged"], 2)
+        self.assertEqual(item["scopeNote"], self.words["scopeWhole"])
 
     def test_no_scope_note_where_the_scopes_do_not_differ(self):
         item = self.items["pair"]
@@ -2519,6 +2546,10 @@ class PriorConditionTests(unittest.TestCase):
                     self.assertIn("重新发布的模型", entry["text"])
                 if "pair" in original:
                     self.assertIn("这一对", entry["text"])
+                # The method is the one the project accepts (Pack next_action;
+                # BIM, review of #58), never any method at all.
+                if "-method " in original:
+                    self.assertIn("项目接受的", entry["text"])
                 self.assertNotIn(
                     entry["text"],
                     [pair["recheck"] for pair in self.vocabulary["actions"].values()],
