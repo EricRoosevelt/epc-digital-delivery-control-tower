@@ -2587,6 +2587,11 @@ function recheckItem(state, subscopeIndex, memberIndex) {
       besideChange(item),
       requirementNote(item),
       item.verdictChange.kind === "changed" ? h("p", { class: "beside caveat" }, changed.note) : null,
+      // A changed conclusion is not the exit condition met: said here as well
+      // as in the condition section, because it is how this conclusion reads.
+      item.verdictChange.kind === "changed"
+        ? h("p", { class: "beside caveat" }, RECHECK_ITEM.changedCondition)
+        : null,
       // Keyed on the disposition code alone, beside the record's own cause.
       // This wording is written for **this Pack's** `pair_source`: the pair
       // comes from a penetration determination, and the openings activity is

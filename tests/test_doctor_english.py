@@ -567,9 +567,9 @@ class LocalCheckWordsTests(_Loaded):
 
     def test_a_fail_is_not_a_defect_and_nothing_applicable_is_not_a_pass(self):
         zh, en = self.pair["zh"], self.pair["en"]
-        self.assertIn("不等于原项目有缺陷", zh["exercise"]["read"][0])
+        self.assertIn("不等于你的模型有交付缺陷", zh["exercise"]["read"][0])
         self.assertIn(
-            "does not mean the original project has a defect", en["exercise"]["read"][0]
+            "does not mean your model has a delivery defect", en["exercise"]["read"][0]
         )
         self.assertIn("这不是通过", zh["result"]["nothing"])
         self.assertIn("That is not a pass", en["result"]["nothing"])
