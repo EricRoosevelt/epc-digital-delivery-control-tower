@@ -281,16 +281,36 @@ function sourceNotice(envelope) {
   return h(
     "details",
     { class: "demo-notice source-notice" },
-    h(
-      "summary",
-      {},
-      h("strong", {}, SOURCE_SUMMARY.lead),
-      " ",
-      cites,
-      " ",
-      h("span", { class: "more" }, SOURCE_SUMMARY.more),
-    ),
+    h("summary", {}, h("strong", {}, SOURCE_SUMMARY.short), " ", h("span", { class: "more" }, SOURCE_SUMMARY.more)),
+    // One fold away: the full settings sentence, which kinds of evidence this
+    // record cites, and the whole notice.
+    h("p", {}, SOURCE_SUMMARY.lead),
+    h("p", {}, cites),
     h("p", {}, DEMO_NOTICE),
+  );
+}
+
+/** A jump from the top of an item page to its next step, which takes the focus
+ * there visibly (doctor.css: .next-step h2). */
+function jumpToNextStep() {
+  return h(
+    "p",
+    { class: "jump" },
+    h(
+      "button",
+      {
+        type: "button",
+        class: "quiet jump-next",
+        onclick: (event) => {
+          const heading = event.target.closest("main").querySelector(".next-step h2");
+          if (!heading) return;
+          heading.setAttribute("tabindex", "-1");
+          heading.focus({ preventScroll: true });
+          heading.scrollIntoView({ block: "start" });
+        },
+      },
+      ITEM.jumpNext,
+    ),
   );
 }
 
@@ -432,30 +452,20 @@ function entry(workspace = { runs: [] }, local = null) {
     { class: "home" },
     h("h1", {}, HOME.title),
     h("p", { class: "lede" }, HOME.lede),
-    // What it cannot do is said beside what it is for, not at the foot.
-    h(
-      "p",
-      { class: "demo-notice", role: "note" },
-      workspaceRun
-        ? said.statusWithWorkspace
-        : carries(workspace, "error")
-          ? said.statusWorkspaceUnknown
-          : said.status,
-    ),
     h(
       "section",
       { class: "block" },
       h("h2", {}, HOME.canHeading),
-      // One recommended start: the examples. The other entries sit beside it,
-      // smaller, and the bundled project's attempt below them, each still with
-      // everything it said before.
+      // One recommended start, and its button straight after its name: a first
+      // visit can act before reading the tour, which follows the button. The
+      // other entries sit below, smaller, each with everything it said before.
       h(
         "article",
         { class: "entry-card primary" },
         h("p", { class: "kicker" }, HOME.recommended),
         h("h3", {}, HOME.example.title),
-        h("p", {}, HOME.example.body),
         h("button", { type: "button", class: "primary-action", onclick: open("fixture") }, HOME.example.action),
+        h("p", {}, HOME.example.body),
       ),
       local || workspaceRun
         ? h(
@@ -476,9 +486,20 @@ function entry(workspace = { runs: [] }, local = null) {
         h("button", { type: "button", class: "quiet", onclick: open("real") }, HOME.attempt.action),
       ),
     ),
+    // What is available now and what is not, together, after the entries: the
+    // same limits the entry cards state, said once more as a whole.
     h(
       "section",
       { class: "block" },
+      h(
+        "p",
+        { class: "home-status", role: "note" },
+        workspaceRun
+          ? said.statusWithWorkspace
+          : carries(workspace, "error")
+            ? said.statusWorkspaceUnknown
+            : said.status,
+      ),
       h("h2", {}, HOME.cannotHeading),
       h("ul", {}, said.cannot.map((text) => h("li", {}, text))),
       note(HOME.cannotNote),
@@ -1691,6 +1712,7 @@ function firstItem(state, activityIndex, ordinal, memberIndex) {
     back(),
     h("p", { class: "kicker" }, fill(ITEM.kicker, { count: countWord(item.keys) })),
     h("h1", {}, itemTitle(state, item.keys)),
+    item.todo ? jumpToNextStep() : null,
     h(
       "section",
       { class: "block" },
@@ -2579,6 +2601,7 @@ function recheckItem(state, subscopeIndex, memberIndex) {
     backToList(),
     h("p", { class: "kicker" }, fill(RECHECK_ITEM.kicker, { count: countWord(keys) })),
     h("h1", {}, itemTitle(state, keys)),
+    jumpToNextStep(),
     h(
       "section",
       { class: "block" },

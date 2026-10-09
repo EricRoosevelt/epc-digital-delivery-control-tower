@@ -769,3 +769,19 @@ W1（Pack 路由，C 通道）、W9（目前没有可达入口）不在本轮。
 - E282／E161（T2/T3，同一处）：这句只按处置码 `pairing-no-longer-derived` 出现，不按读数；实测 recheck-producing-reissued、
   recheck-both-reissued 第 2、3 组的读数是 not-yet-determined。改后不再断言读数，也不预设一份判定。
 - L017／L018：本地检查查的是你自己的模型，“原项目”改为“你的模型”。
+
+## 24. 2026-10-09 简历版本 U1–U4 收口
+
+依据：[PM 62a6369 复走与纠偏](2026-10-09-pm-review-and-decisions-62a6369.md)第 2 节与技术总监第 2 包。逐项见
+[U1–U4 对照](2026-10-09-doctor-resume-polish-bilingual-parity.md)。
+
+| 位置 | 原句 | 现在 |
+| --- | --- | --- |
+| `SOURCE_SUMMARY.short`（新增，页首常显） | （无） | 随附示例，含模拟的项目设定，不是你的模型；证据来源逐条标在各结论的“依据”一行。 |
+| `ITEM.actionHeading`、`RECHECK_ITEM.actionHeading` | 二、要做什么、由谁处理、完成后拿什么复检 | 二、下一步 |
+| `ITEM.jumpNext`（新增） | （无） | 跳到下一步 |
+| `LOCAL_CHECK.scope.trace`（新增） | （无） | 追溯信息：检查号、摘要与运行字段 |
+
+- `SOURCE_SUMMARY.lead` 和本记录的来源种类（`cites`）不变，移到页首提示的展开层，与 `DEMO_NOTICE` 放在一起。
+- 首页、本地结果列表、本地上传入口和确认范围只调整位置、折叠和样式，字面不变。
+
