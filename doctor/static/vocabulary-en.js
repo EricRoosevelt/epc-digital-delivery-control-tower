@@ -106,6 +106,51 @@ export const ACTIONS = {
   },
 };
 
+// The exit condition a record left before its recheck, paraphrased: the same
+// obligations as vocabulary.js's PRIOR_CONDITIONS, keyed by the same Pack
+// wording, with the same declared scope. Whole scope, model versions, the
+// requirements bound and what counts as met are all kept.
+export const PRIOR_CONDITIONS = {
+  "Every requirement_key bound to asset-identity evaluates PASS for every element in the assessed scope, with no element left uncovered, on the reissued model.":
+    {
+      scope: "whole-scope",
+      text: "On the reissued model, every element in the assessed scope passes every requirement bound to asset identity, with no element left unevaluated",
+    },
+  "Every element in the assessed scope is covered by an evaluation under the bound requirement_key(s) -- no element is left with no finding at all.":
+    {
+      scope: "whole-scope",
+      text: "Every element in the assessed scope is evaluated under the bound requirements: no element is left with no check result at all",
+    },
+  "Every element in the assessed scope is covered by a finding under the bound requirement_key(s).": {
+    scope: "whole-scope",
+    text: "Every element in the assessed scope has a check result under the bound requirements",
+  },
+  "A recorded coordination-review determination exists for the named model versions, naming either no penetration or the architectural elements penetrated.":
+    {
+      text: "For the model versions named, a recorded coordination-review determination exists, stating either that there is no penetration or which architectural elements are penetrated",
+    },
+  "The opening-status evaluation is re-run and reports the opening modelled and cross-referenced (outcome = cross-referenced) for this pair, for the named model versions.":
+    {
+      text: "For the model versions named, the opening-status evaluation is re-run and reports, for this pair, the opening modelled and cross-referenced",
+    },
+  "The alignment-confirmation method is performed and reports the models aligned, against the specific model versions named.":
+    {
+      text: "For the specific model versions named, the alignment confirmation is performed by its method and reports the models aligned",
+    },
+  "The alignment-confirmation method is re-run against the reissued model versions and reports the models aligned (outcome = confirmed).":
+    {
+      text: "For the reissued model versions, the alignment confirmation is re-run by its method and reports the models aligned (confirmed)",
+    },
+  "The opening-cross-reference-check method is re-run and reports the opening cross-referenced to the penetrating element, for the pair.":
+    {
+      text: "For this pair, the opening cross-reference check is re-run and reports the opening cross-referenced to the element passing through it",
+    },
+  "The opening-cross-reference-check method is performed and reports a definite result (cross-referenced, modelled-not-cross-referenced, or not-modelled) for the named model versions.":
+    {
+      text: "For the model versions named, the opening cross-reference check is run and gives a definite result (cross-referenced, modelled but not cross-referenced, or not modelled)",
+    },
+};
+
 // The three verdicts, named by the record's own words, and what each means:
 // the product document's definitions, as written there.
 export const VERDICT_LABELS = {
@@ -698,7 +743,19 @@ export const RECHECK_ITEM = {
     "The record does not give this item's current place, so this page has no action, handling team or default handling role to show. " +
     "Those details from the record before the recheck did not come back with the recheck record either.",
   conditionHeading: "4. Was the exit condition left before the recheck reached this time?",
-  priorCondition: "The exit condition left before the recheck: {text}",
+  priorCondition: "The exit condition the original record left before the recheck (paraphrased): {text}.",
+  priorConditionOriginal:
+    "The exit condition the original record left before the recheck (as written; this interface has no reliable paraphrase of it):",
+  priorConditionMissing:
+    "The original record does not carry the exit condition left before the recheck; this page does not fill it in from this item's suggestion.",
+  conditionBoundary:
+    "The status above is about the original record's exit condition: it is not the pass status of this item's own element(s), and not this item's conclusion.",
+  scopeMet:
+    "This item's requirements are met; but the original record's exit condition covers every element in the assessed scope, not only this item, " +
+    "so this cannot be taken to mean the original whole-scope exit condition is met.",
+  scopeWhole:
+    "The original record's exit condition covers every element in the assessed scope, not only this item: " +
+    "even once this item's requirements are met, that cannot be taken to mean the original whole-scope exit condition is met.",
   end: ".",
   conditionNote:
     "This says only how far the exit condition left before the recheck has been shown to be reached; read it apart from the conclusion now. A changed conclusion does not mean the original condition is met.",

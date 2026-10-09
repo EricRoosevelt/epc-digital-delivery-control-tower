@@ -18,6 +18,7 @@
 
 import {
   ACTION_GROUPS,
+  ACTION_PACK,
   ASPECT_NOTES,
   ASPECT_ORDER,
   CARRY_OVER_REASONS,
@@ -30,6 +31,8 @@ import {
   KEY_CHANGED,
   NOT_CARRIED,
   ONLY_REKEYED,
+  PRIOR_CONDITIONS,
+  RECHECK_ITEM,
   RECHECK_MODEL,
   REISSUE_CASES,
   REISSUE_NEUTRAL,
@@ -387,6 +390,57 @@ function conditionModel(outcome) {
   return { code, known: true, text: entry.text, plain };
 }
 
+/** The exit condition the record left before its recheck, as the page says it.
+ *
+ * Read from the record's own `prior_recheck_condition`, never from the problem
+ * type: the interface's recheck sentence for a type says what one item needs
+ * now and can be narrower than what the original record asked for. Four cases:
+ *
+ * * "paraphrase": the wording is the Pack's, word for word, under the one Pack
+ *   id and version PRIOR_CONDITIONS was written for;
+ * * "original": any other wording, Pack or version — shown as written and
+ *   labelled so, with no scope note, since nothing here knows its scope;
+ * * "missing": the record carries no condition although its status does not
+ *   say there was none — said so, and not filled in from a suggestion;
+ * * "none": the status says the prior record left no condition, which the
+ *   status headline already says.
+ */
+function priorConditionModel(outcome, request) {
+  const original = carried(outcome, "prior_recheck_condition");
+  if (typeof original !== "string" || original.trim() === "") {
+    const none = carried(outcome, "condition_status") === "no-recheck-condition";
+    return none
+      ? { kind: "none", original: null, sentence: null, scope: null }
+      : { kind: "missing", original: null, sentence: RECHECK_ITEM.priorConditionMissing, scope: null };
+  }
+  const written =
+    carried(request, "pack_id") === ACTION_PACK.id &&
+    carried(request, "pack_version") === ACTION_PACK.version &&
+    Object.hasOwn(PRIOR_CONDITIONS, original);
+  if (!written) {
+    return { kind: "original", original, sentence: RECHECK_ITEM.priorConditionOriginal, scope: null };
+  }
+  const entry = PRIOR_CONDITIONS[original];
+  return {
+    kind: "paraphrase",
+    original,
+    sentence: fill(RECHECK_ITEM.priorCondition, { text: entry.text }),
+    scope: carried(entry, "scope") === undefined ? null : entry.scope,
+  };
+}
+
+/** The scope note for one item, where the paraphrase says the condition is whole-scope.
+ *
+ * "Met" is said only when every place the record gives the item now carries the
+ * verdict READY; anything else — another verdict, none carried, no current
+ * place — gets the sentence that holds either way.
+ */
+function scopeNote(prior, current) {
+  if (prior.scope !== "whole-scope") return null;
+  const met = current !== null && current.length > 0 && current.every((entry) => entry.verdict === "READY");
+  return met ? RECHECK_ITEM.scopeMet : RECHECK_ITEM.scopeWhole;
+}
+
 function dispositionModel(item) {
   if (!carries(item, "disposition")) {
     return { code: null, known: false, text: NOT_CARRIED, next: "" };
@@ -456,6 +510,7 @@ export function recheckModel(document) {
   const subscopes = successor.subscopes.map((outcome, subscopeIndex) => {
     const evidence = outcome.evidence_carry_over.map(evidenceModel);
     const condition = conditionModel(outcome);
+    const prior = priorConditionModel(outcome, document.request);
     // How many of this sealed group's rows the record marks as a requirement
     // edit. A count of rows as recorded, so the fact can be said beside the
     // verdict as well as among the rows.
@@ -483,6 +538,8 @@ export function recheckModel(document) {
         entry: item,
         disposition: dispositionModel(item),
         condition,
+        prior,
+        scopeNote: scopeNote(prior, current),
         requirementChanged,
         current,
         action: actionKind(current),
@@ -493,6 +550,7 @@ export function recheckModel(document) {
       subscopeIndex,
       outcome,
       condition,
+      prior,
       requirementChanged,
       evidence,
       evidenceTally: stateTally(evidence),

@@ -785,3 +785,29 @@ W1（Pack 路由，C 通道）、W9（目前没有可达入口）不在本轮。
 - `SOURCE_SUMMARY.lead` 和本记录的来源种类（`cites`）不变，移到页首提示的展开层，与 `DEMO_NOTICE` 放在一起。
 - 首页、本地结果列表、本地上传入口和确认范围只调整位置、折叠和样式，字面不变。
 
+
+## 25. 2026-10-10 复检前留下的结束条件显示原记录自己的条件（W2，E289）
+
+依据：[PM 对汇报（七）与 W2 的裁定](2026-10-09-pm-response-to-td-7-w2.md)，选 (a)。逐条见
+[W2 对照](2026-10-10-doctor-w2-prior-condition-bilingual-parity.md)。
+
+复检单项页第四节原来用本界面对上一个问题类型的复检句（`ACTIONS[prior_resolution_kind].recheck`）填“复检前留下的结束条件”。
+资产标识类的复检句经 W2 收窄为“这个构件……都通过”，而原记录的条件覆盖评估范围内的全部构件。现在这里读记录自己的
+`prior_recheck_condition`：
+
+- 与 Pack `interdisciplinary-coordination-readiness` 0.1.0 路由原文逐字相同，且记录的 Pack id、版本也是这一个：显示 `PRIOR_CONDITIONS` 的释义；
+- 其他措辞、其他 Pack 或版本：显示标注的原文，不加范围说明；
+- 记录没有携带（且状态不是“原记录没有复检条件”）：如实说缺失，不拿本项建议补写。
+
+| 位置 | 原句 | 现在 |
+| --- | --- | --- |
+| `RECHECK_ITEM.priorCondition` | 复检前留下的结束条件：{text}。（{text} 为 `ACTIONS` 复检句） | 原记录在复检前留下的结束条件（释义）：{text}。（{text} 为 `PRIOR_CONDITIONS` 释义） |
+| `RECHECK_ITEM.priorConditionOriginal`（新增） | （无） | 原记录在复检前留下的结束条件（原文照录，本界面没有可靠的释义）： |
+| `RECHECK_ITEM.priorConditionMissing`（新增） | （无） | 原记录没有携带复检前留下的结束条件；本页不拿本项的建议补写它。 |
+| `RECHECK_ITEM.conditionBoundary`（新增，每个复检单项都显示） | （无） | 上面的状态说的是原记录的这个结束条件：不是本项构件自己的通过状态，也不是本项的结论。 |
+| `RECHECK_ITEM.scopeMet`（新增，全范围条件且本项现在全部为 READY） | （无） | 本项的要求已满足；但原记录的这个结束条件覆盖评估范围内的全部构件，不只这一项，所以不能据此宣布原全范围结束条件满足。 |
+| `RECHECK_ITEM.scopeWhole`（新增，全范围条件的其他情况） | （无） | 原记录的这个结束条件覆盖评估范围内的全部构件，不只这一项：即使本项的要求满足了，也不能据此宣布原全范围结束条件满足。 |
+| `PRIOR_CONDITIONS`（新增，9 条释义） | （无） | 见 W2 对照第 2 节 |
+
+- 第四节的顺序改为：原记录的条件、机读状态（原样）、状态边界句、范围说明（只在全范围条件时）、原有的 `conditionNote`、追溯折叠。
+- `ACTIONS` 的复检句不变，仍是“二、下一步”里本项的建议（E014）。
