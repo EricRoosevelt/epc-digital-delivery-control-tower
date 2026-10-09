@@ -1048,6 +1048,10 @@ export const WORKSPACE = {
   notApplicable: "Not applicable: this model has no element the requirement applies to. Not applicable is not a pass.",
   failNotDefect:
     "Not meeting this product validation rule is not a delivery defect of the original project. Where this rule comes from is what the returned data's label (ProductValidation) and the citation as written say.",
+  failNotDefectLocal:
+    "Not meeting this product validation rule does not mean your model has a delivery defect. Where this rule comes from is what the returned data's label (ProductValidation) and the citation as written say.",
+  checkFirst:
+    "Before changing anything, check against \"{heading}\" below that the object you have selected in Revit is this element.",
   noFinding: "This check has no such result.",
   identityHeading: "Tracing: this check's run identifier, rule set version and model files",
   findingTrace: "Tracing: this result's internal keys",

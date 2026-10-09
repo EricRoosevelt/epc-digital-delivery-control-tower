@@ -529,16 +529,31 @@ class WordingTests(_Modelled):
         self.assertNotIn("actionWhere", workspace)
 
     def test_a_failed_product_validation_rule_is_not_a_project_defect(self):
-        """W2: said beside a failure, only when the labels say product validation."""
+        """W2: said beside a failure, only when the labels say product validation.
 
-        self.assertIn("不等于原项目的交付缺陷", self.tables["WORKSPACE"]["failNotDefect"])
+        One sentence per mode (BIM, package 4): the workspace check (C2) runs the
+        original project's models, the local check the user's own (L017/L018).
+        Both keep where the rule comes from in the same sentence.
+        """
+
+        words = self.tables["WORKSPACE"]
+        self.assertIn("不等于原项目的交付缺陷", words["failNotDefect"])
+        self.assertIn("不等于你的模型有交付缺陷", words["failNotDefectLocal"])
+        self.assertNotIn("原项目", words["failNotDefectLocal"])
+        source = "这条规则的来源以返回数据的标签（ProductValidation）和出处原文为准。"
+        for key in ("failNotDefect", "failNotDefectLocal"):
+            with self.subTest(key=key):
+                self.assertTrue(words[key].endswith(source))
         screens = (STATIC / "workspace-screens.js").read_text(encoding="utf-8")
-        self.assertEqual(screens.count("WORKSPACE.failNotDefect"), 1)
+        self.assertEqual(screens.count("WORKSPACE.failNotDefect)"), 1)
+        self.assertEqual(screens.count("WORKSPACE.failNotDefectLocal"), 1)
         self.assertIn(
             'status === "FAIL" && isProductValidation(requirement)\n'
-            '        ? h("p", { class: "beside" }, WORKSPACE.failNotDefect)',
+            '        ? h("p", { class: "beside" }, '
+            "local ? WORKSPACE.failNotDefectLocal : WORKSPACE.failNotDefect)",
             screens,
         )
+        self.assertIn('const local = state.mode === "local";', screens)
         for other in ("screens.js", "app.js"):
             with self.subTest(file=other):
                 self.assertNotIn("failNotDefect", (STATIC / other).read_text(encoding="utf-8"))

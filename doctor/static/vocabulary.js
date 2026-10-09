@@ -990,9 +990,16 @@ export const WORKSPACE = {
     "通过只说明这条要求被判为满足；它能证明到哪里，本界面没有为这条规则写说明，请看规则原话。",
   notApplicable: "不适用：这个模型里没有这条要求适用的构件。不适用不是通过。",
   // Beside a failure only, and only when the requirement's own labels mark it a
-  // product validation rule.
+  // product validation rule. The workspace check (C2) is a run of the original
+  // project's models; the local check is the user's own model (BIM L017/L018),
+  // so each mode has its own sentence and neither is reworded for the other.
   failNotDefect:
     "不满足这条产品验证规则，不等于原项目的交付缺陷。这条规则的来源以返回数据的标签（ProductValidation）和出处原文为准。",
+  failNotDefectLocal:
+    "不满足这条产品验证规则，不等于你的模型有交付缺陷。这条规则的来源以返回数据的标签（ProductValidation）和出处原文为准。",
+  // The local check's detail puts what to change before where to find the
+  // object; this points the action at the check it must not skip.
+  checkFirst: "动手改之前，先按下面“{heading}”一节核对：在 Revit 里选中的就是这个构件。",
   noFinding: "这次检查里没有这一条结果。",
   identityHeading: "追溯信息：这次检查的运行号、规则集版本与模型文件",
   findingTrace: "追溯信息：这条结果的内部键",
