@@ -431,14 +431,13 @@ function priorConditionModel(outcome, request) {
 
 /** The scope note for one item, where the paraphrase says the condition is whole-scope.
  *
- * "Met" is said only when every place the record gives the item now carries the
- * verdict READY; anything else — another verdict, none carried, no current
- * place — gets the sentence that holds either way.
+ * One sentence whatever the item's verdict is now. A READY does not show that
+ * this item meets its share of the original condition: the models may not
+ * have been reissued, or a cited requirement may have been edited since
+ * (BIM, review of #58). The sentence only supposes it, and holds either way.
  */
-function scopeNote(prior, current) {
-  if (prior.scope !== "whole-scope") return null;
-  const met = current !== null && current.length > 0 && current.every((entry) => entry.verdict === "READY");
-  return met ? RECHECK_ITEM.scopeMet : RECHECK_ITEM.scopeWhole;
+function scopeNote(prior) {
+  return prior.scope === "whole-scope" ? RECHECK_ITEM.scopeWhole : null;
 }
 
 function dispositionModel(item) {
@@ -539,7 +538,7 @@ export function recheckModel(document) {
         disposition: dispositionModel(item),
         condition,
         prior,
-        scopeNote: scopeNote(prior, current),
+        scopeNote: scopeNote(prior),
         requirementChanged,
         current,
         action: actionKind(current),

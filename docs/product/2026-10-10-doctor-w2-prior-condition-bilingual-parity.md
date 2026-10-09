@@ -2,7 +2,7 @@
 
 日期：2026-10-10。负责：Product/UI Engineer。基线 `66e7a57`；分支 `fix/doctor-w2-prior-condition`。
 依据：[PM 对汇报（七）与 W2 的裁定](2026-10-09-pm-response-to-td-7-w2.md)，选 (a)；技术总监同意的方案与三点补充（释义只对 Pack 0.1.0 成立；全范围由释义条目自己声明；逐条列四项位置）。
-状态：下列释义、新句、改句**都未经 BIM 复核**，交 BIM 复核。
+状态：BIM 已复核（`docs/product/2026-10-10-bim-review-58-verdicts.csv`）。`scopeMet` 为含义错误，已删去；释义 6–9 按建议补“项目接受的”；见 [#58 复核后的修正](2026-10-10-doctor-w2-scope-met-bilingual-parity.md)。下文的表已按修正后的句子更新，删去的句子在修正对照里。
 
 “同一义务”的判断标准：两种语言要求读者做的事、承诺或否认的事、限定的范围相同；措辞、语序、标点不同不算。
 
@@ -107,53 +107,53 @@
 ### 6. `cross-model-alignment-not-confirmed`
 
 - 原文：The alignment-confirmation method is performed and reports the models aligned, against the specific model versions named.
-- 中文：针对所列的具体模型版本，按对齐确认方法做一次确认，结果为模型已对齐
-- 英文：For the specific model versions named, the alignment confirmation is performed by its method and reports the models aligned
+- 中文：针对所列的具体模型版本，按项目接受的对齐确认方法做一次确认，结果为模型已对齐
+- 英文：For the specific model versions named, the alignment confirmation is performed by the method the project accepts and reports the models aligned
 
 | 四项 | 原文 | 中文 | 英文 |
 | --- | --- | --- | --- |
 | 全称范围 | the models（两侧模型，与本项的对齐建议同一范围） | 模型 | the models |
 | 模型版本 | against the specific model versions named | 针对所列的具体模型版本 | For the specific model versions named |
-| 要求集合 | the alignment-confirmation method | 对齐确认方法 | the alignment confirmation … by its method |
+| 要求集合 | the alignment-confirmation method（Pack 的 next_action：项目接受的方法） | 项目接受的对齐确认方法 | the method the project accepts |
 | 通过条件 | is performed and reports the models aligned | 做一次确认，结果为模型已对齐 | is performed … and reports the models aligned |
 
 ### 7. `cross-model-misalignment`
 
 - 原文：The alignment-confirmation method is re-run against the reissued model versions and reports the models aligned (outcome = confirmed).
-- 中文：针对重新发布的模型版本，按对齐确认方法重新确认，结果为模型已对齐（已确认）
-- 英文：For the reissued model versions, the alignment confirmation is re-run by its method and reports the models aligned (confirmed)
+- 中文：针对重新发布的模型版本，按项目接受的对齐确认方法重新确认，结果为模型已对齐（已确认）
+- 英文：For the reissued model versions, the alignment confirmation is re-run by the method the project accepts and reports the models aligned (confirmed)
 
 | 四项 | 原文 | 中文 | 英文 |
 | --- | --- | --- | --- |
 | 全称范围 | the models | 模型 | the models |
 | 模型版本 | against the reissued model versions | 针对重新发布的模型版本 | For the reissued model versions |
-| 要求集合 | the alignment-confirmation method, re-run | 按对齐确认方法重新确认 | is re-run by its method |
+| 要求集合 | the alignment-confirmation method, re-run（项目接受的方法） | 按项目接受的对齐确认方法重新确认 | is re-run by the method the project accepts |
 | 通过条件 | reports the models aligned (outcome = confirmed) | 结果为模型已对齐（已确认） | reports the models aligned (confirmed) |
 
 ### 8. `opening-not-verifiably-linked`
 
 - 原文：The opening-cross-reference-check method is re-run and reports the opening cross-referenced to the penetrating element, for the pair.
-- 中文：针对这一对，重新运行开洞关联核查，结果为洞口已关联到穿过它的构件
-- 英文：For this pair, the opening cross-reference check is re-run and reports the opening cross-referenced to the element passing through it
+- 中文：针对这一对，重新运行项目接受的开洞关联核查，结果为洞口已关联到穿过它的构件
+- 英文：For this pair, the opening cross-reference check the project accepts is re-run and reports the opening cross-referenced to the element passing through it
 
 | 四项 | 原文 | 中文 | 英文 |
 | --- | --- | --- | --- |
 | 全称范围 | for the pair（与本项同一范围） | 针对这一对 | For this pair |
 | 模型版本 | 原文没有写 | 不补写 | 不补写 |
-| 要求集合 | the opening-cross-reference-check method, re-run | 重新运行开洞关联核查 | the opening cross-reference check is re-run |
+| 要求集合 | the opening-cross-reference-check method, re-run（项目接受的方法） | 重新运行项目接受的开洞关联核查 | the opening cross-reference check the project accepts is re-run |
 | 通过条件 | reports the opening cross-referenced to the penetrating element | 结果为洞口已关联到穿过它的构件 | reports the opening cross-referenced to the element passing through it |
 
 ### 9. `opening-status-not-determined`
 
 - 原文：The opening-cross-reference-check method is performed and reports a definite result (cross-referenced, modelled-not-cross-referenced, or not-modelled) for the named model versions.
-- 中文：针对所列模型版本，运行开洞关联核查，并给出明确结果（已关联、已建未关联或未建）
-- 英文：For the model versions named, the opening cross-reference check is run and gives a definite result (cross-referenced, modelled but not cross-referenced, or not modelled)
+- 中文：针对所列模型版本，运行项目接受的开洞关联核查，并给出明确结果（已关联、已建未关联或未建）
+- 英文：For the model versions named, the opening cross-reference check the project accepts is run and gives a definite result (cross-referenced, modelled but not cross-referenced, or not modelled)
 
 | 四项 | 原文 | 中文 | 英文 |
 | --- | --- | --- | --- |
 | 全称范围 | 原文没有写（对象是这次核查） | 不补写 | 不补写 |
 | 模型版本 | for the named model versions | 针对所列模型版本 | For the model versions named |
-| 要求集合 | the opening-cross-reference-check method | 开洞关联核查 | the opening cross-reference check |
+| 要求集合 | the opening-cross-reference-check method（项目接受的方法） | 项目接受的开洞关联核查 | the opening cross-reference check the project accepts |
 | 通过条件 | reports a definite result (three named outcomes) | 给出明确结果（已关联、已建未关联或未建） | gives a definite result (three outcomes) |
 
 ### 10. `mep-element-not-spatially-assigned`：没有释义，显示标注的原文
@@ -170,10 +170,9 @@
 | `RECHECK_ITEM.priorConditionOriginal`（新增） | （无） | （无） | 原记录在复检前留下的结束条件（原文照录，本界面没有可靠的释义）： | The exit condition the original record left before the recheck (as written; this interface has no reliable paraphrase of it): | 其他措辞、Pack 或版本；后接原文引用块 | 同一义务。英文界面里原文本身就是英文，标签仍说明这是照录原文 |
 | `RECHECK_ITEM.priorConditionMissing`（新增） | （无） | （无） | 原记录没有携带复检前留下的结束条件；本页不拿本项的建议补写它。 | The original record does not carry the exit condition left before the recheck; this page does not fill it in from this item's suggestion. | 没有携带条件，且状态不是“原记录没有复检条件” | 同一义务 |
 | `RECHECK_ITEM.conditionBoundary`（新增） | （无） | （无） | 上面的状态说的是原记录的这个结束条件：不是本项构件自己的通过状态，也不是本项的结论。 | The status above is about the original record's exit condition: it is not the pass status of this item's own element(s), and not this item's conclusion. | 每个复检单项，紧跟机读状态 | 同一义务。英文的 element(s) 覆盖一对构件的事项；中文“本项构件”同样不限一个 |
-| `RECHECK_ITEM.scopeMet`（新增） | （无） | （无） | 本项的要求已满足；但原记录的这个结束条件覆盖评估范围内的全部构件，不只这一项，所以不能据此宣布原全范围结束条件满足。 | This item's requirements are met; but the original record's exit condition covers every element in the assessed scope, not only this item, so this cannot be taken to mean the original whole-scope exit condition is met. | 释义声明全范围，且记录给本项现在的每个位置都是 READY | 同一义务 |
-| `RECHECK_ITEM.scopeWhole`（新增） | （无） | （无） | 原记录的这个结束条件覆盖评估范围内的全部构件，不只这一项：即使本项的要求满足了，也不能据此宣布原全范围结束条件满足。 | The original record's exit condition covers every element in the assessed scope, not only this item: even once this item's requirements are met, that cannot be taken to mean the original whole-scope exit condition is met. | 释义声明全范围的其他情况（本项不是全部 READY、没有当前位置） | 同一义务。不声称本项已满足 |
+| `RECHECK_ITEM.scopeWhole`（新增） | （无） | （无） | 原记录的这个结束条件覆盖评估范围内的全部构件，不只这一项：即使本项的要求满足了，也不能据此宣布原全范围结束条件满足。 | The original record's exit condition covers every element in the assessed scope, not only this item: even once this item's requirements are met, that cannot be taken to mean the original whole-scope exit condition is met. | 释义声明全范围时一律显示，不看本项现在的判定 | 同一义务。不声称本项已满足 |
 
-“本项的要求已满足”只按记录给本项现在的判定（每个当前位置都是 READY）来说，不读别的；判定不是 READY、没有携带或没有当前位置时，用 `scopeWhole`，它在任何情况下都成立。
+原来还有一句 `scopeMet`（“本项的要求已满足；但……”），在本项现在全部 READY 时代替 `scopeWhole`。BIM 复核为含义错误：从 READY 推不出本项满足了原条件里属于它的部分，因为模型可能没有重新发布，或者引用的检查要求已经改过。已删去，见修正对照。
 
 ## 四、反例验收（测试，构造数据）
 
@@ -181,7 +180,7 @@
 
 | 用例 | 构造 | 页面模型给出 |
 | --- | --- | --- |
-| `passes`（反例） | 上次问题类型 `missing-project-asset-identity`，原文为 Pack 原文；本项现在 READY；状态 `no-machine-checkable-part` | 释义（含“评估范围内的每一个构件”“没有一个构件漏评”，不含 E014 的建议句）；`scopeMet`，同时含“本项的要求已满足”和“不能据此宣布原全范围结束条件满足”；状态照记录，说“记录对它不下结论” |
+| `passes`（反例） | 上次问题类型 `missing-project-asset-identity`，原文为 Pack 原文；本项现在 READY；状态 `no-machine-checkable-part` | 释义（含“评估范围内的每一个构件”“没有一个构件漏评”，不含 E014 的建议句）；`scopeWhole`，含“不能据此宣布原全范围结束条件满足”，不出现“本项的要求已满足”；状态照记录，说“记录对它不下结论” |
 | `partial` | 同上，状态 `named-outcome-observed` | 状态句保留“这不是‘整句条件已满足’”；范围说明照常 |
 | `unknown` | 同上，状态为界面不认识的码 | 标为不认识，范围说明照常 |
 | `still-blocked` | 同上，本项现在 BLOCKED | `scopeWhole`，不说本项已满足 |
@@ -199,4 +198,3 @@
 1. 9 条释义各自是否忠实，第二节逐条列了四项各在哪里。
 2. 第 4、6、7、8、9 条没有加范围说明，理由是原条件与本项建议同一范围（一对构件，或两侧模型整体）。请确认。
 3. 第 10 条（空间归属）没有释义，是否接受只显示标注的原文。
-4. `scopeMet` 用“本项的要求已满足”指本项现在的判定全部为 READY，是否合适。

@@ -1,6 +1,6 @@
 # Doctor 英文词表（主路径与真实工作区）
 
-日期：2026-10-03；第二部分（单项、复检）与第三部分（工作区的结果、详情、对比、拒绝、故障）同日补入；2026-10-04 补入行动与复检句（`ACTIONS`）；2026-10-05 补入首次结果卡片的三个标签（`FIRST.cardDetails`、`FIRST.cardElements`、`FIRST.openCard`），以及随附项目检查尝试的拒绝页（`REFUSAL_REASONS`、`REFUSAL_SCOPE_NOTE`、`REFUSAL_PAGE`、`REFUSAL_UNGLOSSED`）；同日删去与页首来源提示重复的 `DIRECTORY_NOTE`，复检单项页的标题序号随区块顺序调整。同日补入本地 IFC 检查的 `LOCAL_CHECK`（146 条，#29）。2026-10-08 补入页首来源提示的短摘要 `SOURCE_SUMMARY`（11 条；原 `DEMO_NOTICE` 不变，成为展开后的全文）和示例目录的一句简介 `DIRECTORY.exampleIntro`。2026-10-09 按 BIM 第二批修正 M1、W2–W8、W10 的中英文，并新增 `CONDITION_ENTRIES.no-recheck-condition.plainNotReady`（W4）。2026-10-09 首页补一句 `HOME.recommended`（简历版本 UI 主线整理）。同日按 BIM T1 结论修正 E127、E079、E357／E360／E372、E587、Q01、L008，并新增 `RECHECK_ITEM.changedCondition`（E291）。同日并入 BIM T2/T3 的 E282、E161、L017、L018。同日按 PM U2 新增 `SOURCE_SUMMARY.short`、`ITEM.jumpNext`，下一步标题改为“二、下一步”。同日按 PM U4 新增 `LOCAL_CHECK.scope.trace`（本地检查确认范围的追溯折叠）。2026-10-10 按 PM W2（E289）裁定新增 `PRIOR_CONDITIONS`（12 条：9 条释义、3 个范围标记；空间归属一条原文含规则编号，没有释义，显示标注的原文），改 `RECHECK_ITEM.priorCondition`，新增 `RECHECK_ITEM` 的 `priorConditionOriginal`、`priorConditionMissing`、`conditionBoundary`、`scopeMet`、`scopeWhole`。负责：Product/UI Engineer。
+日期：2026-10-03；第二部分（单项、复检）与第三部分（工作区的结果、详情、对比、拒绝、故障）同日补入；2026-10-04 补入行动与复检句（`ACTIONS`）；2026-10-05 补入首次结果卡片的三个标签（`FIRST.cardDetails`、`FIRST.cardElements`、`FIRST.openCard`），以及随附项目检查尝试的拒绝页（`REFUSAL_REASONS`、`REFUSAL_SCOPE_NOTE`、`REFUSAL_PAGE`、`REFUSAL_UNGLOSSED`）；同日删去与页首来源提示重复的 `DIRECTORY_NOTE`，复检单项页的标题序号随区块顺序调整。同日补入本地 IFC 检查的 `LOCAL_CHECK`（146 条，#29）。2026-10-08 补入页首来源提示的短摘要 `SOURCE_SUMMARY`（11 条；原 `DEMO_NOTICE` 不变，成为展开后的全文）和示例目录的一句简介 `DIRECTORY.exampleIntro`。2026-10-09 按 BIM 第二批修正 M1、W2–W8、W10 的中英文，并新增 `CONDITION_ENTRIES.no-recheck-condition.plainNotReady`（W4）。2026-10-09 首页补一句 `HOME.recommended`（简历版本 UI 主线整理）。同日按 BIM T1 结论修正 E127、E079、E357／E360／E372、E587、Q01、L008，并新增 `RECHECK_ITEM.changedCondition`（E291）。同日并入 BIM T2/T3 的 E282、E161、L017、L018。同日按 PM U2 新增 `SOURCE_SUMMARY.short`、`ITEM.jumpNext`，下一步标题改为“二、下一步”。同日按 PM U4 新增 `LOCAL_CHECK.scope.trace`（本地检查确认范围的追溯折叠）。2026-10-10 按 PM W2（E289）裁定新增 `PRIOR_CONDITIONS`（12 条：9 条释义、3 个范围标记；空间归属一条原文含规则编号，没有释义，显示标注的原文），改 `RECHECK_ITEM.priorCondition`，新增 `RECHECK_ITEM` 的 `priorConditionOriginal`、`priorConditionMissing`、`conditionBoundary`、`scopeWhole`（同日按 BIM 对 #58 的复核删去 `scopeMet`，释义 6–9 补“项目接受的”）。负责：Product/UI Engineer。
 状态：**全部未经 BIM 复核**；有领域含义的条目进 10/15 BIM 批次。
 本文件由界面实际注册的词表生成，测试逐条核对英文与这里一致。中文一列是同一键在 `vocabulary.js` 里的原文。
 
@@ -25,9 +25,9 @@
 | 类别 | 表 | 条目 |
 | --- | --- | --- |
 | 原文（取自 Pack、记录或产品文档，未翻译） | 3 | 12 |
-| 有领域含义（判断、活动、问题类型、限制、来源），待 BIM | 56 | 730 |
+| 有领域含义（判断、活动、问题类型、限制、来源），待 BIM | 56 | 729 |
 | 界面用语 | 24 | 168 |
-| 合计 | 83 | 910 |
+| 合计 | 83 | 909 |
 
 ## 原文
 
@@ -99,10 +99,10 @@
 | `in-model-position-not-evaluated.text` | 评估范围内的每一个构件，在所绑定的要求下都有检查结果 | Every element in the assessed scope has a check result under the bound requirements |
 | `penetration-not-determined.text` | 针对所列模型版本，有一份已记录的协调评审判定，写明不穿过，或写明穿过了哪些建筑构件 | For the model versions named, a recorded coordination-review determination exists, stating either that there is no penetration or which architectural elements are penetrated |
 | `missing-corresponding-opening.text` | 针对所列模型版本，重新运行开洞情况评估，这一对的结果为洞口已建且已关联 | For the model versions named, the opening-status evaluation is re-run and reports, for this pair, the opening modelled and cross-referenced |
-| `cross-model-alignment-not-confirmed.text` | 针对所列的具体模型版本，按对齐确认方法做一次确认，结果为模型已对齐 | For the specific model versions named, the alignment confirmation is performed by its method and reports the models aligned |
-| `cross-model-misalignment.text` | 针对重新发布的模型版本，按对齐确认方法重新确认，结果为模型已对齐（已确认） | For the reissued model versions, the alignment confirmation is re-run by its method and reports the models aligned (confirmed) |
-| `opening-not-verifiably-linked.text` | 针对这一对，重新运行开洞关联核查，结果为洞口已关联到穿过它的构件 | For this pair, the opening cross-reference check is re-run and reports the opening cross-referenced to the element passing through it |
-| `opening-status-not-determined.text` | 针对所列模型版本，运行开洞关联核查，并给出明确结果（已关联、已建未关联或未建） | For the model versions named, the opening cross-reference check is run and gives a definite result (cross-referenced, modelled but not cross-referenced, or not modelled) |
+| `cross-model-alignment-not-confirmed.text` | 针对所列的具体模型版本，按项目接受的对齐确认方法做一次确认，结果为模型已对齐 | For the specific model versions named, the alignment confirmation is performed by the method the project accepts and reports the models aligned |
+| `cross-model-misalignment.text` | 针对重新发布的模型版本，按项目接受的对齐确认方法重新确认，结果为模型已对齐（已确认） | For the reissued model versions, the alignment confirmation is re-run by the method the project accepts and reports the models aligned (confirmed) |
+| `opening-not-verifiably-linked.text` | 针对这一对，重新运行项目接受的开洞关联核查，结果为洞口已关联到穿过它的构件 | For this pair, the opening cross-reference check the project accepts is re-run and reports the opening cross-referenced to the element passing through it |
+| `opening-status-not-determined.text` | 针对所列模型版本，运行项目接受的开洞关联核查，并给出明确结果（已关联、已建未关联或未建） | For the model versions named, the opening cross-reference check the project accepts is run and gives a definite result (cross-referenced, modelled but not cross-referenced, or not modelled) |
 
 **`ACTION_GROUPS`**
 
@@ -535,7 +535,6 @@
 | `priorConditionOriginal` | 原记录在复检前留下的结束条件（原文照录，本界面没有可靠的释义）： | The exit condition the original record left before the recheck (as written; this interface has no reliable paraphrase of it): |
 | `priorConditionMissing` | 原记录没有携带复检前留下的结束条件；本页不拿本项的建议补写它。 | The original record does not carry the exit condition left before the recheck; this page does not fill it in from this item's suggestion. |
 | `conditionBoundary` | 上面的状态说的是原记录的这个结束条件：不是本项构件自己的通过状态，也不是本项的结论。 | The status above is about the original record's exit condition: it is not the pass status of this item's own element(s), and not this item's conclusion. |
-| `scopeMet` | 本项的要求已满足；但原记录的这个结束条件覆盖评估范围内的全部构件，不只这一项，所以不能据此宣布原全范围结束条件满足。 | This item's requirements are met; but the original record's exit condition covers every element in the assessed scope, not only this item, so this cannot be taken to mean the original whole-scope exit condition is met. |
 | `scopeWhole` | 原记录的这个结束条件覆盖评估范围内的全部构件，不只这一项：即使本项的要求满足了，也不能据此宣布原全范围结束条件满足。 | The original record's exit condition covers every element in the assessed scope, not only this item: even once this item's requirements are met, that cannot be taken to mean the original whole-scope exit condition is met. |
 | `end` | 。 | . |
 | `conditionNote` | 这里只说复检前留下的结束条件被证明到了什么程度，与现在的结论分开读：结论变了，不等于原条件已满足。 | This says only how far the exit condition left before the recheck has been shown to be reached; read it apart from the conclusion now. A changed conclusion does not mean the original condition is met. |
