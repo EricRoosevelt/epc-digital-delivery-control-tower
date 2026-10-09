@@ -665,5 +665,85 @@ class NothingElseMovedTests(unittest.TestCase):
         self.assertIsInstance(envelope["refusal"]["reasons"], list)
 
 
+def _between(source: str, start: str, end: str) -> str:
+    begin = source.index(start)
+    return source[begin : source.index(end, begin)]
+
+
+class LocalOrderTests(unittest.TestCase):
+    """Package 4 (PM progress review 66e7a57, item 2) and BIM's four constraints.
+
+    The local check reads results first and the rule in full after them; its
+    detail puts what to change before where to find the object. What must not
+    move does not: every reading limit stays in the result section beside the
+    result, the IFC Tag check stays with "which object to find in Revit", and
+    the FAIL sentence keeps where the rule comes from in the same sentence.
+    """
+
+    @classmethod
+    def setUpClass(cls):
+        cls.screens = (STATIC / "workspace-screens.js").read_text(encoding="utf-8")
+        cls.local = (STATIC / "local-check.js").read_text(encoding="utf-8")
+        cls.panel = _between(cls.screens, "function findingPanel(", "\n}\n")
+
+    def test_every_reading_limit_stays_in_the_result_section(self):
+        result = _between(self.panel, "WORKSPACE.resultHeading", "...(local ?")
+        for limit in (
+            "WORKSPACE.notApplicable",
+            "WORKSPACE.failNotDefectLocal",
+            "WORKSPACE.failNotDefect)",
+            "passBlock(finding, notes)",
+        ):
+            with self.subTest(limit=limit):
+                self.assertIn(limit, result)
+        # What a pass proves and does not, and that it carries no value read.
+        block = _between(self.screens, "function passBlock(", "\n}\n")
+        for said in (
+            "WORKSPACE.passProves",
+            "WORKSPACE.passDoesNotProve",
+            "WORKSPACE.passNoValue",
+        ):
+            with self.subTest(said=said):
+                self.assertIn(said, block)
+
+    def test_the_tag_check_stays_with_where_to_find_the_object(self):
+        find = _between(self.panel, "const find = h(", "const action =")
+        self.assertIn("WORKSPACE.findHeading", find)
+        self.assertIn("locateBlock(element, model)", find)
+        locate = _between(self.screens, "function locateBlock(", "\n}\n")
+        for said in ("TAG_WORDS.note", "TAG_WORDS.byIdNotStorey", "TAG_WORDS.useGlobalId"):
+            with self.subTest(said=said):
+                self.assertIn(said, locate)
+
+    def test_the_local_detail_puts_the_action_first_and_points_at_the_check(self):
+        order = "...(local ? [action, find] : [find, action]).filter(Boolean)"
+        self.assertIn(order, self.panel)
+        action = _between(self.panel, "const action =", "const panel =")
+        self.assertLess(action.index("WORKSPACE.checkFirst"), action.index("notes.action.what"))
+        self.assertIn("heading: WORKSPACE.findHeading", action)
+        # The type change's reach is part of the action, not moved after it.
+        self.assertIn("notes.action.revise", action)
+
+    def test_the_local_result_page_reads_results_before_the_rule(self):
+        check = _between(self.screens, "export function workspaceCheck(", "\n}\n")
+        order = 'state.mode === "local" ? [workbench, checked] : [checked, workbench]'
+        self.assertIn(order, check)
+        page = _between(self.local, "async function resultPage(", "\n}\n")
+        self.assertIn('content.querySelector("h1").after(...frame.lead)', page)
+        after = 'content.querySelector(":scope > section.checked").after(frame.scope)'
+        self.assertIn(after, page)
+        frame = _between(self.local, "function resultFrame(", "\n}\n")
+        lead = _between(frame, "const lead = [", "];")
+        self.assertIn("words.exercise", lead)
+        self.assertIn("words.nothingHeading", lead)
+        self.assertNotIn("words.programme", lead)
+
+    def test_the_workspace_check_keeps_its_order(self):
+        """C2 is not the local check's first-time visitor: its order is unchanged."""
+
+        self.assertIn('const local = state.mode === "local";', self.panel)
+        self.assertNotIn("local", _between(self.screens, "function locateBlock(", "\n}\n"))
+
+
 if __name__ == "__main__":
     unittest.main()

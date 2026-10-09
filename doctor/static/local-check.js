@@ -739,7 +739,7 @@ async function startPage() {
   return h(
     "div",
     { class: "local" },
-    h("p", {}, link(LOCAL.start.back, href())),
+    // The way home is the context bar's, above this; one is enough.
     h("h1", {}, LOCAL.start.title),
     h("p", { class: "lede" }, LOCAL.start.lede),
     exerciseBlock(described),
