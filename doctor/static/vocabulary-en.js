@@ -135,19 +135,19 @@ export const PRIOR_CONDITIONS = {
     },
   "The alignment-confirmation method is performed and reports the models aligned, against the specific model versions named.":
     {
-      text: "For the specific model versions named, the alignment confirmation is performed by its method and reports the models aligned",
+      text: "For the specific model versions named, the alignment confirmation is performed by the method the project accepts and reports the models aligned",
     },
   "The alignment-confirmation method is re-run against the reissued model versions and reports the models aligned (outcome = confirmed).":
     {
-      text: "For the reissued model versions, the alignment confirmation is re-run by its method and reports the models aligned (confirmed)",
+      text: "For the reissued model versions, the alignment confirmation is re-run by the method the project accepts and reports the models aligned (confirmed)",
     },
   "The opening-cross-reference-check method is re-run and reports the opening cross-referenced to the penetrating element, for the pair.":
     {
-      text: "For this pair, the opening cross-reference check is re-run and reports the opening cross-referenced to the element passing through it",
+      text: "For this pair, the opening cross-reference check the project accepts is re-run and reports the opening cross-referenced to the element passing through it",
     },
   "The opening-cross-reference-check method is performed and reports a definite result (cross-referenced, modelled-not-cross-referenced, or not-modelled) for the named model versions.":
     {
-      text: "For the model versions named, the opening cross-reference check is run and gives a definite result (cross-referenced, modelled but not cross-referenced, or not modelled)",
+      text: "For the model versions named, the opening cross-reference check the project accepts is run and gives a definite result (cross-referenced, modelled but not cross-referenced, or not modelled)",
     },
 };
 
@@ -750,9 +750,6 @@ export const RECHECK_ITEM = {
     "The original record does not carry the exit condition left before the recheck; this page does not fill it in from this item's suggestion.",
   conditionBoundary:
     "The status above is about the original record's exit condition: it is not the pass status of this item's own element(s), and not this item's conclusion.",
-  scopeMet:
-    "This item's requirements are met; but the original record's exit condition covers every element in the assessed scope, not only this item, " +
-    "so this cannot be taken to mean the original whole-scope exit condition is met.",
   scopeWhole:
     "The original record's exit condition covers every element in the assessed scope, not only this item: " +
     "even once this item's requirements are met, that cannot be taken to mean the original whole-scope exit condition is met.",
