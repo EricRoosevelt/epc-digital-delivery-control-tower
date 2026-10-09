@@ -192,7 +192,7 @@
 | `missing` | 没有携带条件，状态 `not-comparable` | 说缺失 |
 | `none` | 空条件，状态 `no-recheck-condition`，上次 READY | 不加句子，由状态句说 |
 
-**撤掉修正，测试必须是红的。** 已实测：把 `screens.js`、`recheck-model.js` 换回基线（`ACTIONS` 句填进第四节），这组测试 10 个失败，其中包括检查第四节不再调用 `actionSentences(carried(outcome, "prior_resolution_kind")…)` 的源码测试。只有 3 个只核对词表的测试仍通过。
+**撤掉修正，测试必须是红的。** 已实测：把 `screens.js`、`recheck-model.js` 换回基线（`ACTIONS` 句填进第四节），8 个测试方法中 7 个失败（5 个直接失败；“其他版本或措辞”“状态边界”两个的每个子测试都失败），其中包括检查第四节不再调用 `actionSentences(carried(outcome, "prior_resolution_kind")…)` 的源码测试。唯一仍通过的是只核对词表的“释义保留四项”。（pytest 的汇总行写作“10 failed, 3 passed”，那是把子测试也算进去了。）
 
 ## 五、请 BIM 复核的点
 
