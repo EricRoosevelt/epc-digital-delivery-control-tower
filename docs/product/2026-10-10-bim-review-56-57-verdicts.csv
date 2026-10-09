@@ -1,0 +1,19 @@
+﻿pr,id,key,zh_text,en_text,verdict,reason,suggestion
+#56,E127,CONSEQUENCE_KINDS.work-suspended,这项工作暂缓,This work is on hold,通过,含义错误已清。实测 66e7a57：受阻（member-evidence/item/0/4/0，missing-corresponding-opening）与无法判断（item/0/2/0，penetration-not-determined）两种结论旁都读得通。,
+#56,E079,CARRY_OVER_REASONS.determination-not-cited-by-this-record,模型版本没有变，本次记录没有再引用这份判定；记录没有说明原因。,…; the record does not say why.,通过,含义错误已清；只陈述引擎核对的两件事。recheck-requirement-relaxed 原码对照里核过。,
+#56,E357,RULE_NOTES.PV-001.passProves,（括号内后半改写）,（同）,通过,与 10/9 IfcTester 实测一致：没有类型、NOTDEFINED、USERDEFINED 没写文本三种情形，实例 USERDEFINED 自由文本都参与比较。,
+#56,E360,RULE_NOTES.PV-001.passDoesNotProve[2],（中段改写）,（同）,通过,同 E357。,
+#56,E372,RULE_NOTES.PV-001.reasonFreeText,（后半改写）,（同）,通过,同 E357。,
+#56,E291,RECHECK_ITEM.changedCondition,结论变了，不等于原条件已满足。,A changed conclusion does not mean the original condition is met.,通过,recheck-requirement-relaxed/recheck/7/2（受阻→可以开始）紧跟结论出现；7/0（未变）不出现；第四节原句保留。,
+#56,E587,FIRST.problem,情况,Situation,通过,,
+#56,Q01,SOURCE_SUMMARY.lead,…团队和证据方法的接受等项目设定为演示用…,…teams and the acceptance of evidence methods…,通过,现在在展开层；见 #57 短摘要。,
+#56,L008,LOCAL_CHECK.home.cannot[1],（不变）,"…""ready to hand over"" conclusion",通过,与 E195 统一。,
+#56,E282,RECHECK_ITEM.pairNote,这两个构件已不再被配成一对检查：穿透判定现在不再把它们配对（现在的判定情况见下方记录给出的原因）。…,…the penetration determination no longer pairs them (its current reading is in the reason the record gives below)…,措辞建议,含义错误已清：5 组都不再断言“不穿透”（producing-reissued 2/3、both-reissued 2/3 原因为 not-yet-determined；comparison 0 为 no-penetration）。“现在的判定情况”这个中文用语确认可以。剩下的问题：“记录给出的原因”只有英文原文，中文读者从页面上读不出这一对现在是“判定为不穿透”还是“针对当前版本还没有判定”，而 E161 的下一步正取决于这一点。,按记录原因里的读数给一句中文：不穿透（已有判定，不需要开洞——不等于开洞没问题）／穿过别的构件／针对当前版本还没有判定。或者至少在“现在的判定情况”后注明“原因原文为英文”。不阻塞对外展示。
+#56,E161,DISPOSITION_ENTRIES.pairing-no-longer-derived.next,请核对让它不再被配对的原因…；没有判定时，需要先作出针对当前版本的判定。原来的问题没有被证明已修复。,"…where there is no determination, one against the current version has to be made first…",通过,5 组都核过，不再预设存在一份判定。,
+#56,L018,LOCAL_CHECK.exercise.read[0],…不等于你的模型有交付缺陷。,…does not mean your model has a delivery defect.,通过,,
+#56,L017,LOCAL_CHECK.result.exercise,不通过不等于你的模型有交付缺陷；,A FAIL does not mean your model has a delivery defect;,通过,,
+#57,U2,SOURCE_SUMMARY.short,随附示例，含模拟的项目设定，不是你的模型；证据来源逐条标在各结论的“依据”一行。,"A bundled example with simulated project settings, not your model; each conclusion's ""Basis"" line labels where its evidence comes from.",通过,页首上下文栏紧挨着显示“模拟示例”，每个结论旁的依据行仍标出模拟证据，所以“只有设定是模拟的”这种误读被挡住。“不能用于正式项目决定”移到展开层，由模式标签和展开全文承担，领域上可以接受。,
+#57,U2,ITEM.actionHeading / RECHECK_ITEM.actionHeading,二、下一步,2. Next step,通过,区内“处理团队不代表已经派发”“默认处理角色不是指派”都还在。成对事项“记录没有给出下一步”时标题下仍有 E161 的核对动作，读得通。,
+#57,U2,ITEM.jumpNext,跳到下一步,Jump to the next step,通过,只是导航。注：recheck-both-reissued/recheck/2/0 等成对事项上也出现，跳过去是“记录没有为这一对给出下一步”加 E161 的核对动作，不误导。,
+#57,U4,LOCAL_CHECK.scope.trace,追溯信息：检查号、摘要与运行字段,"Tracing: check number, digests and run fields",通过,折叠里含“代填阶段”的说明；结果页的 L075 仍在主层说明代填，限制没有丢。“不计算几何”留在主层。,
+问题3,RESOLUTION_KINDS × LEAF_READINGS,首次／复检单项页“情况”与“这个结论依据的结果”,—,—,措辞建议（需要产品裁定）,领域上不是同一件事：“情况”是问题类型（决定处理路线和行动），“依据的结果”是证据状态（结论读到了什么）。但在 Pack 0.1.0 里每种问题类型恰好对应一个终点结果，所以页面上内容重复是真的；“情况”多出来的只有 5 种未定类型开头的“不是已知的模型缺陷／错位／缺洞”。“依据的结果”在可以开始的事项上也有（如“这不是开洞没问题”），#52 已定它紧跟结论，不能去掉。,可以合成一行：保留“这个结论依据的结果”；5 种未定类型在它前面带上“不是已知的……：”，其余类型不再单列“情况”。前提是记录属于 Pack 0.1.0；别的 Pack 版本不保证一一对应（例如以后开洞路线按被穿过构件的作者拆分，一个结果会对应不止一种处理），那时两行都要保留。

@@ -48,9 +48,9 @@ The table lists every text block in the image, top to bottom (26). *Id* is the i
 or in BIM's verdict files, which are
 [`2026-10-09-bim-review-t1-verdicts.csv`](../../product/2026-10-09-bim-review-t1-verdicts.csv),
 [`2026-10-09-bim-review-t2-verdicts.csv`](../../product/2026-10-09-bim-review-t2-verdicts.csv) and
-`2026-10-10-bim-review-56-57-verdicts.csv` (BIM's review of PR #56 and #57; at the time of writing
-this last file is held by the technical director and is not committed, so the two rows that rest on
-it, 情况 and 二、下一步, cannot be checked from the repository alone).
+[`2026-10-10-bim-review-56-57-verdicts.csv`](../../product/2026-10-10-bim-review-56-57-verdicts.csv)
+(BIM's review of PR #56 and #57). Two rows rest on that last file, because their sentences changed
+after the T1 review: 情况 (E587, changed by #56) and 二、下一步 (E582, changed by #57).
 "10/8, same sentence" means BIM's 10/8 review of the first-check path, and the sentence is
 byte-identical today.
 
@@ -85,8 +85,11 @@ byte-identical today.
 
 ## How it was made
 
-Repository state: the `doctor/` directory is byte-identical to `origin/main` at
-`e067255` (`git diff e067255 HEAD -- doctor` is empty); `main` then contained PR #56, #57 and #58.
+Repository state: first captured with a `doctor/` directory byte-identical to `origin/main` at
+`e067255` (`git diff e067255 HEAD -- doctor` was empty); `main` then contained PR #56, #57 and #58.
+Captured again after PR #60 was merged (`aa67b73`), which changed only the wording of the recheck
+page's prior-condition paraphrases and removed one recheck-page sentence, none of them on this page:
+the new capture is byte-identical, so the hash below holds for both.
 
 ```bash
 python doctor/serve.py --checks-dir <an empty folder>
