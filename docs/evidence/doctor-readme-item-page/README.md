@@ -143,8 +143,11 @@ changed after the T1 review rests on the #56/#57 file instead: 情况 (E587), �
 
 ## How it was made
 
-Repository state: the `doctor/` directory is byte-identical to `origin/main` at `aa67b73`
-(`git diff aa67b73 HEAD -- doctor` is empty); `main` then contained PR #56 to #60.
+Repository state: first captured with a `doctor/` directory byte-identical to `origin/main` at
+`aa67b73` (`git diff aa67b73 HEAD -- doctor` was empty); `main` then contained PR #56 to #60.
+Captured again after PR #62 was merged (`0bc0049`), which changed only the local-check and workspace
+screens and added two sentences to the local result page, none of them on this page: the new capture
+is byte-identical, so the hash above holds for both.
 
 ```bash
 python doctor/serve.py --checks-dir <an empty folder>
