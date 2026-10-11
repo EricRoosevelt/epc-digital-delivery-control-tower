@@ -4,9 +4,10 @@
 // computer keeps and how to clean it up — both before anything is chosen —
 // then choosing files, declaring each one's discipline, the scope the server
 // plans, and the run. #/local/<check_id> is one finished check: the workspace
-// screens' result list and details (workspace-screens.js, unchanged), framed
-// by what the exercise is, whether anything was applicable, the scope it ran
-// with, and where its records are.
+// screens' result list and details (workspace-screens.js, in their local-check
+// order: results before the rule in full, what to change before where to find
+// it), framed by what the exercise is and whether anything was applicable
+// first, then the scope it ran with and where its records are.
 //
 // Nothing here decides anything. The server stages, plans, refuses and runs
 // (internal/doctor_adapter/local_check.py); this page says what it answered.
@@ -738,7 +739,7 @@ async function startPage() {
   return h(
     "div",
     { class: "local" },
-    h("p", {}, link(LOCAL.start.back, href())),
+    // The way home is the context bar's, above this; one is enough.
     h("h1", {}, LOCAL.start.title),
     h("p", { class: "lede" }, LOCAL.start.lede),
     exerciseBlock(described),
@@ -752,6 +753,9 @@ async function startPage() {
 // #/local/<check_id> — one finished check
 // ---------------------------------------------------------------------------
 
+/** What frames the result list: the short boundary and, where nothing applied,
+ * that result (`lead`, first), and the scope it ran with (`scope`, after the
+ * list and the rule in full — it explains, the visitor does not act on it). */
 function resultFrame(envelope, scope) {
   const models = carries(envelope.run, "models") ? envelope.run.models : [];
   const nothing = models.filter((model) => {
@@ -759,7 +763,7 @@ function resultFrame(envelope, scope) {
     return own.length > 0 && own.every((finding) => finding.status === "N/A");
   });
   const words = LOCAL.result;
-  return [
+  const lead = [
     h("p", { class: "callout" }, words.exercise),
     nothing.length
       ? h(
@@ -769,7 +773,10 @@ function resultFrame(envelope, scope) {
           nothing.map((model) => h("p", { class: "headline" }, fill(words.nothing, { file: model.filename }))),
         )
       : null,
-    scope
+  ];
+  return {
+    lead: lead.filter(Boolean),
+    scope: scope
       ? h(
           "section",
           { class: "block" },
@@ -794,7 +801,7 @@ function resultFrame(envelope, scope) {
           h("p", { class: "sub" }, LOCAL.scope.geometryText),
         )
       : null,
-  ];
+  };
 }
 
 async function resultPage(checkId, screen, rest) {
@@ -826,7 +833,9 @@ async function resultPage(checkId, screen, rest) {
   }
   const state = { mode: "local", runId: checkId, envelope: shown.envelope };
   const content = workspaceCheck(state, screen === "finding" ? (rest[0] ?? "") : null);
-  content.querySelector("h1").after(...resultFrame(shown.envelope, shown.scope?.scope ?? null).filter(Boolean));
+  const frame = resultFrame(shown.envelope, shown.scope?.scope ?? null);
+  content.querySelector("h1").after(...frame.lead);
+  if (frame.scope) content.querySelector(":scope > section.checked").after(frame.scope);
   content.append(
     recordsBlock(shown.described, shown.scope?.location ?? null, false),
     h("p", { class: "actions" }, link(LOCAL.result.another, href("local"))),
