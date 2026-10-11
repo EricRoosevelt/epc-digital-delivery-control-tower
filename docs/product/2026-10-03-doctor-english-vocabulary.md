@@ -1,6 +1,6 @@
 # Doctor 英文词表（主路径与真实工作区）
 
-日期：2026-10-03；第二部分（单项、复检）与第三部分（工作区的结果、详情、对比、拒绝、故障）同日补入；2026-10-04 补入行动与复检句（`ACTIONS`）；2026-10-05 补入首次结果卡片的三个标签（`FIRST.cardDetails`、`FIRST.cardElements`、`FIRST.openCard`），以及随附项目检查尝试的拒绝页（`REFUSAL_REASONS`、`REFUSAL_SCOPE_NOTE`、`REFUSAL_PAGE`、`REFUSAL_UNGLOSSED`）；同日删去与页首来源提示重复的 `DIRECTORY_NOTE`，复检单项页的标题序号随区块顺序调整。同日补入本地 IFC 检查的 `LOCAL_CHECK`（146 条，#29）。2026-10-08 补入页首来源提示的短摘要 `SOURCE_SUMMARY`（11 条；原 `DEMO_NOTICE` 不变，成为展开后的全文）和示例目录的一句简介 `DIRECTORY.exampleIntro`。2026-10-09 按 BIM 第二批修正 M1、W2–W8、W10 的中英文，并新增 `CONDITION_ENTRIES.no-recheck-condition.plainNotReady`（W4）。2026-10-09 首页补一句 `HOME.recommended`（简历版本 UI 主线整理）。同日按 BIM T1 结论修正 E127、E079、E357／E360／E372、E587、Q01、L008，并新增 `RECHECK_ITEM.changedCondition`（E291）。同日并入 BIM T2/T3 的 E282、E161、L017、L018。同日按 PM U2 新增 `SOURCE_SUMMARY.short`、`ITEM.jumpNext`，下一步标题改为“二、下一步”。同日按 PM U4 新增 `LOCAL_CHECK.scope.trace`（本地检查确认范围的追溯折叠）。2026-10-10 按 PM W2（E289）裁定新增 `PRIOR_CONDITIONS`（12 条：9 条释义、3 个范围标记；空间归属一条原文含规则编号，没有释义，显示标注的原文），改 `RECHECK_ITEM.priorCondition`，新增 `RECHECK_ITEM` 的 `priorConditionOriginal`、`priorConditionMissing`、`conditionBoundary`、`scopeWhole`（同日按 BIM 对 #58 的复核删去 `scopeMet`，释义 6–9 补“项目接受的”）。负责：Product/UI Engineer。
+日期：2026-10-03；第二部分（单项、复检）与第三部分（工作区的结果、详情、对比、拒绝、故障）同日补入；2026-10-04 补入行动与复检句（`ACTIONS`）；2026-10-05 补入首次结果卡片的三个标签（`FIRST.cardDetails`、`FIRST.cardElements`、`FIRST.openCard`），以及随附项目检查尝试的拒绝页（`REFUSAL_REASONS`、`REFUSAL_SCOPE_NOTE`、`REFUSAL_PAGE`、`REFUSAL_UNGLOSSED`）；同日删去与页首来源提示重复的 `DIRECTORY_NOTE`，复检单项页的标题序号随区块顺序调整。同日补入本地 IFC 检查的 `LOCAL_CHECK`（146 条，#29）。2026-10-08 补入页首来源提示的短摘要 `SOURCE_SUMMARY`（11 条；原 `DEMO_NOTICE` 不变，成为展开后的全文）和示例目录的一句简介 `DIRECTORY.exampleIntro`。2026-10-09 按 BIM 第二批修正 M1、W2–W8、W10 的中英文，并新增 `CONDITION_ENTRIES.no-recheck-condition.plainNotReady`（W4）。2026-10-09 首页补一句 `HOME.recommended`（简历版本 UI 主线整理）。同日按 BIM T1 结论修正 E127、E079、E357／E360／E372、E587、Q01、L008，并新增 `RECHECK_ITEM.changedCondition`（E291）。同日并入 BIM T2/T3 的 E282、E161、L017、L018。同日按 PM U2 新增 `SOURCE_SUMMARY.short`、`ITEM.jumpNext`，下一步标题改为“二、下一步”。同日按 PM U4 新增 `LOCAL_CHECK.scope.trace`（本地检查确认范围的追溯折叠）。2026-10-10 按 PM W2（E289）裁定新增 `PRIOR_CONDITIONS`（12 条：9 条释义、3 个范围标记；空间归属一条原文含规则编号，没有释义，显示标注的原文），改 `RECHECK_ITEM.priorCondition`，新增 `RECHECK_ITEM` 的 `priorConditionOriginal`、`priorConditionMissing`、`conditionBoundary`、`scopeWhole`（同日按 BIM 对 #58 的复核删去 `scopeMet`，释义 6–9 补“项目接受的”）。同日按 PM 进度复看第 2、4 条（第 4 包）新增 `WORKSPACE.failNotDefectLocal`（本地检查的“不等于你的模型有交付缺陷”，C2 仍用 `failNotDefect`）和 `WORKSPACE.checkFirst`。负责：Product/UI Engineer。
 状态：**全部未经 BIM 复核**；有领域含义的条目进 10/15 BIM 批次。
 本文件由界面实际注册的词表生成，测试逐条核对英文与这里一致。中文一列是同一键在 `vocabulary.js` 里的原文。
 
@@ -25,9 +25,9 @@
 | 类别 | 表 | 条目 |
 | --- | --- | --- |
 | 原文（取自 Pack、记录或产品文档，未翻译） | 3 | 12 |
-| 有领域含义（判断、活动、问题类型、限制、来源），待 BIM | 56 | 729 |
+| 有领域含义（判断、活动、问题类型、限制、来源），待 BIM | 56 | 731 |
 | 界面用语 | 24 | 168 |
-| 合计 | 83 | 909 |
+| 合计 | 83 | 911 |
 
 ## 原文
 
@@ -804,6 +804,8 @@
 | `passUnwritten` | 通过只说明这条要求被判为满足；它能证明到哪里，本界面没有为这条规则写说明，请看规则原话。 | A pass says only that this requirement was judged met; how far that goes, this interface has written no notes for this rule — see the rule's own words. |
 | `notApplicable` | 不适用：这个模型里没有这条要求适用的构件。不适用不是通过。 | Not applicable: this model has no element the requirement applies to. Not applicable is not a pass. |
 | `failNotDefect` | 不满足这条产品验证规则，不等于原项目的交付缺陷。这条规则的来源以返回数据的标签（ProductValidation）和出处原文为准。 | Not meeting this product validation rule is not a delivery defect of the original project. Where this rule comes from is what the returned data's label (ProductValidation) and the citation as written say. |
+| `failNotDefectLocal` | 不满足这条产品验证规则，不等于你的模型有交付缺陷。这条规则的来源以返回数据的标签（ProductValidation）和出处原文为准。 | Not meeting this product validation rule does not mean your model has a delivery defect. Where this rule comes from is what the returned data's label (ProductValidation) and the citation as written say. |
+| `checkFirst` | 动手改之前，先按下面“{heading}”一节核对：在 Revit 里选中的就是这个构件。 | Before changing anything, check against "{heading}" below that the object you have selected in Revit is this element. |
 | `noFinding` | 这次检查里没有这一条结果。 | This check has no such result. |
 | `identityHeading` | 追溯信息：这次检查的运行号、规则集版本与模型文件 | Tracing: this check's run identifier, rule set version and model files |
 | `findingTrace` | 追溯信息：这条结果的内部键 | Tracing: this result's internal keys |

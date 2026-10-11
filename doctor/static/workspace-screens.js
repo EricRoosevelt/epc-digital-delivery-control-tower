@@ -279,15 +279,50 @@ function findingComparison(state, finding, notes) {
   );
 }
 
-/** One result, read in the order a manager acts on it. */
+/** One result, read in the order a manager acts on it.
+ *
+ * Every limit on reading the result — what a pass proves and does not, that a
+ * FAIL is not a delivery defect, that not applicable is not a pass — stays in
+ * the result section, beside the result. In the workspace check (C2) where to
+ * find the object comes next and then what to change. The local check, read by
+ * a first-time visitor, puts what to change first and opens it by pointing at
+ * the Revit check below, which keeps the IFC Tag note with it.
+ */
 function findingPanel(state, finding) {
   const envelope = state.envelope;
   const run = envelope.run;
+  const local = state.mode === "local";
   const requirement = requirementOf(envelope, finding);
   const notes = ruleNotes(run, requirement);
   const element = elementOf(envelope.elements, finding.element_key);
   const model = modelOf(run, finding.model_key);
   const status = carried(finding, "status");
+  const find = h(
+    "section",
+    { class: "detail-part" },
+    h("h3", {}, WORKSPACE.findHeading),
+    locateBlock(element, model),
+  );
+  const action =
+    status === "FAIL"
+      ? h(
+          "section",
+          { class: "detail-part next-step" },
+          h("h3", {}, WORKSPACE.actionHeading),
+          local ? h("p", { class: "beside" }, fill(WORKSPACE.checkFirst, { heading: WORKSPACE.findHeading })) : null,
+          notes
+            ? [
+                definitions([
+                  [WORKSPACE.actionWhat, h("span", { class: "action" }, notes.action.what)],
+                  [WORKSPACE.actionReads, notes.action.reads],
+                  [WORKSPACE.actionRevise, notes.action.revise],
+                  [WORKSPACE.actionUndecided, notes.action.undecided],
+                  [WORKSPACE.recheckHeading, notes.recheck],
+                ]),
+              ]
+            : note(WORKSPACE.noRuleNotes),
+        )
+      : null;
   const panel = h(
     "div",
     {},
@@ -308,37 +343,12 @@ function findingPanel(state, finding) {
       h("p", { class: "headline" }, ruleHeading(run, requirement), COMMON.colon, statusWord(status)),
       status === "N/A" ? h("p", { class: "beside" }, WORKSPACE.notApplicable) : null,
       status === "FAIL" && isProductValidation(requirement)
-        ? h("p", { class: "beside" }, WORKSPACE.failNotDefect)
+        ? h("p", { class: "beside" }, local ? WORKSPACE.failNotDefectLocal : WORKSPACE.failNotDefect)
         : null,
       status === "PASS" ? passBlock(finding, notes) : null,
     ),
-    h(
-      "section",
-      { class: "detail-part" },
-      h("h3", {}, WORKSPACE.findHeading),
-      locateBlock(element, model),
-    ),
+    ...(local ? [action, find] : [find, action]).filter(Boolean),
   );
-  if (status === "FAIL") {
-    panel.append(
-      h(
-        "section",
-        { class: "detail-part next-step" },
-        h("h3", {}, WORKSPACE.actionHeading),
-        notes
-          ? [
-              definitions([
-                [WORKSPACE.actionWhat, h("span", { class: "action" }, notes.action.what)],
-                [WORKSPACE.actionReads, notes.action.reads],
-                [WORKSPACE.actionRevise, notes.action.revise],
-                [WORKSPACE.actionUndecided, notes.action.undecided],
-                [WORKSPACE.recheckHeading, notes.recheck],
-              ]),
-            ]
-          : note(WORKSPACE.noRuleNotes),
-      ),
-    );
-  }
   panel.append(
     h(
       "section",
@@ -603,29 +613,32 @@ export function workspaceCheck(state, selectedKey) {
       ),
     );
   }
-  content.append(
+  const checked = h(
+    "section",
+    { class: "block checked" },
+    h("h2", {}, WORKSPACE.checkedHeading),
+    requirementKeys.map((key) => requirementBlock(run, envelope.requirements[key])),
+  );
+  // With nothing chosen, the list has the width to itself; the detail takes
+  // its half only once there is something in it.
+  const workbench = h(
+    "div",
+    { class: selectedKey === null ? "ws-workbench no-pick" : "ws-workbench" },
+    workspaceList(state, selected),
     h(
       "section",
-      { class: "block" },
-      h("h2", {}, WORKSPACE.checkedHeading),
-      requirementKeys.map((key) => requirementBlock(run, envelope.requirements[key])),
+      { class: selected ? "block ws-detail" : "block ws-detail empty" },
+      selectedKey === null
+        ? note(WORKSPACE.pickOne)
+        : selected === null
+          ? h("p", { class: "problem", tabindex: "-1", "data-return-focus": true }, WORKSPACE.noFinding)
+          : findingPanel(state, selected),
     ),
-    // With nothing chosen, the list has the width to itself; the detail takes
-    // its half only once there is something in it.
-    h(
-      "div",
-      { class: selectedKey === null ? "ws-workbench no-pick" : "ws-workbench" },
-      workspaceList(state, selected),
-      h(
-        "section",
-        { class: selected ? "block ws-detail" : "block ws-detail empty" },
-        selectedKey === null
-          ? note(WORKSPACE.pickOne)
-          : selected === null
-            ? h("p", { class: "problem", tabindex: "-1", "data-return-focus": true }, WORKSPACE.noFinding)
-            : findingPanel(state, selected),
-      ),
-    ),
+  );
+  // The local check's visitor gets the results first and the rule in full
+  // after them; the workspace check keeps the rule before its list.
+  content.append(
+    ...(state.mode === "local" ? [workbench, checked] : [checked, workbench]),
     h(
       "details",
       { class: "block evidence-details" },

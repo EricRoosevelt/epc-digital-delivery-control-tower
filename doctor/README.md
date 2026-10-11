@@ -253,7 +253,7 @@ A user's own IFC4 files, checked in a workspace made for that one check, against
 the one rule set the local check offers: `product-validation` 1.0, a product
 validation exercise (one rule, PV-001: applicable air terminals declare one of
 four predefined types). It is not a general BIM quality, IFC compliance or
-delivery check; a FAIL is not a defect of the original project, and a model with
+delivery check; a FAIL does not mean your model has a delivery defect, and a model with
 nothing applicable says so and is never shown as a pass. The shipped
 `epc-delivery` rule set stays in the checkout and the bundled example and is not
 offered here (product decision of 2026-10-03,
@@ -267,9 +267,12 @@ from, how to read FAIL, PASS and nothing-applicable, and what this computer keep
 where, and how to clean it up. Then: choose `.ifc` files (each is copied to the
 server as it is chosen), declare each file's discipline, confirm the rule set,
 see the scope the server plans, run. A finished check is `#/local/<check_id>`:
-the workspace screens' result list and details, framed by the exercise, any
-model with nothing applicable, the scope it ran with (including the programme
-the check filled in, with no due date), and its directory. Earlier checks are
+first the exercise and any model with nothing applicable, then the summary and
+the workspace screens' result list and details, then the rule in full, the scope
+it ran with (including the programme the check filled in, with no due date), and
+its directory. A result's detail gives the result and its reading limits, then
+what to change (pointing at the Revit check), then where to find the object and
+the rule's own words. Earlier checks are
 listed on `#/local`. The words are `static/local-words.js`, registered in both
 languages with `bilingual()`; the screens are `static/local-check.js`.
 
