@@ -2,7 +2,7 @@
 释义1,missing-project-asset-identity（全范围）,通过,四项齐全：评估范围内每一个构件、在重新发布的模型上、资产标识所绑定的每一条要求、评估为通过，另有“没有一个构件漏评”。,
 释义2,asset-identity-not-evaluated（全范围）,通过,覆盖条件（不是 PASS）译对了；原文没写模型版本，不补写，正确。构件级 N/A 不存在，所以“有检查结果”等于 PASS 或 FAIL。,
 释义3,in-model-position-not-evaluated（全范围）,通过,同释义 2。,
-释义4,penetration-not-determined,通过,忠实于 Pack。“写明穿过了哪些建筑构件”照原文写“建筑构件”。00487 的穿越会落到结构构件，这一问题仍在册（C 通道），不是释义的缺陷。,
+释义4,penetration-not-determined,通过,忠实于 Pack。“写明穿过了哪些建筑构件”照原文写“建筑构件”。受控真实案例 的穿越会落到结构构件，这一问题仍在册（C 通道），不是释义的缺陷。,
 释义5,missing-corresponding-opening,通过,这一对、所列模型版本、重新运行、已建且已关联，四项都在。,
 释义6,cross-model-alignment-not-confirmed,措辞建议,Pack 0.1.0 里 next_action 指明这个方法是“本项目 Overlay 接受的”方法，原条件里的定冠词 The 指的就是它；ACTIONS 的中文也写“按项目接受的方法”。释义把它译成泛称的“方法”，读者可能理解为任何方法都行。,"“按项目接受的对齐确认方法做一次确认”／""by the alignment-confirmation method the project accepts""。"
 释义7,cross-model-misalignment,措辞建议,Pack 0.1.0 里 next_action 指明这个方法是“本项目 Overlay 接受的”方法，原条件里的定冠词 The 指的就是它；ACTIONS 的中文也写“按项目接受的方法”。释义把它译成泛称的“方法”，读者可能理解为任何方法都行。,“按项目接受的对齐确认方法重新确认”。
