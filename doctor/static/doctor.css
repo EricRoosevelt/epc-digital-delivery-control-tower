@@ -445,7 +445,7 @@ h3.team { margin-top: 18px; padding-top: 10px; border-top: 2px solid var(--ink);
    values, nothing to scroll sideways. */
 @media (max-width: 640px) {
   .ws-list thead { position: absolute; left: -9999px; }
-  .ws-list table, .ws-list tbody, .ws-list tr, .ws-list td { display: block; width: 100%; }
+  .ws-list table, .ws-list tbody, .ws-list tr:not([hidden]), .ws-list td { display: block; width: 100%; }
   .ws-list tr { border: 1px solid var(--line); margin: 8px 0; padding: 4px 8px; }
   .ws-list td { border: 0; padding: 2px 0; }
   .ws-list td::before { content: attr(data-label) "  "; color: var(--muted); }
