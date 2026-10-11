@@ -1,0 +1,8 @@
+﻿key,zh,en,verdict,note
+ITEM.back,← 返回事项列表（回到这一项的位置）,← Back to the list of items (to this item's place),通过,只是导航。
+ITEM.kicker,首次检查事项 · {count},First-check item · {count},通过,{count} 显示为“一个构件／一对构件”，与事项的定义（ITEM_UNIT）一致。
+ITEM.conclusion,一、结论,1. Conclusion,通过,
+ITEM.details（第四部分标题）,四、{heading} → 四、具体缺什么,4. {heading} → 4. What exactly is missing,通过,核过：只在有缺口的事项上出现（无法判断的 item/0/2/0 有）；可以开始的 item/0/1/0、1/2/0 不出现，所以不会在 READY 上暗示缺东西。标题后的内容（DETAILS_WORDS）10/8 已核。
+ELEMENT_CARD.storey,楼层,Storey,通过,示例里的值是 IFC 的空间归属（例“00 groundfloor”，没有时写“模型中没有楼层归属”）。工作区和本地结果页已写成“楼层（IFC）”；示例页也统一成“楼层（IFC）”更一致，但不改也不会读错，因为示例不涉及 Revit 标高。
+ELEMENT_CARD.disciplineRow,专业,Discipline,通过,值是“记录未提供专业信息；本界面不从模型标识推断专业”，标签本身中性。
+COPY.button,复制,Copy,通过,COPY 表另外 3 个键（label、done、manual）也一并看了，同样通过。

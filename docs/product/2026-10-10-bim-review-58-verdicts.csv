@@ -16,3 +16,5 @@
 新句,RECHECK_ITEM.conditionBoundary,通过,,
 新句,RECHECK_ITEM.scopeMet,含义错误,实测反例页 #/fixture/recheck-requirement-relaxed/recheck/7/2 第四节写“本项的要求已满足”。但原条件要求的是“在重新发布的模型上、资产标识所绑定的每一条要求下评估为通过”。这一页上，第一，两侧模型都没有重新发布，同页写着“版本未变”；第二，同组 6 条旧证据里有 2 条的检查要求被修改过，同页也写着。所以本项现在 READY 是在原版本、改过的要求下得到的，“本项满足原条件里属于它的那部分”没有被证明。按 READY 推断“要求已满足”：对两条覆盖类路线（asset-identity-not-evaluated、in-model-position-not-evaluated）成立，因为 READY 说明这个构件确实被评估到；对 missing-project-asset-identity 不成立，因为原条件还限定了模型版本和要求集合。,删掉“本项的要求已满足”，一律用 scopeWhole；或改为陈述判定本身：“本项现在的结论是可以开始；但原记录的这个结束条件……”。不要从 READY 推出原条件的任何部分已满足。
 新句,RECHECK_ITEM.scopeWhole,通过,只作假设（“即使……满足了”），不断言本项已满足，在任何情况下都成立。,
+#60 复核,RECHECK_ITEM.scopeMet（已删）,通过,aa67b73 实测 recheck-requirement-relaxed/recheck/7/2，中英两种语言：第四节不再出现“本项的要求已满足”，显示的是 scopeWhole（“即使本项的要求满足了，也不能……”）。含义错误已清。,
+#60 复核,释义 6–9（补“项目接受的”）,通过,中英都补上了：按项目接受的对齐确认方法（6、7），项目接受的开洞关联核查（8、9）；英文为 by the method the project accepts／the check the project accepts。,
