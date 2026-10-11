@@ -7,6 +7,8 @@ home page and the item page was changed in PR #52, and the item-page capture sho
 the sentence "no element in the scope is left unevaluated" under "what a recheck must
 show", which BIM asked to change (W2) and which PR #50 changed. They are kept here as
 a record of what the interface looked like at `577620e`, and nothing displays them.
+The root README now shows a different capture, taken later and covered sentence by sentence:
+[`../doctor-readme-item-page/`](../doctor-readme-item-page/README.md).
 
 A screenshot goes back into the root README only after every visible sentence in it
 has been reviewed (the subset of wording to review is in

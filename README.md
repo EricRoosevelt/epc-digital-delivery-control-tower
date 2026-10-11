@@ -73,6 +73,17 @@ the last command. The server changes no file that Git tracks.
    handling team, what a recheck must show), **三、是哪个构件** (which element) and
    **四、具体缺什么** (exactly what is missing). The button **跳到下一步** (jump to the
    next step), under the element's name, takes you to part two.
+
+   ![An item page in the Chinese interface, under a banner saying it is a bundled example with simulated settings: the conclusion 房间数据表与设备明细表：受阻 (blocked) with its basis and situation, part 二、下一步 (what to do, the handling team, the default handling role, what it means for the work, what a recheck must show), part 三 (the element) and part 四 (the requirements that were not met).](docs/evidence/doctor-readme-item-page/item-blocked-zh.png)
+
+   *One item page of the simulated example, Chinese interface, from the page's banner
+   to the end of part 四 (the context bar above and the folded sections below are
+   left out). The banner marks the example as simulated; the handling team is the
+   example's own setting and assigns no one. The element comes from a buildingSMART
+   sample model (see
+   [Data Source and Attribution](#data-source-and-attribution)). Which sentence in the
+   image has which BIM review verdict is in
+   [the evidence note](docs/evidence/doctor-readme-item-page/README.md).*
 4. Lower on the item page, click **在示例“模型未改，但交接判断发生变化”里看这一项**
    (see this item in the example "models unchanged, but the handover judgement
    changed"): the recheck of the same record. Neither model is republished. Exactly
