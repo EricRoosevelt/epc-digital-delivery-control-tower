@@ -1,0 +1,36 @@
+{
+  "source_sha": "0b36a2256b16daf0699ab1699d36142e68766c97",
+  "source_tree": "6f31cf3948441ad1d5e721223c9559b23c1b3fc6",
+  "captured_on": "2026-10-13",
+  "video": {
+    "duration_seconds": 79.772,
+    "width": 1280,
+    "height": 900,
+    "codec": "VP9/WebM",
+    "audio": false,
+    "method": "Fresh real browser frames captured continuously and encoded by installed native MediaRecorder; no older stills replayed",
+    "scope": "Real Doctor UI navigation of bundled simulated example; no model edits or real project determinations"
+  },
+  "files": [
+    {
+      "file": "doctor-live.webm",
+      "sha256": "159da9e649e555ba0bec1942049745b516e7fda37fad9bfab715d121f43c44f5",
+      "bytes": 1798154
+    },
+    {
+      "file": "home-zh.jpg",
+      "sha256": "68248a7e72ed9b2651367b77fb287f8466f7916f5c5397c2e48513768fa9c53e",
+      "bytes": 112029
+    },
+    {
+      "file": "item-blocked-zh.jpg",
+      "sha256": "83949c6c24654e21d8f73a529672d71e946c321f6b391f137ce50c9d0138c470",
+      "bytes": 94736
+    },
+    {
+      "file": "local-detail-zh.jpg",
+      "sha256": "028b10a1d942be7f5e53f6f6f31a95cd280f086c09fae74d28bf99cd9457552b",
+      "bytes": 121666
+    }
+  ]
+}
