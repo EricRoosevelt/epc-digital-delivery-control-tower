@@ -15,6 +15,7 @@
 // (local-check.js, which makes its own requests).
 
 import { h, note } from "./dom.js";
+import { shell } from "./shell.js";
 import { LANG, LANGUAGES, fill } from "./i18n.js";
 import { languageSwitch, untranslated } from "./language.js";
 import { localEntry, localScreen } from "./local-check.js";
@@ -212,6 +213,10 @@ async function render() {
   const main = document.getElementById("main");
   const header = document.getElementById("context");
   const [mode, runId, screen, ...rest] = parseRoute();
+  // Pending content must not inherit the previous record or mode identity.
+  header.replaceChildren();
+  document.title = PAGE.title;
+  document.getElementById("shell").replaceChildren(shell(mode));
   // The language is on every screen, whatever the screen.
   document.getElementById("language").replaceChildren(languageSwitch());
 
@@ -369,7 +374,13 @@ async function render() {
 // A screen may mark the place the manager came from; they are put back on it
 // instead of at the top of the page. Otherwise focus goes to the heading.
 function focusMain(main) {
-  const origin = main.querySelector("[data-return-focus]");
+  const title = main.querySelector(".ws-detail h2") || main.querySelector("h1");
+  if (title) document.title = `${title.textContent} · ${PAGE.title}`;
+  let origin = main.querySelector("[data-return-focus]");
+  if (origin && origin.getClientRects().length === 0) {
+    origin = [...main.querySelectorAll("[data-return-focus]")]
+      .find((node) => node.getClientRects().length > 0);
+  }
   if (origin) {
     origin.focus();
     origin.scrollIntoView({ block: "center" });
@@ -378,7 +389,11 @@ function focusMain(main) {
   const heading = main.querySelector("h1");
   if (heading) {
     heading.setAttribute("tabindex", "-1");
-    heading.focus();
+    if (rendering > 1) {
+      heading.focus({ preventScroll: true });
+      // New pages start with their shell/source context; object/return targets above are separate.
+      window.scrollTo({ top: 0, left: 0 });
+    }
   }
 }
 
@@ -386,7 +401,13 @@ function focusMain(main) {
 function framePage() {
   document.documentElement.lang = LANGUAGES[LANG];
   document.title = PAGE.title;
-  document.querySelector("a.skip").textContent = PAGE.skip;
+  const skip = document.querySelector("a.skip");
+  skip.textContent = PAGE.skip;
+  skip.addEventListener("click", (event) => {
+    event.preventDefault();
+    document.getElementById("main").focus({ preventScroll: true });
+    document.getElementById("main").scrollIntoView({ block: "start" });
+  });
   document.getElementById("context").setAttribute("aria-label", PAGE.contextLabel);
 }
 

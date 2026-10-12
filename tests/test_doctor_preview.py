@@ -180,10 +180,11 @@ class StaticTreeTests(unittest.TestCase):
     def test_the_static_tree_carries_no_result_of_its_own(self):
         """No bundled record, digest, element key or refusal text to fall back on."""
 
-        self.assertEqual(
-            sorted(path.suffix for path in STATIC.iterdir()),
-            [".css", ".html", *[".js"] * 14],
-        )
+        # New code modules are allowed; data fallbacks and extra entrypoints are not.
+        suffixes = [path.suffix for path in STATIC.iterdir()]
+        self.assertEqual(suffixes.count(".css"), 1)
+        self.assertEqual(suffixes.count(".html"), 1)
+        self.assertTrue(all(suffix in {".css", ".html", ".js"} for suffix in suffixes))
         for path in sorted(STATIC.iterdir()):
             text = path.read_text(encoding="utf-8")
             with self.subTest(file=path.name):
