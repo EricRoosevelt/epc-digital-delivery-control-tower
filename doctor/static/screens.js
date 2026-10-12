@@ -16,6 +16,7 @@
 //   this product must never do.
 
 import { clearResults, go, href } from "./app.js";
+import { UI } from "./ui-words.js";
 import {
   code,
   copyable,
@@ -459,19 +460,18 @@ function entry(workspace = { runs: [] }, local = null) {
       // One recommended start, and its button straight after its name: a first
       // visit can act before reading the tour, which follows the button. The
       // other entries sit below, smaller, each with everything it said before.
-      h(
+      h("div", { class: "entry-grid main-entries" }, h(
         "article",
         { class: "entry-card primary" },
         h("p", { class: "kicker" }, HOME.recommended),
         h("h3", {}, HOME.example.title),
         h("button", { type: "button", class: "primary-action", onclick: open("fixture") }, HOME.example.action),
         h("p", {}, HOME.example.body),
-      ),
-      local || workspaceRun
+      ), local ? local.card : null),
+      workspaceRun
         ? h(
             "div",
             { class: "entry-grid" },
-            local ? local.card : null,
             workspaceRun ? card("workspace", WORKSPACE_HOME, workspaceRun.run_id) : null,
           )
         : null,
@@ -1471,6 +1471,9 @@ function first(state) {
     returning.ordinal === item.ordinal &&
     returning.memberIndex === item.memberIndex;
   const content = firstIntro(state);
+  content.classList.add("first-results");
+  const reading = howToRead();
+  reading.querySelector("p").textContent = plural(FIRST.elementsLine, model.counts.elements, { unit: ITEM_UNIT });
 
   content.append(
     h("h1", {}, FIRST.title),
@@ -1500,7 +1503,14 @@ function first(state) {
           fill(FIRST.quietLine, { summary: ACTION_GROUPS.none.summary }),
         ),
       ),
-      h("p", { class: "sub" }, plural(FIRST.elementsLine, model.counts.elements, { unit: ITEM_UNIT })),
+      h("p", { class: "unit-note" }, UI.notDefects),
+      reading,
+      h("button", { type: "button", class: "quiet results-jump", onclick: () => {
+        const heading = content.querySelector(".open-items h2");
+        heading.setAttribute("tabindex", "-1");
+        heading.focus({ preventScroll: true });
+        heading.scrollIntoView({ block: "start" });
+      } }, UI.results),
     ),
   );
 
@@ -1515,14 +1525,19 @@ function first(state) {
   const card = (item, said) => {
     const sentences = actionSentences(item.kind, request);
     const key = `${item.activityIndex}/${item.ordinal}/${item.memberIndex}`;
+    // Work, source and reading limits always remain outside the name/action fold.
+    const contextCells = [
+      h("td", { "data-label": FIRST.columns.work },
+        h("p", { class: "conclusion" }, workVerdict(item.activity, item.verdict)),
+        besideVerdict(item.activity, item.verdict, said)),
+      h("td", { "data-label": UI.basis }, basisLine(item.basis)),
+    ];
     return h(
-      "li",
-      { class: "recheck-item first-card" },
-      h("div", { class: "kicker" }, countWord(item.keys)),
-      h("div", { class: "member-name" }, itemTitle(state, item.keys)),
-      h("p", { class: "conclusion" }, workVerdict(item.activity, item.verdict)),
-      basisLine(item.basis),
-      besideVerdict(item.activity, item.verdict, said),
+      "tr",
+      { class: here(item) ? "first-card selected" : "first-card" },
+      h("td", { class: "first-name", "data-label": UI.name },
+        h("div", { class: "kicker" }, countWord(item.keys)),
+        h("div", { class: "member-name" }, itemTitle(state, item.keys)),
       h(
         "p",
         { class: "card-problem" },
@@ -1556,7 +1571,8 @@ function first(state) {
           { class: "run", href: itemHref(item), "data-return-focus": here(item) ? true : null },
           FIRST.openCard,
         ),
-      ),
+      )),
+      ...contextCells,
     );
   };
 
@@ -1581,8 +1597,9 @@ function first(state) {
           team.roles.length ? team.roles.map((role) => [code(role), " "]) : missing(NOT_CARRIED),
           ` ${BESIDE.team}`,
         ),
-        tableWrap(
-          table(
+        h("details", { class: "group-overview" },
+          h("summary", {}, FIRST.columns.problem, " / ", FIRST.columns.work),
+          tableWrap(table(
             null,
             [FIRST.columns.problem, FIRST.columns.work, FIRST.columns.count],
             team.rows.map((row) =>
@@ -1594,21 +1611,22 @@ function first(state) {
                 h("td", {}, plural(FIRST.items, row.items.length)),
               ),
             ),
-          ),
+          )),
         ),
         // One team is one block: its general notes are said once.
         ((said) =>
           h(
-            "ol",
-            { class: "recheck-items" },
-            team.rows.flatMap((row) => row.items.map((item) => card(item, said))),
+            "div",
+            { class: "first-register table-wrap" },
+            table(null, [UI.name, FIRST.columns.work, UI.basis],
+              team.rows.flatMap((row) => row.items.map((item) => card(item, said)))) ,
           ))(new Set()),
       ]),
     ),
     h(
-      "section",
-      { class: "block" },
-      h("h2", {}, plural(FIRST.quietHeading, model.counts.quiet, { label: ACTION_GROUPS.none.label })),
+      "details",
+      { class: "block quiet-records", open: model.quiet.some(here) },
+      h("summary", {}, plural(FIRST.quietHeading, model.counts.quiet, { label: ACTION_GROUPS.none.label })),
       h("p", {}, model.quiet.length ? ACTION_GROUPS.none.note : ACTION_GROUPS.none.none),
       ((said) =>
         h(
@@ -1651,11 +1669,14 @@ function first(state) {
   }
 
   content.append(
-    howToRead(),
     h(
       "details",
       { class: "block evidence-details" },
       h("summary", {}, FIRST.traceSummary),
+      request.model_version_context
+        ? definitions(Object.entries(request.model_version_context).map(([name, value]) => [
+            name, h("pre", { class: "prose" }, JSON.stringify(value, null, 2)),
+          ])) : note(NOT_CARRIED),
       h(
         "p",
         {},

@@ -1,0 +1,14 @@
+{
+  "profile": "product-admin",
+  "sourceRoots": ["doctor/static"],
+  "locale": "zh-CN",
+  "canonicalMap": "UX-CONTRACT.md",
+  "requiredCapabilities": ["Table Selection", "Select/Listbox", "Form", "Scrollbar"],
+  "ownership": {"Select/Listbox": "native"},
+  "requiredCommands": ["unit", "browser"],
+  "commands": {
+    "unit": "python -m pytest -p no:cacheprovider tests -q",
+    "browser": "node tests/doctor_ui.browser.cjs http://127.0.0.1:18875"
+  },
+  "evidence": {"failurePaths": "tests/doctor_ui.browser.cjs"}
+}

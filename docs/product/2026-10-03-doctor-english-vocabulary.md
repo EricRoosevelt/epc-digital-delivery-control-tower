@@ -1362,3 +1362,22 @@
 | `unchanged` | {work}：{before} （{note}） | {work}: {before} ({note}) |
 | `changed` | {work}：复检前 {before} → 现在 {now} | {work}: before the recheck {before} → now {now} |
 | `missing` | {work}：复检前 {before}；现在：记录没有给出 | {work}: before the recheck {before}; now: not given in the record |
+
+
+## 2026-10-12 WORKSPACE_UI：导航与布局增量（待实际候选 BIM/UX 复核）
+
+| Key | 中文 | English |
+|---|---|---|
+| examples | 模拟示例 | Simulated examples |
+| local | 本地 IFC 检查 | Local IFC check |
+| navigation | 主要路径 | Main paths |
+| preview | 内部预览 | Internal preview |
+| results | 定位到结果列表 | Go to the results list |
+| back | 返回结果列表 | Back to results |
+| clear | 清空搜索 | Clear search |
+| input | 输入模型 | Input model |
+| models | 模型版本与记录 | Model versions and record |
+| notDefects | 同一个构件可以出现在几个事项里，所以事项数不是缺陷数。 | The same element can appear in several items, so the number of items is not a number of defects. |
+| outside | 当前选中项不在筛选结果中；详情保持可读。 | The selected item is outside this filter. Its detail remains visible. |
+| name | 名称 | Name |
+| basis | 依据 | Basis |

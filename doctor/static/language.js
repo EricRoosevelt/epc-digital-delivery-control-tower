@@ -6,7 +6,15 @@
 // own wording without adding to the central tables.
 
 import { h } from "./dom.js";
-import { LANG, LANGUAGES, bilingual, chooseLanguage } from "./i18n.js";
+import "./ui-words.js";
+import { carryForLanguage } from "./view-state.js";
+
+function chooseLanguage(language) {
+  if (language === LANG || !Object.hasOwn(LANGUAGES, language)) return;
+  carryForLanguage();
+  reloadLanguage(language);
+}
+import { LANG, LANGUAGES, bilingual, chooseLanguage as reloadLanguage } from "./i18n.js";
 
 const WORDS = bilingual(
   "LANGUAGE",

@@ -88,10 +88,19 @@ async function main() {
             assert.match(await page.locator(".ws-detail").innerText(), /house fireplace cap/);
             assert.equal(await page.locator("#workspace-filter").inputValue(), "house");
             assert.equal(await page.locator(".ws-list tr.selected a").getAttribute("aria-current"), "true");
-            assert.deepEqual(await page.locator(".ws-list tbody tr:visible .c-name a").allTextContents(), names);
+            if (width > 700) {
+              assert.deepEqual(await page.locator(".ws-list tbody tr:visible .c-name a").allTextContents(), names);
+            } else {
+              assert.equal(await page.locator(".ws-list").isVisible(), false);
+            }
             if (evidence) {
               await page.locator(".ws-detail").scrollIntoViewIfNeeded();
               await page.screenshot({ path: path.join(evidence, `${lang}-${width}-detail.png`) });
+            }
+            if (width <= 700) {
+              await page.locator(".ws-back").click();
+              await page.locator("#workspace-filter").waitFor();
+              assert.equal(await page.locator("#workspace-filter").inputValue(), "house");
             }
           }
         }

@@ -7,6 +7,8 @@
 
 import { clearResults, go, href } from "./app.js";
 import { plural } from "./i18n.js";
+import { UI } from "./ui-words.js";
+import { selectRun, workspaceView } from "./view-state.js";
 import { code, copyable, definitions, h, link, missing, note, section, table } from "./dom.js";
 import {
   carried,
@@ -68,7 +70,7 @@ import {
 
 // The list's filter, kept while the manager moves between the list and one
 // result, and dropped when a different run is shown.
-const workspaceView = { run: null, status: null, query: "" };
+// The view-state owner supplies memory and a one-use language handoff.
 
 function fill(template, values) {
   return Object.entries(values).reduce(
@@ -299,8 +301,8 @@ function findingPanel(state, finding) {
   const status = carried(finding, "status");
   const find = h(
     "section",
-    { class: "detail-part" },
-    h("h3", {}, WORKSPACE.findHeading),
+    { class: "detail-part locate-part" },
+    h("h3", { tabindex: "-1" }, WORKSPACE.findHeading),
     locateBlock(element, model),
   );
   const action =
@@ -309,16 +311,23 @@ function findingPanel(state, finding) {
           "section",
           { class: "detail-part next-step" },
           h("h3", {}, WORKSPACE.actionHeading),
-          local ? h("p", { class: "beside" }, fill(WORKSPACE.checkFirst, { heading: WORKSPACE.findHeading })) : null,
+          local ? h("p", { class: "beside check-first" }, fill(WORKSPACE.checkFirst, { heading: WORKSPACE.findHeading }),
+            " ", h("button", { type: "button", class: "quiet locate-jump", onclick: () => {
+              const heading = find.querySelector("h3");
+              heading.focus({ preventScroll: true });
+              heading.scrollIntoView({ block: "start" });
+            } }, WORKSPACE.findHeading, " ↓")) : null,
           notes
             ? [
                 definitions([
                   [WORKSPACE.actionWhat, h("span", { class: "action" }, notes.action.what)],
-                  [WORKSPACE.actionReads, notes.action.reads],
+                  local && isProductValidation(requirement) ? null : [WORKSPACE.actionReads, notes.action.reads],
                   [WORKSPACE.actionRevise, notes.action.revise],
                   [WORKSPACE.actionUndecided, notes.action.undecided],
                   [WORKSPACE.recheckHeading, notes.recheck],
                 ]),
+                local && isProductValidation(requirement) ? h("details", { class: "checker-read" },
+                  h("summary", {}, WORKSPACE.actionReads), h("p", {}, notes.action.reads)) : null,
               ]
             : note(WORKSPACE.noRuleNotes),
         )
@@ -327,6 +336,14 @@ function findingPanel(state, finding) {
     "div",
     {},
     h("p", { class: "kicker" }, WORKSPACE.detailKicker),
+    local ? h("p", { class: "input-identity" }, UI.local, " · ", UI.input, " ",
+      model ? field(model, "filename", code) : missing(NOT_CARRIED), " ",
+      h("button", { type: "button", class: "quiet model-trace", onclick: (event) => {
+        const trace = event.target.closest(".workspace").querySelector(".run-trace");
+        trace.open = true;
+        trace.querySelector("summary").focus({ preventScroll: true });
+        trace.scrollIntoView({ block: "start" });
+      } }, UI.models)) : null,
     h(
       "h2",
       { tabindex: "-1", "data-return-focus": true },
@@ -351,9 +368,9 @@ function findingPanel(state, finding) {
   );
   panel.append(
     h(
-      "section",
-      { class: "detail-part" },
-      h("h3", {}, WORKSPACE.requirementHeading),
+      local && status === "FAIL" && notes && isProductValidation(requirement) ? "details" : "section",
+      { class: "detail-part observation" },
+      h(local && status === "FAIL" && notes && isProductValidation(requirement) ? "summary" : "h3", {}, WORKSPACE.requirementHeading),
       definitions([
         [WORKSPACE.ruleExpected, field(finding, "expected", (text) => h("span", { class: "prose" }, text))],
         [WORKSPACE.reason, field(finding, "reason", (text) => reasonText(text, notes))],
@@ -445,7 +462,7 @@ function runIdentity(run) {
 }
 
 /** The filterable list of every result, in the adapter's order within each status. */
-function workspaceList(state, selected) {
+function workspaceList(state, selected, filterNotice) {
   const envelope = state.envelope;
   const groups = statusGroups(envelope.findings);
   const rows = [];
@@ -453,7 +470,8 @@ function workspaceList(state, selected) {
   for (const group of groups) {
     for (const finding of group.findings) {
       const element = elementOf(envelope.elements, finding.element_key);
-      const isSelected = selected !== null && finding.finding_key === selected.finding_key;
+      const isSelected = finding.finding_key === workspaceView.selected;
+      const returning = selected === null && isSelected;
       const cells = workspaceCells(state, finding, element, envelope.run);
       // The name cell is the link: one keyboard stop per row.
       const nameCell = cells[1];
@@ -463,10 +481,16 @@ function workspaceList(state, selected) {
           {
             href: href(state.mode, state.runId, "finding", finding.finding_key),
             "aria-current": isSelected ? "true" : null,
+            "data-return-focus": returning ? true : null,
           },
           ...nameCell.childNodes,
         ),
       );
+      if (state.mode === "local") {
+        nameCell.append(h("div", { class: "row-meta" },
+          ...cells[2].childNodes, " · ", ...cells[3].childNodes, " · ", ...cells[4].childNodes),
+          h("div", { class: "row-meta row-tag" }, WORKSPACE.columns.tag, " ", ...cells[5].childNodes));
+      }
       // A click anywhere on the row opens it, as the name does: measured, a click
       // on the Tag or the class did nothing, and the Tag filled most of a row.
       // The keyboard keeps one stop per row, the name; a drag that selects text
@@ -482,7 +506,7 @@ function workspaceList(state, selected) {
             location.hash = target;
           },
         },
-        cells,
+        state.mode === "local" ? [cells[1], cells[0]] : cells,
       );
       rows.push({ node: row, finding, element });
       body.push(row);
@@ -497,10 +521,20 @@ function workspaceList(state, selected) {
         (workspaceView.status === null || finding.status === workspaceView.status) &&
         matches(element, finding, workspaceView.query);
       node.hidden = !visible;
+      const link = node.querySelector("a");
+      if (!visible) link.removeAttribute("data-return-focus");
       if (visible) count += 1;
     }
     shown.textContent = fill(WORKSPACE.filterShown, { shown: count, count: rows.length });
     empty.hidden = count !== 0;
+    if (selected) {
+      filterNotice.hidden = (workspaceView.status === null || selected.status === workspaceView.status) &&
+        matches(elementOf(envelope.elements, selected.element_key), selected, workspaceView.query);
+    }
+    if (!selected && workspaceView.selected && !rows.some(({ node }) => node.querySelector("[data-return-focus]"))) {
+      search.setAttribute("data-return-focus", "");
+    } else search.removeAttribute("data-return-focus");
+    clear.hidden = workspaceView.query === "";
     for (const button of buttons) {
       button.setAttribute("aria-pressed", String(button.dataset.status === String(workspaceView.status)));
     }
@@ -528,15 +562,21 @@ function workspaceList(state, selected) {
       choice(group.status, group.known ? FINDING_STATUS[group.status] : String(group.status), group.count),
     ),
   ];
+  let composing = false;
   const search = h("input", {
     type: "search",
     id: "workspace-filter",
     value: workspaceView.query,
+    oncompositionstart: () => { composing = true; },
+    oncompositionend: (event) => { composing = false; workspaceView.query = event.target.value; apply(); },
     oninput: (event) => {
+      if (composing || event.isComposing) return;
       workspaceView.query = event.target.value;
       apply();
     },
   });
+  const clear = h("button", { type: "button", class: "clear-search", "aria-label": UI.clear,
+    onclick: () => { workspaceView.query = ""; search.value = ""; apply(); search.focus(); } }, UI.clear);
   const columns = WORKSPACE.columns;
   const list = h(
     "section",
@@ -544,13 +584,13 @@ function workspaceList(state, selected) {
     h("h2", {}, WORKSPACE.listHeading),
     h("div", { class: "filters", role: "group", "aria-label": WORKSPACE.columns.status }, buttons),
     h("label", { for: "workspace-filter" }, WORKSPACE.filterLabel),
-    search,
+    h("div", { class: "search-control" }, search, clear),
     shown,
     empty,
     tableWrap(
       table(
         null,
-        RESULT_COLUMNS.map((column) => columns[column]),
+        (state.mode === "local" ? ["name", "status"] : RESULT_COLUMNS).map((column) => columns[column]),
         body,
       ),
     ),
@@ -562,17 +602,15 @@ function workspaceList(state, selected) {
 export function workspaceCheck(state, selectedKey) {
   const envelope = state.envelope;
   const run = envelope.run;
-  if (workspaceView.run !== run.validation_run_id) {
-    workspaceView.run = run.validation_run_id;
-    workspaceView.status = null;
-    workspaceView.query = "";
-  }
+  selectRun(`${state.mode}/${state.runId}`);
   const selected = selectedKey === null ? null : findingByKey(envelope, selectedKey);
+  if (selected) workspaceView.selected = selected.finding_key;
+  const filterNotice = h("p", { class: "out-of-filter", hidden: true }, UI.outside);
   const groups = statusGroups(envelope.findings);
   const requirementKeys = Object.keys(envelope.requirements);
   const content = h(
     "div",
-    { class: "workspace" },
+    { class: `workspace${state.mode === "local" && selectedKey !== null ? " local-detail" : ""}` },
     h("p", {}, link(WORKSPACE.back, href())),
     h("h1", {}, WORKSPACE.resultTitle),
     h("p", { class: "callout" }, WORKSPACE.noJudgement),
@@ -623,11 +661,14 @@ export function workspaceCheck(state, selectedKey) {
   // its half only once there is something in it.
   const workbench = h(
     "div",
-    { class: selectedKey === null ? "ws-workbench no-pick" : "ws-workbench" },
-    workspaceList(state, selected),
+    { class: `ws-workbench ${selectedKey === null ? "no-pick" : "has-pick"}${state.mode === "local" ? " local-workbench" : ""}` },
+    workspaceList(state, selected, filterNotice),
     h(
       "section",
       { class: selected ? "block ws-detail" : "block ws-detail empty" },
+      selectedKey !== null ? h("p", { class: "back-line" },
+        h("a", { class: "ws-back", href: href(state.mode, state.runId) }, UI.back)) : null,
+      filterNotice,
       selectedKey === null
         ? note(WORKSPACE.pickOne)
         : selected === null
@@ -641,7 +682,7 @@ export function workspaceCheck(state, selectedKey) {
     ...(state.mode === "local" ? [workbench, checked] : [checked, workbench]),
     h(
       "details",
-      { class: "block evidence-details" },
+      { class: "block evidence-details run-trace" },
       h("summary", {}, WORKSPACE.identityHeading),
       runIdentity(run),
     ),
@@ -811,7 +852,7 @@ export function workspaceCompare(state) {
     ),
     h(
       "details",
-      { class: "block evidence-details" },
+      { class: "block evidence-details run-trace" },
       h("summary", {}, WORKSPACE.identityHeading),
       h("h3", {}, WORKSPACE_COMPARE.prior),
       runIdentity(comparison.prior_run),

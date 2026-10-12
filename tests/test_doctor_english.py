@@ -251,7 +251,7 @@ class ParityTests(_Loaded):
     def test_the_english_tables_are_vocabulary_en_and_the_modules_own(self):
         self.assertEqual(
             set(self.english),
-            _exports(STATIC / "vocabulary-en.js") | {"LANGUAGE", "LOCAL_CHECK"},
+            _exports(STATIC / "vocabulary-en.js") | {"LANGUAGE", "LOCAL_CHECK", "WORKSPACE_UI"},
         )
         self.assertEqual(
             {name for name, pair in self.registry.items() if pair["same"]}, NEUTRAL
