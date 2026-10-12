@@ -68,33 +68,38 @@ the last command. The server changes no file that Git tracks.
    button on the page, under the card marked **推荐从这里开始** (start here).
 2. In the catalogue, under **第一步** (step one), click **打开这个示例的结果**
    (open this example's result): the first-check result, 13 items, 8 to handle.
-3. On any card, click **查看这一项** (see this item). The item page has four numbered
-   parts: **一、结论** (the conclusion), **二、下一步** (next step: what to do, the
+3. In the result table, open **building element** under **房间数据表与设备明细表**
+   (room data sheets and equipment schedules), using **查看这一项** (see this item).
+   This blocked item page has four numbered parts: **一、结论** (the conclusion), **二、下一步** (next step: what to do, the
    handling team, what a recheck must show), **三、是哪个构件** (which element) and
    **四、具体缺什么** (exactly what is missing). The button **跳到下一步** (jump to the
    next step), under the element's name, takes you to part two.
 
-   ![An item page in the Chinese interface, under a banner saying it is a bundled example with simulated settings: the conclusion 房间数据表与设备明细表：受阻 (blocked) with its basis and situation, part 二、下一步 (what to do, the handling team, the default handling role, what it means for the work, what a recheck must show), part 三 (the element) and part 四 (the requirements that were not met).](docs/evidence/doctor-readme-item-page/item-blocked-zh.png)
+   ![The new Chinese BIM Doctor item page: building element is blocked for room data sheets and equipment schedules, with the simulated-example notice, evidence source, next action and recheck condition visible.](docs/evidence/doctor-resume-ui-2026-10-13/item-blocked-zh.jpg)
 
-   *One item page of the simulated example, Chinese interface, from the page's banner
-   to the end of part 四 (the context bar above and the folded sections below are
-   left out). The banner marks the example as simulated; the handling team is the
-   example's own setting and assigns no one. The element comes from a buildingSMART
-   sample model (see
-   [Data Source and Attribution](#data-source-and-attribution)). Which sentence in the
-   image has which BIM review verdict is in
-   [the evidence note](docs/evidence/doctor-readme-item-page/README.md).*
+   *Actual Chinese UI from the accepted software baseline. The example's team
+   arrangement assigns no one; the check results behind this item come from the
+   public buildingSMART sample models. [Capture source, limits and media hashes](docs/evidence/doctor-resume-ui-2026-10-13/README.md).*
 4. Lower on the item page, click **在示例“模型未改，但交接判断发生变化”里看这一项**
    (see this item in the example "models unchanged, but the handover judgement
    changed"): the recheck of the same record. Neither model is republished. Exactly
    one of the 13 items changes: *building element*, under room data sheets and
    equipment schedules, moves from **受阻** (blocked) to **可以开始** (can start). On
-   the other seven cards the page marks the conclusion **复检前后未变** (unchanged by
+   the other seven items the page marks the conclusion **复检前后未变** (unchanged by
    the recheck). The page says that a check
    requirement it was judged against changed, and does not say whether it was
    relaxed or tightened.
 
 The same example is also in the catalogue as **第二步** (step two).
+
+### A short operation recording
+
+[Watch the 80-second Chinese UI recording](docs/evidence/doctor-resume-ui-2026-10-13/doctor-live.webm)
+of the real local application navigating the bundled simulated example. It has
+no narration, model edits or real-project acceptance claim. The recheck changes
+one conclusion without either model being reissued; that does not establish that
+the original closure condition has been met. Source SHA and actual duration are
+in the [media note](docs/evidence/doctor-resume-ui-2026-10-13/README.md).
 
 ## Check your own IFC4 file (limited)
 
@@ -146,9 +151,9 @@ The page explains how to clean the records up. More in
   notifying anyone.
 * **Status of the wording.** The interface opens in Chinese, and an English wording
   is available (`?lang=en` on any address). The wording of the main path, in both
-  languages, has been through this project's own domain-wording review; the
-  corrections that review asked for are still being applied. So this is a preview,
-  not a reviewed release. The record, activity and member pages are not translated
+  languages, has been through this project's own domain-wording review on the accepted
+  UI baseline. This remains a preview, not a production deployment or a formal
+  model acceptance decision. The record, activity and member pages are not translated
   and say so.
 
 ## 中文快速开始
@@ -179,12 +184,13 @@ BIM Doctor 是个人开源项目，讲的是 IFC 模型从一个专业交给下�
    `--port 8770`。在终端里按 Ctrl+C 停止。
 4. 点 **选择模拟示例**（首页的第一个按钮）；在 **第一步** 下点 **打开这个示例的结果**：
    共 13 个事项，其中 8 个需要处理。
-5. 在任一卡片上点 **查看这一项**。单项页分四部分：一、结论；二、下一步（要做什么、处理团队、
+5. 在结果表中找到 **building element** 的 **房间数据表与设备明细表** 事项，点 **查看这一项**。
+   这个受阻事项页分四部分：一、结论；二、下一步（要做什么、处理团队、
    完成后拿什么复检）；三、是哪个构件；四、具体缺什么。标题下的 **跳到下一步** 直达第二部分。
 6. 想看复检之后的变化：在单项页下方点
    **在示例“模型未改，但交接判断发生变化”里看这一项**；也可以回到示例目录，打开
    **第二步**。13 个事项里只有一个变了结论：building element（房间数据表与设备明细表），
-   从受阻变为可以开始；其余七张卡片对应的页面写着“复检前后未变”。
+   从受阻变为可以开始；其余七个事项对应的页面写着“复检前后未变”。
 7. 检查自己的模型：首页点 **开始本地检查**，点 **选择一个或多个 .ifc 文件** 选文件，声明
    专业，点 **查看检查范围**，再点 **运行检查**。只接受 IFC4 文件，只做 PV-001 一条规则
    （风口须声明四种预定义类型之一），不是通用质量检查，也不给示例里的交接结论；Revit
@@ -193,8 +199,8 @@ BIM Doctor 是个人开源项目，讲的是 IFC 模型从一个专业交给下�
 
 读结果时记住三点，页面上都有对应的说明：事项数不是缺陷数；“无法判断”不等于这个构件
 没有问题；处理团队是示例里的安排，不代表已经派发。主路径的中英措辞经过本项目自己的领域
-措辞复核，复核提出的修正还在落实，所以这仍是预览，不是已复核的发布版；记录、活动、成员
-等明细页没有翻译。英文界面在任一地址后加 `?lang=en` 即可。
+措辞复核，已接受的新版 UI 保留这些限制；这仍是预览，不是生产部署或正式模型验收。
+记录、活动、成员等明细页没有翻译。英文界面在任一地址后加 `?lang=en` 即可。
 
 ## For engineers: the framework
 
