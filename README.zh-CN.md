@@ -2,7 +2,7 @@
 
 **看懂模型检查结果，找到下一步，再看清复检改变了什么。**
 
-[English](README.md) · [观看 80 秒演示](docs/evidence/doctor-resume-ui-2026-10-13/doctor-live.webm) · [快速开始](#快速开始)
+[English](README.md) · [观看 80 秒演示](docs/evidence/doctor-resume-ui-2026-10-13/doctor-live.webm) · [产品案例](https://app.notion.com/p/3f81cb00200581f2aad8dd078f9d5fa9) · [快速开始](#快速开始)
 
 准备把建筑模型交给下一个专业时，BIM 协调人员需要的不只是“不通过”清单：
 它影响哪项工作？接下来要补什么？重新检查后，变化又来自哪里？
