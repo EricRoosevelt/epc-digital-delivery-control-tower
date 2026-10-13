@@ -127,8 +127,8 @@ example shows.
 
 ![A real local check in English: chimney cover fails PV-001 on public Building-Hvac.ifc; the input identity and single-rule limits are visible.](docs/evidence/doctor-resume-ui-en-2026-10-13/local-detail-en.jpg)
 
-*This screenshot opens a real public-sample record generated through the local
-API; this capture session does not establish a successful browser file selection.
+*Actual English result from the unchanged public HVAC sample. This is one
+product-validation rule, not a handover assessment.
 [Source and capture limits](docs/evidence/doctor-resume-ui-en-2026-10-13/README.md).*
 
 To try it without a model of your own, use a public sample from the clone:
@@ -159,10 +159,10 @@ The page explains how to clean the records up. More in
   Revit, starting a recheck from the page, marking an item resolved, and assigning or
   notifying anyone.
 * **Status of the wording.** The quick-start address opens the main path in English
-  (`?lang=en`, before any route fragment); Chinese is also available. The wording
-of the main path, in both
-  languages, has been through this project's own domain-wording review on the accepted
-  UI baseline. This remains a preview, not a production deployment or a formal
+  (`?lang=en`, before any route fragment); Chinese is also available. The main
+  path's wording in both languages has been through this project's own
+  domain-wording review on the accepted UI baseline. This remains a preview, not
+  a production deployment or a formal
   model acceptance decision. The record, activity and member pages are not translated
   and say so.
 
