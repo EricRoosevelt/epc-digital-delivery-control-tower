@@ -1,325 +1,76 @@
 # AGENTS.md
 
-Guidance for humans and coding agents working in this repository.
+## Working approach
 
-This project is meant to be forked and adapted. Most decisions are yours. The
-rules below are the few that will silently break it if ignored.
+Ship useful changes with the least process that makes the result trustworthy.
+The user's current request takes precedence over repository workflow guidance.
+This file is the single active workflow policy, revised 2026-10-13.
 
-## Hard rules
+- Own the task end to end: inspect, implement, verify, and finish within the
+  user's authorization. Do not stop at a plan or handoff when you can do the work.
+- Make routine, reversible implementation decisions yourself. Ask only when
+  missing information materially changes the outcome or an action needs authority
+  that has not been given. Existing authorization does not need repeating.
+- One session is enough by default. PM, technical lead, UI, framework, and BIM
+  describe expertise, not mandatory stages or exclusive permissions to edit.
+- There are no A/B/C lanes, fixed checkpoint counts, mandatory separate reviewers,
+  or default design/draft stop points. Use a second opinion for a concrete
+  uncertainty, not as ceremony. Domain wording does not automatically need a BIM
+  session; seek help when its meaning or evidence is genuinely unresolved.
+- Small tasks need no separate plan, ADR, task packet, or dated completion report.
+  For larger tasks, keep only the decisions needed to implement and maintain them.
+- Finish with what changed, what was checked, and any material remaining issue.
+  Do not create follow-up work merely to make the process look complete.
 
-1. **Determinism.** Outputs must be byte-identical across runs, machines, and
-   operating systems. Never read the clock, iterate an unordered collection,
-   compress a ZIP archive, or emit platform-dependent line endings. Generated
-   CSVs stay `utf-8-sig` with `lineterminator="\n"`. If you need a timestamp,
-   take it from configuration, not from `datetime.now()`.
+## Read only what the task needs
 
-2. **Published artifacts move deliberately.** Everything under
-   `data/processed/` and `reports/` is generated: `epc-ct run` rewrites it, and
-   CI fails if a run changes anything. Do not hand-edit those files.
+Dated plans, old task packets, acceptance matrices, and reports in `docs/product/`
+are historical context, not standing instructions. Old deadlines, freeze stops,
+review chains, and unfinished proposals do not become today's task automatically.
+Local `Agent-*.md` files are optional role notes and cannot reintroduce those gates.
+Explicitly requested acceptance criteria still apply to the task that requests them.
 
-   If a change genuinely moves the contract, say so in `CHANGELOG.md` and then
-   refresh its record with
-   `epc-ct snapshot --refresh --contract-changed`. The refresh refuses until
-   the CHANGELOG describes the version, so the account of what moved exists
-   before the expectation that says it did.
+For pipeline or contract work, consult the relevant section of
+[the engineering reference](docs/engineering-reference.md). Do not read the entire
+project history before a routine change. Preserve historical evidence and links;
+archive obsolete instructions rather than accumulating competing current policies.
 
-   The three test layers are different promises, and the difference matters:
+## Verify in proportion to the change
 
-   | Layer | Asserts | Updated |
-   |---|---|---|
-   | `test_determinism.py` | two runs give identical bytes | **never** |
-   | `test_run_invariants.py` | laws of the domain | rarely, when the domain changes |
-   | `test_contract_snapshot.py`, `test_legacy_pbip_contract.py` | exact bytes and counts | by the ceremony above |
+| Change | Useful verification |
+|---|---|
+| Prose, plans, role notes | Read the diff; check facts, links, and accidental disclosures. No local full suite. |
+| Screenshots or demo media | Inspect the actual media, language, and version. No pipeline rerun for unchanged code. |
+| UI behavior | Exercise affected flows and relevant tests; include the languages/viewports affected. |
+| Core, rules, identities, dependencies, artifacts | Relevant tests and the full checks in the engineering reference; measure published differences. |
 
-   A red determinism test is never fixed by changing the test. It means
-   something read a clock, iterated an unordered collection, or depended on the
-   machine.
+Reuse valid evidence for unchanged code. Do not rerun every gate in every session.
+Run broader checks when a failure or changed dependency gives a reason. Existing
+required CI checks remain in effect; do not claim an unrun or skipped check passed.
+No mandatory new tests for prose or simple cosmetic edits. Add regression coverage
+where it prevents a meaningful behavioral failure.
 
-3. **Third-party intake.** Follow the Review Gate in
-   `docs/open_source_adoption.md`. In short: GPL/AGPL code never enters the
-   source tree; CC BY-ND assets are vendored byte-for-byte and never
-   reformatted; every addition pins a version, records a SHA-256, and updates
-   both `docs/open_source_adoption.md` and `THIRD_PARTY_NOTICES.md`.
+## Keep these boundaries
 
-4. **Attribution.** The buildingSMART CC BY 4.0 attribution blocks must survive
-   every refactor.
-
-5. **Claims.** This is a personal open-source project. Never state or imply in
-   code, documentation, or commit messages that it has been deployed,
-   commissioned, or adopted by any company or client. Describing the problem as
-   coming from real EPC delivery experience is fine.
-
-6. **Measure what doing nothing costs, before deciding.** When a change could
-   move or widen something already published, do not reason about it — run it
-   and write down what actually happened. Twice now that measurement has been
-   the whole argument, and in both cases the code reported success while
-   quietly doing the wrong thing:
-
-   - Adding a second project, with no scope on the legacy writers: all eight
-     published CSVs changed and `models.csv` grew a second `architecture` row,
-     while all four exporters reported success.
-   - Adding one rule, with no scope on the rule set version: **0 of 47**
-     published finding keys survived, because the published `run_id` digests
-     the rule document. Growing the rule library would have been blocked on
-     re-capturing five Power BI screenshots by hand — a Phase 5 task.
-
-   Neither was visible by reading the code, and a silent default is the worst
-   outcome available: it decides for you and leaves no record. Pin the
-   counterfactual as a test afterwards, so the decision keeps being true rather
-   than merely having been made once.
-
-## Where to extend
-
-The pipeline has three seams, and a fork should be adding an implementation to
-one of them rather than editing stages. They are protocols in
-`epc_control_tower/protocols.py`, and the one place implementations are
-registered is `default_registry` in `epc_control_tower/registry.py`.
-
-| You want to change | Implement | Register as |
-|---|---|---|
-| *How a requirement is evaluated* | `Checker` | a checker |
-| *What counts as one actionable issue* | `GroupingPolicy` | a grouping policy |
-| *Where results go* | `Exporter` | an exporter |
-
-Each `Requirement` names the checker that evaluates it, and the registry routes
-on that name. A rule pointed at a checker that does not exist — or at one that
-cannot evaluate its facets, or read its IFC schema — is rejected while planning,
-before any model is opened.
-
-**These three seams are extension points, not a list of the product's phases.**
-They describe the shapes the current pipeline can absorb without being edited.
-Work that is not one of those shapes does not become one by being forced through
-the nearest seam, and the table above is not a roadmap. Two consequences worth
-stating, because both have been guessed wrong already:
-
-- **A purpose assessment, if it is ever built, is approved between `check` and
-  the compatible group** — after requirements and facts have been validated,
-  before findings are grouped into issues. It is not a `Checker` (it does not
-  evaluate a requirement against a model), not a `GroupingPolicy` (it does not
-  decide what counts as one actionable issue), not an `Exporter` (it does not
-  move results anywhere), and it does not belong in `default_registry`.
-  Registering it as one of the three would make an approval step look like a
-  pipeline component and put a decision inside a projection.
-- **`Finding.is_issue`, `Issue`, and the `Requirement` metadata fields
-  (`owner_role`, `severity`, `stage`, `priority`, `labels`) are contract 1.6
-  validation and legacy-compatibility concepts, and stay that way.** `is_issue`
-  records that a check failed in a way that warrants a topic; `Issue` is the
-  grouping of such findings; the `Requirement` fields carry what a rule means
-  and are what lets the frozen legacy archive be rebuilt byte for byte from rule
-  metadata. Specifically, none of them is:
-  - a Purpose readiness verdict — nothing here says a deliverable is fit for a
-    purpose;
-  - a blocker consequence — `priority` says when somebody will get to a failure,
-    not what that failure stops;
-  - a final responsible-role decision — `owner_role` is the role a *rule author*
-    expects to answer for the rule, which is an input to such a decision and not
-    the decision.
-
-  Reusing any of them as one would silently redefine every published number that
-  currently depends on them — exactly the class of change rule 6 exists to stop.
-- **`discipline_scope` expresses validation applicability only.** It is meant to
-  say which disciplines a requirement is evaluated against — which models the
-  rule applies to at all.
-  - *Today:* nothing that evaluates a requirement reads it. It reaches the rule
-    set digest, issue labels and the legacy projection, and nothing else; a rule
-    is evaluated against every model whose elements match its applicability
-    facet. `pcert-sample`'s structural walls are evaluated by R-001 and R-002,
-    both scoped to Architecture, and the eight PASS findings that produces are
-    published.
-  - *Target:* enforcement is deliberately not switched on. A model declares one
-    discipline string, so a merged model cannot say it is more than one, and
-    enforcing that single value silently drops whole rule families (measured in
-    ADR 0004 §4.3). It waits for an explicit multi-discipline declaration and a
-    coverage record that names every requirement not evaluated, and why.
-
-  It does not express a *directional handoff*: "MEP hands this to
-  Architecture" is a statement about who gives what to whom, and no field in
-  this package carries it today. Direction is Pack data when Packs exist. Do not
-  read a scope tuple as an arrow, and do not overload it into one; a set of
-  disciplines that quietly becomes a from/to pair is unreviewable and would
-  re-key every requirement that carries it.
-
-Registration is explicit and in-tree. Dynamic discovery is deliberately absent:
-an entry-point mechanism is a promise to third-party packages about names,
-versions and compatibility, and making that promise before anything outside this
-repository depends on it would fix the wrong details.
-
-Some rules of thumb that follow from the shape:
-
-- **An exporter receives a `RunBundle` and nothing else.** If yours needs to
-  reopen an IFC file, consult a checker, or branch on a rule id, the information
-  it wants belongs in the domain model. Bounding boxes went that way already —
-  they are a stage and an entity, not something the BCF exporter fetches.
-- **A checker's own source format is its business.** Compiling IDS is an
-  internal detail of `IdsChecker`, not a stage. Making it a stage is what put
-  the project's ceiling at whatever IDS 1.0 can express.
-- **Constants have three different homes**, and picking the wrong one is how a
-  settings file becomes a bag nobody can reason about:
-  - what a *project* contains → its manifest, `projects/<id>/project.toml`
-  - what a *rule* means (severity, owner role, stage) → the rule
-  - what the *fixture happens to contain* (counts, digests) → tests and
-    `docs/contracts/`, never production code
-  Genuine runtime knobs — output locations, which exporters run, which grouping
-  policy, the logical `as_of`, and which project the legacy writers publish —
-  go in `control-tower.toml` at the repository root. There are a handful, and
-  keeping it that small is the point: a settings file that accepts everything
-  explains nothing.
-
-**Adding a rule should not touch this package either.** A rule is one TOML file
-under `rules/<ruleset>/`, carrying its own severity, owner role, stage,
-discipline scope and citation. `checker = "ids"` compiles it into the IDS
-document that `ids/` holds as a build product; `checker = "completeness"` routes
-it to the cross-model checker instead and never reaches that document. A rule
-naming a checker the library does not know is rejected when the library loads,
-because a delivery requirement the pipeline silently declines to evaluate is the
-worst outcome available.
-
-A checker-specific parameter — `CompletenessChecker`'s `name_pattern`, say —
-stays in the rule file, and the checker reads it back from there. A
-`Requirement` carries identity and metadata, not a payload every checker would
-have to agree on the shape of.
-
-**A finding may be about something that is not there**, and what it names then
-is a decision, not a default. The rule: *a finding names the smallest thing that
-exists and that a person can go and look at.* Usually an element, including for
-an absence — "this space has no terminal" points at the space. When no element
-can stand for it, the model: `element_key` is empty and the finding is
-model-level. Nothing is ever minted for a thing that was not modelled. A pass is
-stricter and stays so: it says a specific thing was checked and was correct, so
-it always names that thing. See `domain.Finding` for the four legal shapes.
-
-**Adding a project should not touch this package.** Drop a directory under
-`projects/` with a `project.toml` and the models beside it; discovery is a glob.
-Give each model a `model_id` that means something inside the project — two
-projects may both have an `architecture` — and leave `model_key` alone unless
-you are pinning a published identity, because it is derived as
-`<project_id>.<model_id>` and is what every join and every `element_key` is
-built from.
-
-That is true of the package, not of the published identities:
-
-- *Today:* every project under `projects/` joins one shared run, and
-  `validation_run_id` digests every model in it, so adding a project re-keys
-  every other project. Measured in ADR 0004 §3: the other projects' findings
-  stay content-identical, but 0 of 121 finding keys and 0 of 21 issue keys
-  survive and all 21 BCF markups change — and a run that stays under the BCF
-  cap still exits 0. In this repository the diff gate catches it; in a local
-  run nothing does. A project
-  that is not part of the published contract runs in its own workspace
-  (`epc-ct --repository-root <workspace> run`), which changes no published byte.
-- *Target:* adding a project to the shared published run stays a contract
-  change until project-scoped identity exists; that migration is deferred
-  (ADR 0004 §5.3).
-
-Two exporters are named `Legacy…`, and the reason is now the same for both:
-they reproduce **frozen identity derivations**. `LegacyPbipAdapter` always did.
-`LegacyBcfExporter` used to also know the R-005 rule family and the HVAC model,
-and no longer does — priority, stage, labels and the assignee's role come from
-rule metadata, and the published archive is rebuilt from that metadata byte for
-byte. What keeps it is that the published archive's `ReferenceLink`s carry
-legacy finding keys, which no amount of metadata can produce.
-
-`BcfExporter` is the general one: issues and their history in, BCF out, no rule
-ids and no filenames. Both are pure projections of the canonical model, both
-are pinned by byte-equality tests, and both `Legacy…` writers retire together
-in Phase 5. Do not extend them; add alongside.
-
-A **scope** on an exporter is not the same thing as rule-awareness, and the
-distinction is worth keeping straight when you read those two. Narrowing to one
-project and one frozen rule set version says *which slice of the run is
-published*; asking "is this rule R-005A?" says what a rule means. The first is
-legitimate and stays; the second is what Phase 4 removed.
-
-### Running it
-
-```bash
-epc-ct run          # every stage, then every enabled exporter
-epc-ct check        # validate and report; see below for what it writes today
-epc-ct components   # what is registered
-epc-ct snapshot     # does the published contract still match its record?
-```
-
-`check` does not yet keep the promise its help text makes:
-
-- *Today:* it writes files. It rewrites every checker report under
-  `reports/ids/` and recompiles `ids/<ruleset>_v<version>.ids` — thirteen tracked
-  files on the shipped fixture, none of them listed in `artifact_manifest.json`.
-  `--reports-dir` moves the reports elsewhere but the compiled rule document is
-  still rewritten, and a new project's reports are added to the tree. Do not run
-  it on a model whose name should not reach this repository; use a workspace.
-- *Target:* by default `check` changes no persistent file of the user's and no
-  repository artifact; asking for reports explicitly is the visible exception,
-  and `run`'s published bytes are verified separately (ADR 0004, P5).
-
-Without installing the package, `python -m epc_control_tower.cli …` does the
-same. The scripts under `src/` are shims kept for the published entry points
-and retire with the legacy adapters; new work goes in the package.
-
-One test needs a tool the test suite does not install. `tests/test_ids_syntax_audit.py`
-runs buildingSMART's `ids-tool` over the rule documents, and skips with
-instructions when it is absent:
-
-```bash
-dotnet tool install --global ids-tool.CommandLine --version 1.0.124
-```
-
-CI installs it and sets `EPC_REQUIRE_IDS_AUDIT=1`, which turns that skip into a
-failure — a gate that disappears when its tool is missing is not a gate.
-
-### Before you push
-
-Run the gates in the order continuous integration runs them, using the
-project's own `.venv` so the tool versions match what CI will use. This is the
-minimum that makes a local pass mean anything:
-
-```bash
-python -m ruff check .
-EPC_REQUIRE_IDS_AUDIT=1 python -m pytest -p no:cacheprovider tests -q
-python -m epc_control_tower.cli run
-git diff --exit-code -- data/processed reports
-git status --porcelain --untracked-files=all   # no new or changed generated files
-python -m epc_control_tower.cli snapshot
-python src/validate_dashboard.py --mode core
-python src/validate_pbip.py
-python -m pip check
-```
-
-In PowerShell the environment variable is set separately, since there is no
-inline `VAR=value` prefix:
-
-```powershell
-$env:EPC_REQUIRE_IDS_AUDIT = "1"
-python -m pytest -p no:cacheprovider tests -q
-```
-
-**What the working tree has to show is that the pipeline changed nothing** —
-the same state before and after `epc-ct run`, with no generated file added or
-modified. That is not the same as the tree being empty. A maintainer's checkout
-can legitimately hold local files that are not repository deliverables:
-`Agent-product-manager.md` and `Agent-tech-lead.md` are local maintainer role
-charters, and they stay untracked and unstaged. Read the two commands above as
-"nothing under `data/processed/` or `reports/` moved, and the run left no new
-output behind", not as "the porcelain output is blank". CI's own tree has no
-charters in it, which is why the workflow can afford the stricter phrasing that
-a working checkout cannot.
-
-Two things this checklist is defending against, both of which have happened:
-
-- **Do not let the IDS audit skip.** Set `EPC_REQUIRE_IDS_AUDIT=1` and install
-  the pinned `ids-tool` above. Without it the audit skips, the suite is green,
-  and the gate is simply not running.
-- **A failed early gate hides every gate behind it.** `ruff` failing means the
-  suite, the pipeline run, the diff gates and the snapshot were *skipped* — not
-  passed. Run the list to the end, and when reading a CI result, read the steps
-  rather than the job's headline.
-
-Nothing here needs a hook or a wrapper script. It is a list you run.
+- Preserve the user's unrelated changes. Use an isolated checkout if needed;
+  never reset, clean, or overwrite someone else's work to simplify your task.
+- Keep private models, case identifiers, and credentials out of public changes.
+  This is a personal open-source project; do not claim company adoption or deployment.
+- Canonical/published outputs remain deterministic across runs and platforms.
+  Keep generated CSVs UTF-8 with BOM and LF endings. This constraint does not ban
+  ordinary runtime clocks or UI behavior outside deterministic artifact generation.
+- Do not hand-edit `data/processed/` or `reports/`. For intentional contract changes,
+  document and regenerate them using the engineering reference. Measure actual
+  differences when changing published identity or scope; do not silently recapture
+  snapshots to conceal an unintended change.
+- Preserve buildingSMART attribution. For third-party intake, follow
+  [the adoption guide](docs/open_source_adoption.md): retain license notices,
+  versions and hashes; no GPL/AGPL source intake or altered CC BY-ND assets.
+- Merge, publish, or perform destructive operations only within the user's granted
+  scope and tool permissions. No additional role approval is required by this file.
 
 ## Conventions
 
-- Branch from `main`: `feat/`, `fix/`, `docs/`, `chore/`.
-- Conventional Commits (`feat:`, `fix:`, `docs:`, `ci:`).
-- Data contract changes are documented in `docs/data_contract.md` or
-  `docs/bcf_data_contract.md`.
-
-Everything else — structure, naming, style, how you split commits — is your call.
+Branch from `main` using `feat/`, `fix/`, `docs/`, or `chore/`; use Conventional
+Commits. Local maintainer charters stay untracked. Prefer a small complete change
+against the current code over a new layer of process or speculative architecture.
