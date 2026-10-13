@@ -1,0 +1,58 @@
+{
+  "source_sha": "3108fb10cfe0cd2c3f638331b3c74407193ccff9",
+  "source_tree": "5c8efd336a420e8cd16e96bb0c90dd3c20c993ba",
+  "accepted_ui_sha": "0b36a2256b16daf0699ab1699d36142e68766c97",
+  "captured_on": "2026-10-13",
+  "language": "en",
+  "viewport_css": [
+    1280,
+    720
+  ],
+  "video": {
+    "duration_seconds": 79.754,
+    "width": 1280,
+    "height": 720,
+    "codec": "VP9/WebM",
+    "audio": false,
+    "fresh_browser_frames": 128,
+    "method": "Live authorized browser captures at roughly two fresh frames per second; installed native MediaRecorder continuous encoding, current screen held during tool gaps",
+    "scope": "Real English Doctor UI operating the bundled simulated example; no model edit or real project determination"
+  },
+  "local_check": {
+    "method": "Real frozen-code upload/plan/check API, then English UI record/detail navigation; browser chooser did not establish a selected file",
+    "input": "data/raw/Building-Hvac.ifc",
+    "input_sha256": "11a8552bc555fa44dfdc49374d1ab2da0a16104c10f086af509f500ce03fa2b3",
+    "check_id": "e7838dad4ac0d3b3",
+    "rule": "PV-001",
+    "ruleset": "product-validation 1.0",
+    "results": 2,
+    "fail": 2
+  },
+  "files": [
+    {
+      "file": "doctor-live-en.webm",
+      "sha256": "6a4448cb267681ba96022640ab35318d474c4ba1c6fb4416c24b8218cd31dd1c",
+      "bytes": 1715061
+    },
+    {
+      "file": "home-en.jpg",
+      "sha256": "340d688072ad08ea2299e33db214d199aa3fa45e3cd5b40f2a75386970896cff",
+      "bytes": 101809
+    },
+    {
+      "file": "item-blocked-en.jpg",
+      "sha256": "519ef9c1c476c884c8613cb578c9e3ebe186ce9327fd3fe0a423722cc12dc866",
+      "bytes": 77937
+    },
+    {
+      "file": "local-detail-en.jpg",
+      "sha256": "8626ea532e70d5802e2e9d6e4ddb273bda6ca2d9224bad08231a412fcbed6fc2",
+      "bytes": 88059
+    },
+    {
+      "file": "recheck-en.jpg",
+      "sha256": "33a9588866065344f157da940b558afd005cecb87b75da9cdd46e1366cc4adef",
+      "bytes": 105316
+    }
+  ]
+}

@@ -58,48 +58,51 @@ Cloning into a short folder such as `C:\src` avoids it too. Unpacking the ZIP fi
 instead has not been tried against this.
 
 The server prints its address and the folder where local checks are kept. Open
-**<http://127.0.0.1:8765/>**. The interface opens in Chinese. **Stop the server with
-Ctrl+C** in the terminal. If the port is taken, add `--port 8770` (any free port) to
-the last command. The server changes no file that Git tracks.
+**[the English preview](http://127.0.0.1:8765/?lang=en)**. The query selects English
+before the home page opens; keep it before `#` on a routed address. **Stop the
+server with Ctrl+C** in the terminal. If the port is taken, add `--port 8770`
+(any free port) to the last command and use that port in the browser address.
+The server changes no file that Git tracks.
 
 ### What you will see
 
-1. On the home page, click **选择模拟示例** (choose a simulated example), the first
-   button on the page, under the card marked **推荐从这里开始** (start here).
-2. In the catalogue, under **第一步** (step one), click **打开这个示例的结果**
-   (open this example's result): the first-check result, 13 items, 8 to handle.
-3. In the result table, open **building element** under **房间数据表与设备明细表**
-   (room data sheets and equipment schedules), using **查看这一项** (see this item).
-   This blocked item page has four numbered parts: **一、结论** (the conclusion), **二、下一步** (next step: what to do, the
-   handling team, what a recheck must show), **三、是哪个构件** (which element) and
-   **四、具体缺什么** (exactly what is missing). The button **跳到下一步** (jump to the
-   next step), under the element's name, takes you to part two.
+1. On the home page, click **Choose a simulated example**, under **Start here**.
+   [English home screenshot](docs/evidence/doctor-resume-ui-en-2026-10-13/home-en.jpg).
+2. In the catalogue, under **Step 1**, click **Open this example's result**:
+   the first-check result, 13 items, 8 to handle. Items are not a defect count.
+3. In the result table, open **building element** under **Room data sheets and
+   equipment schedules**, using **See this item**. This blocked item page has four
+   numbered parts: **1. Conclusion**, **2. Next step**, **3. Which element** and
+   **4. What exactly is missing**. The button **Jump to the next step**, under the
+   element's name, takes you to part two: what to do, the handling team and what a
+   recheck must show.
 
-   ![The new Chinese BIM Doctor item page: building element is blocked for room data sheets and equipment schedules, with the simulated-example notice, evidence source, next action and recheck condition visible.](docs/evidence/doctor-resume-ui-2026-10-13/item-blocked-zh.jpg)
+   ![The English BIM Doctor item page: building element is Blocked for Room data sheets and equipment schedules, with the simulated-example notice, real check output, conclusion and next action visible.](docs/evidence/doctor-resume-ui-en-2026-10-13/item-blocked-en.jpg)
 
-   *Actual Chinese UI from the accepted software baseline. The example's team
-   arrangement assigns no one; the check results behind this item come from the
-   public buildingSMART sample models. [Capture source, limits and media hashes](docs/evidence/doctor-resume-ui-2026-10-13/README.md).*
-4. Lower on the item page, click **在示例“模型未改，但交接判断发生变化”里看这一项**
-   (see this item in the example "models unchanged, but the handover judgement
-   changed"): the recheck of the same record. Neither model is republished. Exactly
-   one of the 13 items changes: *building element*, under room data sheets and
-   equipment schedules, moves from **受阻** (blocked) to **可以开始** (can start). On
-   the other seven items the page marks the conclusion **复检前后未变** (unchanged by
-   the recheck). The page says that a check
-   requirement it was judged against changed, and does not say whether it was
-   relaxed or tightened.
+   *Actual English UI from the frozen Doctor. The example's team arrangement
+   assigns no one; the check results behind this item come from the public
+   buildingSMART sample models. [Capture source, limits and media hashes](docs/evidence/doctor-resume-ui-en-2026-10-13/README.md).*
+4. Lower on the item page, click **See this item in the example "The models did
+   not change, but a handover conclusion did"**: the recheck of the same record.
+   Neither model is republished. Exactly one of the 13 items changes:
+   *building element*, under Room data sheets and equipment schedules, moves from
+   **Blocked** to **Ready**. Ready holds for this one item, this work and the
+   listed model versions only; it does not mean the whole handover is complete.
+   On the other seven items the page marks the conclusion **Unchanged by the
+   recheck**. The page says that a check requirement it was judged against
+   changed, and does not say whether it was relaxed or tightened. **A changed
+   conclusion does not mean the original condition is met.**
 
-The same example is also in the catalogue as **第二步** (step two).
+The same example is also in the catalogue as **Step 2**.
 
 ### A short operation recording
 
-[Watch the 80-second Chinese UI recording](docs/evidence/doctor-resume-ui-2026-10-13/doctor-live.webm)
+[Watch the 80-second English UI recording](docs/evidence/doctor-resume-ui-en-2026-10-13/doctor-live-en.webm)
 of the real local application navigating the bundled simulated example. It has
 no narration, model edits or real-project acceptance claim. The recheck changes
 one conclusion without either model being reissued; that does not establish that
 the original closure condition has been met. Source SHA and actual duration are
-in the [media note](docs/evidence/doctor-resume-ui-2026-10-13/README.md).
+in the [English media note](docs/evidence/doctor-resume-ui-en-2026-10-13/README.md).
 
 ## Check your own IFC4 file (limited)
 
@@ -110,17 +113,23 @@ not mean your project has a defect, and a pass does not say the classification i
 right or that any work can start. It gives none of the handover conclusions the
 example shows.
 
-1. On the home page click **开始本地检查** (start a local check). Before you choose
+1. On the home page click **Start a local check**. Before you choose
    anything, the page says what is checked, where the requirement comes from, how to
    read a result, and what this computer keeps.
-2. Click **选择一个或多个 .ifc 文件** (choose one or more .ifc files) and pick them
+2. Click **Choose one or more .ifc files** and pick them
    (IFC4 text files only: the page says it does not accept `.ifczip`, `.ifcxml` or
    Revit files, and an IFC2x3 file is refused with how to export it again). Declare
-   each file's discipline, click **查看检查范围** (view the scope), check the scope the
-   page shows, then click **运行检查** (run the check).
+   each file's discipline, click **See the scope of the check**, check the scope the
+   page shows, then click **Run the check**.
 3. The result opens on its own page: a list with one row per result, giving the
    element's name, category, model, floor and IFC Tag. Click a row to see its
    GlobalId and what would have to change.
+
+![A real local check in English: chimney cover fails PV-001 on public Building-Hvac.ifc; the input identity and single-rule limits are visible.](docs/evidence/doctor-resume-ui-en-2026-10-13/local-detail-en.jpg)
+
+*Actual English result from the unchanged public HVAC sample. This is one
+product-validation rule, not a handover assessment.
+[Source and capture limits](docs/evidence/doctor-resume-ui-en-2026-10-13/README.md).*
 
 To try it without a model of your own, use a public sample from the clone:
 `data/raw/Building-Hvac.ifc`, declared as HVAC. It runs in about a second and gives
@@ -149,10 +158,11 @@ The page explains how to clean the records up. More in
   delivered" conclusion, writing back to a model, uploading, opening an element in
   Revit, starting a recheck from the page, marking an item resolved, and assigning or
   notifying anyone.
-* **Status of the wording.** The interface opens in Chinese, and an English wording
-  is available (`?lang=en` on any address). The wording of the main path, in both
-  languages, has been through this project's own domain-wording review on the accepted
-  UI baseline. This remains a preview, not a production deployment or a formal
+* **Status of the wording.** The quick-start address opens the main path in English
+  (`?lang=en`, before any route fragment); Chinese is also available. The main
+  path's wording in both languages has been through this project's own
+  domain-wording review on the accepted UI baseline. This remains a preview, not
+  a production deployment or a formal
   model acceptance decision. The record, activity and member pages are not translated
   and say so.
 
@@ -196,6 +206,12 @@ BIM Doctor 是个人开源项目，讲的是 IFC 模型从一个专业交给下�
    （风口须声明四种预定义类型之一），不是通用质量检查，也不给示例里的交接结论；Revit
    文件本身不能导入。可以先用克隆里的公开样例 `data/raw/Building-Hvac.ifc`（专业选暖通）试。
    文件只复制到本机，不上传；记录所在的文件夹在服务器启动时会打印出来。
+
+![新版中文 BIM Doctor 事项页：building element 的房间数据表与设备明细表事项受阻，显示模拟来源、下一步及复检条件。](docs/evidence/doctor-resume-ui-2026-10-13/item-blocked-zh.jpg)
+
+中文原素材继续保留：[80 秒中文操作实录](docs/evidence/doctor-resume-ui-2026-10-13/doctor-live.webm)，
+[截图来源、边界与哈希](docs/evidence/doctor-resume-ui-2026-10-13/README.md)。实录无旁白，演示模拟交接，
+没有修改模型或作真实项目验收；结论改变不等于原结束条件已经满足。
 
 读结果时记住三点，页面上都有对应的说明：事项数不是缺陷数；“无法判断”不等于这个构件
 没有问题；处理团队是示例里的安排，不代表已经派发。主路径的中英措辞经过本项目自己的领域
