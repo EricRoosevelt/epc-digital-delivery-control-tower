@@ -2,7 +2,7 @@
   "schema_version": "1.0",
   "component": "three",
   "version": "0.186.1",
-  "distribution_boundary": "vendored_unmodified_when_integrated",
+  "distribution_boundary": "vendored_unmodified",
   "upstream": {
     "repository": "https://github.com/mrdoob/three.js",
     "registry": "https://registry.npmjs.org/",
@@ -39,7 +39,7 @@
     }
   ],
   "repository_policy": {
-    "build_files_committed": false,
+    "build_files_committed": true,
     "vendored_location": "third_party/three/0.186.1/",
     "git_text_normalization": "disabled for vendored files",
     "bundler": "none; loaded as ES modules through an import map"

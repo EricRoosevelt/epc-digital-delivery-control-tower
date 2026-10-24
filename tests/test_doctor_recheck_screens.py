@@ -1309,7 +1309,9 @@ class ScreenStructureTests(unittest.TestCase):
         # PM U1 (2026-10-09): the recommended action comes straight after the
         # purpose; what is available and what is not is said after the entries.
         self.assertLess(entry.index("HOME.lede"), entry.index("primary-action"))
-        self.assertLess(entry.index("primary-action"), entry.index("HOME.example.body"))
+        self.assertLess(entry.index("primary-action"), entry.index("UI.reviewBody"))
+        self.assertIn('card("fixture", HOME.example)', entry)
+        self.assertIn("local ? local.card : null", entry)
         self.assertLess(entry.index("entry-grid"), entry.index("said.status"))
         self.assertLess(entry.index("said.status"), entry.index("HOME.cannotHeading"))
         self.assertNotIn("details", entry)

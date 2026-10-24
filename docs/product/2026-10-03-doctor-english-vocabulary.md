@@ -1381,3 +1381,13 @@
 | outside | 当前选中项不在筛选结果中；详情保持可读。 | The selected item is outside this filter. Its detail remains visible. |
 | name | 名称 | Name |
 | basis | 依据 | Basis |
+
+## 2026-10-24 WORKSPACE_UI：真实 3D 工作台入口
+
+本轮只新增入口文案；既有领域词和历史记录不变。
+
+| Key | 中文 | English |
+|---|---|---|
+| review | 3D 检查工作台 | 3D review workspace |
+| reviewAction | 打开 3D 检查工作台 | Open 3D review workspace |
+| reviewBody | 载入真实公共示例或自己的 IFC，在模型中定位问题，并查看有证据的处理建议。 | Load the real public example or your own IFC, locate issues in the model, and read evidence-based next steps. |

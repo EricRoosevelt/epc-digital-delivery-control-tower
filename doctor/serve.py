@@ -60,7 +60,9 @@ LOOPBACK_NAMES = ("127.0.0.1", "localhost", "[::1]")
 #: The body type each endpoint that is sent something takes. Neither can be
 #: sent cross-site without the browser asking first, and nothing here answers.
 POSTED_TYPES = {
+    "/api/review/advice": "application/json",
     "/api/local/models": "application/octet-stream",
+    "/api/review/models": "application/octet-stream",
     "/api/local/plan": "application/json",
     "/api/local/checks": "application/json",
 }
@@ -208,6 +210,8 @@ def _json(handler: BaseHTTPRequestHandler, status: HTTPStatus, body: object) -> 
 def make_handler(
     source_factory: Callable[[], Source],
     local_factory: Callable[[], object] | None = None,
+    review_factory: Callable[[], object] | None = None,
+    advice_factory: Callable[[], object] | None = None,
 ) -> type[BaseHTTPRequestHandler]:
     """The request handler; ``local_factory`` enables the local check endpoints."""
 
@@ -233,6 +237,9 @@ def make_handler(
                     return
                 if parts.path == "/api/local" or parts.path.startswith("/api/local/"):
                     self._local_get(parts.path, parse_qs(parts.query))
+                    return
+                if parts.path.startswith("/api/review/"):
+                    self._review_get(parts.path, parse_qs(parts.query))
                     return
                 self._api(parts.path, parse_qs(parts.query))
                 return
@@ -272,7 +279,106 @@ def make_handler(
                 self.close_connection = True
                 _json(self, HTTPStatus.LENGTH_REQUIRED, {"error": "Content-Length is required"})
                 return
+            if length < 0:
+                self.close_connection = True
+                _json(self, HTTPStatus.BAD_REQUEST, {"error": "Negative Content-Length"})
+                return
+            if parts.path == "/api/review/models":
+                self._review_post(parse_qs(parts.query), length)
+                return
+            if parts.path == "/api/review/advice":
+                self._advice_post(length)
+                return
             self._local_post(parts.path, parse_qs(parts.query), length)
+
+        def _review(self):
+            if review_factory is None:
+                raise SourceUnavailable("This server was started without IFC review.")
+            return review_factory()
+
+        def _review_get(self, path: str, query: dict[str, list[str]]) -> None:
+            try:
+                if path == "/api/review/ai":
+                    _json(self, HTTPStatus.OK, self._advice().describe())
+                    return
+                store = self._review()
+                if path == "/api/review/demo":
+                    answer = store.demo()
+                elif path == "/api/review/report":
+                    answer = store.get((query.get("review") or [""])[0])
+                elif path == "/api/review/geometry":
+                    answer = store.geometry((query.get("review") or [""])[0])
+                else:
+                    _json(self, HTTPStatus.NOT_FOUND, {"error": "Unknown review endpoint"})
+                    return
+                _json(self, HTTPStatus.OK, answer)
+            except KeyError:
+                _json(self, HTTPStatus.NOT_FOUND,
+                      {"error": "Review not found in this session."})
+            except SourceUnavailable as error:
+                _json(self, HTTPStatus.SERVICE_UNAVAILABLE, {"error": str(error)})
+            except Exception as error:
+                _json(self, HTTPStatus.INTERNAL_SERVER_ERROR,
+                      {"error": f"{type(error).__name__}: {error}"})
+
+        def _advice(self):
+            if advice_factory is None:
+                raise SourceUnavailable("This server was started without review advice.")
+            return advice_factory()
+
+        def _advice_post(self, length: int) -> None:
+            from doctor.advice import AdviceUnavailable
+
+            if length > MAX_REQUEST_BYTES:
+                self.close_connection = True
+                _json(self, HTTPStatus.REQUEST_ENTITY_TOO_LARGE,
+                      {"error": "Advice request is too large."})
+                return
+            try:
+                request = json.loads(self.rfile.read(length).decode("utf-8"))
+                if not isinstance(request, dict):
+                    raise ValueError("Advice request must be a JSON object.")
+                review_id, finding_id = request.get("review_id"), request.get("finding_id")
+                if not isinstance(review_id, str) or not isinstance(finding_id, str):
+                    raise ValueError("Select a review and a finding before requesting advice.")
+                answer = self._advice().explain(
+                    review_id, finding_id, language=request.get("language", "en"),
+                    use_ai=request.get("use_ai", False),
+                )
+                _json(self, HTTPStatus.OK, answer)
+            except (ValueError, UnicodeDecodeError) as error:
+                _json(self, HTTPStatus.BAD_REQUEST, {"error": str(error)})
+            except KeyError:
+                _json(self, HTTPStatus.NOT_FOUND,
+                      {"error": "The selected review or finding is not in this session."})
+            except (AdviceUnavailable, SourceUnavailable) as error:
+                _json(self, HTTPStatus.SERVICE_UNAVAILABLE, {"error": str(error)})
+            except Exception as error:
+                _json(self, HTTPStatus.INTERNAL_SERVER_ERROR,
+                      {"error": f"{type(error).__name__}: {error}"})
+
+        def _review_post(self, query: dict[str, list[str]], length: int) -> None:
+            try:
+                store = self._review()
+                if length > store.max_model_bytes:
+                    _drain(self.rfile, length)
+                    self.close_connection = True
+                    _json(self, HTTPStatus.REQUEST_ENTITY_TOO_LARGE,
+                          {"error": f"The model exceeds {store.max_model_bytes} bytes."})
+                    return
+                body = self.rfile.read(length)
+                if len(body) != length:
+                    raise ValueError("The model upload was incomplete.")
+                answer = store.create((query.get("filename") or [""])[0], body)
+                _json(self, HTTPStatus.OK, answer)
+            except SourceUnavailable as error:
+                self.close_connection = True
+                _json(self, HTTPStatus.SERVICE_UNAVAILABLE, {"error": str(error)})
+            except ValueError as error:
+                _json(self, HTTPStatus.BAD_REQUEST, {"error": str(error)})
+            except Exception as error:
+                _json(self, HTTPStatus.INTERNAL_SERVER_ERROR,
+                      {"error": f"{type(error).__name__}: {error}"})
 
         def _local(self):
             if local_factory is None:
@@ -382,9 +488,13 @@ def make_handler(
 
         def _static(self, path: str) -> None:
             name = "index.html" if path in ("", "/") else path.lstrip("/")
-            target = (STATIC / name).resolve()
+            root = STATIC
+            if path.startswith("/vendor/three/"):
+                root = REPOSITORY_ROOT / "third_party/three/0.186.1"
+                name = path.removeprefix("/vendor/three/")
+            target = (root / name).resolve()
             if (
-                STATIC not in target.parents
+                root not in target.parents
                 or not target.is_file()
                 or target.suffix not in CONTENT_TYPES
             ):
@@ -439,10 +549,21 @@ def main(argv: list[str] | None = None) -> int:
         sys.path.insert(0, str(REPOSITORY_ROOT))
     source = functools.partial(adapter_source, arguments.workspace, arguments.prior)
     local = local_checks(arguments.checks_dir, arguments.max_model_bytes)
+    from internal.doctor_adapter.review import ReviewStore
+
+    review_options = {} if arguments.max_model_bytes is None else {
+        "max_model_bytes": arguments.max_model_bytes
+    }
+    reviews = ReviewStore(REPOSITORY_ROOT, **review_options)
+    from doctor.advice import AdviceService
+
+    advice = AdviceService(reviews)
     server = ThreadingHTTPServer(
-        ("127.0.0.1", arguments.port), make_handler(source, lambda: local)
+        ("127.0.0.1", arguments.port),
+        make_handler(source, lambda: local, lambda: reviews, lambda: advice),
     )
     print(f"BIM Doctor preview: http://127.0.0.1:{arguments.port}/")
+    print(f"3D IFC review: http://127.0.0.1:{arguments.port}/review.html")
     print(f"Local checks are kept in {local.root}")
     try:
         server.serve_forever()

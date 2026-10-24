@@ -12,6 +12,19 @@ BIM Doctor brings those answers together in a local browser application. It is
 built for people coordinating building models across teams. IFC is the open file
 format used to exchange those models.
 
+## 3D model review and optional AI advice
+
+Open **[the 3D workspace](http://127.0.0.1:8765/review.html?lang=en)** after starting
+the local server below. Load the public three-model example or import one IFC
+file, select a check result and focus or isolate its actual geometry. Four review
+checks cover air-terminal type, readable names, storey association and model-local
+GlobalId integrity. Information prompts remain separate from check failures.
+
+Each result includes observed evidence, practical local guidance and verification
+steps. Optional OpenAI advice uses the selected finding's text evidence; IFC files
+and mesh data stay in the local server. Set `OPENAI_API_KEY` in the server's
+environment to enable it. [Setup and current limits](doctor/README.md#3d-review-workspace).
+
 ## A check with somewhere to go next
 
 In the bundled example, a duct segment is missing the asset identifiers needed

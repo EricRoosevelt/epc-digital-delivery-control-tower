@@ -1,4 +1,69 @@
-# BIM Doctor — D1 internal preview
+# BIM Doctor — local model review
+
+## 3D review workspace
+
+Start the server from the repository root and open the workspace:
+
+```powershell
+.\.venv\Scripts\python.exe doctor/serve.py
+# English: http://127.0.0.1:8765/review.html?lang=en
+# 中文:   http://127.0.0.1:8765/review.html?lang=zh
+```
+
+Load the public buildingSMART example or import one `.ifc` file (up to 50 MB).
+Select a result to highlight its exact element, focus or isolate it, and inspect
+the rule, observed value and next steps. You can also click a visible element and
+read its checks. Models are positioned using IFC world coordinates in metres;
+no geometry is invented for objects without a representation. Missing geometry
+does not erase an element's check results.
+
+The four runtime review checks are PV-001 (the existing four-value air-terminal
+type convention), INFO-001 (non-blank instance Name), INFO-002 (resolvable storey)
+and ID-001 (valid, model-local unique GlobalId). Name and storey results are
+information prompts: site-level or multi-storey containment can be intentional.
+The public sample produces 39 elements, 32 renderable shapes, 2 type failures and
+19 storey prompts. These are review counts, not a defect or compliance score.
+
+The browser uploads a selected file only to this loopback server. Review data and
+geometry are kept in memory for this server session. A refresh or language change
+can reopen the same review while the server runs; a restart clears it. To check
+an edited model, export IFC again and import the revision. This workspace does not
+yet compare two revisions or persist issue handling. The established example and
+recheck experiences remain available from **Records & checks**.
+
+### OpenAI setup
+
+Local rule guidance is available immediately. To enable optional generated advice,
+set `OPENAI_API_KEY` in the terminal that starts the server; use your operating
+system's secret/environment settings or a masked prompt. For example, PowerShell:
+
+```powershell
+$doctorKey = Read-Host 'OpenAI API key' -AsSecureString
+$env:OPENAI_API_KEY = [System.Net.NetworkCredential]::new('', $doctorKey).Password
+$env:OPENAI_MODEL = 'gpt-4.1-mini' # optional; this is the default
+.\.venv\Scripts\python.exe doctor/serve.py
+# When finished, stop with Ctrl+C and clear this terminal's key:
+Remove-Item Env:OPENAI_API_KEY
+```
+
+Then click **Generate AI advice** on a selected result. The server calls the
+OpenAI Responses API using the selected rule, actual/expected values, element
+name/class/storey/tag and local engineering guidance. It sends no IFC bytes, mesh
+arrays, file path or other findings. Facts and citation labels remain copied
+from the local result; the generated summary/actions are suggestions. The request
+sets `store: false`; this is not a promise about the provider's broader data
+retention policy. Calls use the user's API account and may incur charges.
+
+The key is never returned to the browser. A missing key leaves **Rule guidance**
+available; a timeout, provider refusal or quota error is reported without claiming
+that AI generated advice. There is no automatic model edit or status change.
+Transport and selection are covered by offline tests; evaluating a live model
+requires a configured account and representative project examples.
+
+Implementation notes and each worker's handoff are linked from
+[`docs/product/2026-10-24-product-phase1.md`](../docs/product/2026-10-24-product-phase1.md).
+
+## Established example preview
 
 A local, clickable preview of the D1 screen flow
 ([design](../docs/product/2026-09-16-doctor-d1-screen-flow.md), PR #11) for a

@@ -43,7 +43,7 @@ Ownership model B: `doctor/static/doctor.css :root` is canonical. DESIGN.md mirr
 
 ## Typography
 
-No fetched fonts. Segoe/CJK fallbacks remain local. The v2 proposal's display family and compact spacing are adopted while the application's existing 16px body is retained on desktop and mobile. Density is achieved through geometry, not by reducing body text to the prototype's 15/14px. Main headings use 28px desktop / 26px mobile; home 34/30px; detail object names 26px and wrap fully. Existing smaller metadata remains metadata, not action instructions. Model keys/Tag/digests use the data stack.
+No fetched fonts. Segoe/CJK fallbacks remain local. Existing reading screens retain their 16px body. Main headings use 28px desktop / 26px mobile; home 34/30px; existing detail object names 26px and wrap fully. The operational 3D workspace uses 14px finding names, 13px action text at 1.7 line height, 22px selected object names, and 10–12px metadata. Model keys/Tag/digests use the data stack.
 
 ## Layout
 
@@ -65,7 +65,7 @@ Panels 7px, controls 5px, textual state markers 4px. State labels never wrap ver
 
 `shell.js` owns app identity/main links; `language.js` owns the language control; `dom.js` owns text-safe construction and shared primitives; `screens.js` owns example/item/recheck arrangement; `workspace-screens.js` owns result selection/detail; `local-check.js` owns real input steps and result framing. `view-state.js` owns transient same-check UI continuity. `ui-words.js` registers navigation/layout wording separately from domain vocabulary. See UX-CONTRACT.md for ownership and behavior.
 
-Value path: CSS semantic root → existing shared component selectors → all main-path screens; DESIGN mirrors that path. No generated token exports, second stylesheet or per-page theme copy. Browser computed style and token drift validation are required.
+Value path: CSS semantic root → shared component selectors → main-path screens; DESIGN mirrors that path. No generated token exports or per-page theme copy. The named review workspace variant adds review.css for geometry and operational components while importing doctor.css for all shared color/font/control tokens. Browser computed style and token drift validation are required.
 
 ## Iconography
 
@@ -82,3 +82,15 @@ No animation is necessary for this reading workflow. In-page jumps move visible 
 - Preserve type-change impact and undecided value/actor outside folds. Checker-read folding is limited to the reviewed known local PV-001 FAIL notes.
 - Return to a visible selected row or search; never focus a hidden filtered-out link.
 - Describe actual verification and remaining review separately. Prototype approval does not mean the implemented candidate passed TD/UX/BIM.
+
+## 3D review workspace variant
+
+The 2026-10-24 product implementation extends BIM Doctor with `/review.html?lang=zh|en`. Its audience is an engineer checking a real IFC; its single job is to connect a requirement, its actual element, and an evidence-grounded next action. Existing record routes remain available.
+
+The signature is a large, pale engineering model stage between two quiet evidence rails. Source geometry, rather than a decorative hero or score, carries the page. Existing teal #245c70, ink #172b3a, surface #ffffff and muted #536777 remain canonical. Review-only roles live in `.review-app`: viewport #e7edf1, selection #0a6c85, selection fill #edf8fb, viewport ink #244759. Three.js uses cyan for the selected element and muted orange for elements needing review; words identify both states.
+
+At 1440px the layout uses 270px / flexible viewport / 330px columns and 24px outside gutters. Below 1180px the evidence panel moves below; below 700px the model stage, issue list, and evidence stack in that order. The document owns overall vertical scroll, while only the finite issue register has a bounded internal scroller. The right evidence/actions rail grows naturally. No overlay hides evidence on a phone.
+
+IFC remains Z-up in world metres. Initial framing uses an IQR-based main spatial cluster so source origin/georeference helper objects do not make the building tiny; Show all frames every visible source mesh. No source position is modified. Model filter visibility, element selection, focus/isolation, and the detail rail all use `element_key`, never GlobalId alone. Advice puts actions and verification before folded known facts. INFO is a neutral information state; PV-001 is a repository rule requiring review, not a statutory or construction failure.
+
+Canonical owners are review.js (state, loading, finite result list, source/upload and advice), review-viewer.js (Three renderer and camera/picking), review-words.js (registered bilingual UI), and existing dom.js/language.js (safe text and language switching). Native selects retain OS-owned popup behavior. Loading is indeterminate and cancellable; failures preserve the prior report and expose Retry. A failed WebGL/geometry request leaves checks and advice usable. No configured AI key means explicitly labelled local rule guidance. A configured key alone is labelled configured; generated advice is only labelled AI after the endpoint returns mode=ai.

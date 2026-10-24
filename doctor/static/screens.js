@@ -32,7 +32,7 @@ import {
 } from "./dom.js";
 import { basisOf, firstCheckItem, firstCheckModel, leafOf, recordCitations } from "./first-check-model.js";
 import { handoverSide, recheckModel, sealedGroupIndex } from "./recheck-model.js";
-import { compose, fill, plural } from "./i18n.js";
+import { compose, fill, plural, LANG } from "./i18n.js";
 import { workspaceCheck, workspaceCompare, workspaceRefusal } from "./workspace-screens.js";
 import {
   ACTION,
@@ -464,10 +464,10 @@ function entry(workspace = { runs: [] }, local = null) {
         "article",
         { class: "entry-card primary" },
         h("p", { class: "kicker" }, HOME.recommended),
-        h("h3", {}, HOME.example.title),
-        h("button", { type: "button", class: "primary-action", onclick: open("fixture") }, HOME.example.action),
-        h("p", {}, HOME.example.body),
-      ), local ? local.card : null),
+        h("h3", {}, UI.review),
+        h("a", { class: "primary-action", href: `/review.html?lang=${LANG}` }, UI.reviewAction),
+        h("p", {}, UI.reviewBody),
+      ), card("fixture", HOME.example), local ? local.card : null),
       workspaceRun
         ? h(
             "div",

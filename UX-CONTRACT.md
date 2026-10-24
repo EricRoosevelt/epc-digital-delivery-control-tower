@@ -49,3 +49,22 @@ Existing stage/plan/check requests remain pessimistic, labelled and duplicate-di
 ## Verification
 
 Use the project venv and mandatory pinned IDS audit for all AGENTS gates. Explicit browser commands require externally available Playwright/browser and an isolated server/checks directory; they are not silently substituted by static audits. `doctor_ui.browser.cjs`, `doctor_mobile_search.browser.cjs`, state-matrix browser evidence and `test_doctor_view_state.py` cover navigation/continuity. Full TD/UX/BIM review, real-device/IME/screen-reader and full WCAG claims require their own evidence.
+
+## Real IFC review workspace
+
+The authorized 2026-10-24 product scope adds `/review.html` and the `ReviewStore` HTTP contract under `/api/review/`. This is a named operational variant, with the existing record/check paths preserved. The homepage recommends the new workbench and keeps both prior paths reachable.
+
+| Capability | Canonical owner | Source of truth | Allowed variants | Verification |
+|---|---|---|---|---|
+| Table Selection | review.js selected finding and element state | ReviewStore element_key/finding_id | Single finding; direct 3D selection chooses its relevant finding | doctor_review.browser.cjs list/pick/detail |
+| Select/Listbox | review.js native select controls | ReviewStore models/status/severity | OS popup accepted, labelled model/result/per-element rule | Browser selectOption, keyboard/native popup |
+| Form | review.js file input and load actions | POST /api/review/models raw IFC | One .ifc up to server limit; explicit picker; duplicate-disabled | Real Building-Hvac.ifc upload |
+| Scrollbar | doctor.css global baseline | DESIGN.md | Bounded issue register; naturally growing detail and document | Desktop/390px overflow inspection |
+
+Search is local and IME-safe, with an explicit clear that restores input focus. Search and filters remain transient in memory and do not put private object names into URLs/storage. The review ID alone is retained in the URL for language reload and report reopening; reload starts from the first relevant issue. The register renders 100 results initially and explicitly loads the next 100, with a visible total. Initial results prefer severity ERROR + FAIL, labelled Needs review; when none exist, they show INFO + FAIL, then PASS, or all results when neither applies. Selection starts inside that initial filter. Information is labelled neutrally throughout list, per-element rule select and evidence. The stored rule status remains evidence, not an overall release conclusion.
+
+The list and 3D stage use model-qualified element_key. Selecting another element cancels prior advice; late results cannot replace the current selection's advice. Model filters hide meshes without changing source geometry or report records. A selected item outside a filter retains readable detail and an explicit notice. Geometry-less elements retain identity, every result and advice, with focus/isolation disabled. Camera buttons offer a non-drag alternative to orbit/zoom. Display all includes source reference helpers; reset returns to the main spatial cluster.
+
+Requests are pessimistic, duplicate-disabled, abortable and time-bounded. Failed model loads preserve the prior report. Failed geometry/WebGL leaves result reading available and offers retry. No estimated percentage or fabricated geometry appears. Advice labels the server-returned mode, renders all evidence as text and has a retry state. Local guidance sends no AI request. The explicit AI action sends the current finding's minimal evidence through the server, with the visible notice that IFC/geometry are not sent. API configuration is not presented as a successful provider connection.
+
+`tests/doctor_review.browser.cjs` is the real-server integration check, including deliberately failed transport recovery. It stores new evidence under `docs/evidence/product-phase1/` without recapturing historical snapshots.
