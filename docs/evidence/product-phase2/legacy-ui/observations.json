@@ -1,0 +1,80 @@
+[
+  {
+    "lang": "zh",
+    "home": {
+      "top": 500.0625,
+      "bottom": 544.453125,
+      "left": 58,
+      "right": 233.15625,
+      "scroll": 0,
+      "bodyFont": "16px",
+      "explanationTop": 593.546875,
+      "shell": true
+    }
+  },
+  {
+    "lang": "en",
+    "home": {
+      "top": 619.0625,
+      "bottom": 663.453125,
+      "left": 58,
+      "right": 288.953125,
+      "scroll": 0,
+      "bodyFont": "16px",
+      "explanationTop": 712.546875,
+      "shell": true
+    }
+  },
+  {
+    "lang": "zh",
+    "width": 375,
+    "selected": {
+      "top": 397.234375,
+      "query": "house",
+      "overflow": "visible",
+      "maxHeight": "none",
+      "listVisible": false,
+      "url": "http://127.0.0.1:8774/?lang=en#/local/e7838dad4ac0d3b3/finding/3ccf0d43-76d7-53c8-863c-601dc7878825",
+      "sourceVisible": true
+    }
+  },
+  {
+    "lang": "en",
+    "width": 375,
+    "selected": {
+      "top": 380.140625,
+      "query": "house",
+      "overflow": "visible",
+      "maxHeight": "none",
+      "listVisible": false,
+      "url": "http://127.0.0.1:8774/?lang=zh#/local/e7838dad4ac0d3b3/finding/3ccf0d43-76d7-53c8-863c-601dc7878825",
+      "sourceVisible": true
+    }
+  },
+  {
+    "lang": "zh",
+    "width": 1280,
+    "selected": {
+      "top": 676.28125,
+      "query": "house",
+      "overflow": "visible",
+      "maxHeight": "none",
+      "listVisible": true,
+      "url": "http://127.0.0.1:8774/?lang=en#/local/e7838dad4ac0d3b3/finding/3ccf0d43-76d7-53c8-863c-601dc7878825",
+      "sourceVisible": true
+    }
+  },
+  {
+    "lang": "en",
+    "width": 1280,
+    "selected": {
+      "top": 649.890625,
+      "query": "house",
+      "overflow": "visible",
+      "maxHeight": "none",
+      "listVisible": true,
+      "url": "http://127.0.0.1:8774/?lang=zh#/local/e7838dad4ac0d3b3/finding/3ccf0d43-76d7-53c8-863c-601dc7878825",
+      "sourceVisible": true
+    }
+  }
+]

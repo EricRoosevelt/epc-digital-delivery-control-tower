@@ -1391,3 +1391,9 @@
 | review | 3D 检查工作台 | 3D review workspace |
 | reviewAction | 打开 3D 检查工作台 | Open 3D review workspace |
 | reviewBody | 载入真实公共示例或自己的 IFC，在模型中定位问题，并查看有证据的处理建议。 | Load the real public example or your own IFC, locate issues in the model, and read evidence-based next steps. |
+
+## 2026-10-25 WORKSPACE_UI：持久项目与复查入口
+
+| Key | 中文 | English |
+|---|---|---|
+| projects | 项目与复查 | Projects & rechecks |

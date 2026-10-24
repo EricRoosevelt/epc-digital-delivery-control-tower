@@ -20,6 +20,12 @@ file, select a check result and focus or isolate its actual geometry. Four revie
 checks cover air-terminal type, readable names, storey association and model-local
 GlobalId integrity. Information prompts remain separate from check failures.
 
+Use **[Projects & rechecks](http://127.0.0.1:8765/projects.html?lang=en)** to retain
+model revisions and 3D snapshots across restarts. Record follow-up work, import a
+new IFC into the same model and compare the evidence. A passed recheck, a missing
+object and a changed checking basis remain distinct. Each project can export a
+Markdown work brief. [Project workflow and storage](doctor/README.md#projects-and-revision-rechecks).
+
 Each result includes observed evidence, practical local guidance and verification
 steps. Optional OpenAI advice uses the selected finding's text evidence; IFC files
 and mesh data stay in the local server. Set `OPENAI_API_KEY` in the server's

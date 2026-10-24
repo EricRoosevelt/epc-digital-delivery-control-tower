@@ -1,0 +1,182 @@
+/* Projects extend the operational review variant; shared token ownership stays in doctor.css. */
+.projects-main { max-width: 1500px; padding: 30px 24px 60px; }
+.projects-page-heading { margin: 0 0 26px; }
+.projects-page-heading h1 { font-size: 28px; margin: 4px 0 8px; }
+.projects-page-heading > p:last-child { font-size: 14px; color: var(--muted); margin: 0; }
+.projects-layout { display: grid; grid-template-columns: 280px minmax(0, 1fr); gap: 20px; align-items: start; }
+.project-surface { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); }
+.project-sidebar { padding: 20px 14px; }
+.project-sidebar > h2 { padding: 0 6px; margin: 0; font-size: 16px; }
+.project-list-status { padding: 0 6px; font-size: 11px; color: var(--muted); }
+.project-list { display: grid; gap: 5px; max-height: 460px; overflow-y: auto; scrollbar-gutter: stable; }
+.review-app button.project-list-item { width: 100%; display: flex; flex-direction: column; gap: 5px; text-align: left; padding: 12px; border-color: transparent; background: var(--surface); }
+.project-list-item strong { font-size: 14px; font-weight: 600; overflow-wrap: anywhere; }
+.project-list-item span { color: var(--muted); font-size: 11px; }
+.review-app button.project-list-item.is-selected { border-color: var(--selection); background: var(--selection-fill); box-shadow: inset 3px 0 var(--selection); }
+.project-create-section { border-top: 1px solid var(--line); padding: 18px 6px 0; margin-top: 18px; }
+.project-create-section h3 { font-size: 14px; margin: 0 0 12px; }
+.project-create-form { display: grid; gap: 8px; }
+.review-app .project-create-form label { font-size: 11px; }
+.review-app input[type=text], .review-app textarea { width: 100%; min-width: 0; min-height: 40px; padding: 8px 10px; border: 1px solid var(--line); border-radius: var(--control-radius); font: 13px/1.5 var(--font-body); color: var(--ink); background: var(--surface); }
+.review-app textarea { resize: none; min-height: 112px; }
+.review-app [aria-invalid=true] { border-color: var(--problem-ink); }
+.project-create-form button { width: 100%; font-size: 13px; }
+.project-form-message { min-height: 20px; margin: 0; font-size: 12px; color: var(--muted); overflow-wrap: anywhere; }
+.project-form-message.is-error { color: var(--problem-ink); }
+.project-main-panel { min-width: 0; display: grid; gap: 18px; }
+.project-detail-heading { padding: 24px; display: flex; align-items: center; justify-content: space-between; gap: 20px; }
+.project-detail-heading h2 { font-size: 24px; line-height: 1.3; margin: 5px 0 8px; overflow-wrap: anywhere; }
+.project-detail-heading .project-muted { margin: 0; }
+.project-header-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
+.project-muted { color: var(--muted); font-size: 12px; }
+.review-app a.project-primary-link, .review-app a.project-secondary-link { display: inline-flex; align-items: center; justify-content: center; text-decoration: none; border: 1px solid var(--line); min-height: 38px; padding: 7px 12px; border-radius: var(--control-radius); font-size: 12px; color: var(--ink); text-align: center; line-height: 1.35; }
+.review-app a.project-primary-link { background: var(--accent); border-color: var(--accent); color: var(--on-accent); font-weight: 600; }
+.review-app a.project-primary-link:hover { background: var(--accent-hover); }
+.review-app a.project-secondary-link:hover { background: var(--callout-bg); border-color: var(--accent); }
+.review-app a.project-primary-link:active, .review-app a.project-secondary-link:active { box-shadow: inset 0 0 0 1px var(--ink); }
+.project-text-link { font-size: 12px; text-underline-offset: 3px; }
+.project-start-state { padding: 50px 32px; }
+.project-start-state h2, .project-start-state h3 { font-size: 22px; margin: 0 0 12px; }
+.project-start-state p { max-width: 560px; font-size: 14px; color: var(--muted); margin: 0 0 20px; }
+.project-loading, .project-error { padding: 28px; font-size: 14px; }
+.project-error { color: var(--problem-ink); }
+.project-model-list { display: grid; gap: 18px; }
+.project-model-heading { padding: 20px 22px; display: flex; justify-content: space-between; align-items: center; gap: 14px; border-bottom: 1px solid var(--line); }
+.project-model-heading h3 { font-size: 20px; margin: 4px 0; overflow-wrap: anywhere; }
+.project-model-heading p { margin: 0; }
+.project-model-actions { display: flex; gap: 7px; align-items: center; }
+.project-model-actions button { font-size: 12px; }
+.project-revision-row { display: grid; grid-template-columns: 46px minmax(150px, 1fr) auto auto; gap: 16px; align-items: center; padding: 16px 22px; border-bottom: 1px solid var(--line); }
+.project-revision-row:last-child { border: 0; }
+.project-revision-number { color: var(--accent); background: var(--callout-bg); border: 1px solid var(--line); border-radius: 4px; padding: 7px 4px; text-align: center; font: 12px var(--font-data); }
+.project-revision-name { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
+.project-revision-name strong { font-size: 14px; font-weight: 600; overflow-wrap: anywhere; }
+.project-revision-name > span { font-size: 10px; color: var(--muted); overflow-wrap: anywhere; }
+.project-revision-counts { display: flex; flex-direction: column; gap: 3px; font-size: 10px; color: var(--muted); white-space: nowrap; }
+.project-earlier-revisions { font-size: 12px; }
+.project-earlier-revisions > summary { padding: 14px 22px; color: var(--accent); }
+.project-compare { padding: 24px; scroll-margin-top: 20px; }
+.project-section-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; }
+.project-section-header h2 { font-size: 20px; margin: 0 0 6px; }
+.project-section-header p { margin: 0 0 12px; }
+.project-compare-form { display: grid; grid-template-columns: 1fr 1fr 1fr auto; gap: 12px; align-items: end; margin: 12px 0; }
+.project-compare-form > button { font-size: 12px; min-height: 38px; min-width: 140px; }
+.project-compare .project-form-message { margin-bottom: 16px; }
+.project-severity-switch { display: flex; gap: 6px; border-top: 1px solid var(--line); padding-top: 18px; margin-top: 12px; }
+.project-comparison-scope { font-size: 12px; line-height: 1.7; padding: 10px 12px; background: var(--callout-bg); border-left: 2px solid var(--accent); color: var(--ink); }
+.project-severity-switch button { display: flex; gap: 10px; align-items: center; font-size: 12px; }
+.project-severity-switch button > span { font: 11px var(--font-data); }
+.project-severity-switch button[aria-pressed=true] { border-color: var(--accent); color: var(--accent); background: var(--callout-bg); }
+.project-comparison-categories { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 14px 0 24px; }
+.review-app button.project-change-count { display: flex; align-items: center; gap: 10px; text-align: left; padding: 12px; min-height: 64px; }
+.project-change-count > strong { font: 600 24px/1.1 var(--font-display); min-width: 22px; }
+.project-change-count > span { font-size: 11px; line-height: 1.5; }
+.review-app button.project-change-count[aria-pressed=true] { border-color: var(--accent); background: var(--selection-fill); box-shadow: inset 0 -2px var(--accent); }
+.project-change-count.change-resolved strong { color: var(--accent); }
+.project-change-count.change-missing strong, .project-change-count.change-not_comparable strong { color: var(--unknown); }
+.project-comparison-heading { display: flex; gap: 16px; align-items: center; justify-content: space-between; }
+.project-comparison-heading h3 { margin: 0; font-size: 16px; }
+.project-comparison-hint { color: var(--muted); font-size: 12px; line-height: 1.6; margin: 8px 0 16px; }
+.project-empty-inline { padding: 24px 0; color: var(--muted); font-size: 13px; }
+.project-change-row { padding: 18px 0; border-top: 1px solid var(--line); }
+.project-change-row-heading { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
+.project-change-row-heading > div { min-width: 0; }
+.project-change-row-heading code { font-size: 10px; color: var(--muted); display: block; margin-bottom: 4px; }
+.project-change-row-heading strong { font-size: 14px; font-weight: 600; overflow-wrap: anywhere; display: block; }
+.project-change-row-heading .project-text-link { flex: none; }
+.project-observations { display: grid; grid-template-columns: 110px 1fr; gap: 8px 16px; font-size: 12px; margin: 16px 0 12px; }
+.project-observations dt { color: var(--muted); }
+.project-observations dd { margin: 0; overflow-wrap: anywhere; }
+.project-raw-status { display: inline-block; font: 10px var(--font-data); background: var(--unknown-bg); padding: 2px 5px; margin-right: 8px; border-radius: 3px; }
+.project-change-reason { font-size: 13px; line-height: 1.7; margin: 8px 0; }
+.project-row-identity { font-size: 10px; color: var(--muted); }
+.project-row-identity p { overflow-wrap: anywhere; }
+/* Review persistence and follow-up are explicit operational variants. */
+.project-review-context { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 13px 0 0; }
+.project-review-context-text { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 16px; font-size: 12px; min-width: 0; }
+.project-review-context-text strong { font-size: 12px; font-weight: 600; overflow-wrap: anywhere; }
+.project-context-status { background: var(--callout-bg); color: var(--accent); font-size: 11px; padding: 3px 7px; border-radius: 3px; }
+.project-review-context > button { font-size: 12px; flex: none; }
+.project-review-save { padding: 20px; margin-top: 14px; }
+.project-review-save .project-section-header > button { font-size: 12px; }
+.project-save-form { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; align-items: end; }
+.project-save-form > button { font-size: 13px; min-height: 40px; }
+.project-save-form > .project-form-message { grid-column: 1 / -1; }
+.project-followup { padding: 13px 0; margin-top: 16px; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+.project-followup > summary { display: flex; align-items: center; flex-wrap: wrap; gap: 7px; font-size: 12px; }
+.project-followup > summary::before { content: "+"; color: var(--accent); font-size: 16px; }
+.project-followup[open] > summary::before { content: "−"; }
+.project-followup > summary > strong { font-weight: 600; margin-right: auto; }
+.project-followup-state { font-size: 10px; color: var(--muted); padding: 2px 5px; background: var(--unknown-bg); border-radius: 3px; }
+.project-followup-state.work-in_progress { color: var(--accent); background: var(--callout-bg); }
+.project-followup-state.work-ready_for_recheck { color: var(--demo-ink); background: var(--demo-bg); }
+.project-followup-owner { flex-basis: 100%; margin-left: 17px; font-size: 10px; color: var(--muted); overflow-wrap: anywhere; }
+.project-followup-owner:empty { display: none; }
+.project-followup-form { display: grid; gap: 12px; margin-top: 16px; }
+.project-followup-form button { font-size: 12px; }
+.project-followup-note { font-size: 10px; line-height: 1.7; color: var(--muted); margin: 12px 0 0; }
+.project-followup-unsaved { border-top: 1px solid var(--line); margin-top: 14px; padding-top: 12px; display: flex; flex-wrap: wrap; gap: 6px; align-items: center; font-size: 11px; color: var(--muted); }
+.project-followup-unsaved > button { font-size: 11px; min-height: 28px; padding: 4px 8px; }
+.project-draft-dialog { max-width: min(440px, calc(100vw - 32px)); max-height: calc(100dvh - 40px); overflow-y: auto; border: 1px solid var(--line); border-radius: var(--radius); padding: 24px; color: var(--ink); background: var(--surface); }
+.project-draft-dialog::backdrop { background: #172b3a66; }
+.project-draft-dialog h2 { font-size: 20px; margin-bottom: 12px; }
+.project-draft-dialog p { font-size: 14px; line-height: 1.7; }
+.project-dialog-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 24px; }
+.project-dialog-actions button { font-size: 13px; }
+@media (min-width: 701px) and (max-width: 1180px) { .project-followup { grid-column: 1; } .project-identifiers { grid-column: 1; } }
+@media (max-width: 1100px) {
+  .projects-layout { grid-template-columns: 230px minmax(0, 1fr); gap: 14px; }
+  .project-detail-heading { flex-wrap: wrap; }
+  .project-header-actions { justify-content: flex-start; }
+  .project-revision-row { grid-template-columns: 40px 1fr auto; gap: 12px; padding: 14px 16px; }
+  .project-revision-counts { grid-column: 2; grid-row: 2; flex-direction: row; gap: 12px; }
+  .project-revision-row > a { grid-column: 3; grid-row: 1 / 3; }
+  .project-compare-form { grid-template-columns: 1fr 1fr; }
+  .project-model-heading { align-items: flex-start; }
+  .project-model-actions { flex-direction: column; align-items: stretch; }
+}
+@media (max-width: 700px) {
+  .projects-main { padding: 22px 14px 40px; }
+  .projects-page-heading { margin-bottom: 20px; }
+  .projects-page-heading h1 { font-size: 26px; }
+  .projects-page-heading > p:last-child { font-size: 13px; }
+  .projects-layout { display: block; }
+  .project-sidebar { margin-bottom: 16px; padding: 16px; }
+  .project-list { max-height: 200px; }
+  .project-create-section { padding-top: 14px; margin-top: 14px; }
+  .project-create-form { grid-template-columns: minmax(0, 1fr) auto; gap: 8px; }
+  .project-create-form label, .project-create-form .project-form-message { grid-column: 1 / -1; }
+  .review-app input[type=text], .review-app textarea { font-size: 16px; min-height: 44px; }
+  .project-create-form button { min-height: 44px; }
+  .project-detail-heading { padding: 20px; }
+  .project-detail-heading h2 { font-size: 23px; }
+  .project-header-actions { width: 100%; }
+  .project-header-actions a { flex: 1; min-height: 44px !important; }
+  .project-start-state { padding: 28px 22px; }
+  .project-model-heading { padding: 16px; }
+  .project-model-heading h3 { font-size: 18px; }
+  .project-model-actions button, .project-model-actions a { min-height: 40px; font-size: 11px; }
+  .project-revision-row { grid-template-columns: 34px minmax(0, 1fr); padding: 14px 16px; gap: 10px; }
+  .project-revision-name strong { font-size: 14px; }
+  .project-revision-row > a { grid-column: 2; grid-row: 3; justify-self: start; }
+  .project-revision-counts { grid-column: 2; grid-row: 2; flex-wrap: wrap; }
+  .project-compare { padding: 20px 16px; }
+  .project-compare-form { grid-template-columns: 1fr; }
+  .project-compare-form > button { min-height: 44px; }
+  .project-comparison-categories { grid-template-columns: 1fr 1fr; }
+  .review-app button.project-change-count { min-height: 75px; padding: 10px; gap: 8px; }
+  .project-severity-switch { flex-wrap: wrap; }
+  .project-severity-switch button { min-height: 42px; font-size: 11px; }
+  .project-comparison-heading { align-items: flex-start; }
+  .project-comparison-heading h3 { font-size: 15px; }
+  .project-comparison-heading > span { font-size: 10px; }
+  .project-change-row-heading { flex-wrap: wrap; }
+  .project-observations { grid-template-columns: 80px minmax(0, 1fr); gap: 10px; }
+  .project-review-context { align-items: flex-start; gap: 10px; }
+  .project-review-context-text { gap: 5px 10px; }
+  .project-review-context-text > .project-muted { display: none; }
+  .project-review-context > button { min-height: 40px; font-size: 11px; }
+  .project-review-save { padding: 16px; }
+  .project-save-form { grid-template-columns: 1fr; }
+  .project-followup-form select, .project-followup-form button { min-height: 44px; }
+}

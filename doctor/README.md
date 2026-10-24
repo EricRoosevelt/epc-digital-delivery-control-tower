@@ -24,12 +24,52 @@ information prompts: site-level or multi-storey containment can be intentional.
 The public sample produces 39 elements, 32 renderable shapes, 2 type failures and
 19 storey prompts. These are review counts, not a defect or compliance score.
 
-The browser uploads a selected file only to this loopback server. Review data and
-geometry are kept in memory for this server session. A refresh or language change
-can reopen the same review while the server runs; a restart clears it. To check
-an edited model, export IFC again and import the revision. This workspace does not
-yet compare two revisions or persist issue handling. The established example and
-recheck experiences remain available from **Records & checks**.
+The browser uploads a selected file only to this loopback server. Unsaved review
+data is kept for the server session. Use **Save to project** to retain a report,
+its 3D snapshot and follow-up records across restarts. The established example
+and recheck experiences remain available from **Records & checks**.
+
+## Projects and revision rechecks
+
+Open **[Projects & rechecks](http://127.0.0.1:8765/projects.html?lang=en)**
+([中文](http://127.0.0.1:8765/projects.html?lang=zh)).
+
+1. Create a project, then load the public example or your own IFC in the workspace.
+2. Choose **Save to project**, name the model and its first revision. The saved
+   record includes the actual report, rule snapshot and triangle geometry.
+3. On an individual result, record an owner, work status and note. Work status
+   can be Open, In progress or Ready for recheck; it does not change PASS/FAIL.
+4. From the model's project card, choose **Import new revision**. Upload the
+   newly exported IFC and save it under the existing model. A renamed file still
+   belongs to the same model when you select it explicitly.
+5. Compare two revisions and open an individual result in the appropriate saved
+   3D revision. Download a Markdown work brief from the project when useful.
+
+Recheck results distinguish a passed rule, a remaining finding, a new finding,
+an element not found now, a check no longer applicable, and an unavailable
+comparison. Optional information prompts are counted separately. Single-file
+comparison uses valid GlobalIds proven unique in that file and the same frozen
+rule predicate; it exposes changes of class, schema or rule basis. A vanished
+object or an empty check result is not evidence of a successful fix.
+
+The public three-file federation can be saved and reopened. Cross-revision
+object pairing currently supports single-file models; a federation comparison
+states that limit and keeps the two revisions' failed observations separate.
+Names, tags and STEP IDs are never used to guess identity across versions.
+
+The SQLite project library is at `<checks-dir>/projects/library.sqlite3`.
+The server prints its actual location on startup. `--checks-dir` or the existing
+`EPC_DOCTOR_CHECKS_DIR` setting chooses the external data directory. Saved revisions
+are immutable; follow-up text is updated for its own revision/finding. Opening a
+saved revision restores the report and geometry to the existing workspace and
+advice API. The source IFC file and API credentials are not stored by the project
+library. Unrelated older local-check entries retain their original storage behavior.
+
+Project records are local to this computer. An owner is a recorded person/team,
+not an authenticated assignment or notification. The downloaded brief uses the
+latest saved revision per model and its immediate predecessor, while keeping
+manual follow-up and machine results separate. Preserve your source IFC files
+and include the complete external project directory in your own backup routine.
 
 ### OpenAI setup
 
@@ -60,8 +100,9 @@ that AI generated advice. There is no automatic model edit or status change.
 Transport and selection are covered by offline tests; evaluating a live model
 requires a configured account and representative project examples.
 
-Implementation notes and each worker's handoff are linked from
-[`docs/product/2026-10-24-product-phase1.md`](../docs/product/2026-10-24-product-phase1.md).
+Implementation notes and worker handoffs are in
+[phase one](../docs/product/2026-10-24-product-phase1.md) and
+[phase two](../docs/product/2026-10-25-product-phase2.md).
 
 ## Established example preview
 

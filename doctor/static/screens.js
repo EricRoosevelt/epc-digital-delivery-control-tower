@@ -466,6 +466,7 @@ function entry(workspace = { runs: [] }, local = null) {
         h("p", { class: "kicker" }, HOME.recommended),
         h("h3", {}, UI.review),
         h("a", { class: "primary-action", href: `/review.html?lang=${LANG}` }, UI.reviewAction),
+        h("a", { class: "home-project-link", href: `/projects.html?lang=${LANG}` }, UI.projects, " ↗"),
         h("p", {}, UI.reviewBody),
       ), card("fixture", HOME.example), local ? local.card : null),
       workspaceRun

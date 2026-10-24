@@ -105,6 +105,10 @@ async function main() {
         if (backExists) {
           await page.locator(".ws-back").click();
           await page.locator("#workspace-filter").waitFor();
+          // Desktop detail already contains a visible filter. Wait for the
+          // hash route's actual focus handoff, not for that pre-existing field.
+          await page.waitForFunction(() =>
+            document.activeElement?.matches('.c-name a[aria-current="true"]'));
           const returned = await page.evaluate(() => ({ query: document.querySelector("#workspace-filter").value,
             focus: document.activeElement.textContent, current: document.activeElement.getAttribute("aria-current") }));
           assert.equal(returned.query, "house");

@@ -61,6 +61,9 @@ LOOPBACK_NAMES = ("127.0.0.1", "localhost", "[::1]")
 #: sent cross-site without the browser asking first, and nothing here answers.
 POSTED_TYPES = {
     "/api/review/advice": "application/json",
+    "/api/projects": "application/json",
+    "/api/projects/revisions": "application/json",
+    "/api/projects/followup": "application/json",
     "/api/local/models": "application/octet-stream",
     "/api/review/models": "application/octet-stream",
     "/api/local/plan": "application/json",
@@ -212,6 +215,7 @@ def make_handler(
     local_factory: Callable[[], object] | None = None,
     review_factory: Callable[[], object] | None = None,
     advice_factory: Callable[[], object] | None = None,
+    project_factory: Callable[[], object] | None = None,
 ) -> type[BaseHTTPRequestHandler]:
     """The request handler; ``local_factory`` enables the local check endpoints."""
 
@@ -237,6 +241,9 @@ def make_handler(
                     return
                 if parts.path == "/api/local" or parts.path.startswith("/api/local/"):
                     self._local_get(parts.path, parse_qs(parts.query))
+                    return
+                if parts.path == "/api/projects" or parts.path.startswith("/api/projects/"):
+                    self._project_get(parts.path, parse_qs(parts.query))
                     return
                 if parts.path.startswith("/api/review/"):
                     self._review_get(parts.path, parse_qs(parts.query))
@@ -289,7 +296,96 @@ def make_handler(
             if parts.path == "/api/review/advice":
                 self._advice_post(length)
                 return
+            if parts.path == "/api/projects" or parts.path.startswith("/api/projects/"):
+                self._project_post(parts.path, length)
+                return
             self._local_post(parts.path, parse_qs(parts.query), length)
+
+        def _projects(self):
+            if project_factory is None:
+                raise SourceUnavailable("This server was started without a project library.")
+            return project_factory()
+
+        def _project_get(self, path: str, query: dict[str, list[str]]) -> None:
+            try:
+                library = self._projects()
+                if path == "/api/projects":
+                    answer = {"projects": library.projects()}
+                elif path == "/api/projects/detail":
+                    answer = library.detail((query.get("project") or [""])[0])
+                elif path == "/api/projects/revision":
+                    answer = library.revision((query.get("revision") or [""])[0])
+                elif path == "/api/projects/compare":
+                    answer = library.compare((query.get("before") or [""])[0],
+                                             (query.get("after") or [""])[0])
+                elif path == "/api/projects/brief":
+                    from doctor.project_brief import project_brief
+
+                    body = project_brief(
+                        library, (query.get("project") or [""])[0],
+                        (query.get("language") or ["en"])[0],
+                    ).encode("utf-8")
+                    self.send_response(HTTPStatus.OK)
+                    self.send_header("Content-Type", "text/markdown; charset=utf-8")
+                    self.send_header("Content-Disposition",
+                                     'attachment; filename="bim-doctor-project-brief.md"')
+                    self.send_header("Content-Length", str(len(body)))
+                    self.send_header("Cache-Control", "no-store")
+                    self.end_headers()
+                    self.wfile.write(body)
+                    return
+                else:
+                    _json(self, HTTPStatus.NOT_FOUND, {"error": "Unknown project endpoint."})
+                    return
+                _json(self, HTTPStatus.OK, answer)
+            except KeyError as error:
+                _json(self, HTTPStatus.NOT_FOUND, {"error": str(error)})
+            except ValueError as error:
+                _json(self, HTTPStatus.BAD_REQUEST, {"error": str(error)})
+            except SourceUnavailable as error:
+                _json(self, HTTPStatus.SERVICE_UNAVAILABLE, {"error": str(error)})
+            except Exception as error:
+                _json(self, HTTPStatus.INTERNAL_SERVER_ERROR,
+                      {"error": f"{type(error).__name__}: {error}"})
+
+        def _project_post(self, path: str, length: int) -> None:
+            if length > MAX_REQUEST_BYTES:
+                self.close_connection = True
+                _json(self, HTTPStatus.REQUEST_ENTITY_TOO_LARGE,
+                      {"error": "Project request is too large."})
+                return
+            try:
+                request = json.loads(self.rfile.read(length).decode("utf-8"))
+                if not isinstance(request, dict):
+                    raise ValueError("Project request must be a JSON object.")
+                library = self._projects()
+                if path == "/api/projects":
+                    answer = library.create_project(request.get("name"))
+                elif path == "/api/projects/revisions":
+                    answer = library.save_revision(
+                        request.get("project_id"), request.get("review_id"),
+                        model_id=request.get("model_id"), model_name=request.get("model_name"),
+                        label=request.get("label", ""),
+                    )
+                elif path == "/api/projects/followup":
+                    answer = library.update_followup(
+                        request.get("revision_id"), request.get("finding_id"),
+                        status=request.get("status", "open"),
+                        owner=request.get("owner", ""), note=request.get("note", ""),
+                    )
+                else:
+                    _json(self, HTTPStatus.NOT_FOUND, {"error": "Unknown project endpoint."})
+                    return
+                _json(self, HTTPStatus.OK, answer)
+            except KeyError as error:
+                _json(self, HTTPStatus.NOT_FOUND, {"error": str(error)})
+            except (ValueError, UnicodeDecodeError) as error:
+                _json(self, HTTPStatus.BAD_REQUEST, {"error": str(error)})
+            except SourceUnavailable as error:
+                _json(self, HTTPStatus.SERVICE_UNAVAILABLE, {"error": str(error)})
+            except Exception as error:
+                _json(self, HTTPStatus.INTERNAL_SERVER_ERROR,
+                      {"error": f"{type(error).__name__}: {error}"})
 
         def _review(self):
             if review_factory is None:
@@ -558,13 +654,17 @@ def main(argv: list[str] | None = None) -> int:
     from doctor.advice import AdviceService
 
     advice = AdviceService(reviews)
+    from internal.doctor_adapter.project_library import ProjectLibrary
+
+    projects = ProjectLibrary(local.root / "projects", reviews)
     server = ThreadingHTTPServer(
         ("127.0.0.1", arguments.port),
-        make_handler(source, lambda: local, lambda: reviews, lambda: advice),
+        make_handler(source, lambda: local, lambda: reviews, lambda: advice, lambda: projects),
     )
     print(f"BIM Doctor preview: http://127.0.0.1:{arguments.port}/")
     print(f"3D IFC review: http://127.0.0.1:{arguments.port}/review.html")
     print(f"Local checks are kept in {local.root}")
+    print(f"Project library: {projects.path}")
     try:
         server.serve_forever()
     except KeyboardInterrupt:

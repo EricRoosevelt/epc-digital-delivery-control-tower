@@ -2,6 +2,9 @@ import { h } from "./dom.js";
 import { LANG } from "./i18n.js";
 import { languageSwitch } from "./language.js";
 import { W } from "./review-words.js";
+import { P } from "./projects-words.js";
+import { createProjectReview } from "./projects-review.js";
+import { requestJSON } from "./projects-api.js";
 
 document.documentElement.lang = LANG === "en" ? "en" : "zh-CN";
 document.title = `BIM Doctor · ${W.title}`;
@@ -57,13 +60,15 @@ const viewControls = [
 ];
 [W.zoomIn, W.zoomOut, W.rotateLeft, W.rotateRight, W.top, W.iso].forEach((name, i) => { viewControls[i].setAttribute("aria-label", name); viewControls[i].title = name; });
 const aiStatus = h("span", { class: "review-ai-status" }, W.aiOff);
+const projectReview = createProjectReview({ getReport: () => state.report, onSaved: () => renderDetail() });
 document.querySelector("#review-root").append(
   h("header", { class: "review-header" }, h("a", { class: "brand", href: `/?lang=${LANG}` }, h("span", { class: "brand-mark", "aria-hidden": "true" }, "BD"), "BIM Doctor"),
-    h("nav", { class: "review-nav", "aria-label": W.navigation }, h("a", { href: `/?lang=${LANG}` }, W.home), h("a", { href: `/review.html?lang=${LANG}`, "aria-current": "page" }, W.workspace)), languageSwitch()),
+    h("nav", { class: "review-nav", "aria-label": W.navigation }, h("a", { href: `/projects.html?lang=${LANG}` }, P.nav), h("a", { href: `/review.html?lang=${LANG}`, "aria-current": "page" }, W.workspace), h("a", { href: `/?lang=${LANG}` }, W.home)), languageSwitch()),
   h("main", { id: "main", class: "review-main", tabindex: "-1" },
     h("section", { class: "review-heading" }, h("div", {}, h("p", { class: "review-eyebrow" }, "IFC / MODEL REVIEW"), h("h1", {}, W.title), h("p", { class: "review-subtitle" }, W.introBody)),
       h("div", { class: "review-load-actions" }, demoButton, importButton, fileInput, h("span", { class: "review-file-hint" }, W.size))),
     h("section", { class: "review-overview" }, h("div", { class: "review-source-block" }, h("span", { class: "review-overline" }, W.source), sourceName), stats, aiStatus),
+    projectReview.context, projectReview.panel,
     statusbar,
     h("div", { class: "review-workspace" },
       h("aside", { class: "review-left", "aria-label": W.models }, h("div", { class: "review-panel-heading" }, h("h2", {}, W.models), h("span", { class: "review-panel-index" }, "IFC")),
@@ -87,32 +92,36 @@ function setBusy(busy, text) {
   statusbar.setAttribute("aria-busy", String(busy)); message.textContent = text; recovery.hidden = true;
 }
 async function json(url, options = {}) {
-  const timeout = AbortSignal.timeout(180000);
-  const response = await fetch(url, { ...options, signal: options.signal ? AbortSignal.any([options.signal, timeout]) : timeout });
-  const body = await response.json().catch(() => ({}));
-  if (!response.ok) throw new Error(typeof body.error === "string" ? body.error : body.error?.message || `HTTP ${response.status}`);
-  return body;
+  return requestJSON(url, options);
 }
 function showError(text) { message.textContent = `${W.failed}: ${text} ${W.errorHint}`; statusbar.classList.add("has-error"); recovery.hidden = !retryLoad; }
-function loadDemo() { return loadReport(() => json("/api/review/demo", { signal: controller.signal })); }
+function loadDemo() { return loadReport(() => json("/api/review/demo", { signal: controller.signal }), { fresh: true }); }
 function importFile(file) {
   if (!/\.ifc$/i.test(file.name) || !file.size) { showError(W.invalid); return; }
   if (file.size > 50 * 1024 * 1024) { showError(W.tooLarge); return; }
-  return loadReport(() => json(`/api/review/models?filename=${encodeURIComponent(file.name)}`, { method: "POST", headers: { "Content-Type": "application/octet-stream" }, body: file, signal: controller.signal }));
+  return loadReport(() => json(`/api/review/models?filename=${encodeURIComponent(file.name)}`, { method: "POST", headers: { "Content-Type": "application/octet-stream" }, body: file, signal: controller.signal }), { fresh: true });
 }
-async function loadReport(getReport) {
+async function loadReport(getReport, { fresh = false } = {}) {
   controller?.abort(); adviceController?.abort(); controller = new AbortController();
   const current = ++requestNumber;
-  retryLoad = () => loadReport(getReport);
+  retryLoad = () => loadReport(getReport, { fresh });
   setBusy(true, W.loading); statusbar.classList.remove("has-error");
   try {
-    const report = await getReport();
+    const loaded = await getReport();
+    const report = loaded.report || loaded;
     if (current !== requestNumber) return;
     state.report = report; state.selected = null; state.element = null; state.geometryReady = false;
     state.model = ""; state.limit = 100;
     state.status = report.summary.errors > 0 ? "ERROR" : report.summary.information > 0 ? "INFO" : report.summary.passed > 0 ? "PASS" : "";
+    const requestedFinding = fresh ? null : report.findings.find(f => f.finding_id === new URL(location.href).searchParams.get("finding"));
+    if (requestedFinding) state.status = requestedFinding.status === "FAIL" ? requestedFinding.severity || "FAIL" : requestedFinding.status;
     state.query = ""; search.value = ""; statusSelect.value = state.status;
-    const url = new URL(location.href); url.searchParams.set("review", report.review_id); history.replaceState(null, "", url);
+    projectReview.useReport(report, loaded.revision ? loaded : null);
+    const url = new URL(location.href); url.searchParams.set("review", report.review_id);
+    if (fresh) url.searchParams.delete("finding");
+    if (loaded.revision) { url.searchParams.set("revision", loaded.revision.revision_id); url.searchParams.set("project", loaded.revision.project_id); url.searchParams.set("model", loaded.revision.model_id); }
+    else url.searchParams.delete("revision");
+    history.replaceState(null, "", url);
     renderReport();
     await loadGeometry(current);
     if (current === requestNumber) setBusy(false, W.loaded);
@@ -155,7 +164,8 @@ function renderReport() {
   const records = document.querySelector("#review-source-records");
   records.replaceChildren(h("p", {}, value(report.source.attribution)), h("p", {}, W.local), ...report.models.map(m => h("div", {}, h("strong", {}, m.name || m.model_key), h("p", {}, `${W.discipline}: ${value(m.discipline)}`), h("code", {}, `SHA-256 ${value(m.sha256)}`))));
   renderList();
-  const first = matching()[0] || report.findings[0];
+  const requested = report.findings.find(f => f.finding_id === new URL(location.href).searchParams.get("finding"));
+  const first = requested || matching()[0] || report.findings[0];
   if (first) selectFinding(first.finding_id); else if (report.elements[0]) selectElement(report.elements[0].element_key);
 }
 function matching() {
@@ -203,6 +213,9 @@ function selectionChanged() {
   adviceController?.abort();
   viewer?.select(state.element?.element_key);
   selectionLabel.textContent = `${W.selected}: ${state.element?.name || state.element?.ifc_class || W.unknown}`;
+  const url = new URL(location.href);
+  if (state.selected) url.searchParams.set("finding", state.selected.finding_id); else url.searchParams.delete("finding");
+  history.replaceState(null, "", url);
   renderList(); renderDetail(); updateViewButtons();
 }
 function updateViewButtons() {
@@ -223,6 +236,7 @@ function renderDetail() {
     choose.value = f?.finding_id || ""; choose.addEventListener("change", () => selectFinding(choose.value)); detail.append(label(W.selectedRule, choose));
   }
   if (!f) { detail.append(h("p", {}, W.noFindings)); return; }
+  detail.append(projectReview.renderFollowup(f));
   detail.append(h("section", { class: `review-evidence${displayedStatus(f) === "INFO" ? " is-information" : ""}` }, h("div", { class: "review-section-title" }, h("h3", {}, W.evidence), badge(displayedStatus(f))), h("h4", {}, f.title), h("code", { class: "review-rule-id" }, f.rule_id), h("dl", {}, [[W.expected, f.expected], [W.actual, f.actual], [W.reason, f.reason]].map(([k, v]) => [h("dt", {}, k), h("dd", {}, value(v))])), h("p", { class: "review-citation" }, value(f.citation))));
   const adviceBody = h("div", { class: "review-advice-body", "aria-live": "polite" });
   const aiButton = button(W.generate, () => requestAdvice(f, true, adviceBody, aiButton), "review-primary");
@@ -252,6 +266,12 @@ async function requestAdvice(finding, useAi, body, control) {
   } finally { if (!signal.aborted) { control.disabled = false; control.textContent = W.generate; body.setAttribute("aria-busy", "false"); } }
 }
 updateViewButtons(); renderList();
-json("/api/review/ai").then(data => { state.ai = !!data.configured; aiStatus.textContent = state.ai ? `${W.aiReady} · ${data.model || data.provider || "AI"}` : W.aiOff; if (state.selected) renderDetail(); }).catch(() => {});
+json("/api/review/ai").then(data => {
+  state.ai = !!data.configured; aiStatus.textContent = state.ai ? `${W.aiReady} · ${data.model || data.provider || "AI"}` : W.aiOff;
+  const aiButton = detail.querySelector(".review-advice > .review-primary"); if (aiButton) aiButton.hidden = !state.ai;
+  const notice = detail.querySelector(".review-advice-notice"); if (notice) notice.textContent = state.ai ? W.aiNotice : W.guidanceNotice;
+}).catch(() => {});
 const saved = new URL(location.href).searchParams.get("review");
-if (saved) loadReport(() => json(`/api/review/report?review=${encodeURIComponent(saved)}`, { signal: controller.signal }));
+const revision = new URL(location.href).searchParams.get("revision");
+if (revision) loadReport(() => json(`/api/projects/revision?revision=${encodeURIComponent(revision)}`, { signal: controller.signal }));
+else if (saved) loadReport(() => json(`/api/review/report?review=${encodeURIComponent(saved)}`, { signal: controller.signal }));

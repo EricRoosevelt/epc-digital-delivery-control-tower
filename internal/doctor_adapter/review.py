@@ -9,6 +9,7 @@ from __future__ import annotations
 from collections import Counter
 from copy import deepcopy
 import hashlib
+import json
 import math
 from pathlib import Path
 import re
@@ -26,6 +27,7 @@ ALLOWED_TERMINAL_TYPES = ("DIFFUSER", "GRILLE", "LOUVRE", "REGISTER")
 RULES = [
     {
         "rule_id": "PV-001",
+        "predicate_version": "1",
         "severity": "ERROR",
         "title": "Air terminals declare one of four predefined types",
         "expected": ", ".join(ALLOWED_TERMINAL_TYPES),
@@ -36,6 +38,7 @@ RULES = [
     },
     {
         "rule_id": "INFO-001",
+        "predicate_version": "1",
         "severity": "INFO",
         "title": "Element has a readable Name",
         "expected": "A non-blank Name",
@@ -45,6 +48,7 @@ RULES = [
     },
     {
         "rule_id": "INFO-002",
+        "predicate_version": "1",
         "severity": "INFO",
         "title": "Element resolves to a building storey",
         "expected": "An IfcBuildingStorey through spatial containment or parent relations",
@@ -54,6 +58,7 @@ RULES = [
     },
     {
         "rule_id": "ID-001",
+        "predicate_version": "1",
         "severity": "ERROR",
         "title": "GlobalId is valid and unique within its IFC file",
         "expected": "A 22-character compressed IFC GlobalId unique among this file's IfcRoot",
@@ -143,8 +148,42 @@ class ReviewStore:
         with self._lock:
             return deepcopy(self._reviews[review_id][1])
 
+    def admit(self, report: dict, geometry: dict) -> dict:
+        """Restore an immutable saved review without changing its evidence or identity."""
+        if not isinstance(report, dict) or not isinstance(geometry, dict):
+            raise ValueError("Saved report and geometry must be objects.")
+        review_id = report.get("review_id")
+        if (
+            not isinstance(review_id, str)
+            or not review_id
+            or geometry.get("review_id") != review_id
+        ):
+            raise ValueError("Saved report and geometry identities must match.")
+        if any(
+            not isinstance(report.get(key), list)
+            for key in ("models", "elements", "findings", "rules")
+        ):
+            raise ValueError("Saved report is missing review evidence.")
+        if any(not isinstance(geometry.get(key), list) for key in ("meshes", "unavailable")):
+            raise ValueError("Saved geometry is missing mesh evidence.")
+        keys = {item["element_key"] for item in report["elements"]}
+        if len(keys) != len(report["elements"]) or any(
+            item["element_key"] not in keys
+            for item in report["findings"] + geometry["meshes"] + geometry["unavailable"]
+        ):
+            raise ValueError("Saved review element bindings are inconsistent.")
+        # Verify JSON validity before admitting persisted evidence to existing endpoints.
+        json.dumps((report, geometry), allow_nan=False)
+        with self._lock:
+            prior = self._reviews.get(review_id)
+            if prior is not None and prior != (report, geometry):
+                raise ValueError("A different review already uses this session identity.")
+            self._reviews[review_id] = (deepcopy(report), deepcopy(geometry))
+            return deepcopy(report)
+
     def _build(self, source: dict, inputs: list[tuple[dict, bytes]]) -> dict:
         identity = source["kind"] + source["filename"] + source["sha256"]
+        identity += json.dumps(RULES, sort_keys=True, ensure_ascii=False)
         review_id = "review-" + hashlib.sha256(identity.encode()).hexdigest()[:24]
         if review_id in self._reviews:
             return self._reviews[review_id][0]
@@ -193,6 +232,7 @@ class ReviewStore:
                 row = {
                     "element_key": key,
                     "global_id": guid,
+                    "global_id_count": counts[guid],
                     "model_key": model_key,
                     "step_id": entity.id(),
                     "ifc_class": entity.is_a(),

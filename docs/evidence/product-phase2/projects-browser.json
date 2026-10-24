@@ -1,0 +1,13 @@
+{
+  "observations": [
+    "Real public IFC: project creation and validation, save model revision, owner/status/multiline note, retained finding drafts, unsaved-change dialog, failed-save retry, language reopening, same-model new revision, Markdown brief.",
+    "Real synthetic IFC comparisons: FAIL to PASS, remaining, new, disappearance not repair, class not comparable, six categories, automatic comparison deep link, exact finding/revision links, no fake geometry, Chinese 390px and reduced motion."
+  ],
+  "errors": [],
+  "project_id": "project-9856b2d4599746dcbf0990cba71520dd",
+  "model_id": "model-57b7ac214e5b46579966aaa28a63fd07",
+  "revision_id": "revision-eba29eefda9e4404b058f11df3646fb4",
+  "later_revision_id": "revision-d980cd16c8e24f6dadc3a19215c11986",
+  "finding_id": "5762a75e6f5a12275058a448",
+  "saved_note": "Check the cap classification in the source model.\nRe-export after coordination; this note is not a passed recheck.\nUnsaved coordination draft."
+}
