@@ -39,8 +39,10 @@ basis, so rerun both source versions under v2 to assess a repair. Supported-scop
 parity and deliberate reporting differences are recorded in the
 [rule parity evidence](../docs/handoffs/rule-parity.md).
 
-The browser uploads a selected file only to this loopback server. Unsaved review
-data is kept for the server session. Use **Save to project** to retain a report,
+The browser uploads a selected file only to this loopback server. The in-memory
+JSON cache is bounded to 16 payloads / 64 MiB. Completed unsaved imports have a
+temporary spool capped at four results / 256 MiB; job metadata retains at most
+16 jobs. Unsaved data can expire before the server exits. Use **Save to project** to retain a report,
 its 3D snapshot and follow-up records across restarts. The established example
 and recheck experiences remain available from **Records & checks**.
 
@@ -76,8 +78,10 @@ The SQLite project library is at `<checks-dir>/projects/library.sqlite3`.
 The server prints its actual location on startup. `--checks-dir` or the existing
 `EPC_DOCTOR_CHECKS_DIR` setting chooses the external data directory. Saved revisions
 are immutable; follow-up text is updated for its own revision/finding. Opening a
-saved revision restores the report and geometry to the existing workspace and
-advice API. The source IFC file and API credentials are not stored by the project
+saved revision restores the report; its geometry is loaded when requested by the
+workspace. Saving notes, comparing revisions and generating briefs do not load
+geometry. Evicted saved payloads are restored from SQLite, including after a
+restart. The source IFC file and API credentials are not stored by the project
 library. Unrelated older local-check entries retain their original storage behavior.
 For non-UTF-8 STEP exports, parsing uses an external temporary file containing
 the exact uploaded bytes; that file is removed immediately after native parsing.
@@ -90,8 +94,12 @@ and include the complete external project directory in your own backup routine.
 
 One authorized source-backed case has exercised exact 3D selection, same-model
 revision comparison, a real server restart and brief download with 2,055 meshes
-and 1.07 million triangles. New uncached content took 179.5 seconds to become
-usable on the recorded host; its POST was close to the 180-second timeout. This
+and 1.07 million triangles. Under the earlier synchronous API, new uncached
+content took 179.5 seconds to become usable on the recorded host. Imports now run
+as separate jobs, with 30-second individual requests and a configurable hard
+deadline (`--import-timeout-seconds`, default 600). An earlier cold viewport
+failure was not reproduced; technical details distinguish request, JSON decode,
+viewer initialization and geometry loading failures, with request IDs. This
 is a measured case, not a larger-model capacity guarantee or engineering sign-off.
 See the [case evidence and limitations](../docs/handoffs/model-case.md).
 

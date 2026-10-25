@@ -90,9 +90,18 @@ an application dependency. [Recording commands](evidence/phase2-candidate/README
   pip installation. Do not add this developer's machine paths to `PYTHONPATH`.
 - A viewport failure leaves check evidence readable. Inspect its technical
   details and retry; a failed viewer is not evidence of missing IFC geometry.
+- Imports show worker stages and progress. Cancel waits for the native process to
+  stop; a failed/cancelled job keeps the existing report and viewport. A lost
+  response can resume polling. The server enforces a 600-second deadline; use
+  `--import-timeout-seconds` to choose another positive deadline at startup.
 - The 50 MB browser upload cap is not a capacity guarantee. A recorded 2,055-mesh
-  case took about 179.5 seconds, near the 180-second request timeout; one earlier
-  cold 3D failure remains unexplained. [Measured scope](handoffs/model-case.md).
+  case took about 179.5 seconds under the old synchronous API. One earlier cold
+  3D failure remains unexplained; technical details now include the request ID
+  and failure phase. [Measured scope](handoffs/model-case.md).
+- Save important work. The report/geometry cache is limited to 16 payloads and
+  64 MiB; saved revisions restore from SQLite after eviction or restart. Notes,
+  comparison and briefs read reports without restoring full geometry. Unsaved
+  completed imports retain at most four temporary results / 256 MiB.
 - The [October 13 recording](evidence/doctor-resume-ui-en-2026-10-13/doctor-live-en.webm)
   and [earlier phase evidence](evidence/product-phase2/README.md) are historical.
   Use the current SHA-bound CI artifacts for candidate acceptance.

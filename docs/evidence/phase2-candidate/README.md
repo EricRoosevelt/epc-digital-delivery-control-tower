@@ -53,6 +53,7 @@ and use Node.js 20 or later. From the checked-out candidate commit:
 ```sh
 npm ci
 npx playwright install --with-deps chromium
+python tools/run_browser_qa.py --output <new-external-browser-evidence-directory>
 npm run capture:phase2 -- --source-sha <full-40-character-SHA> --data-dir <new-external-data-directory> --output-dir <new-external-artifact-directory>/capture --python <python-executable> --browser chromium --port 0
 ```
 
@@ -61,6 +62,15 @@ Playwright's video encoder has been installed. Linux requires CJK fonts for the
 Chinese scenes; CI installs `fonts-noto-cjk`. The default browser is Playwright's
 pinned Chromium. `--language zh` records the main workflow in Chinese instead of
 English. Both modes include Chinese saved-revision and mobile screenshots.
+
+CI also runs the five existing browser regression scripts: project drafts/save
+failure, geometry recovery, selected findings beyond the first 100 rows, the
+earlier UI flow, and import job cancellation/retry. Results are in
+`browser-qa/browser-qa.json`; each script retains its log and failures retain
+screenshots. To prove the original assertions detect broken behavior, add
+`--mutations` to the QA command. It modifies disposable external copies and
+requires the draft, malformed-JSON recovery and selected-row mutations to fail
+at their specific assertions. It leaves the application checkout unchanged.
 
 Both supplied directories must be fresh, separate, and outside the checkout.
 The tool refuses reused directories, starts its own loopback server on an

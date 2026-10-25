@@ -1,6 +1,8 @@
 """Import supervision must stop work, retain old results and publish only complete output."""
 
 import json
+import os
+import signal
 import time
 
 import ifcopenshell
@@ -92,6 +94,45 @@ def test_only_one_native_worker_is_active(tmp_path, blocked_worker):
         jobs.cancel(first["job_id"])
 
 
+def test_cancel_stops_computing_descendants_not_only_the_python_launcher(tmp_path):
+    heartbeat = tmp_path / "heartbeat"
+    child_pid = tmp_path / "child.pid"
+    child = tmp_path / "child.py"
+    child.write_text(
+        "import os,time\nfrom pathlib import Path\n"
+        f"Path({str(child_pid)!r}).write_text(str(os.getpid()))\n"
+        f"heartbeat=Path({str(heartbeat)!r})\n"
+        "while True:\n heartbeat.write_text(str(time.monotonic_ns()))\n time.sleep(.02)\n",
+        encoding="utf-8",
+    )
+    worker = tmp_path / "parent.py"
+    worker.write_text(
+        "import subprocess,sys,time\n"
+        f"subprocess.Popen([sys.executable,{str(child)!r}])\n"
+        "while True: time.sleep(10)\n", encoding="utf-8",
+    )
+    try:
+        with ImportJobs(ReviewStore(), tmp_path / "jobs", worker_script=worker) as jobs:
+            job = jobs.submit("public.ifc", model_body())
+            deadline = time.monotonic() + 5
+            while not heartbeat.exists() and time.monotonic() < deadline:
+                time.sleep(.02)
+            assert heartbeat.exists(), "The actual computing descendant did not start"
+            jobs.cancel(job["job_id"])
+            assert wait_for(jobs, job["job_id"], {"cancelled"})["worker_exited"]
+            stopped = heartbeat.read_bytes()
+            time.sleep(.25)
+            assert heartbeat.read_bytes() == stopped, (
+                "The computing descendant survived cancellation"
+            )
+    finally:
+        if child_pid.exists():
+            try:
+                os.kill(int(child_pid.read_text()), signal.SIGTERM)
+            except OSError:
+                pass
+
+
 def test_real_worker_publishes_complete_serialized_result_and_reuses_completed_input(tmp_path):
     store = ReviewStore()
     with ImportJobs(store, tmp_path / "jobs") as jobs:
@@ -129,4 +170,3 @@ def test_job_metadata_history_and_artifact_storage_are_bounded(tmp_path):
         assert len(jobs.snapshot()["jobs"]) == 3
         with pytest.raises(KeyError):
             jobs.get("cancelled-0")
-

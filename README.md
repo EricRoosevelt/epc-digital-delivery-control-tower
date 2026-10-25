@@ -88,9 +88,17 @@ automatic source-model editing or project acceptance decision. Cross-revision
 pairing currently supports a single IFC file per logical model; public federated
 examples can be saved/reopened but are not paired across revisions.
 
-The upload limit is not a validated capacity guarantee. One recorded 2,055-mesh,
-1.07-million-triangle case took 179.5 seconds for new content, near the 180-second
-request timeout; one earlier cold 3D failure remains unexplained.
+Imports run in a separate process with progress, confirmed cancellation and a
+600-second server deadline. Individual browser requests time out after 30 seconds;
+status polling can resume without starting another import. Existing results stay
+readable during computation. The payload cache is limited to 16 entries / 64 MiB;
+saved revisions reload from SQLite. Save work before leaving it: unsaved results
+have bounded temporary storage and expire.
+
+The upload limit is not a validated capacity guarantee. A recorded 2,055-mesh,
+1.07-million-triangle case took 179.5 seconds under the earlier synchronous API.
+One earlier cold 3D failure remains unexplained; request IDs and geometry/viewer
+phase diagnostics now support investigation, and recovery paths run in browser CI.
 [Measured scope and qualifications](docs/handoffs/model-case.md).
 Live OpenAI advice requires the user's own configured account and was not a
 prerequisite for the candidate's offline checks or demonstration.

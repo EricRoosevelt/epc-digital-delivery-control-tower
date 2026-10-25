@@ -226,7 +226,7 @@ jobs:
           from pathlib import Path
           root = Path(os.environ["RUNNER_TEMP"]) / "phase2-candidate/evidence"
           expected = os.environ["CANDIDATE_SOURCE_SHA"]
-          for name in ("clean-install.json", "smoke.json"):
+          for name in ("clean-install.json", "smoke.json", "browser-qa/browser-qa.json"):
               data = json.loads((root / name).read_text(encoding="utf-8"))
               assert data["status"] == "passed", name + " did not pass"
               assert data["source_sha"] == expected, name + " source SHA mismatch"
@@ -237,7 +237,7 @@ jobs:
               path = (root / "capture" / item["path"]).resolve()
               assert path.is_relative_to((root / "capture").resolve())
               assert hashlib.sha256(path.read_bytes()).hexdigest() == item["sha256"]
-          print("Candidate smoke, demo and media hashes match source " + expected)
+          print("Candidate smoke, browser regressions, demo and media hashes match source " + expected)
           PY
 
       - name: Candidate source and smoke summary
@@ -249,7 +249,7 @@ jobs:
           from pathlib import Path
           evidence = Path(os.environ["RUNNER_TEMP"]) / "phase2-candidate/evidence"
           lines = ["## Phase 2 candidate", "", "Source SHA: `" + os.environ["CANDIDATE_SOURCE_SHA"] + "`", ""]
-          for name in ("clean-install.json", "smoke.json", "capture/manifest.json"):
+          for name in ("clean-install.json", "smoke.json", "browser-qa/browser-qa.json", "capture/manifest.json"):
               path = evidence / name
               status = "not produced"
               if path.is_file():

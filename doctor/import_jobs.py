@@ -14,6 +14,7 @@ import os
 from pathlib import Path
 import re
 import shutil
+import signal
 import subprocess
 import sys
 import tempfile
@@ -48,6 +49,7 @@ class _Job:
     error: dict | None = None
     worker_exited: bool = False
     done: threading.Event = field(default_factory=threading.Event)
+    stop_lock: threading.Lock = field(default_factory=threading.Lock)
     diagnostics: deque = field(default_factory=lambda: deque(maxlen=20))
     readers: int = 0
     readers_done: threading.Event = field(default_factory=threading.Event)
@@ -113,12 +115,13 @@ class ImportJobs:
             }
 
     def _remove_files(self, job):
-        path, job.directory = job.directory, None
+        path = job.directory
         if path is not None:
             resolved = path.resolve()
             if resolved == self.root or not resolved.is_relative_to(self.root):
                 raise ValueError("Import cleanup must remain in its owned task directory.")
             shutil.rmtree(resolved, ignore_errors=False)
+            job.directory = None
 
     def _trim(self):
         # Called with the metadata lock, never while native IFC work is running here.
@@ -194,6 +197,8 @@ class ImportJobs:
                      "--filename", filename],
                     cwd=self.reviews.root, env=env, stdout=subprocess.PIPE,
                     stderr=subprocess.STDOUT, text=True, encoding="utf-8", errors="replace",
+                    start_new_session=os.name != "nt",
+                    creationflags=subprocess.CREATE_NO_WINDOW if os.name == "nt" else 0,
                 )
                 job.state, job.stage = "running", "starting"
                 threading.Thread(target=self._watch, args=(job,), daemon=True).start()
@@ -232,14 +237,40 @@ class ImportJobs:
                         job.total = event.get("total", 0)
 
     @staticmethod
-    def _stop(process):
+    def _stop(job):
+        # A user cancellation and the deadline may arrive together.
+        with job.stop_lock:
+            ImportJobs._stop_process(job.process)
+
+    @staticmethod
+    def _stop_process(process):
         if process.poll() is None:
-            process.terminate()
+            if os.name == "nt":
+                # A venv python.exe can be a launcher. Terminating only that PID
+                # leaves the actual native computation alive in its child.
+                result = subprocess.run(
+                    ["taskkill", "/PID", str(process.pid), "/T", "/F"],
+                    stdout=subprocess.PIPE, stderr=subprocess.STDOUT, timeout=5,
+                    creationflags=subprocess.CREATE_NO_WINDOW,
+                )
+                if result.returncode and process.poll() is None:
+                    raise RuntimeError("The IFC worker process tree could not be stopped.")
+                process.wait(timeout=2)
+                return
+            try:
+                os.killpg(process.pid, signal.SIGTERM)
+            except ProcessLookupError:
+                pass
             try:
                 process.wait(timeout=2)
             except subprocess.TimeoutExpired:
-                process.kill()
-                process.wait(timeout=2)
+                pass
+            # A descendant may ignore SIGTERM even after its parent exits.
+            try:
+                os.killpg(process.pid, signal.SIGKILL)
+            except ProcessLookupError:
+                pass
+            process.wait(timeout=2)
 
     def _watch(self, job):
         reader = threading.Thread(target=self._read_events, args=(job,), daemon=True)
@@ -250,7 +281,7 @@ class ImportJobs:
                     with self._lock:
                         if job.reason is None:
                             job.reason, job.state = "deadline", "cancelling"
-                    self._stop(job.process)
+                    self._stop(job)
                 time.sleep(0.05)
             reader.join(timeout=2)
             job.worker_exited = True
@@ -294,17 +325,19 @@ class ImportJobs:
         finally:
             with self._lock:
                 self._active = None if self._active == job.identity else self._active
-                if job.directory:
-                    if job.state == "succeeded":
-                        (job.directory / "input.ifc").unlink(missing_ok=True)
-                        scratch = job.directory / "tmp"
-                        if scratch.exists():
-                            shutil.rmtree(scratch)
-                    else:
-                        self._remove_files(job)
-                self._trim()
-                job.finished_at = time.monotonic()
-                job.done.set()
+                try:
+                    if job.directory:
+                        if job.state == "succeeded":
+                            (job.directory / "input.ifc").unlink(missing_ok=True)
+                            scratch = job.directory / "tmp"
+                            if scratch.exists():
+                                shutil.rmtree(scratch)
+                        else:
+                            self._remove_files(job)
+                    self._trim()
+                finally:
+                    job.finished_at = time.monotonic()
+                    job.done.set()
 
     def cancel(self, identity):
         identity = self._identity(identity)
@@ -329,7 +362,7 @@ class ImportJobs:
                     self._active = None
                 job.done.set()
                 return self._view(job)
-        self._stop(process)
+        self._stop(job)
         job.done.wait(timeout=3)
         return self.get(identity)
 
@@ -378,7 +411,8 @@ class ImportJobs:
             jobs = list(self._jobs.values())
         for job in jobs:
             if job.process is not None:
-                self._stop(job.process)
+                self._stop(job)
+                job.done.wait()
             job.readers_done.wait()
             with self._lock:
                 self._remove_files(job)

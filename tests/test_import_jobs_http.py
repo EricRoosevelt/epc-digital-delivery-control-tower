@@ -135,4 +135,3 @@ def test_geometry_failure_has_a_correlated_request_and_original_phase(supervised
     assert body["diagnostic"]["request_id"] == response.headers["X-Request-ID"]
     assert body["diagnostic"]["phase"] == "geometry_load"
     assert "RuntimeError: Public injected" in body["error"]
-
