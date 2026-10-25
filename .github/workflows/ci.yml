@@ -19,6 +19,9 @@ on:
 permissions:
   contents: read
 
+env:
+  CANDIDATE_SOURCE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+
 jobs:
   validate:
     # Both platforms, because the determinism this project claims is a
@@ -40,6 +43,8 @@ jobs:
     steps:
       - name: Check out repository
         uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
 
       - name: Set up Python
         uses: actions/setup-python@v6
@@ -134,3 +139,128 @@ jobs:
 
       - name: Check dependency consistency
         run: python -m pip check
+
+
+  phase2-candidate:
+    name: Phase 2 candidate (${{ matrix.os }})
+    needs: validate
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - name: Check out the exact candidate source
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+
+      - name: Set up clean-install Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.14"
+
+      - name: Verify a clean clone, new venv, editable install and restart smoke
+        run: >-
+          python tools/verify_clean_install.py
+          --source "$GITHUB_WORKSPACE"
+          --output "$RUNNER_TEMP/phase2-candidate"
+          --expected-sha "$CANDIDATE_SOURCE_SHA"
+
+      - name: Set up the pinned browser QA runtime
+        uses: actions/setup-node@v6
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: package-lock.json
+
+      - name: Install browser QA from the lockfile
+        working-directory: ${{ runner.temp }}/phase2-candidate/checkout
+        run: npm ci
+
+      - name: Install the public-demo Chromium runtime
+        working-directory: ${{ runner.temp }}/phase2-candidate/checkout
+        run: npx playwright install --with-deps chromium
+
+      - name: Install Chinese screenshot fonts on Ubuntu
+        if: runner.os == 'Linux'
+        run: sudo apt-get install -y fonts-noto-cjk
+
+      - name: Capture the public demo at the same source SHA
+        working-directory: ${{ runner.temp }}/phase2-candidate/checkout
+        run: |
+          if [ "$RUNNER_OS" = "Windows" ]; then
+            smoke_python="$RUNNER_TEMP/phase2-candidate/venv/Scripts/python.exe"
+          else
+            smoke_python="$RUNNER_TEMP/phase2-candidate/venv/bin/python"
+          fi
+          npm run capture:phase2 -- \
+            --source-sha "$CANDIDATE_SOURCE_SHA" \
+            --data-dir "$RUNNER_TEMP/public-capture-$RUNNER_OS" \
+            --output-dir "$RUNNER_TEMP/phase2-candidate/evidence/capture" \
+            --python "$smoke_python" --browser chromium --port 0
+
+      - name: Verify exact-SHA evidence and media before packaging
+        run: |
+          python - <<'PY'
+          import hashlib
+          import json
+          import os
+          from pathlib import Path
+          root = Path(os.environ["RUNNER_TEMP"]) / "phase2-candidate/evidence"
+          expected = os.environ["CANDIDATE_SOURCE_SHA"]
+          for name in ("clean-install.json", "smoke.json"):
+              data = json.loads((root / name).read_text(encoding="utf-8"))
+              assert data["status"] == "passed", name + " did not pass"
+              assert data["source_sha"] == expected, name + " source SHA mismatch"
+          manifest = json.loads((root / "capture/manifest.json").read_text(encoding="utf-8"))
+          assert manifest["status"] == "candidate-captured"
+          assert manifest["source_sha"] == expected and manifest["source_tree_verified"]
+          for item in manifest["media"]:
+              path = (root / "capture" / item["path"]).resolve()
+              assert path.is_relative_to((root / "capture").resolve())
+              assert hashlib.sha256(path.read_bytes()).hexdigest() == item["sha256"]
+          print("Candidate smoke, demo and media hashes match source " + expected)
+          PY
+
+      - name: Candidate source and smoke summary
+        if: always()
+        run: |
+          python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+          evidence = Path(os.environ["RUNNER_TEMP"]) / "phase2-candidate/evidence"
+          lines = ["## Phase 2 candidate", "", "Source SHA: `" + os.environ["CANDIDATE_SOURCE_SHA"] + "`", ""]
+          for name in ("clean-install.json", "smoke.json", "capture/manifest.json"):
+              path = evidence / name
+              status = "not produced"
+              if path.is_file():
+                  data = json.loads(path.read_text(encoding="utf-8"))
+                  status = str(data.get("status", "produced"))
+              lines.append("- " + name + ": " + status)
+          lines += ["", "Artifacts expire after 90 days. Failures retain diagnostic evidence."]
+          with Path(os.environ["GITHUB_STEP_SUMMARY"]).open("a", encoding="utf-8") as stream:
+              stream.write("\n".join(lines) + "\n")
+          PY
+
+      - name: Publish the verified source-matched candidate evidence
+        if: success()
+        uses: actions/upload-artifact@v6
+        with:
+          name: candidate-${{ env.CANDIDATE_SOURCE_SHA }}-${{ runner.os }}
+          path: ${{ runner.temp }}/phase2-candidate/evidence
+          retention-days: 90
+          if-no-files-found: error
+
+      - name: Preserve failed candidate diagnostics
+        if: failure()
+        uses: actions/upload-artifact@v6
+        with:
+          name: candidate-diagnostics-${{ env.CANDIDATE_SOURCE_SHA }}-${{ runner.os }}
+          path: ${{ runner.temp }}/phase2-candidate/evidence
+          retention-days: 90
+          if-no-files-found: warn

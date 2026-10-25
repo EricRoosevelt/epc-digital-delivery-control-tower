@@ -1,4 +1,4 @@
-"""Serve the BIM Doctor D1 preview on this machine only.
+"""Run the BIM Doctor workspace and project library on this machine only.
 
 Run from the repository root::
 
@@ -6,15 +6,15 @@ Run from the repository root::
     python doctor/serve.py --workspace <dir> [--prior <dir>]
     python doctor/serve.py --checks-dir <dir>
 
-Nothing here evaluates anything. The server hands the browser the envelopes the
-internal adapter (A1) returns — unchanged — and the static files that lay them
-out. It writes no file itself, reads no clock, and binds to the loopback
-interface, because this is an internal preview and not a service. The adapter
-it calls validates against a scratch copy of the rule library that it makes
-outside this checkout and removes afterwards; nothing in the checkout is written.
+The established handover routes project the internal adapter's envelopes. The
+review API checks uploaded IFC, extracts actual geometry and offers local rule
+guidance or explicitly requested AI advice. The project API persists immutable
+reports, geometry snapshots and separate follow-up records in an external SQLite
+library. These runtime records may contain timestamps; canonical published
+pipeline artifacts are not rewritten. The application binds to loopback only.
 
-The local check (``/api/local/…``) is the one place the browser sends anything:
-a model file, and the choice of rule set and disciplines. What arrives is handed
+The established local check (``/api/local/…``) receives
+a model file and the choice of rule set and disciplines. What arrives is handed
 to :class:`internal.doctor_adapter.local_check.LocalChecks`, which keeps it — and
 every check run on it — under a checks directory outside any checkout, named at
 start-up and reported in every answer. Because a page on any other site can
@@ -24,11 +24,10 @@ sends anything must carry a JSON or binary body (which a cross-site page cannot
 send without asking first, and nothing here answers that question) and, if it
 says where it comes from, come from this server's own origin.
 
-The one seam is :class:`Source`: which runs a mode offers, and the envelope for
-one of them. :func:`adapter_source` is the only implementation that ships, and
-it is a thin call into A1. There is deliberately no bundled sample data to fall
-back on: a preview whose adapter is missing says so instead of showing
-something that looks like a result.
+The established handover seam is :class:`Source`: which runs a mode offers, and
+the envelope for one of them. :func:`adapter_source` calls A1. The review workspace
+has a separate explicit public-example action; missing adapters or failed model
+loads do not silently substitute a sample result.
 """
 
 from __future__ import annotations

@@ -1,5 +1,7 @@
 // Real local IFC UI measurement. Config and every raw output stay outside checkout.
-// NODE_PATH=<external Playwright> node tools/model_case/browser.cjs private-config.json
+// npm ci
+// npx playwright install chromium
+// node tools/model_case/browser.cjs private-config.json
 const fs = require("node:fs");
 const path = require("node:path");
 const assert = require("node:assert/strict");
@@ -31,7 +33,8 @@ async function main() {
   let geometryDuration = null;
   let saved = null;
   const phases = {};
-  const browser = await chromium.launch({ headless: true, channel: config.channel || "msedge" });
+  const channel = config.channel || process.env.BROWSER_CHANNEL || "chromium";
+  const browser = await chromium.launch({ headless: true, channel });
   const page = await browser.newPage({ viewport: config.viewport || { width: 1440, height: 1000 } });
   await page.route("**/*", route => {
     const url = new URL(route.request().url());
@@ -209,7 +212,7 @@ async function main() {
     assert.deepEqual(pageErrors, []); assert.deepEqual(externalRequests, []);
     const result = {
       schema_version: 1, measured_at_utc: new Date().toISOString(), context: config.context, label,
-      browser: { version: browser.version(), channel: config.channel || "msedge", headless: true, viewport: config.viewport || { width: 1440, height: 1000 }, renderer: browserProbe.gpu },
+      browser: { version: browser.version(), channel, headless: true, viewport: config.viewport || { width: 1440, height: 1000 }, renderer: browserProbe.gpu },
       source_path: source, source_sha256: crypto.createHash("sha256").update(fs.readFileSync(source)).digest("hex"), review_id: report.review_id,
       counts: { ifc_bytes: fs.statSync(source).size, elements: report.elements.length, findings: report.findings.length, meshes: geometry.meshes.length, triangles: geometry.triangles, vertices: geometry.vertices, geometry_json_bytes: resources.find(entry => entry.path.endsWith("/geometry"))?.bytes },
       timing: { browser_post_request_ms: postDuration, browser_geometry_request_ms: geometryDuration, upload_to_ui_ready_wall_ms: uiReadyWall, upload_to_first_triangle_submission_ms: browserProbe.firstTriangleSubmission - browserProbe.uploadStart, upload_to_next_frame_after_triangle_ms: browserProbe.firstTriangleFrame - browserProbe.uploadStart, upload_to_first_screenshot_complete_ms: firstScreenshotWall },

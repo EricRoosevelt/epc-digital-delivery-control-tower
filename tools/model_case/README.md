@@ -38,11 +38,12 @@ Prepare a private JSON config. Replace every example value locally:
 }
 ```
 
-Use externally available Playwright and the existing Python environment. No
-package installation is necessary:
+Install the repository's pinned QA dependencies and Chromium once. These are
+development tools; normal application startup does not require Node.js:
 
 ```powershell
-$env:NODE_PATH = '<external-runtime>/dependencies/node/node_modules'
+npm ci
+npx playwright install chromium
 python tools/model_case/measure_browser.py '<private-config.json>' --pid <server-pid>
 ```
 
@@ -104,6 +105,9 @@ verifies current/previous comparison and the latest-revision brief. Manual statu
 is explicitly a role exercise, not a named engineer's classification approval.
 The helper's expected 2 passed / 94 remaining is the executed representative case,
 not a generic rule; adapt those assertions before using a different case.
+The default QA browser is Chromium. Set `channel` in the browser config or
+`BROWSER_CHANNEL` for another installed Playwright browser channel; recorded
+measurements identify the actual channel/version. The earlier case used Edge.
 
 Conclusions must name the measured element, mesh, triangle and input-byte counts.
 A larger file's metadata or a successful synthetic regression is not evidence of

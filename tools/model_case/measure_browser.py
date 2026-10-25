@@ -1,8 +1,8 @@
 """Wrap the real browser case with independent server-process memory sampling.
 
   python tools/model_case/measure_browser.py private-config.json --pid <server-pid>
-The config names a private output_dir and the authorized source IFC. External
-Playwright must already be available through NODE_PATH; no package is installed.
+The config names a private output_dir and the authorized source IFC. Install
+the repository's pinned QA Playwright dependency and browser before this tool.
 """
 
 from __future__ import annotations

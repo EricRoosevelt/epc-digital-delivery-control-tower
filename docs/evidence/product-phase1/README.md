@@ -25,3 +25,4 @@ the initially buried next actions. These captures support layout and observed
 interaction findings; they do not establish physical-device, screen-reader or
 full accessibility certification. `premium-audit.json` is the separate static
 design-context audit, not a substitute for these browser observations.
+The public audit copy normalizes its absolute workspace path to `.`; no screenshots were recaptured and no checks were rerun for this normalization.

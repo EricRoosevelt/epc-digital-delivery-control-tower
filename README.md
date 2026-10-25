@@ -1,106 +1,110 @@
-# BIM Doctor
+# BIM Doctor — Phase 2 RC1
 
-**Understand a model check, find the next action, and see what changed.**
+**Locate a check in real 3D, save the evidence, and explain the next revision.**
 
-[中文](README.zh-CN.md) · [Watch the 80-second demo](docs/evidence/doctor-resume-ui-en-2026-10-13/doctor-live-en.webm) · [Product case study](https://app.notion.com/p/3be1cb002005801b8d5dd536615d46f9) · [Quick start](#quick-start)
+[中文](README.zh-CN.md) · [Candidate demo and exact-commit evidence](docs/evidence/phase2-candidate/README.md) · [Quick start](#quick-start) · [Windows / Ubuntu CI](https://github.com/EricRoosevelt/epc-digital-delivery-control-tower/actions/workflows/ci.yml?query=branch%3Afeat%2Fdoctor-product-phase1)
 
-A BIM coordinator preparing a model handover needs more than a list of failed
-checks. Which piece of work is affected? What should someone do next? What
-changed when the model was checked again?
+BIM Doctor is a personal open-source application for engineers and BIM
+coordinators reviewing IFC model exchanges. It runs in a local browser and keeps
+project records on that computer. A rule result and a person's engineering
+acceptance remain separate decisions.
 
-BIM Doctor brings those answers together in a local browser application. It is
-built for people coordinating building models across teams. IFC is the open file
-format used to exchange those models.
+## What this candidate does
 
-## 3D model review and optional AI advice
+- **Real 3D inspection:** load the bundled public buildingSMART example or one
+  IFC file, select a result, and focus or isolate its actual tessellated geometry.
+- **Projects and revision rechecks:** save immutable reports and 3D snapshots,
+  record an owner/status/note, import a new IFC into the same model slot, compare
+  revisions and download a Markdown work brief. Reopen saved evidence after a
+  server restart without uploading the source again.
+- **Evidence-based comparison:** distinguish passed rechecks, remaining/new
+  findings, missing objects, no-longer-applicable checks and unavailable
+  comparisons. Deletion, reclassification or a changed rule is not a repair.
+- **Local guidance and optional OpenAI advice:** guidance works without an API
+  key. Optional generated advice uses the selected finding's text evidence;
+  source IFC and meshes are not sent. [AI setup](doctor/README.md#openai-setup).
 
-Open **[the 3D workspace](http://127.0.0.1:8765/review.html?lang=en)** after starting
-the local server below. Load the public three-model example or import one IFC
-file, select a check result and focus or isolate its actual geometry. Four review
-checks cover air-terminal type, readable names, storey association and model-local
-GlobalId integrity. Information prompts remain separate from check failures.
-
-Use **[Projects & rechecks](http://127.0.0.1:8765/projects.html?lang=en)** to retain
-model revisions and 3D snapshots across restarts. Record follow-up work, import a
-new IFC into the same model and compare the evidence. A passed recheck, a missing
-object and a changed checking basis remain distinct. Each project can export a
-Markdown work brief. [Project workflow and storage](doctor/README.md#projects-and-revision-rechecks).
-
-Each result includes observed evidence, practical local guidance and verification
-steps. Optional OpenAI advice uses the selected finding's text evidence; IFC files
-and mesh data stay in the local server. Set `OPENAI_API_KEY` in the server's
-environment to enable it. [Setup and current limits](doctor/README.md#3d-review-workspace).
-
-## A check with somewhere to go next
-
-In the bundled example, a duct segment is missing the asset identifiers needed
-for the project's equipment schedule. Doctor connects that finding to the work
-it affects, then shows the proposed action and what a later check should establish.
-
-![First-check conclusion: the equipment-schedule task is blocked because the example project's asset identity is missing.](docs/evidence/doctor-case-study-2026-10-13/01-conclusion-en.png)
-
-The page follows **conclusion → next step → details**. Element identifiers and
-individual check results remain available when the reader needs to investigate.
-
-The supplied recheck adds a useful twist: the model stays the same, but a check
-requirement changes and this item's conclusion moves from Blocked to Ready.
-Doctor shows that reason beside the change. It gives the reader a way to
-understand a different answer without assuming the model was repaired.
-
-**[Watch the full example](docs/evidence/doctor-resume-ui-en-2026-10-13/doctor-live-en.webm)** — an 80-second silent recording of the English interface.
-
-## Explore an example or check a file
-
-- **Explore a simulated handover.** Follow an item from its first conclusion to
-  its next action and supplied recheck. Public models and example project
-  decisions make the workflow available without preparing your own files.
-- **Check your own IFC4 file.** Run a real check of how air terminals declare
-  their type. The current rule accepts `DIFFUSER`, `GRILLE`, `LOUVRE`, or
-  `REGISTER`; results show the object and its identifier for finding it in the
-  source model. Files and check records stay on your computer.
-
-These paths answer different questions. The example explains a handover decision;
-the own-file check evaluates one declared property. Keeping them separate avoids
-applying the example project's conventions to someone else's model.
+The four workspace checks cover air-terminal type (PV-001), readable names,
+storey association and file-local GlobalId integrity. PV-001 shares the existing
+rule definition and IfcTester predicate with the framework. Name/storey findings
+are information prompts, not a count of engineering defects.
 
 ## Quick start
 
-You need **Python 3.11+**, **Git**, and a browser. Setup below was tested on
-Windows PowerShell; the first install downloads about 80 MB.
+Use **Python 3.14**, **Git** and a browser with WebGL2, ES modules and import maps.
+Windows and Ubuntu are the candidate CI platforms. Node.js, Revit and an OpenAI
+account are not required to run the application. Keep the complete source checkout:
+the framework wheel alone does not contain the browser application and assets.
+
+The candidate is on `feat/doctor-product-phase1`; cloning the default branch may
+still give the earlier product until the candidate PR is merged.
+
+**Windows PowerShell**
 
 ```powershell
-git clone -c core.longpaths=true https://github.com/EricRoosevelt/epc-digital-delivery-control-tower.git
+git clone -c core.longpaths=true --branch feat/doctor-product-phase1 https://github.com/EricRoosevelt/epc-digital-delivery-control-tower.git
 cd epc-digital-delivery-control-tower
-py -m venv .venv
-.\.venv\Scripts\python.exe -m pip install -r requirements.txt
-.\.venv\Scripts\python.exe doctor/serve.py
+py -3.14 -m venv .venv
+.\.venv\Scripts\python.exe -m pip install -e .
+$doctorState = Join-Path $env:LOCALAPPDATA 'BIMDoctor\phase2-rc1'
+.\.venv\Scripts\python.exe doctor/serve.py --checks-dir "$doctorState"
 ```
 
-Open **[BIM Doctor in English](http://127.0.0.1:8765/?lang=en)** and choose
-**Choose a simulated example**. Stop the server with **Ctrl+C**.
+**Ubuntu / Bash**
 
-[Step-by-step guide and sample files](docs/quick-start.md) · [中文快速开始](README.zh-CN.md#快速开始)
+```bash
+git clone --branch feat/doctor-product-phase1 https://github.com/EricRoosevelt/epc-digital-delivery-control-tower.git
+cd epc-digital-delivery-control-tower
+python3.14 -m venv .venv
+.venv/bin/python -m pip install -e .
+.venv/bin/python doctor/serve.py --checks-dir "$HOME/.local/state/bim-doctor/phase2-rc1"
+```
 
-## Current scope
+Open **[the 3D workspace](http://127.0.0.1:8765/review.html?lang=en)** and choose
+**Load public example**. Save it to a project, then open
+**[Projects & rechecks](http://127.0.0.1:8765/projects.html?lang=en)**. Stop with
+Ctrl+C and restart using the **same checks directory** to reopen saved revisions.
+If the port is occupied, use `--port 8770` and change the browser URL accordingly.
 
-This personal open-source application demonstrates simulated handovers and runs
-one real rule on local IFC4 files. Handover decisions depend on the stated project
-requirements; the local check reports that rule's result, not an overall quality
-score. Model editing, work assignment, browser-initiated rechecks, and a 3D viewer
-are future work. The main flows are bilingual; some secondary record pages remain
-Chinese-only.
+[Step-by-step workflow, backup and troubleshooting](docs/quick-start.md) ·
+[Storage and API details](doctor/README.md#projects-and-revision-rechecks)
 
-## Build on it
+## Reproduce this version and its demonstration
 
-The application uses Python and IfcOpenShell to read models, with a plain
-HTML/CSS/JavaScript interface. The underlying framework supports configurable
-checks and exports, including issue files other BIM tools can read (BCF).
+Run `git rev-parse HEAD` and compare it with `source_sha` in the candidate CI
+artifact manifests. For an immutable rerun, use `git checkout <source_sha>` before
+installation. Both Windows and Ubuntu jobs run the full checks and a clean
+installation/save/restart/restore workflow. Their commit-named artifacts contain
+machine results, the current demonstration and its screenshots/checksums.
 
-- [Engineering reference](docs/engineering-reference.md): architecture and development commands.
-- [Rule definitions](rules/product-validation/README.md) and [data formats](docs/data_contract.md).
-- [Automated checks](https://github.com/EricRoosevelt/epc-digital-delivery-control-tower/actions/workflows/ci.yml).
-- [Earlier Power BI / Speckle work](dashboard/README.md): the reporting stage of the same project.
-- [Detailed technical reference from the previous README](https://github.com/EricRoosevelt/epc-digital-delivery-control-tower/blob/3145c61c89037cec3d9825b5f2dbee6587307d1d/README.md#reference).
+[Candidate evidence and recording commands](docs/evidence/phase2-candidate/README.md)
+explain how to download or regenerate those files. CI results count only when
+their head SHA matches the candidate; old green runs do not certify this branch.
+
+## Current limits
+
+This is a local candidate, with no authenticated team assignment, notifications,
+automatic source-model editing or project acceptance decision. Cross-revision
+pairing currently supports a single IFC file per logical model; public federated
+examples can be saved/reopened but are not paired across revisions.
+
+The upload limit is not a validated capacity guarantee. One recorded 2,055-mesh,
+1.07-million-triangle case took 179.5 seconds for new content, near the 180-second
+request timeout; one earlier cold 3D failure remains unexplained.
+[Measured scope and qualifications](docs/handoffs/model-case.md).
+Live OpenAI advice requires the user's own configured account and was not a
+prerequisite for the candidate's offline checks or demonstration.
+
+## Earlier work and engineering reference
+
+The [October 13 English recording](docs/evidence/doctor-resume-ui-en-2026-10-13/doctor-live-en.webm)
+and [earlier case study](https://app.notion.com/p/3be1cb002005801b8d5dd536615d46f9)
+show the previous simulated-handover experience. They remain historical material,
+not evidence of the Phase 2 candidate or a source-model repair.
+
+- [Engineering reference](docs/engineering-reference.md) and [candidate decisions](docs/product/phase2-candidate.md).
+- [Rule definitions](rules/product-validation/README.md), [rule parity](docs/handoffs/rule-parity.md) and [data formats](docs/data_contract.md).
+- [Earlier Power BI / Speckle work](dashboard/README.md).
 
 ## Data Source and Attribution
 

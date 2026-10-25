@@ -48,3 +48,4 @@ opening the database with a fresh ReviewStore/ProjectLibrary.
 accessibility. Screenshots cover desktop Chromium/Edge and an emulated 390px
 viewport; physical-device and screen-reader certification were not performed.
 No live OpenAI response is represented in these captures.
+The public audit copy normalizes its absolute workspace path to `.`; no screenshots were recaptured and no checks were rerun for this normalization.

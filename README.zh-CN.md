@@ -1,90 +1,91 @@
-# BIM Doctor
+# BIM Doctor — Phase 2 RC1
 
-**看懂模型检查结果，找到下一步，再看清复检改变了什么。**
+**在真实三维中定位检查结果，保存证据，再看清修订改变了什么。**
 
-[English](README.md) · [观看 80 秒演示](docs/evidence/doctor-resume-ui-2026-10-13/doctor-live.webm) · [产品案例](https://app.notion.com/p/3f81cb00200581f2aad8dd078f9d5fa9) · [快速开始](#快速开始)
+[English](README.md) · [当前候选演示与同提交证据](docs/evidence/phase2-candidate/README.md) · [快速开始](#快速开始) · [Windows／Ubuntu CI](https://github.com/EricRoosevelt/epc-digital-delivery-control-tower/actions/workflows/ci.yml?query=branch%3Afeat%2Fdoctor-product-phase1)
 
-准备把建筑模型交给下一个专业时，BIM 协调人员需要的不只是“不通过”清单：
-它影响哪项工作？接下来要补什么？重新检查后，变化又来自哪里？
+BIM Doctor 是面向工程师和 BIM 协调人员的个人开源应用，在本机浏览器中查看 IFC
+模型和检查证据。项目记录留在本机；规则结果与真人工程判断、项目接纳分别处理。
 
-BIM Doctor 把这些问题放到同一条阅读路径里。它在本机浏览器中运行，面向负责模型交接
-和专业协调的人。项目使用 IFC 文件——一种在不同建模工具之间交换建筑模型的开放格式。
+## 这个候选版本能做什么
 
-## 3D 检查工作台与 AI 建议
+- **真实 3D 检查。** 载入随附的 buildingSMART 公共模型，或导入单个 IFC；选择结果，
+  聚焦和隔离实际三角化的构件几何。
+- **项目保存与修订复查。** 保存报告及 3D 快照，记录处理人、状态和备注；把新 IFC
+  存为同一模型的新修订，比较证据、下载 Markdown 简报。服务重启后可直接重开保存记录。
+- **解释变化。** 分别展示复检通过、仍未满足、新增、构件未找到、不适用和不可比较；
+  删除、改分类或检查依据变化不会直接计为修正。
+- **本地指导与可选 OpenAI 建议。** 无密钥也能阅读规则指导；配置自己的 API 账户后，
+  可按需发送所选问题的文字证据生成建议，IFC 和几何不发送。[配置方法](doctor/README.md#openai-setup)。
 
-启动下方的本地服务后，打开 **[3D 检查工作台](http://127.0.0.1:8765/review.html?lang=zh)**。
-载入三专业公共示例或导入单个 IFC，选择检查结果，在真实模型中聚焦、隔离对应构件。
-本轮提供风口类型、名称可读性、楼层归属和文件内 GlobalId 完整性四项检查；信息提示单独展示。
-
-在 **[项目与复查](http://127.0.0.1:8765/projects.html?lang=zh)** 中保存模型修订与 3D 快照，
-重启后也可继续查看。记录处理人和进展，再把新导出的 IFC 保存为同一模型的新修订，
-比较检查证据。规则通过、构件未找到和检查依据改变分别列示，也可下载项目工作简报。
-[操作流程与本机存储](doctor/README.md#projects-and-revision-rechecks)。
-
-每项结果都有原始证据、本地规则指导和修改后的验证步骤。配置服务端环境变量
-`OPENAI_API_KEY` 后，可按需生成 OpenAI 建议，只发送所选问题的文字证据；
-IFC 文件与几何留在本机服务中。[配置方法与当前范围](doctor/README.md#3d-review-workspace)。
-
-## 从检查结果走到下一步
-
-随附示例中，一段风管缺少项目要求的资产标识，设备明细表因此无法按这些标识建立对应。
-Doctor 先说明受影响的工作与原因，再给出补充信息的行动，以及复检需要确认的内容。
-
-![初检结论：示例项目要求的资产标识缺失，房间数据表与设备明细表事项受阻。](docs/evidence/doctor-case-study-2026-10-13/01-conclusion-zh.png)
-
-页面按 **结论 → 下一步 → 细节** 排列。需要进一步核对时，读者可以继续查看构件标识
-和每一条检查结果。
-
-复检示例展示了另一种情况：模型没有改，检查要求变了，同一事项的结论从“受阻”变为
-“可以开始”。页面把变化的原因放在结论旁，帮助读者区分“答案变了”和“模型修好了”。
-
-**[观看完整示例](docs/evidence/doctor-resume-ui-2026-10-13/doctor-live.webm)**：80 秒中文界面实录，无旁白。
-
-## 看一个示例，或检查自己的文件
-
-- **体验模拟交接。** 从一个事项的初检结论，看到下一步与随附复检记录。公开模型和
-  示例项目设定让你无需准备文件就能体验完整流程。
-- **检查自己的 IFC4 文件。** 真实检查风口有没有声明规则要求的类型。目前接受
-  `DIFFUSER`、`GRILLE`、`LOUVRE`、`REGISTER` 四种值；结果附有构件标识，方便回到
-  建模工具中查找。文件和检查记录保存在本机。
-
-这两个入口回答不同的问题：示例解释一次交接判断，自己的文件检查一项属性声明。
-分开呈现，是为了让样例项目的约定留在样例里，而不被直接套到其他人的模型上。
+三维工作台检查风口类型 PV-001、名称、楼层归属及文件内 GlobalId 完整性。
+PV-001 与旧框架共享规则定义和 IfcTester 判断；名称、楼层属于信息提示，不是工程缺陷计数。
 
 ## 快速开始
 
-需要 **Python 3.11 或更新版本、Git 和浏览器**。以下命令在 Windows PowerShell 下验证过，
-首次安装下载约 80 MB。
+使用 **Python 3.14、Git，以及支持 WebGL2、ES modules 和 import maps 的浏览器**。
+候选 CI 平台为 Windows 和 Ubuntu。运行应用无需 Node.js、Revit 或 OpenAI 账户。
+必须保留完整源码检出；现有框架 wheel 不包含整个网页应用和配套资源。
+
+候选代码位于 `feat/doctor-product-phase1`；候选 PR 合并前，默认主线克隆可能仍是旧阶段。
+
+**Windows PowerShell**
 
 ```powershell
-git clone -c core.longpaths=true https://github.com/EricRoosevelt/epc-digital-delivery-control-tower.git
+git clone -c core.longpaths=true --branch feat/doctor-product-phase1 https://github.com/EricRoosevelt/epc-digital-delivery-control-tower.git
 cd epc-digital-delivery-control-tower
-py -m venv .venv
-.\.venv\Scripts\python.exe -m pip install -r requirements.txt
-.\.venv\Scripts\python.exe doctor/serve.py
+py -3.14 -m venv .venv
+.\.venv\Scripts\python.exe -m pip install -e .
+$doctorState = Join-Path $env:LOCALAPPDATA 'BIMDoctor\phase2-rc1'
+.\.venv\Scripts\python.exe doctor/serve.py --checks-dir "$doctorState"
 ```
 
-打开 **[BIM Doctor 中文界面](http://127.0.0.1:8765/?lang=zh)**，选择 **选择模拟示例**。
-在终端按 **Ctrl+C** 停止服务。
+**Ubuntu／Bash**
 
-[逐步操作、公开样例与常见启动问题](docs/quick-start.md#中文操作指南)
+```bash
+git clone --branch feat/doctor-product-phase1 https://github.com/EricRoosevelt/epc-digital-delivery-control-tower.git
+cd epc-digital-delivery-control-tower
+python3.14 -m venv .venv
+.venv/bin/python -m pip install -e .
+.venv/bin/python doctor/serve.py --checks-dir "$HOME/.local/state/bim-doctor/phase2-rc1"
+```
 
-## 当前范围
+打开 **[3D 检查工作台](http://127.0.0.1:8765/review.html?lang=zh)**，选择 **载入公共示例**，
+保存到项目后进入 **[项目与复查](http://127.0.0.1:8765/projects.html?lang=zh)**。
+按 Ctrl+C 停止，再用**同一个存储目录**启动即可重开。
+端口被占用时加 `--port 8770`，浏览器地址也改成 8770。
 
-这是一个个人开源项目，提供模拟交接流程和针对本地 IFC4 文件的一条真实规则检查。
-交接判断依赖具体项目的要求；本地检查报告这条规则的结果，不提供模型整体质量评分。
-模型编辑、任务派发、从页面发起复检和三维查看器留待后续开发。
-主要使用流程支持中英双语，部分次级记录页仍只有中文。
+[逐步操作、备份与排错](docs/quick-start.md#中文操作指南) ·
+[本机存储细节](doctor/README.md#projects-and-revision-rechecks)
 
-## 了解实现
+## 复现同一版本与演示
 
-项目使用 Python 和 IfcOpenShell 读取模型，界面采用 HTML、CSS 和 JavaScript。
-底层支持配置检查规则，并把结果导出为其他 BIM 工具可读取的问题文件（BCF）。
+运行 `git rev-parse HEAD`，应与候选 CI 附件清单中的 `source_sha` 完全相同。
+固定复现时，先 `git checkout <source_sha>`，再安装。Windows 和 Ubuntu 都运行完整检查，
+并从新环境验证安装、保存、停止服务及重开。同提交命名的附件包含机器结果、新演示、截图和校验值。
 
-- [开发参考](docs/engineering-reference.md)：架构与开发命令。
-- [规则定义](rules/product-validation/README.md)和[数据格式](docs/data_contract.md)。
-- [自动检查记录](https://github.com/EricRoosevelt/epc-digital-delivery-control-tower/actions/workflows/ci.yml)。
-- [早期 Power BI / Speckle 工作](dashboard/README.md)：同一项目的报表阶段。
+[当前候选证据与录制命令](docs/evidence/phase2-candidate/README.md)说明如何下载或重新生成。
+只有 HEAD 相同的 CI 才能证明这个候选；此前旧提交上的绿色结果不作为新版证据。
+
+## 当前边界
+
+这是本机候选版本，尚无经过身份认证的团队派单、通知、自动修改源模型或项目接纳决定。
+跨修订配对目前要求一个模型槽对应单个 IFC；公共联邦示例可保存重开，但不跨版本配对。
+
+上传大小限制不是已验证的容量上限。既有 2,055 网格、107 万三角形案例的新内容导入
+约 179.5 秒，接近 180 秒请求超时；另有一次早期冷加载三维异常尚未定位。
+[实测范围及限定](docs/handoffs/model-case.md)。OpenAI 建议需要用户自行配置账户，
+候选的离线检查和演示不以真实 API 调用为前提。
+
+## 历史素材与开发参考
+
+[10 月 13 日中文录像](docs/evidence/doctor-resume-ui-2026-10-13/doctor-live.webm)
+和[早期案例](https://app.notion.com/p/3f81cb00200581f2aad8dd078f9d5fa9)展示之前的模拟交接体验，
+保留作历史材料，不作为 Phase 2 候选或源模型修正的证明。
+
+- [开发参考](docs/engineering-reference.md)与[候选版本约定](docs/product/phase2-candidate.md)。
+- [规则定义](rules/product-validation/README.md)、[一致性保障](docs/handoffs/rule-parity.md)和[数据格式](docs/data_contract.md)。
+- [早期 Power BI／Speckle 工作](dashboard/README.md)。
 
 ## 数据来源与署名
 

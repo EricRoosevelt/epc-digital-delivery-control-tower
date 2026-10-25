@@ -1,88 +1,125 @@
-# Quick start / 快速开始
+# Phase 2 candidate quick start / 快速开始
 
-[Project overview](../README.md) · [中文介绍](../README.zh-CN.md)
+[English overview](../README.md) · [中文介绍](../README.zh-CN.md) · [Exact-commit CI and demonstration](evidence/phase2-candidate/README.md)
 
-## Installation
+## Install the complete candidate checkout
 
-Follow the five commands in the [root README](../README.md#quick-start).
-They were tested with Python 3.14 on Windows 11. The virtual environment uses
-about 280 MB. Keep `-c core.longpaths=true` in the clone command to avoid Windows
-path-length errors. A short checkout path, such as `C:\src`, also helps.
+Follow the Windows or Ubuntu commands in the [README](../README.md#quick-start).
+Use Python **3.14** with venv/pip, Git and a modern **WebGL2** browser. The native
+IfcOpenShell dependency does not support Python 3.15. Candidate CI verifies
+Windows and Ubuntu; macOS is not a certified candidate platform.
 
-For macOS/Linux, use `python3 -m venv .venv` and `.venv/bin/python` in place of
-the Windows Python paths. These setup variants have not been manually verified;
-automated tests run on Ubuntu and Windows.
+Clone `feat/doctor-product-phase1` while the candidate PR is unmerged. For an
+immutable reproduction, compare `git rev-parse HEAD` with `source_sha` in the CI
+artifact manifest and check out that SHA. Keep the complete repository: the
+framework wheel is not a standalone installer for the Doctor application.
+Normal use needs no Revit, Node.js, .NET audit tool or OpenAI key.
 
-The server prints its address and the location of local check records. If port
-8765 is busy, add `--port 8770` to the server command and open that port instead.
-Use Ctrl+C to stop it. The application listens on your own machine only.
+Run from the repository root using that checkout's virtual-environment Python.
+The server binds to 127.0.0.1 and prints its browser and data-directory addresses.
+Choose an external writable `--checks-dir`; use the same directory after restart.
+If port 8765 is busy, add `--port 8770` and change the browser URL accordingly.
 
-## Follow the example
+## Inspect, save and reopen
 
-Open <http://127.0.0.1:8765/?lang=en>.
+1. Open <http://127.0.0.1:8765/review.html?lang=en> and choose **Load public example**.
+   No uploaded file or existing project is needed.
+2. Select a result, then **Focus element** / **Isolate element**. The three-file
+   public example contains 39 elements and 32 real renderable shapes. Information
+   prompts and missing geometry remain distinct from rule failures.
+3. Choose **Save to project**, create a project/logical model and save R1. This
+   retains the report, rule snapshot and triangle geometry.
+4. Record an owner, work status and note. **Ready for recheck** is a work record;
+   it does not change a machine FAIL to PASS.
+5. Stop the server with Ctrl+C. Restart with the same `--checks-dir`, open
+   **Projects & rechecks** and choose the revision. Its report and real geometry
+   reopen without re-uploading the IFC.
 
-1. Choose **Choose a simulated example**, then **Open this example's result**
-   under **Step 1**.
-2. Find **building element** under **Room data sheets and equipment schedules**
-   and choose **See this item**. The list has 13 workflow items, eight needing
-   attention; these are not a count of model defects.
-3. Read the conclusion, then use **Jump to the next step** for the action and
-   what a recheck should establish. The handling team is an example setting.
-4. Follow the link to **The models did not change, but a handover conclusion did**
-   for the same item's supplied recheck. Its requirement changed while the model
-   stayed the same. The page explains why the new conclusion does not establish
-   that the original condition was met.
+Revision data is in `<checks-dir>/projects/library.sqlite3`. Back up the entire
+external checks directory while the server is stopped. Project snapshots do not
+archive the original IFC; retain source models separately. Clearing browser
+storage does not delete this library. An empty directory opens an empty library.
 
-[Watch this flow](evidence/doctor-resume-ui-en-2026-10-13/doctor-live-en.webm)
+## Import a revision and explain the change
 
-## Check a local file
+Import a single-file source-tool re-export, select **Save to project**, and choose
+the existing project/model slot. Compare R1/R2 from the project, open the exact
+saved result and download the Markdown work brief. Pairing uses unique GlobalIds
+and an unchanged rule basis. A passed rule, a missing object, a changed IFC class
+and a changed checking basis are distinct. Actual classification and engineering
+acceptance belong to a person with project context. The public federation can be
+saved/reopened; cross-revision pairing currently requires one IFC file per slot.
 
-1. Choose **Start a local check**, then **Choose one or more .ifc files**.
-2. Select IFC4 text files and declare each file's discipline. For a first run,
-   use `data/raw/Building-Hvac.ifc` from the repository and declare HVAC.
-3. Choose **See the scope of the check**, inspect it, then **Run the check**.
-4. Open a result to see the requirement and the object's GlobalId, an identifier
-   you can use to find it in a modeling tool.
+The [current demonstration](evidence/phase2-candidate/README.md) reproduces a
+revision example from clearly labelled public synthetic source geometry. It does
+not present that exercise as a Revit edit or engineer-approved repair. No private
+authoring project or previously populated database is needed.
 
-This checks PV-001: each air terminal declares one of four predefined types.
-The public HVAC sample produces two failures. The architecture sample has no
-applicable air terminals and produces a not-applicable result. Revit `.rvt`,
-IFC2x3, `.ifczip`, and `.ifcxml` files need to be exported as IFC4 text first.
+## Local guidance and optional AI
 
-Files are copied into the local checks folder; no model upload service is used.
-The page explains how to remove records. To choose a folder, start with
-`python doctor/serve.py --checks-dir "<your folder>"`.
+Rule guidance works without an account. Optional generated advice needs the
+user's own `OPENAI_API_KEY` in the server environment; see [setup](../doctor/README.md#openai-setup).
+Keep secrets out of the repository and browser. Selected finding text can be
+sent; IFC and meshes are not sent by this action. A configured key does not prove
+a live call or engineering correctness. Candidate CI uses no provider secret.
+
+## Verify a new environment
+
+From the candidate checkout, using Python 3.14:
+
+```bash
+python3.14 tools/verify_clean_install.py --source . --output ../phase2-clean-check
+```
+
+On Windows use `py -3.14 tools/verify_clean_install.py --source . --output ../phase2-clean-check`.
+Choose
+a **new output directory outside any checkout**. The supervisor clones the exact
+commit, creates another venv, installs it and tests the real server, persistence,
+comparison and process restart. It does not copy dirty application files or
+reuse an existing database. Read `evidence/clean-install.json`,
+`evidence/smoke.json` and the logs; compare their source SHA with the candidate.
+Both OS results are available in the same-SHA CI artifact.
+
+Browser recording additionally needs pinned Node.js/Playwright QA tooling, not
+an application dependency. [Recording commands](evidence/phase2-candidate/README.md).
+
+## Troubleshooting and limits
+
+- Keep `-c core.longpaths=true` on Windows; a short checkout path also helps.
+- For import errors, check the venv Python, repository root, complete source and
+  pip installation. Do not add this developer's machine paths to `PYTHONPATH`.
+- A viewport failure leaves check evidence readable. Inspect its technical
+  details and retry; a failed viewer is not evidence of missing IFC geometry.
+- The 50 MB browser upload cap is not a capacity guarantee. A recorded 2,055-mesh
+  case took about 179.5 seconds, near the 180-second request timeout; one earlier
+  cold 3D failure remains unexplained. [Measured scope](handoffs/model-case.md).
+- The [October 13 recording](evidence/doctor-resume-ui-en-2026-10-13/doctor-live-en.webm)
+  and [earlier phase evidence](evidence/product-phase2/README.md) are historical.
+  Use the current SHA-bound CI artifacts for candidate acceptance.
 
 ## 中文操作指南
 
-先按[中文 README](../README.zh-CN.md#快速开始)安装并启动，打开
-<http://127.0.0.1:8765/?lang=zh>。
+按[中文 README](../README.zh-CN.md#快速开始)克隆候选分支，建立 Python 3.14 环境，
+安装完整源码并指定仓库外的 `--checks-dir`。普通运行无需 Revit、Node 或 AI 账户。
+固定复现时，把 `git rev-parse HEAD` 与 CI 附件里的 `source_sha` 对齐。
 
-### 体验示例
+1. 打开 <http://127.0.0.1:8765/review.html?lang=zh>，点 **载入公共示例**。
+2. 选择结果并 **聚焦构件**、**隔离构件**。公共示例有 39 个构件、32 个真实网格；
+   信息提示、规则未满足和没有几何分别说明。
+3. 点 **保存到项目**，建立项目和模型槽，保存 R1。报告、规则快照、真实几何一并保存。
+4. 记录处理人、进度及备注。**待复检** 不会把机器 FAIL 改成 PASS。
+5. Ctrl+C 停止，用**同一个存储目录**重启；在 **项目与复查** 重开保存版本。
+   无需再次上传原 IFC。
 
-1. 点 **选择模拟示例**，在 **第一步** 下点 **打开这个示例的结果**。
-2. 找到 **building element** 的 **房间数据表与设备明细表** 事项，点 **查看这一项**。
-   列表有 13 个工作事项，其中 8 个需要处理；事项数不是模型缺陷数。
-3. 先看结论，再用 **跳到下一步** 查看行动和复检条件。处理团队来自示例设定。
-4. 在页面下方打开 **模型未改，但交接判断发生变化** 的同项复检。
-   页面会解释：模型未改、要求改变时，结论也可能变化，原来的结束条件仍需另行判断。
+数据在 `<checks-dir>/projects/library.sqlite3`。停止服务后备份整个外部存储目录，
+原 IFC 另行保留。清理浏览器缓存不会删除 SQLite；换空目录则会打开空项目库。
+端口忙时加 `--port 8770`，浏览器地址也改为 8770。
 
-[观看中文操作录像](evidence/doctor-resume-ui-2026-10-13/doctor-live.webm)
+从源工具重新导出单个 IFC，保存到同一模型槽的新修订，比较证据并下载简报。
+删除、改分类、不适用或规则变化不等于修正；工程取值和接纳仍由有上下文的人判断。
+公共联邦示例可保存重开，跨版配对目前只支持单文件槽。
 
-### 检查文件
-
-1. 点 **开始本地检查**，再点 **选择一个或多个 .ifc 文件**。
-2. 选择 IFC4 文本文件并声明专业。可以先用仓库里的
-   `data/raw/Building-Hvac.ifc`，专业选暖通。
-3. 点 **查看检查范围**，核对后点 **运行检查**。
-4. 打开结果查看具体要求与 GlobalId，后者可用于在建模工具中查找构件。
-
-目前检查风口有没有声明四种预定义类型之一。暖通样例得到两条不通过；建筑样例没有
-适用风口，显示不适用。Revit 原文件、IFC2x3 和压缩 IFC 等格式需先导出为 IFC4 文本。
-文件和记录都留在本机，存储目录会在启动时打印，页面提供清理说明。
-
-### 启动问题
-
-- 克隆时保留 `-c core.longpaths=true`，也可使用 `C:\src` 这样的短目录，避免 Windows 长路径错误。
-- 端口被占用时，在启动命令后加 `--port 8770`，浏览器地址也改用 8770。
-- 在终端按 Ctrl+C 停止服务。macOS/Linux 的命令差异见本页 Installation。
+[新版演示](evidence/phase2-candidate/README.md)用带几何的公开合成源生成前后导出，
+不依赖私有模型，也不冒称 Revit 修改或具名工程师签认。规则指导无需密钥；可选
+OpenAI 建议的配置和发送范围见[说明](../doctor/README.md#openai-setup)。
+Windows／Ubuntu 的安装、保存和重开结果以当前完整 SHA 的 CI 附件为准；旧录像保留为历史。
