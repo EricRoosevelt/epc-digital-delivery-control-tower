@@ -105,7 +105,7 @@ exact IFC payloads outside the checkout: **192 applicable observations, zero
 status differences**, with all 1,959 non-applicable projections matching in each
 revision. See [rule parity](rule-parity.md) for its scope and reporting differences.
 
-## Measured scale and limits
+## Historical synchronous-import measurements
 
 Measurement host: Windows 11 (10.0.26200), Intel i7-10700 (8 cores/16 logical
 processors), 15.9 GiB system RAM, NVIDIA RTX 3080 via ANGLE D3D11. Browser:
@@ -137,7 +137,7 @@ can miss short peaks, while the OS peak spans the process lifetime.
 
 This establishes a completed workflow for the measured **single-file 2,055-object,
 1.07-million-triangle case on this host**, not a larger-model or concurrency SLA.
-The 177.193 s POST is close to the current 180 s request timeout. The upload cap
+The 177.193 s POST was close to that version's 180 s request timeout. The upload cap
 is not a validated model-size capacity, and there is insufficient margin to
 promise larger inputs or slower machines.
 
@@ -165,6 +165,14 @@ palette values and visible-object count are preserved. Small terminals still
 require focus/isolation at this floor-wide scale. The timing table precedes this
 display-only lighting adjustment; subsequent cached visual checks do not create
 a new uncached-import timing claim.
+
+Subsequent hardening replaces the synchronous browser import with observable
+worker jobs, process-tree cancellation and a server deadline. The measurements
+above remain evidence for the earlier implementation. The current cache retains
+at most 16 serialized payloads / 64 MiB; project operations that need only reports
+do not restore geometry. Current same-SHA browser CI includes project drafts,
+geometry failure/retry, deep selection and import-job recovery. These changes do
+not retroactively identify the earlier cold viewport error.
 
 ## Verification
 
