@@ -174,7 +174,62 @@ do not restore geometry. Current same-SHA browser CI includes project drafts,
 geometry failure/retry, deep selection and import-job recovery. These changes do
 not retroactively identify the earlier cold viewport error.
 
-## Verification
+## Worker and cache hardening measurements
+
+A separate replay compared frozen `23b4361` with `d5090c4` on the same Windows
+host, using fresh databases and two uncached source revisions. Later UI recovery
+and documentation changes do not alter the measured native worker/cache code.
+Both browser runs used Playwright 1.62.1 Chromium 151.0.7922.34, headless at
+1440 by 1000, with WebGL2 through ANGLE/SwiftShader software rendering. These
+browser observations are separate from the earlier Edge/RTX measurements above.
+
+| Observation | Earlier synchronous implementation | Worker/cache implementation |
+| --- | ---: | ---: |
+| Two complete native imports | 165.71 / 169.34 s | 167.99 / 166.86 s |
+| Existing report during second import | 2.5 s client timeout | 84.9 ms, HTTP 200 |
+| Existing geometry during second import | 2.5 s client timeout | 99.7 ms, HTTP 200 |
+| Existing revision during second import | 2.5 s client timeout | 226.5 ms, HTTP 200 |
+| Project list during second import | 2.5 s client timeout | 75.4 ms, HTTP 200 |
+| Compare, median of three rounds | 5,051.7 ms | 281.8 ms |
+| Save follow-up, median of three rounds | 2,425.1 ms | 109.4 ms |
+| Browser revision reopen, median of three rounds | 7,874.3 ms | 5,103.4 ms |
+| HTTP process sampled peak RSS | 786.4 MiB | 262.9 MiB |
+| HTTP process full geometry JSON decodes | 15 | 0 |
+
+Native import timing ends at worker completion, not a usable UI or GPU
+presentation. Both revisions were subsequently reopened in the real browser,
+with all 2,055 meshes and 1,073,546 triangles submitted, and no page/console
+errors or context loss. A separate exploratory attempt stopped on a polling
+`ERR_NETWORK_CHANGED`; it is retained as a transport failure, not counted as a
+successful full replay or an explanation of the historical viewport failure.
+
+New-process memory sampling covered the entire HTTP/worker descendant tree:
+its combined sampled peak was **543.7 MiB**, including computation. The 262.9 MiB
+HTTP-only figure must not be presented as the total. External sampling targeted
+250 ms; actual gaps were median 344 ms, p95 403 ms, maximum 701 ms over 1,099
+samples. The earlier in-process sampler had gaps up to 19.49 seconds during
+native work. Both sampled peaks can miss shorter spikes and are not OS memory
+limits. The 64 MiB budget bounds retained serialized payloads, not process RSS.
+
+Across two imports and three rounds of revision switching, notes and comparison,
+retained cache bytes peaked at **54,195,258**, below the 67,108,864-byte budget,
+with nine LRU evictions and zero oversized admissions. Explicit clearing reached
+zero entries/bytes. Lazy database restoration then admitted 48,869,337 bytes in
+646 ms. Before/after report JSON serialization and follow-up serialization were
+equal; geometry HTTP response SHA-256 values were byte-identical. This checks
+returned historical evidence and manual records, not SQLite file byte equality.
+The new process made six explicit geometry restores but no full float-tree JSON
+decodes; metadata, comparison and follow-up operations did not decode geometry.
+
+Real cancellation and a separate five-second backend deadline each retained
+Windows process handles for the launcher, actual Python worker and descendant
+before stopping. Every handle signalled exit and no review was published.
+Cancellation confirmation took about 1.46 seconds; the five-second deadline
+reached its terminal state at 6.52 seconds including process-tree cleanup.
+This is evidence for the measured case and sequence, not unlimited continuous
+use, larger models, sustained frame rate or an engineering acceptance decision.
+
+## Historical case verification
 
 Full Python verification: **1,476 passed and 11,871 subtests passed**, with the
 required IDS audit enabled. Ruff, dependency consistency, shipped pipeline

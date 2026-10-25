@@ -41,8 +41,11 @@ parity and deliberate reporting differences are recorded in the
 
 The browser uploads a selected file only to this loopback server. The in-memory
 JSON cache is bounded to 16 payloads / 64 MiB. Completed unsaved imports have a
-temporary spool capped at four results / 256 MiB; job metadata retains at most
-16 jobs. Unsaved data can expire before the server exits. Use **Save to project** to retain a report,
+temporary spool capped at four results / 256 MiB per running server; job metadata
+retains at most 16 jobs. Unsaved data can expire before the server exits. A forced
+server termination can leave task directories in `<checks-dir>/import-jobs`;
+these are not restored or counted by a later server. Remove those scratch files
+only after all server/worker processes have stopped. Use **Save to project** to retain a report,
 its 3D snapshot and follow-up records across restarts. The established example
 and recheck experiences remain available from **Records & checks**.
 

@@ -115,7 +115,8 @@ modelSelect.addEventListener("change", () => { state.model = modelSelect.value; 
 statusSelect.addEventListener("change", () => { state.status = statusSelect.value; state.limit = 100; renderList(); });
 function refreshVisible() { visibleCount.textContent = viewer && state.geometryReady ? `${W.visible}: ${number(viewer.visibleCount())}` : ""; }
 function setBusy(busy, text) {
-  state.busy = busy; demoButton.disabled = busy; importButton.disabled = busy; cancelButton.hidden = !busy;
+  const unresolved = activeImport && !activeImport.terminal;
+  state.busy = busy; demoButton.disabled = importButton.disabled = busy || !!unresolved; cancelButton.hidden = !busy && !unresolved;
   cancelButton.disabled = false;
   statusbar.setAttribute("aria-busy", String(busy)); message.textContent = text; recovery.hidden = true;
 }
@@ -128,7 +129,7 @@ function importFile(file) {
   if (!/\.ifc$/i.test(file.name) || !file.size) { showError(W.invalid); return; }
   if (file.size > 50 * 1024 * 1024) { showError(W.tooLarge); return; }
   const job = { file, id: crypto.randomUUID(), submitted: false, cancelRequested: false, cancelSent: false };
-  return loadReport(() => importReport(job), { fresh: true });
+  return loadReport(() => importReport(job), { fresh: true, importJob: job });
 }
 async function sendCancel(job) {
   if (!job.id || job.cancelSent) return;
@@ -136,13 +137,16 @@ async function sendCancel(job) {
   try {
     const status = await json("/api/review/imports/cancel", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ job_id: job.id }) });
     if (status.state === "cancelled") { job.confirmedCancelled = true; job.finished = true; job.terminal = true; job.controller?.abort(); }
+    return status;
   }
   catch (error) { job.cancelSent = false; throw error; }
 }
 function cancelLoad() {
   if (!activeImport) { controller?.abort(); return; }
   const job = activeImport;
-  job.cancelRequested = true; cancelButton.disabled = true; message.textContent = W.cancelling;
+  job.cancelRequested = true;
+  if (!state.busy) loadReport(() => importReport(job), { fresh: true, importJob: job });
+  cancelButton.disabled = true; message.textContent = W.cancelling;
   sendCancel(job).catch(error => {
     if (activeImport !== job) return;
     cancelButton.disabled = false; message.textContent = `${W.cancelUnconfirmed} ${error.message}`;
@@ -169,9 +173,10 @@ async function importReport(job) {
   job.controller = controller;
   activeImport = job;
   try {
-    const submit = () => {
-      job.submitted = true;
-      return json(`/api/review/imports?filename=${encodeURIComponent(job.file.name)}&job=${encodeURIComponent(job.id)}`, { method: "POST", headers: { "Content-Type": "application/octet-stream" }, body: job.file, signal });
+    const submit = async () => {
+      job.submitted = true; job.terminal = false;
+      try { return await json(`/api/review/imports?filename=${encodeURIComponent(job.file.name)}&job=${encodeURIComponent(job.id)}`, { method: "POST", headers: { "Content-Type": "application/octet-stream" }, body: job.file, signal }); }
+      catch (error) { if (error.status >= 400 && error.status < 500) job.terminal = true; throw error; }
     };
     message.textContent = W.uploading;
     let status;
@@ -206,15 +211,33 @@ async function importReport(job) {
   } finally {
     // A lost HTTP response does not mean the worker stopped. Keep this page's
     // ownership so retry and pagehide can still address that exact job.
-    if (activeImport === job && (job.terminal || signal.aborted)) activeImport = null;
+    if (activeImport === job && job.terminal) activeImport = null;
   }
 }
-async function loadReport(getReport, { fresh = false } = {}) {
+async function settleOwnedImport(job, signal) {
+  job.cancelRequested = true; cancelButton.disabled = true; message.textContent = W.cancelling;
+  let status = await sendCancel(job);
+  while (!["succeeded", "failed", "cancelled", "timed_out"].includes(status?.state)) {
+    if (!job.cancelSent) {
+      status = await sendCancel(job);
+      if (["succeeded", "failed", "cancelled", "timed_out"].includes(status?.state)) break;
+    }
+    await pollDelay(signal);
+    status = await json(`/api/review/imports?job=${encodeURIComponent(job.id)}`, { signal });
+  }
+  job.terminal = true;
+  if (activeImport === job) activeImport = null;
+}
+async function loadReport(getReport, { fresh = false, importJob = null } = {}) {
+  const previousImport = activeImport;
   controller?.abort(); controller = new AbortController();
   const current = ++requestNumber;
-  retryLoad = () => loadReport(getReport, { fresh });
+  retryLoad = () => loadReport(getReport, { fresh, importJob });
   setBusy(true, W.loading); statusbar.classList.remove("has-error");
   try {
+    if (previousImport && previousImport !== importJob && !previousImport.terminal) await settleOwnedImport(previousImport, controller.signal);
+    if (current !== requestNumber) return;
+    cancelButton.disabled = false;
     const loaded = await getReport();
     const report = loaded.report || loaded;
     if (current !== requestNumber) return;

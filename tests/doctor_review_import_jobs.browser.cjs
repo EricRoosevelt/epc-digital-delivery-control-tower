@@ -39,10 +39,14 @@ async function main() {
       let releaseSubmission = null;
       let submittedId = null;
       let dropSubmission = false;
+      let rejectSubmission = false;
+      let holdCancelFailure = false;
+      let releaseCancelFailure = null;
       let resultReview = previousReview;
       let switching = false;
       const knownIds = new Set();
-      const descriptor = id => ({ job_id: id, state: mode, stage: "tessellating", completed: 7, total: 100, review_id: mode === "succeeded" ? resultReview : null, error: mode === "failed" ? "Controlled worker failure" : null });
+      const statusOverrides = new Map();
+      const descriptor = id => ({ job_id: id, state: statusOverrides.get(id) || mode, stage: "tessellating", completed: 7, total: 100, review_id: mode === "succeeded" ? resultReview : null, error: mode === "failed" ? "Controlled worker failure" : null });
       await page.route(url => url.pathname === "/api/review/imports", async route => {
         const request = route.request();
         const id = new URL(request.url()).searchParams.get("job");
@@ -50,6 +54,7 @@ async function main() {
           posts++; submittedId = id;
           knownIds.add(id);
           assert.match(id, /^[0-9a-f-]{36}$/);
+          if (rejectSubmission) { rejectSubmission = false; return route.fulfill({ status: 409, json: { error: "Another page owns the active public job", active_job_id: "other-page-public-job" } }); }
           if (dropSubmission) { dropSubmission = false; return route.abort("connectionreset"); }
           if (holdSubmission) await new Promise(resolve => { releaseSubmission = resolve; });
           return route.fulfill({ status: 202, json: { ...descriptor(id), state: "queued", stage: "queued" } });
@@ -57,7 +62,15 @@ async function main() {
         if (failPoll) { failPoll = false; return route.fulfill({ status: 503, json: { error: "Controlled polling outage" } }); }
         return route.fulfill({ json: descriptor(id) });
       });
-      await page.context().route("**/api/review/imports/cancel", route => { cancels++; if (!switching) mode = "cancelling"; const id = route.request().postDataJSON().job_id; assert.ok(knownIds.has(id)); return route.fulfill({ json: { ...descriptor(id), state: "cancelling" } }); });
+      await page.context().route("**/api/review/imports/cancel", async route => {
+        cancels++; if (!switching) mode = "cancelling";
+        const id = route.request().postDataJSON().job_id; assert.ok(knownIds.has(id));
+        if (holdCancelFailure) {
+          holdCancelFailure = false;
+          return new Promise(resolve => { releaseCancelFailure = async () => { await route.fulfill({ status: 503, json: { error: "Controlled first cancellation outage" } }); resolve(); }; });
+        }
+        return route.fulfill({ json: { ...descriptor(id), state: "cancelling" } });
+      });
       const upload = name => page.locator("#review-file").setInputFiles({ name: `${name}.ifc`, mimeType: "application/octet-stream", buffer: Buffer.from("controlled job transport; real report retained") });
       const kept = async () => {
         assert.equal(new URL(page.url()).searchParams.get("review"), previousReview);
@@ -120,6 +133,76 @@ async function main() {
       await page.locator(".review-status").getByRole("button", { name: text("Retry", "重试"), exact: true }).click();
       await page.locator(".review-status").filter({ hasText: text("Model loaded", "模型已载入") }).waitFor();
       assert.equal(posts, beforeLostResponseRetry, "lost submission response recovers by client id without re-upload");
+      for (const transport of ["poll", "submit"]) {
+        mode = "running"; switching = false;
+        failPoll = transport === "poll"; dropSubmission = transport === "submit";
+        await upload(`controlled-unknown-${transport}`);
+        await page.locator(".review-status.has-error").waitFor();
+        const unknownId = submittedId;
+        const beforeReplacementPosts = posts;
+        assert.equal(await page.getByRole("button", { name: text("Cancel loading", "取消载入"), exact: true }).isVisible(), true, "unknown worker state keeps an explicit cancellation control");
+        assert.equal(await page.getByRole("button", { name: text("Import IFC", "导入 IFC"), exact: true }).isEnabled(), false, "new picker cannot orphan an unknown worker");
+        assert.equal(await page.getByRole("button", { name: text("Load public example", "载入公共示例"), exact: true }).isEnabled(), false);
+        await kept();
+        statusOverrides.set(unknownId, "cancelling"); switching = true; mode = "succeeded";
+        const cancelOld = page.context().waitForEvent("request", { predicate: request => new URL(request.url()).pathname === "/api/review/imports/cancel" && request.postDataJSON()?.job_id === unknownId });
+        // A picker may have been opened before the transport failure occurred.
+        await upload(`controlled-replacement-${transport}`);
+        await cancelOld;
+        assert.equal(posts, beforeReplacementPosts, "replacement does not submit before its own previous worker reaches a terminal state");
+        await kept();
+        statusOverrides.set(unknownId, "cancelled");
+        await page.locator(".review-status").filter({ hasText: text("Model loaded", "模型已载入") }).waitFor();
+        assert.equal(posts, beforeReplacementPosts + 1);
+        assert.notEqual(submittedId, unknownId);
+      }
+      mode = "running"; switching = false; failPoll = true;
+      await upload("controlled-unknown-cancel-without-retry");
+      await page.locator(".review-status.has-error").waitFor();
+      const beforeUnknownCancelPosts = posts;
+      const unknownCancelId = submittedId;
+      statusOverrides.set(unknownCancelId, "cancelled"); switching = true;
+      await page.getByRole("button", { name: text("Cancel loading", "取消载入"), exact: true }).click();
+      await page.locator(".review-status").filter({ hasText: text("Loading cancelled", "已取消载入") }).waitFor();
+      assert.equal(posts, beforeUnknownCancelPosts, "cancel from a transport error resumes control of the same worker without a new upload");
+      await kept();
+      mode = "running"; switching = false; failPoll = true;
+      await upload("controlled-cancel-response-race");
+      await page.locator(".review-status.has-error").waitFor();
+      const racedId = submittedId;
+      const beforeRacedReplacementPosts = posts;
+      holdCancelFailure = true;
+      const firstCancel = page.context().waitForEvent("request", { predicate: request => new URL(request.url()).pathname === "/api/review/imports/cancel" && request.postDataJSON()?.job_id === racedId });
+      await page.getByRole("button", { name: text("Cancel loading", "取消载入"), exact: true }).click();
+      await firstCancel;
+      statusOverrides.set(racedId, "cancelling"); switching = true; mode = "succeeded";
+      await upload("controlled-replacement-after-cancel-outage");
+      const retriedCancel = page.context().waitForEvent("request", { predicate: request => new URL(request.url()).pathname === "/api/review/imports/cancel" && request.postDataJSON()?.job_id === racedId });
+      await releaseCancelFailure();
+      await retriedCancel;
+      assert.equal(posts, beforeRacedReplacementPosts, "failed in-flight cancellation is retried for the same owned job before replacement submission");
+      statusOverrides.set(racedId, "cancelled");
+      await page.locator(".review-status").filter({ hasText: text("Model loaded", "模型已载入") }).waitFor();
+      assert.equal(posts, beforeRacedReplacementPosts + 1);
+      mode = "running"; switching = false; failPoll = true;
+      await upload("controlled-unknown-late-success");
+      await page.locator(".review-status.has-error").waitFor();
+      const beforeLateCancelPosts = posts;
+      mode = "succeeded"; switching = true;
+      await page.getByRole("button", { name: text("Cancel loading", "取消载入"), exact: true }).click();
+      await page.locator(".review-status").filter({ hasText: text("finished before cancellation", "已按取消请求保留原结果") }).waitFor();
+      assert.equal(posts, beforeLateCancelPosts);
+      assert.equal(await page.getByRole("button", { name: text("Import IFC", "导入 IFC"), exact: true }).isEnabled(), true);
+      await kept();
+      mode = "running"; rejectSubmission = true;
+      const beforeForeignBusyCancels = cancels;
+      await upload("controlled-other-page-busy");
+      await page.locator(".review-status.has-error").waitFor();
+      assert.equal(await page.getByRole("button", { name: text("Cancel loading", "取消载入"), exact: true }).isVisible(), false, "a rejected upload does not acquire another page's worker");
+      assert.equal(await page.getByRole("button", { name: text("Import IFC", "导入 IFC"), exact: true }).isEnabled(), true);
+      assert.equal(cancels, beforeForeignBusyCancels, "foreign active_job_id is never cancelled");
+      await kept();
+      mode = "succeeded";
       const previousReport = await (await page.request.get(`${base}/api/review/report?review=${previousReview}`)).json();
       const architecture = await (await page.request.post(`${base}/api/review/models?filename=Building-Architecture.ifc`, { headers: { "Content-Type": "application/octet-stream" }, data: fs.readFileSync(path.resolve(__dirname, "../data/raw/Building-Architecture.ifc")) })).json();
       let releaseLateReport;
