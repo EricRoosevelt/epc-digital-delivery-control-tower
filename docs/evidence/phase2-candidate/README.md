@@ -68,8 +68,11 @@ automatically selected port (`--port 0`), verifies an empty project library, and
 stops only that server when finished. It never uses an existing preview service
 or database. Raw server logs stay in the data directory, outside the public
 artifact. It removes the provider API key from the server environment and blocks
-external browser requests. The final run rejects modified or untracked runtime
-and capture inputs, and verifies the commit again before writing its manifest.
+external browser requests. The final run rejects changes across the entire Git
+worktree (including staged changes and all non-ignored untracked files), hashes
+every tracked file using a NUL-delimited Git file list, and repeats the clean-source
+check before writing its manifest. CI tests this guard against real changes in
+temporary Git repositories.
 
 The output contains `demo.webm`, `captions.vtt`, 13 PNG screenshots, `brief.md`,
 the public JSON/IFC fixtures and `manifest.json`. Captions are approximate chapter

@@ -181,6 +181,10 @@ jobs:
         working-directory: ${{ runner.temp }}/phase2-candidate/checkout
         run: npm ci
 
+      - name: Verify capture source guard against real Git changes
+        working-directory: ${{ runner.temp }}/phase2-candidate/checkout
+        run: node --test tools/phase2_demo/source_guard.test.cjs
+
       - name: Install the public-demo Chromium runtime
         working-directory: ${{ runner.temp }}/phase2-candidate/checkout
         run: npx playwright install --with-deps chromium

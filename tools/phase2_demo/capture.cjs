@@ -10,9 +10,16 @@ const { performance } = require("node:perf_hooks");
 const { chromium } = require("playwright");
 
 const ROOT = path.resolve(__dirname, "../..");
-const SOURCE_PATHS = ["doctor", "internal", "epc_control_tower", "config", "ids", "tools/phase2_demo", "package.json", "package-lock.json", "requirements.txt", "pyproject.toml", ".github/workflows", "third_party/three", "data/raw/Building-Architecture.ifc", "data/raw/Building-Hvac.ifc", "data/raw/Building-Structural.ifc"];
 const sha256 = body => crypto.createHash("sha256").update(body).digest("hex");
 const git = args => execFileSync("git", args, { cwd: ROOT, encoding: "utf8" }).trim();
+
+function assertCleanSource(root, expectedSHA) {
+  const run = args => execFileSync("git", args, { cwd: root, encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] });
+  assert.equal(run(["rev-parse", "HEAD"]).trim(), expectedSHA, "Source commit changed during capture");
+  run(["diff", "--exit-code", "HEAD", "--"]);
+  run(["diff", "--cached", "--exit-code", "HEAD", "--"]);
+  assert.equal(run(["ls-files", "--others", "--exclude-standard", "-z"]), "", "Candidate capture requires the entire Git worktree to be committed");
+}
 
 function options(argv) {
   const result = { browser: "chromium", port: 0, language: "en", hold: 1600, python: process.platform === "win32" ? "python" : "python3" };
@@ -72,11 +79,7 @@ async function main() {
   const opt = options(process.argv.slice(2));
   const sourceSHA = git(["rev-parse", "HEAD"]);
   assert.equal(sourceSHA, opt["source-sha"], "Run from the requested exact source commit");
-  if (!opt.rehearsal) {
-    execFileSync("git", ["diff", "--exit-code", sourceSHA, "--", ...SOURCE_PATHS], { cwd: ROOT, stdio: "pipe" });
-    const untracked = git(["ls-files", "--others", "--exclude-standard", "--", ...SOURCE_PATHS]);
-    assert.equal(untracked, "", "Candidate capture requires all runtime/capture inputs committed");
-  }
+  if (!opt.rehearsal) assertCleanSource(ROOT, sourceSHA);
   const dataDir = freshExternal(opt["data-dir"]);
   const output = freshExternal(opt["output-dir"]);
   for (const [parent, child] of [[dataDir, output], [output, dataDir]]) {
@@ -84,7 +87,7 @@ async function main() {
     assert.ok(relative === ".." || relative.startsWith(".." + path.sep) || path.isAbsolute(relative), "Keep raw server data and public artifact directories separate");
   }
   const sanitize = message => String(message).replaceAll(ROOT, "<checkout>").replaceAll(dataDir, "<external-demo-data>").replaceAll(output, "<artifact>");
-  const sourceFiles = git(["ls-files", "--", ...SOURCE_PATHS]).split(/\r?\n/).filter(Boolean).sort();
+  const sourceFiles = execFileSync("git", ["ls-files", "-z"], { cwd: ROOT, encoding: "utf8" }).split("\0").filter(Boolean).sort();
   const sourceHashes = sourceFiles.map(name => ({ path: name.replaceAll("\\", "/"), sha256: sha256(fs.readFileSync(path.join(ROOT, name))) }));
   const fixtureDir = path.join(dataDir, "public-fixtures");
   const generated = JSON.parse(execFileSync(opt.python, [path.join(__dirname, "export_public.py"), "--output-dir", fixtureDir], { cwd: ROOT, encoding: "utf8" }).trim());
@@ -247,7 +250,7 @@ async function main() {
     await mobile.close();
     assert.deepEqual(errors, []); assert.deepEqual(blocked, []);
     assert.equal(git(["rev-parse", "HEAD"]), sourceSHA, "Source commit changed during capture");
-    if (!opt.rehearsal) execFileSync("git", ["diff", "--exit-code", sourceSHA, "--", ...SOURCE_PATHS], { cwd: ROOT, stdio: "pipe" });
+    if (!opt.rehearsal) assertCleanSource(ROOT, sourceSHA);
     const end = performance.now() - timelineStart;
     const captions = scenes.map((item, index) => `${index + 1}\n${vttTime(item.at_ms)} --> ${vttTime(scenes[index + 1]?.at_ms ?? end)}\n${item.caption}\n`).join("\n");
     fs.writeFileSync(path.join(output, "captions.vtt"), "WEBVTT\n\n" + captions);
@@ -274,4 +277,5 @@ async function main() {
     serverLog.end();
   }
 }
-main().catch(error => { console.error(error.message); process.exitCode = 1; });
+module.exports = { assertCleanSource };
+if (require.main === module) main().catch(error => { console.error(error.message); process.exitCode = 1; });
