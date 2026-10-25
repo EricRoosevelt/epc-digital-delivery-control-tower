@@ -248,3 +248,24 @@ def test_ifc2x3_air_terminal_type_mapping_is_not_silently_skipped():
     finding = next(f for f in report["findings"] if f["rule_id"] == "PV-001")
     assert finding["status"] == "PASS"
     assert finding["actual"] == "DIFFUSER"
+
+
+def test_legacy_step_character_bytes_use_native_reader_without_changing_source(
+    tmp_path, monkeypatch
+):
+    import hashlib
+    import tempfile
+
+    model = ifcopenshell.file(schema="IFC4")
+    model.create_entity("IfcWall", GlobalId=ifcopenshell.guid.new(), Name="public-name")
+    body = model.to_string().encode().replace(b"public-name", b"public-\xb5")
+    reference = tmp_path / "native-reference.ifc"
+    reference.write_bytes(body)
+    expected_name = ifcopenshell.open(reference).by_type("IfcWall")[0].Name
+    monkeypatch.setattr(tempfile, "tempdir", str(tmp_path))
+    report = ReviewStore().create("legacy-text.ifc", body)
+    assert report["elements"][0]["name"] == expected_name
+    assert report["source"]["sha256"] == hashlib.sha256(body).hexdigest()
+    assert report["models"][0]["sha256"] == hashlib.sha256(body).hexdigest()
+    assert reference.read_bytes() == body
+    assert sorted(path.name for path in tmp_path.iterdir()) == ["native-reference.ifc"]

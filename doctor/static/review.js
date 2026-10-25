@@ -123,8 +123,11 @@ async function loadReport(getReport, { fresh = false } = {}) {
     else url.searchParams.delete("revision");
     history.replaceState(null, "", url);
     renderReport();
-    await loadGeometry(current);
-    if (current === requestNumber) setBusy(false, W.loaded);
+    const geometryReady = await loadGeometry(current);
+    if (current === requestNumber) {
+      setBusy(false, geometryReady ? W.loaded : W.geometryError);
+      statusbar.classList.toggle("has-error", !geometryReady);
+    }
   } catch (error) {
     if (current !== requestNumber) return;
     setBusy(false, error.name === "AbortError" ? W.cancelled : W.failed);
@@ -147,12 +150,15 @@ async function loadGeometry(current = requestNumber) {
     const geometryNote = detail.querySelector(".review-geometry-note");
     if (state.element && viewer.has(state.element.element_key)) geometryNote?.remove();
     updateViewButtons(); refreshVisible();
+    return true;
   } catch (error) {
     if (error.name === "AbortError") throw error;
+    console.error("BIM Doctor geometry", error);
     viewOverlay.replaceChildren(h("h2", {}, W.geometryError), h("p", {}, W.fullReport), button(W.retry, () => {
-      controller = new AbortController(); loadGeometry().then(() => { message.textContent = W.loaded; });
-    }));
+      controller = new AbortController(); loadGeometry().then(ready => { message.textContent = ready ? W.loaded : W.geometryError; statusbar.classList.toggle("has-error", !ready); });
+    }), h("details", { class: "review-geometry-error-details" }, h("summary", {}, W.technical), h("pre", {}, `${error.name}: ${error.message}`)));
     state.geometryReady = false; updateViewButtons();
+    return false;
   }
 }
 function renderReport() {
@@ -187,7 +193,13 @@ function renderList() {
   if (!state.report) { list.append(h("p", { class: "review-empty" }, W.idleHint)); return; }
   if (!found.length) { list.append(h("div", { class: "review-empty" }, h("p", {}, W.noResults), button(W.clearFilters, () => { state.query = ""; state.model = ""; state.status = ""; search.value = ""; modelSelect.value = ""; statusSelect.value = ""; viewer?.filter(""); renderList(); refreshVisible(); }, "quiet"))); return; }
   const elements = new Map(state.report.elements.map(e => [e.element_key, e]));
-  for (const f of found.slice(0, state.limit)) {
+  const visible = found.slice(0, state.limit);
+  const selectedIndex = found.findIndex(f => f.finding_id === state.selected?.finding_id);
+  if (selectedIndex >= state.limit) {
+    visible.pop();
+    visible.unshift(found[selectedIndex]);
+  }
+  for (const f of visible) {
     const e = elements.get(f.element_key) || {};
     const selected = state.selected?.finding_id === f.finding_id;
     const row = button("", () => selectFinding(f.finding_id), `review-finding${selected ? " is-selected" : ""}`);
@@ -229,7 +241,7 @@ function renderDetail() {
   detail.replaceChildren(h("div", { class: "review-object-heading" }, h("span", { class: "review-overline" }, e.ifc_class), h("h3", {}, e.name || e.ifc_class), h("p", {}, model?.name || e.model_key)),
     h("dl", { class: "review-object-facts" }, facts.map(([k, v]) => [h("dt", {}, k), h("dd", {}, value(v))])),
     h("details", { class: "review-identifiers" }, h("summary", {}, "GlobalId / Tag"), h("dl", { class: "review-object-facts" }, [["GlobalId", e.global_id], ["Tag", e.tag]].map(([k, v]) => [h("dt", {}, k), h("dd", {}, value(v))]))));
-  if (e.geometry_status !== "available" && !viewer?.has(e.element_key)) detail.append(h("p", { class: "review-geometry-note" }, W.noGeometry));
+  if (e.geometry_status !== "renderable" && !viewer?.has(e.element_key)) detail.append(h("p", { class: "review-geometry-note" }, W.noGeometry));
   const elementFindings = state.report.findings.filter(item => item.element_key === e.element_key);
   if (elementFindings.length > 1) {
     const choose = h("select", { "aria-label": W.selectedRule }, elementFindings.map(item => h("option", { value: item.finding_id }, `${displayedStatus(item)} · ${item.rule_id} · ${item.title}`)));

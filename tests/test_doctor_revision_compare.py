@@ -93,7 +93,7 @@ def test_duplicate_current_guid_does_not_make_old_failure_missing_or_resolved():
 
 @pytest.mark.parametrize("field,value", [("expected", "NEW VALUE"),
                                          ("scope", "A different scope"),
-                                         ("predicate_version", "2")])
+                                         ("predicate_version", "different-predicate-version")])
 def test_changed_rule_predicate_cannot_claim_pass_as_resolution(field, value):
     before, after = report(), report("DIFFUSER")
     after["rules"][0][field] = value
@@ -111,7 +111,8 @@ def test_changed_finding_expected_alone_is_still_a_basis_change():
 def test_unversioned_historical_predicates_cannot_establish_same_checking_basis():
     before, after = report(), report("DIFFUSER")
     for rep in (before, after):
-        rep["rules"][0].pop("predicate_version", None)
+        for key in ("predicate_version", "semantics_digest", "version"):
+            rep["rules"][0].pop(key, None)
     assert pv(compare(before, after))[0]["reason_code"] == "rule_changed"
 
 

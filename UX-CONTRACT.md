@@ -67,6 +67,8 @@ The list and 3D stage use model-qualified element_key. Selecting another element
 
 Requests are pessimistic, duplicate-disabled, abortable and time-bounded. Failed model loads preserve the prior report. Failed geometry/WebGL leaves result reading available and offers retry. No estimated percentage or fabricated geometry appears. Advice labels the server-returned mode, renders all evidence as text and has a retry state. Local guidance sends no AI request. The explicit AI action sends the current finding's minimal evidence through the server, with the visible notice that IFC/geometry are not sent. API configuration is not presented as a successful provider connection.
 
+A geometry/viewer failure does not display Model loaded as the final status and does not relabel a server-renderable element as geometry-less. The original exception is retained in an expandable technical detail and local console for diagnosis. Successful HTTP responses with unreadable JSON propagate their parse error instead of silently becoming an empty result. The existing browser regression exercises HTTP geometry failure, malformed JSON and actual retry recovery.
+
 `tests/doctor_review.browser.cjs` is the real-server integration check, including deliberately failed transport recovery. It stores new evidence under `docs/evidence/product-phase1/` without recapturing historical snapshots.
 
 ## Persistent project and revision workflow
@@ -84,6 +86,14 @@ The 2026-10-25 product scope adds the `ProjectLibrary` `/api/projects` contract 
 New project creation and revision/follow-up save are pessimistic and duplicate-disabled. After a revision save, its returned ID enters the URL and the same model remains visible. A raw new IFC removes the old revision identity while retaining the intended project/model destination. The logical model selection uses its server ID; filename changes do not create a new slot implicitly. Same-slot/same-review retry is idempotent in the service. Errors preserve input and expose a retry action or an enabled save control. Model choices finish loading before save is enabled.
 
 Explicit Load public example and Import IFC start a fresh selection: once the new report succeeds, old finding/revision deep-link choices are removed and the relevant initial result filter is chosen. Opening a revision/finding URL or changing language restores that intentional selection instead. Fresh-load retries retain the fresh intent. A failed new-source request changes neither the previous report nor its URL identity, and project/model save destinations remain available for the next revision.
+
+If an in-filter selected finding would fall beyond the current finite result
+window, it replaces the window's final ordinary row and appears first. The
+rendered-row limit is unchanged; an out-of-filter finding is never inserted as a
+match. The saved/deep-link selection, right detail and 3D identity remain exact.
+`doctor_review_large_selection.browser.cjs` covers this with over 100 synthetic
+PASS results in both languages; it is a list-selection regression, not evidence
+of model or geometry capacity.
 
 Opening a saved revision calls the revision endpoint before geometry/advice, restoring the report and geometry session after a restart. URLs retain revision and selected finding across language changes. Result-list selection and per-element rule selection continue to use finding_id/element_key; comparison links select the exact endpoint-provided finding in the appropriate revision. Missing rows point to the previous revision. No client-side GlobalId guess is made for ambiguous identities.
 

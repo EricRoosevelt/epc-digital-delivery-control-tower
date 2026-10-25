@@ -14,28 +14,19 @@ import math
 from pathlib import Path
 import re
 import threading
+import tempfile
 import tomllib
 
 import ifcopenshell
 import ifcopenshell.geom
 import ifcopenshell.util.element
 
+from .review_rules import ProductValidation
+
 ROOT = Path(__file__).resolve().parents[2]
 MAX_MODEL_BYTES = 64 * 1024 * 1024
 GUID_PATTERN = re.compile(r"[0-3][0-9A-Za-z_$]{21}\Z")
-ALLOWED_TERMINAL_TYPES = ("DIFFUSER", "GRILLE", "LOUVRE", "REGISTER")
-RULES = [
-    {
-        "rule_id": "PV-001",
-        "predicate_version": "1",
-        "severity": "ERROR",
-        "title": "Air terminals declare one of four predefined types",
-        "expected": ", ".join(ALLOWED_TERMINAL_TYPES),
-        "citation": "Repository product-validation/PV-001; not a statutory requirement. "
-        "Values from IFC4 ADD2 TC1 IfcAirTerminalTypeEnum.",
-        "scope": "IfcAirTerminal occurrences, including IFC2x3 IfcAirTerminalType mapping; "
-        "effective type text including assigned type",
-    },
+LOCAL_RULES = [
     {
         "rule_id": "INFO-001",
         "predicate_version": "1",
@@ -82,8 +73,17 @@ class ReviewInputError(ValueError):
 class ReviewStore:
     """Own reviews for one local server; methods return isolated JSON-shaped copies."""
 
-    def __init__(self, repository_root: Path = ROOT, max_model_bytes: int = MAX_MODEL_BYTES):
+    def __init__(
+        self,
+        repository_root: Path = ROOT,
+        max_model_bytes: int = MAX_MODEL_BYTES,
+        *,
+        rule_library_path: Path | None = None,
+    ):
         self.root = Path(repository_root)
+        library = rule_library_path or ROOT / "rules/product-validation"
+        self._product_validation = ProductValidation(library)
+        self._rules = [deepcopy(self._product_validation.snapshot), *deepcopy(LOCAL_RULES)]
         self.max_model_bytes = max_model_bytes
         self._reviews: dict[str, tuple[dict, dict]] = {}
         self._lock = threading.RLock()
@@ -183,17 +183,14 @@ class ReviewStore:
 
     def _build(self, source: dict, inputs: list[tuple[dict, bytes]]) -> dict:
         identity = source["kind"] + source["filename"] + source["sha256"]
-        identity += json.dumps(RULES, sort_keys=True, ensure_ascii=False)
+        identity += json.dumps(self._rules, sort_keys=True, ensure_ascii=False)
         review_id = "review-" + hashlib.sha256(identity.encode()).hexdigest()[:24]
         if review_id in self._reviews:
             return self._reviews[review_id][0]
         elements, findings, models, meshes, unavailable = [], [], [], [], []
         for metadata, body in inputs:
             try:
-                text = body.decode("utf-8-sig")
-                if not text.lstrip().startswith("ISO-10303-21;"):
-                    raise ValueError("missing STEP header")
-                model = ifcopenshell.file.from_string(text)
+                model = _open_step(body)
                 model.by_type("IfcRoot")
             except Exception as error:
                 raise ReviewInputError(
@@ -211,6 +208,7 @@ class ReviewStore:
                     "license": metadata.get("license", "User supplied"),
                 }
             )
+            product_results = self._product_validation.evaluate(model)
             counts = Counter(str(root.GlobalId or "") for root in model.by_type("IfcRoot"))
             settings = ifcopenshell.geom.settings()
             settings.set(settings.USE_WORLD_COORDS, True)
@@ -249,7 +247,9 @@ class ReviewStore:
                 else:
                     unavailable.append({"element_key": key, "reason": reason})
                 elements.append(row)
-                findings.extend(_findings(entity, row, counts[guid]))
+                findings.extend(
+                    _findings(entity, row, counts[guid], self._rules, product_results)
+                )
         statuses = Counter(item["status"] for item in findings)
         report = {
             "review_id": review_id,
@@ -257,7 +257,7 @@ class ReviewStore:
             "models": models,
             "elements": elements,
             "findings": findings,
-            "rules": deepcopy(RULES),
+            "rules": deepcopy(self._rules),
             "summary": {
                 "elements": len(elements),
                 "renderable": len(meshes),
@@ -287,6 +287,23 @@ class ReviewStore:
         return report
 
 
+def _open_step(body: bytes):
+    if not body.removeprefix(b"\xef\xbb\xbf").lstrip().startswith(b"ISO-10303-21;"):
+        raise ValueError("missing STEP header")
+    try:
+        text = body.decode("utf-8-sig")
+    except UnicodeDecodeError:
+        # Legacy STEP text can contain non-UTF-8 bytes. Let the native reader
+        # interpret the original encoding, rather than guessing or replacing it.
+        # IfcOpenShell's in-memory SWIG reader accepts str only, so retain exact
+        # input bytes in a short-lived temporary file and remove it after parse.
+        with tempfile.TemporaryDirectory(prefix="epc-doctor-ifc-") as scratch:
+            path = Path(scratch) / "model.ifc"
+            path.write_bytes(body)
+            return ifcopenshell.open(path)
+    return ifcopenshell.file.from_string(text)
+
+
 def _mesh(entity, key, settings, discipline):
     if not entity.Representation:
         return None, "The IFC element has no representation."
@@ -308,28 +325,22 @@ def _mesh(entity, key, settings, discipline):
         return None, "IfcOpenShell could not tessellate this representation."
 
 
-def _findings(entity, row, id_count):
+def _findings(entity, row, id_count, rules, product_results):
+    # The effective value is evidence for the UI only. Applicability and status
+    # come from the shared compiled rule + IfcTester model evaluation above.
     effective = ifcopenshell.util.element.get_predefined_type(entity)
-    assigned_type = ifcopenshell.util.element.get_type(entity)
-    applicable = entity.is_a("IfcAirTerminal") or (
-        entity.file.schema == "IFC2X3"
-        and entity.is_a("IfcFlowTerminal")
-        and assigned_type is not None
-        and assigned_type.is_a("IfcAirTerminalType")
-    )
-    pv_status = "PASS" if effective in ALLOWED_TERMINAL_TYPES else "FAIL"
-    if not applicable:
-        pv_status = "NOT_APPLICABLE"
+    pv_status = product_results.get(entity.id(), "NOT_APPLICABLE")
+    applicable = pv_status != "NOT_APPLICABLE"
     valid_id = bool(GUID_PATTERN.fullmatch(row["global_id"])) and id_count == 1
     outcomes = [
         (
             pv_status,
             str(effective or "Not declared") if applicable else entity.is_a(),
-            "Effective predefined type is in the repository's four-value set."
+            "The source rule requirement is satisfied by the effective predefined type."
             if pv_status == "PASS"
-            else "Effective type is outside the accepted set; verify source IFC mapping."
+            else "The source rule is not satisfied; verify effective type and IFC mapping."
             if applicable
-            else "This element is not an IfcAirTerminal.",
+            else "This element is outside the source rule applicability.",
         ),
         (
             "PASS" if row["name"].strip() else "FAIL",
@@ -355,7 +366,7 @@ def _findings(entity, row, id_count):
         ),
     ]
     result = []
-    for rule, (status, actual, reason) in zip(RULES, outcomes):
+    for rule, (status, actual, reason) in zip(rules, outcomes):
         identity = row["element_key"] + "::" + rule["rule_id"]
         result.append(
             {

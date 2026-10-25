@@ -379,17 +379,15 @@ def test_saved_recheck_resolves_only_when_new_ifc_passes(tmp_path):
 
 
 def test_runtime_review_identity_changes_with_rule_predicate_version(monkeypatch):
-    from copy import deepcopy
-    from internal.doctor_adapter import review as review_module
+    from internal.doctor_adapter import review_rules
 
     source = ifcopenshell.file(schema="IFC4")
     source.create_entity("IfcWall", GlobalId=ifcopenshell.guid.new())
     body = source.to_string().encode()
     old_store = ReviewStore()
     original = old_store.create("same.ifc", body)
-    new_rules = deepcopy(review_module.RULES)
-    new_rules[0]["predicate_version"] = "2"
-    monkeypatch.setattr(review_module, "RULES", new_rules)
+    next_version = str(int(review_rules.PREDICATE_VERSION) + 1)
+    monkeypatch.setattr(review_rules, "PREDICATE_VERSION", next_version)
     new_store = ReviewStore()
     current = new_store.create("same.ifc", body)
     assert original["source"]["sha256"] == current["source"]["sha256"]

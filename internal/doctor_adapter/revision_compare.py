@@ -19,7 +19,8 @@ __all__ = ["compare_revisions"]
 _GUID = re.compile(r"[0-3][0-9A-Za-z_$]{21}\Z")
 _CHANGES = ("resolved", "remaining", "new", "missing", "not_applicable", "not_comparable")
 _PREDICATE_KEYS = (
-    "rule_id", "expected", "scope", "checker", "predicate_version", "version",
+    "rule_id", "expected", "scope", "checker", "checker_version",
+    "engine", "engine_version", "predicate_version", "version",
     "semantics_digest", "applicability", "severity",
 )
 _REASONS = {

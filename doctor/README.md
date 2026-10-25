@@ -24,6 +24,14 @@ information prompts: site-level or multi-storey containment can be intentional.
 The public sample produces 39 elements, 32 renderable shapes, 2 type failures and
 19 storey prompts. These are review counts, not a defect or compliance score.
 
+PV-001 reads the existing product-validation rule definition and uses the same
+compiler and IfcTester predicate as the pipeline. The workbench records the
+rule semantics and engine versions with each revision. Its PV-001 runtime
+predicate is now v2; comparison with an older v1 result reports a changed rule
+basis, so rerun both source versions under v2 to assess a repair. Supported-scope
+parity and deliberate reporting differences are recorded in the
+[rule parity evidence](../docs/handoffs/rule-parity.md).
+
 The browser uploads a selected file only to this loopback server. Unsaved review
 data is kept for the server session. Use **Save to project** to retain a report,
 its 3D snapshot and follow-up records across restarts. The established example
@@ -64,12 +72,21 @@ are immutable; follow-up text is updated for its own revision/finding. Opening a
 saved revision restores the report and geometry to the existing workspace and
 advice API. The source IFC file and API credentials are not stored by the project
 library. Unrelated older local-check entries retain their original storage behavior.
+For non-UTF-8 STEP exports, parsing uses an external temporary file containing
+the exact uploaded bytes; that file is removed immediately after native parsing.
 
 Project records are local to this computer. An owner is a recorded person/team,
 not an authenticated assignment or notification. The downloaded brief uses the
 latest saved revision per model and its immediate predecessor, while keeping
 manual follow-up and machine results separate. Preserve your source IFC files
 and include the complete external project directory in your own backup routine.
+
+One authorized source-backed case has exercised exact 3D selection, same-model
+revision comparison, a real server restart and brief download with 2,055 meshes
+and 1.07 million triangles. New uncached content took 179.5 seconds to become
+usable on the recorded host; its POST was close to the 180-second timeout. This
+is a measured case, not a larger-model capacity guarantee or engineering sign-off.
+See the [case evidence and limitations](../docs/handoffs/model-case.md).
 
 ### OpenAI setup
 

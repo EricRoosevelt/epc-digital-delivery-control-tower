@@ -27,6 +27,23 @@ async function main() {
     assert.equal(await page.getByRole("button", { name: "Focus element", exact: true }).isEnabled(), true);
     assert.equal(await page.locator(".review-finding").count(), 2);
     assert.equal(await page.locator(".review-geometry-note").count(), 0, "renderable element must not be called geometry-less");
+    for (const failure of [
+      { status: 503, body: JSON.stringify({ error: "Temporary geometry test failure" }) },
+      { status: 200, body: "{invalid geometry JSON" },
+    ]) {
+      await page.route("**/api/review/geometry**", route => route.fulfill({ ...failure, contentType: "application/json" }));
+      await page.getByRole("button", { name: "Load public example", exact: true }).click();
+      await page.locator(".review-status.has-error").waitFor();
+      assert.doesNotMatch(await page.locator(".review-status").innerText(), /Model loaded/);
+      assert.equal(await page.locator(".review-finding").count(), 2, "geometry failure keeps check evidence available");
+      assert.equal(await page.locator(".review-geometry-note").count(), 0, "renderer/transport failure is not missing IFC geometry");
+      assert.ok(await page.locator(".review-geometry-error-details pre").textContent(), "original error remains inspectable");
+      assert.equal(await page.getByRole("button", { name: "Focus element", exact: true }).isEnabled(), false);
+      await page.unroute("**/api/review/geometry**");
+      await page.locator(".review-view-overlay").getByRole("button", { name: "Retry", exact: true }).click();
+      await page.locator(".review-status").filter({ hasText: "Model loaded" }).waitFor();
+      assert.equal(await page.getByRole("button", { name: "Focus element", exact: true }).isEnabled(), true);
+    }
     assert.match(await page.locator(".review-ai-status").innerText(), /Local rule guidance|AI configured/);
     await capture(page, "review-en-1440");
     const review = new URL(page.url()).searchParams.get("review");

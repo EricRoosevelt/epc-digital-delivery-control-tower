@@ -15,8 +15,8 @@ export function createViewer(host, onSelect) {
   const controls = new OrbitControls(camera, renderer.domElement);
   controls.enableDamping = false;
   controls.screenSpacePanning = true;
-  scene.add(new THREE.HemisphereLight(0xffffff, 0x7b8792, 2.5));
-  const light = new THREE.DirectionalLight(0xffffff, 3);
+  scene.add(new THREE.HemisphereLight(0xffffff, 0x7b8792, 1.2));
+  const light = new THREE.DirectionalLight(0xffffff, 1.6);
   light.position.set(30, -20, 50);
   scene.add(light);
   const root = new THREE.Group();
@@ -112,7 +112,7 @@ export function createViewer(host, onSelect) {
         geometry.setAttribute("position", new THREE.Float32BufferAttribute(item.positions, 3));
         geometry.setIndex(item.indices);
         geometry.computeVertexNormals();
-        const source = Array.isArray(item.color) ? new THREE.Color(...item.color.slice(0, 3)) : new THREE.Color("#adbcc5");
+        const source = Array.isArray(item.color) ? new THREE.Color().setRGB(...item.color.slice(0, 3), THREE.SRGBColorSpace) : new THREE.Color("#adbcc5");
         const color = failed.has(item.element_key) ? new THREE.Color("#d58c62") : source;
         const material = new THREE.MeshStandardMaterial({ color, roughness: 0.78, metalness: 0, side: THREE.DoubleSide });
         const mesh = new THREE.Mesh(geometry, material);
@@ -129,7 +129,7 @@ export function createViewer(host, onSelect) {
       if (!overall.isEmpty()) {
         const size = overall.getSize(new THREE.Vector3());
         const center = overall.getCenter(new THREE.Vector3());
-        grid = new THREE.GridHelper(Math.max(size.x, size.y, 10) * 1.6, 20, 0xa8b7c2, 0xd1dbe2);
+        grid = new THREE.GridHelper(Math.max(size.x, size.y, 10) * 1.6, 20, 0xc4d1d9, 0xdce4e9);
         grid.rotation.x = Math.PI / 2;
         grid.position.set(center.x, center.y, overall.min.z - 0.03);
         scene.add(grid);
