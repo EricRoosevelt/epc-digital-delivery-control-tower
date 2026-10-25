@@ -4,13 +4,14 @@ const assert = require("node:assert/strict");
 const fs = require("node:fs");
 const path = require("node:path");
 const { chromium } = require("playwright");
+const { captureFailure, browserOptions } = require("./browser-qa-helpers.cjs");
 
 async function main() {
   const base = process.argv[2];
   assert.ok(base, "Supply a running isolated Doctor URL");
   const evidence = process.argv[3];
   if (evidence) fs.mkdirSync(evidence, { recursive: true });
-  const browser = await chromium.launch({ headless: true, channel: process.env.BROWSER_CHANNEL || "msedge" });
+  const browser = await chromium.launch(browserOptions());
   const observations = [];
   const errors = [];
   const capture = async (page, name, fullPage = false) => {
@@ -28,22 +29,36 @@ async function main() {
     assert.equal(await page.locator(".review-finding").count(), 2);
     assert.equal(await page.locator(".review-geometry-note").count(), 0, "renderable element must not be called geometry-less");
     for (const failure of [
-      { status: 503, body: JSON.stringify({ error: "Temporary geometry test failure" }) },
-      { status: 200, body: "{invalid geometry JSON" },
+      { status: 503, body: JSON.stringify({ error: "Temporary geometry test failure" }), phase: "geometry_request" },
+      { status: 200, body: "{invalid geometry JSON", phase: "geometry_decode" },
+      { status: 200, body: '{"meshes":{}}', phase: "viewer_load" },
     ]) {
-      await page.route("**/api/review/geometry**", route => route.fulfill({ ...failure, contentType: "application/json" }));
+      await page.route("**/api/review/geometry**", route => route.fulfill({ status: failure.status, body: failure.body, contentType: "application/json", headers: { "X-Request-ID": "public-geometry-regression" } }));
       await page.getByRole("button", { name: "Load public example", exact: true }).click();
-      await page.locator(".review-status.has-error").waitFor();
+      await page.locator('.review-status[aria-busy="false"]').waitFor();
+      assert.equal(await page.locator(".review-status.has-error").count(), 1, "geometry failure must stay recoverable rather than report Model loaded");
       assert.doesNotMatch(await page.locator(".review-status").innerText(), /Model loaded/);
       assert.equal(await page.locator(".review-finding").count(), 2, "geometry failure keeps check evidence available");
       assert.equal(await page.locator(".review-geometry-note").count(), 0, "renderer/transport failure is not missing IFC geometry");
       assert.ok(await page.locator(".review-geometry-error-details pre").textContent(), "original error remains inspectable");
+      const diagnostic = JSON.parse(await page.locator(".review-geometry-error-details pre").textContent());
+      assert.equal(diagnostic.phase, failure.phase);
+      assert.equal(diagnostic.request_id, "public-geometry-regression");
       assert.equal(await page.getByRole("button", { name: "Focus element", exact: true }).isEnabled(), false);
       await page.unroute("**/api/review/geometry**");
       await page.locator(".review-view-overlay").getByRole("button", { name: "Retry", exact: true }).click();
       await page.locator(".review-status").filter({ hasText: "Model loaded" }).waitFor();
       assert.equal(await page.getByRole("button", { name: "Focus element", exact: true }).isEnabled(), true);
     }
+    // An injected browser event verifies reporting, not a claim of actual GPU loss.
+    await page.locator("#review-viewport canvas").evaluate(canvas => canvas.dispatchEvent(new Event("webglcontextlost")));
+    await page.locator(".review-status.has-error").waitFor();
+    const webglDiagnostic = JSON.parse(await page.locator(".review-geometry-error-details pre").textContent());
+    assert.equal(webglDiagnostic.phase, "webgl_context");
+    assert.ok(webglDiagnostic.webgl_events.some(event => event.type === "webglcontextlost"));
+    await page.locator("#review-viewport canvas").evaluate(canvas => canvas.dispatchEvent(new Event("webglcontextrestored")));
+    await page.locator(".review-view-overlay").getByRole("button", { name: "Retry", exact: true }).click();
+    await page.locator(".review-status").filter({ hasText: "Model loaded" }).waitFor();
     assert.match(await page.locator(".review-ai-status").innerText(), /Local rule guidance|AI configured/);
     await capture(page, "review-en-1440");
     const review = new URL(page.url()).searchParams.get("review");
@@ -135,6 +150,7 @@ async function main() {
     assert.deepEqual(errors, []);
     if (evidence) fs.writeFileSync(path.join(evidence, "review-browser.json"), JSON.stringify({ observations, errors }, null, 2));
     console.log(JSON.stringify({ passed: true, observations, errors }, null, 2));
-  } finally { await browser.close(); }
+  } catch (error) { await captureFailure(browser, evidence, error); throw error; }
+  finally { await browser.close(); }
 }
 main().catch(error => { console.error(error); process.exitCode = 1; });

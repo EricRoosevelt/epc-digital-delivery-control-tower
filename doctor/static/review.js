@@ -14,6 +14,23 @@ let controller = null;
 let adviceController = null;
 let requestNumber = 0;
 let retryLoad = null;
+let activeImport = null;
+function cancelOnDeparture() {
+  const job = activeImport;
+  if (!job || job.terminal) return;
+  job.cancelRequested = true;
+  // Leaving cannot await confirmation. The server's hard deadline remains the fallback.
+  fetch("/api/review/imports/cancel", { method: "POST", keepalive: true, headers: { "Content-Type": "application/json" }, body: JSON.stringify({ job_id: job.id }) }).catch(() => {});
+}
+window.addEventListener("pagehide", cancelOnDeparture);
+document.addEventListener("click", event => {
+  if (event.defaultPrevented || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return;
+  const target = event.target.closest(".language-switch button, a[href]");
+  if (!target || target.hasAttribute("download") || target.target === "_blank") return;
+  if (target.matches(".language-switch button")) { if (target.getAttribute("aria-pressed") !== "true") cancelOnDeparture(); return; }
+  const destination = new URL(target.href, location.href);
+  if (destination.origin !== location.origin || destination.pathname !== location.pathname || destination.search !== location.search) cancelOnDeparture();
+});
 const number = n => Number(n || 0).toLocaleString(LANG === "en" ? "en" : "zh-CN");
 const value = v => v === null || v === undefined || v === "" ? W.unknown : typeof v === "object" ? JSON.stringify(v) : String(v);
 const button = (label, handler, cls = "") => h("button", { type: "button", class: cls, onclick: handler }, label);
@@ -21,10 +38,10 @@ const label = (name, control) => h("label", {}, h("span", {}, name), control);
 const badge = status => h("span", { class: `review-verdict status-${String(status).toLowerCase()}` }, String(status));
 const displayedStatus = finding => finding.status === "FAIL" && finding.severity === "INFO" ? "INFO" : finding.status;
 const fileInput = h("input", { id: "review-file", type: "file", accept: ".ifc", "aria-label": W.input });
-fileInput.addEventListener("change", () => { const file = fileInput.files[0]; if (file) importFile(file); });
+fileInput.addEventListener("change", () => { const file = fileInput.files[0]; fileInput.value = ""; if (file) importFile(file); });
 const demoButton = button(W.demo, () => loadDemo(), "review-primary");
 const importButton = button(W.import, () => fileInput.click());
-const cancelButton = button(W.cancel, () => controller?.abort(), "quiet");
+const cancelButton = button(W.cancel, () => cancelLoad(), "quiet");
 cancelButton.hidden = true;
 const message = h("span", {}, W.idle);
 const recovery = button(W.retry, () => retryLoad?.(), "quiet");
@@ -43,6 +60,16 @@ const list = h("div", { class: "review-findings", id: "review-findings" });
 const outside = h("p", { class: "review-outside" }, W.selectedOutside); outside.hidden = true;
 const detail = h("div", { class: "review-detail-content", id: "review-detail-content" }, h("div", { class: "review-detail-empty" }, h("span", { class: "review-crosshair", "aria-hidden": "true" }, "+"), h("p", {}, W.select)));
 const viewport = h("div", { class: "review-canvas", id: "review-viewport", "aria-label": W.view });
+const webglEvents = [];
+for (const type of ["webglcontextcreationerror", "webglcontextlost"]) viewport.addEventListener(type, event => {
+  const diagnostic = { type, message: event.statusMessage || "", at: new Date().toISOString() };
+  webglEvents.push(diagnostic); if (webglEvents.length > 10) webglEvents.shift();
+  console.error("BIM Doctor WebGL", diagnostic);
+  if (type === "webglcontextlost" && state.report) {
+    geometryFailure(new Error(event.statusMessage || type), "webgl_context");
+    message.textContent = W.geometryError; statusbar.classList.add("has-error");
+  }
+}, true);
 const viewOverlay = h("div", { class: "review-view-overlay" }, h("div", { class: "review-orbit-mark", "aria-hidden": "true" }, "IFC"), h("h2", {}, W.intro), h("p", {}, W.idleHint));
 const viewNote = h("span", {}, W.units);
 const visibleCount = h("span", {}, "");
@@ -89,6 +116,7 @@ statusSelect.addEventListener("change", () => { state.status = statusSelect.valu
 function refreshVisible() { visibleCount.textContent = viewer && state.geometryReady ? `${W.visible}: ${number(viewer.visibleCount())}` : ""; }
 function setBusy(busy, text) {
   state.busy = busy; demoButton.disabled = busy; importButton.disabled = busy; cancelButton.hidden = !busy;
+  cancelButton.disabled = false;
   statusbar.setAttribute("aria-busy", String(busy)); message.textContent = text; recovery.hidden = true;
 }
 async function json(url, options = {}) {
@@ -99,10 +127,90 @@ function loadDemo() { return loadReport(() => json("/api/review/demo", { signal:
 function importFile(file) {
   if (!/\.ifc$/i.test(file.name) || !file.size) { showError(W.invalid); return; }
   if (file.size > 50 * 1024 * 1024) { showError(W.tooLarge); return; }
-  return loadReport(() => json(`/api/review/models?filename=${encodeURIComponent(file.name)}`, { method: "POST", headers: { "Content-Type": "application/octet-stream" }, body: file, signal: controller.signal }), { fresh: true });
+  const job = { file, id: crypto.randomUUID(), submitted: false, cancelRequested: false, cancelSent: false };
+  return loadReport(() => importReport(job), { fresh: true });
+}
+async function sendCancel(job) {
+  if (!job.id || job.cancelSent) return;
+  job.cancelSent = true;
+  try {
+    const status = await json("/api/review/imports/cancel", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ job_id: job.id }) });
+    if (status.state === "cancelled") { job.confirmedCancelled = true; job.finished = true; job.terminal = true; job.controller?.abort(); }
+  }
+  catch (error) { job.cancelSent = false; throw error; }
+}
+function cancelLoad() {
+  if (!activeImport) { controller?.abort(); return; }
+  const job = activeImport;
+  job.cancelRequested = true; cancelButton.disabled = true; message.textContent = W.cancelling;
+  sendCancel(job).catch(error => {
+    if (activeImport !== job) return;
+    cancelButton.disabled = false; message.textContent = `${W.cancelUnconfirmed} ${error.message}`;
+  });
+}
+function importProgress(job, status) {
+  if (activeImport !== job) return;
+  if (job.cancelRequested || status.state === "cancelling") { message.textContent = W.cancelling; return; }
+  const stages = { queued: W.queued, uploading: W.uploading, starting: W.starting, parsing: W.reading, checking: W.checking, tessellating: W.geometryLoading, serializing: W.serializing, publishing: W.importSaving, complete: W.resultsLoading };
+  const stage = stages[status.stage] || (status.state === "queued" ? W.queued : W.importing);
+  const measured = status.stage === "tessellating" && Number.isFinite(status.completed) && Number.isFinite(status.total) && status.total > 0;
+  message.textContent = `${stage}${measured ? ` · ${W.processed}: ${number(status.completed)} / ${number(status.total)}` : ""}`;
+}
+function pollDelay(signal) {
+  return new Promise((resolve, reject) => {
+    const abort = () => { clearTimeout(timer); reject(new DOMException("Aborted", "AbortError")); };
+    const timer = setTimeout(() => { signal.removeEventListener("abort", abort); resolve(); }, 500);
+    if (signal.aborted) abort(); else signal.addEventListener("abort", abort, { once: true });
+  });
+}
+async function importReport(job) {
+  const signal = controller.signal;
+  if (job.finished) Object.assign(job, { id: crypto.randomUUID(), submitted: false, cancelRequested: false, cancelSent: false, finished: false, terminal: false, confirmedCancelled: false });
+  job.controller = controller;
+  activeImport = job;
+  try {
+    const submit = () => {
+      job.submitted = true;
+      return json(`/api/review/imports?filename=${encodeURIComponent(job.file.name)}&job=${encodeURIComponent(job.id)}`, { method: "POST", headers: { "Content-Type": "application/octet-stream" }, body: job.file, signal });
+    };
+    message.textContent = W.uploading;
+    let status;
+    if (!job.submitted) status = await submit();
+    else {
+      try { status = await json(`/api/review/imports?job=${encodeURIComponent(job.id)}`, { signal }); }
+      catch (error) { if (error.status === 404) status = await submit(); else throw error; }
+    }
+    if (status.job_id !== job.id) throw new Error(W.invalidJob);
+    while (true) {
+      if (signal.aborted) throw new DOMException("Aborted", "AbortError");
+      if (job.cancelRequested && !job.cancelSent) await sendCancel(job);
+      importProgress(job, status);
+      if (status.state === "succeeded") {
+        job.terminal = true;
+        if (job.cancelRequested) throw Object.assign(new Error(W.cancelTooLate), { name: "ImportDiscarded" });
+        message.textContent = W.resultsLoading;
+        return await json(`/api/review/report?review=${encodeURIComponent(status.review_id)}`, { signal });
+      }
+      if (["cancelled", "timed_out", "failed"].includes(status.state)) job.finished = job.terminal = true;
+      if (status.state === "cancelled") throw Object.assign(new Error(W.cancelled), { name: "ImportCancelled" });
+      if (status.state === "timed_out") throw new Error(W.importTimedOut);
+      if (status.state === "failed") throw new Error(typeof status.error === "string" ? status.error : status.error?.message || W.failed);
+      if (!["queued", "running", "cancelling"].includes(status.state)) throw new Error(W.invalidJob);
+      await pollDelay(signal);
+      status = await json(`/api/review/imports?job=${encodeURIComponent(job.id)}`, { signal });
+    }
+  } catch (error) {
+    if (job.confirmedCancelled) throw Object.assign(new Error(W.cancelled), { name: "ImportCancelled" });
+    if (signal.aborted) sendCancel(job).catch(() => {});
+    throw error;
+  } finally {
+    // A lost HTTP response does not mean the worker stopped. Keep this page's
+    // ownership so retry and pagehide can still address that exact job.
+    if (activeImport === job && (job.terminal || signal.aborted)) activeImport = null;
+  }
 }
 async function loadReport(getReport, { fresh = false } = {}) {
-  controller?.abort(); adviceController?.abort(); controller = new AbortController();
+  controller?.abort(); controller = new AbortController();
   const current = ++requestNumber;
   retryLoad = () => loadReport(getReport, { fresh });
   setBusy(true, W.loading); statusbar.classList.remove("has-error");
@@ -110,6 +218,7 @@ async function loadReport(getReport, { fresh = false } = {}) {
     const loaded = await getReport();
     const report = loaded.report || loaded;
     if (current !== requestNumber) return;
+    adviceController?.abort();
     state.report = report; state.selected = null; state.element = null; state.geometryReady = false;
     state.model = ""; state.limit = 100;
     state.status = report.summary.errors > 0 ? "ERROR" : report.summary.information > 0 ? "INFO" : report.summary.passed > 0 ? "PASS" : "";
@@ -130,19 +239,24 @@ async function loadReport(getReport, { fresh = false } = {}) {
     }
   } catch (error) {
     if (current !== requestNumber) return;
-    setBusy(false, error.name === "AbortError" ? W.cancelled : W.failed);
+    const cancelled = ["AbortError", "ImportCancelled", "ImportDiscarded"].includes(error.name);
+    setBusy(false, error.name === "ImportDiscarded" ? error.message : cancelled ? W.cancelled : W.failed);
     if (state.report && !state.geometryReady && error.name === "AbortError") viewOverlay.replaceChildren(h("p", {}, W.cancelled), button(W.retry, () => { controller = new AbortController(); loadGeometry(); }));
-    if (error.name !== "AbortError") showError(error.message);
+    if (!cancelled) showError(error.message);
   }
 }
 async function loadGeometry(current = requestNumber) {
   message.textContent = W.geometryLoading; viewOverlay.hidden = false;
   viewOverlay.replaceChildren(h("p", {}, W.geometryLoading));
+  let phase = "geometry_request";
+  let requestId = null;
   try {
-    const data = await json(`/api/review/geometry?review=${encodeURIComponent(state.report.review_id)}`, { signal: controller.signal });
+    const data = await json(`/api/review/geometry?review=${encodeURIComponent(state.report.review_id)}`, { signal: controller.signal, onResponse: response => { requestId = response.requestId; } });
     if (current !== requestNumber) return;
+    phase = "viewer_initialize";
     if (!viewer) { const { createViewer } = await import("./review-viewer.js"); viewer = createViewer(viewport, key => selectElement(key)); }
     if (current !== requestNumber) return;
+    phase = "viewer_load";
     const count = viewer.load(data, state.report); state.geometryReady = true;
     viewOverlay.hidden = count > 0;
     if (!count) viewOverlay.replaceChildren(h("p", {}, W.emptyGeometry));
@@ -152,14 +266,20 @@ async function loadGeometry(current = requestNumber) {
     updateViewButtons(); refreshVisible();
     return true;
   } catch (error) {
+    if (current !== requestNumber) return false;
     if (error.name === "AbortError") throw error;
-    console.error("BIM Doctor geometry", error);
-    viewOverlay.replaceChildren(h("h2", {}, W.geometryError), h("p", {}, W.fullReport), button(W.retry, () => {
-      controller = new AbortController(); loadGeometry().then(ready => { message.textContent = ready ? W.loaded : W.geometryError; statusbar.classList.toggle("has-error", !ready); });
-    }), h("details", { class: "review-geometry-error-details" }, h("summary", {}, W.technical), h("pre", {}, `${error.name}: ${error.message}`)));
-    state.geometryReady = false; updateViewButtons();
+    geometryFailure(error, error.responsePhase === "decode" ? "geometry_decode" : phase, error.requestId || requestId);
     return false;
   }
+}
+function geometryFailure(error, phase, requestId = null) {
+    const diagnostic = { phase, request_id: requestId, name: error.name, message: error.message, webgl_events: [...webglEvents] };
+    console.error("BIM Doctor geometry", diagnostic, error);
+    viewOverlay.hidden = false;
+    viewOverlay.replaceChildren(h("h2", {}, W.geometryError), h("p", {}, W.fullReport), button(W.retry, () => {
+      controller = new AbortController(); loadGeometry().then(ready => { message.textContent = ready ? W.loaded : W.geometryError; statusbar.classList.toggle("has-error", !ready); });
+    }), h("details", { class: "review-geometry-error-details" }, h("summary", {}, W.technical), h("pre", {}, JSON.stringify(diagnostic, null, 2))));
+    state.geometryReady = false; updateViewButtons();
 }
 function renderReport() {
   const report = state.report;

@@ -35,13 +35,19 @@ from __future__ import annotations
 import argparse
 import functools
 import json
+import logging
+import select
+import socket
 import sys
+import threading
+import time
 from collections.abc import Callable
 from http import HTTPStatus
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from typing import Protocol
 from urllib.parse import parse_qs, urlsplit
+from uuid import uuid4
 
 STATIC = Path(__file__).resolve().parent / "static"
 REPOSITORY_ROOT = Path(__file__).resolve().parent.parent
@@ -59,6 +65,8 @@ LOOPBACK_NAMES = ("127.0.0.1", "localhost", "[::1]")
 #: The body type each endpoint that is sent something takes. Neither can be
 #: sent cross-site without the browser asking first, and nothing here answers.
 POSTED_TYPES = {
+    "/api/review/imports": "application/octet-stream",
+    "/api/review/imports/cancel": "application/json",
     "/api/review/advice": "application/json",
     "/api/projects": "application/json",
     "/api/projects/revisions": "application/json",
@@ -199,14 +207,44 @@ def local_checks(checks_dir: Path | None = None, max_model_bytes: int | None = N
     return LocalChecks(root, repository_root=REPOSITORY_ROOT, **options)
 
 
-def _json(handler: BaseHTTPRequestHandler, status: HTTPStatus, body: object) -> None:
-    payload = json.dumps(body, ensure_ascii=False).encode("utf-8")
+def _payload(handler, status, payload, content_type="application/json; charset=utf-8"):
+    """Write immutable bytes once; a disconnected peer cannot receive a second error."""
     handler.send_response(status)
-    handler.send_header("Content-Type", "application/json; charset=utf-8")
+    handler.send_header("Content-Type", content_type)
     handler.send_header("Content-Length", str(len(payload)))
     handler.send_header("Cache-Control", "no-store")
-    handler.end_headers()
-    handler.wfile.write(payload)
+    handler.send_header("X-Request-ID", getattr(handler, "request_id", ""))
+    started = getattr(handler, "request_started", time.monotonic())
+    handler.send_header("Server-Timing", f"review;dur={(time.monotonic()-started)*1000:.1f}")
+    try:
+        handler.end_headers()
+        handler.wfile.write(payload)
+    except (ConnectionError, OSError):
+        logging.getLogger(__name__).warning(
+            "Response disconnected request_id=%s endpoint=%s bytes=%s",
+            getattr(handler, "request_id", ""), urlsplit(handler.path).path, len(payload),
+        )
+
+
+def _json(handler: BaseHTTPRequestHandler, status: HTTPStatus, body: object) -> None:
+    _payload(handler, status, json.dumps(body, ensure_ascii=False, allow_nan=False).encode())
+
+
+def configure_import_loaders(manager, library=None):
+    """Saved SQLite evidence wins; recent unsaved imports have bounded disk backing."""
+    def load(identity, geometry=False):
+        if library is not None:
+            try:
+                loader = library.restore_geometry if geometry else library.restore_report
+                return loader(identity)
+            except KeyError:
+                pass
+        return (manager.geometry_payload if geometry else manager.report_payload)(identity)
+
+    manager.reviews.set_loaders(
+        report_loader=lambda identity: load(identity),
+        geometry_loader=lambda identity: load(identity, True),
+    )
 
 
 def make_handler(
@@ -215,8 +253,27 @@ def make_handler(
     review_factory: Callable[[], object] | None = None,
     advice_factory: Callable[[], object] | None = None,
     project_factory: Callable[[], object] | None = None,
+    import_factory: Callable[[], object] | None = None,
 ) -> type[BaseHTTPRequestHandler]:
     """The request handler; ``local_factory`` enables the local check endpoints."""
+
+    import_holder = {}
+    import_lock = threading.Lock()
+
+    def imports():
+        if import_factory is not None:
+            return import_factory()
+        if review_factory is None:
+            raise SourceUnavailable("This server was started without IFC review.")
+        with import_lock:
+            if "jobs" not in import_holder:
+                from doctor.import_jobs import ImportJobs
+
+                manager = ImportJobs(review_factory())
+                library = project_factory() if project_factory else None
+                configure_import_loaders(manager, library)
+                import_holder["jobs"] = manager
+            return import_holder["jobs"]
 
     class Handler(BaseHTTPRequestHandler):
         server_version = "epc-doctor-preview"
@@ -233,6 +290,7 @@ def make_handler(
             return host if host in allowed else None
 
         def do_GET(self) -> None:
+            self.request_id, self.request_started = uuid4().hex, time.monotonic()
             parts = urlsplit(self.path)
             if parts.path.startswith("/api/"):
                 if self._own_host() is None:
@@ -252,6 +310,7 @@ def make_handler(
             self._static(parts.path)
 
         def do_POST(self) -> None:
+            self.request_id, self.request_started = uuid4().hex, time.monotonic()
             parts = urlsplit(self.path)
             # Whatever is refused here, its body is not read, so the connection
             # cannot be reused.
@@ -289,8 +348,12 @@ def make_handler(
                 self.close_connection = True
                 _json(self, HTTPStatus.BAD_REQUEST, {"error": "Negative Content-Length"})
                 return
-            if parts.path == "/api/review/models":
-                self._review_post(parse_qs(parts.query), length)
+            if parts.path in {"/api/review/models", "/api/review/imports"}:
+                self._review_post(parse_qs(parts.query), length,
+                                  asynchronous=parts.path == "/api/review/imports")
+                return
+            if parts.path == "/api/review/imports/cancel":
+                self._cancel_import(length)
                 return
             if parts.path == "/api/review/advice":
                 self._advice_post(length)
@@ -393,6 +456,14 @@ def make_handler(
 
         def _review_get(self, path: str, query: dict[str, list[str]]) -> None:
             try:
+                if path == "/api/review/imports":
+                    identity = (query.get("job") or [None])[0]
+                    answer = imports().get(identity) if identity else imports().snapshot()
+                    _json(self, HTTPStatus.OK, answer)
+                    return
+                if path == "/api/review/cache":
+                    _json(self, HTTPStatus.OK, self._review().stats())
+                    return
                 if path == "/api/review/ai":
                     _json(self, HTTPStatus.OK, self._advice().describe())
                     return
@@ -402,19 +473,27 @@ def make_handler(
                 elif path == "/api/review/report":
                     answer = store.get((query.get("review") or [""])[0])
                 elif path == "/api/review/geometry":
-                    answer = store.geometry((query.get("review") or [""])[0])
+                    payload = store.geometry_payload((query.get("review") or [""])[0])
+                    _payload(self, HTTPStatus.OK, payload)
+                    return
                 else:
                     _json(self, HTTPStatus.NOT_FOUND, {"error": "Unknown review endpoint"})
                     return
                 _json(self, HTTPStatus.OK, answer)
-            except KeyError:
+            except KeyError as error:
                 _json(self, HTTPStatus.NOT_FOUND,
-                      {"error": "Review not found in this session."})
+                      {"error": str(error) or "Review or import task not found."})
             except SourceUnavailable as error:
                 _json(self, HTTPStatus.SERVICE_UNAVAILABLE, {"error": str(error)})
             except Exception as error:
+                logging.getLogger(__name__).exception(
+                    "Review request failed request_id=%s endpoint=%s", self.request_id, path
+                )
                 _json(self, HTTPStatus.INTERNAL_SERVER_ERROR,
-                      {"error": f"{type(error).__name__}: {error}"})
+                      {"error": f"{type(error).__name__}: {error}",
+                       "diagnostic": {"request_id": self.request_id,
+                                      "phase": "geometry_load" if path.endswith("geometry")
+                                      else "review_load"}})
 
         def _advice(self):
             if advice_factory is None:
@@ -452,7 +531,33 @@ def make_handler(
                 _json(self, HTTPStatus.INTERNAL_SERVER_ERROR,
                       {"error": f"{type(error).__name__}: {error}"})
 
-        def _review_post(self, query: dict[str, list[str]], length: int) -> None:
+        def _cancel_import(self, length):
+            if length > MAX_REQUEST_BYTES:
+                self.close_connection = True
+                _json(self, HTTPStatus.REQUEST_ENTITY_TOO_LARGE,
+                      {"error": "Import control request is too large."})
+                return
+            try:
+                request = json.loads(self.rfile.read(length))
+                identity = request.get("job_id") if isinstance(request, dict) else None
+                if not isinstance(identity, str) or not identity:
+                    raise ValueError("Select an import task to cancel.")
+                _json(self, HTTPStatus.OK, imports().cancel(identity))
+            except (ValueError, TypeError) as error:
+                _json(self, HTTPStatus.BAD_REQUEST, {"error": str(error)})
+
+        def _client_disconnected(self):
+            try:
+                readable, _, _ = select.select([self.connection], [], [], 0)
+                return bool(readable) and not self.connection.recv(1, socket.MSG_PEEK)
+            except (OSError, ValueError):
+                return True
+
+        def _review_post(
+            self, query: dict[str, list[str]], length: int, *, asynchronous=False,
+        ) -> None:
+            from doctor.import_jobs import ImportBusy, TERMINAL
+
             try:
                 store = self._review()
                 if length > store.max_model_bytes:
@@ -464,8 +569,30 @@ def make_handler(
                 body = self.rfile.read(length)
                 if len(body) != length:
                     raise ValueError("The model upload was incomplete.")
-                answer = store.create((query.get("filename") or [""])[0], body)
-                _json(self, HTTPStatus.OK, answer)
+                manager = imports()
+                job = manager.submit(
+                    (query.get("filename") or [""])[0], body,
+                    job_id=(query.get("job") or [None])[0],
+                )
+                if asynchronous:
+                    _json(self, HTTPStatus.ACCEPTED, job)
+                    return
+                # Compatibility API: wait without native work or a cache lock in this process.
+                while job["state"] not in TERMINAL:
+                    if self._client_disconnected():
+                        manager.cancel(job["job_id"])
+                        return
+                    job = manager.wait(job["job_id"])
+                if job["state"] == "succeeded":
+                    _payload(self, HTTPStatus.OK, store.report_payload(job["review_id"]))
+                else:
+                    status = HTTPStatus.GATEWAY_TIMEOUT if job["state"] == "timed_out" \
+                        else HTTPStatus.BAD_REQUEST
+                    _json(self, status, {"error": (job["error"] or {}).get(
+                        "message", f"Import {job['state']}."), "job_id": job["job_id"]})
+            except ImportBusy as error:
+                _json(self, HTTPStatus.CONFLICT,
+                      {"error": str(error), "active_job_id": error.job_id})
             except SourceUnavailable as error:
                 self.close_connection = True
                 _json(self, HTTPStatus.SERVICE_UNAVAILABLE, {"error": str(error)})
@@ -632,12 +759,18 @@ def main(argv: list[str] | None = None) -> int:
         ),
     )
     parser.add_argument(
+        "--import-timeout-seconds", type=float, default=600,
+        help="Backend hard time limit for each isolated IFC import worker (default: 600).",
+    )
+    parser.add_argument(
         "--max-model-bytes",
         type=int,
         default=None,
         help="The largest model file a local check accepts.",
     )
     arguments = parser.parse_args(argv)
+    if arguments.import_timeout_seconds <= 0:
+        parser.error("--import-timeout-seconds must be positive")
     if arguments.prior is not None and arguments.workspace is None:
         parser.error("--prior needs --workspace")
     if str(REPOSITORY_ROOT) not in sys.path:
@@ -656,19 +789,28 @@ def main(argv: list[str] | None = None) -> int:
     from internal.doctor_adapter.project_library import ProjectLibrary
 
     projects = ProjectLibrary(local.root / "projects", reviews)
+    from doctor.import_jobs import ImportJobs
+
+    imports = ImportJobs(
+        reviews, local.root / "import-jobs", timeout_seconds=arguments.import_timeout_seconds,
+    )
+    configure_import_loaders(imports, projects)
     server = ThreadingHTTPServer(
         ("127.0.0.1", arguments.port),
-        make_handler(source, lambda: local, lambda: reviews, lambda: advice, lambda: projects),
+        make_handler(source, lambda: local, lambda: reviews, lambda: advice, lambda: projects,
+                     lambda: imports),
     )
     print(f"BIM Doctor preview: http://127.0.0.1:{arguments.port}/")
     print(f"3D IFC review: http://127.0.0.1:{arguments.port}/review.html")
     print(f"Local checks are kept in {local.root}")
     print(f"Project library: {projects.path}")
+    print(f"IFC import worker: one process, hard limit {arguments.import_timeout_seconds:g}s")
     try:
         server.serve_forever()
     except KeyboardInterrupt:
         pass
     finally:
+        imports.close()
         server.server_close()
     return 0
 

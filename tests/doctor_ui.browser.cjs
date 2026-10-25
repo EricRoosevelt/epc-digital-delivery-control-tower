@@ -5,13 +5,14 @@ const assert = require("node:assert/strict");
 const fs = require("node:fs");
 const path = require("node:path");
 const { chromium } = require("playwright");
+const { captureFailure, browserOptions } = require("./browser-qa-helpers.cjs");
 
 async function main() {
   const base = process.argv[2];
   const evidence = process.argv[3];
   assert.ok(base, "Supply an isolated Doctor URL");
   if (evidence) fs.mkdirSync(evidence, { recursive: true });
-  const browser = await chromium.launch({ headless: true, channel: process.env.BROWSER_CHANNEL || "msedge" });
+  const browser = await chromium.launch(browserOptions());
   const failures = [];
   const observations = [];
   function check(label, test) {
@@ -49,7 +50,7 @@ async function main() {
       check(`${lang} example jump exists`, () => assert.equal(jumpExists, 1));
       await links.first().click();
       const itemHash = new URL(page.url()).hash;
-      await page.locator("main h1").waitFor();
+      await page.locator(".next-step").waitFor();
       const itemTitle = await page.locator("main h1").innerText();
       await page.getByRole("button", { name: lang === "zh" ? "English" : "中文", exact: true }).click();
       await page.waitForURL((url) => url.searchParams.get("lang") === (lang === "zh" ? "en" : "zh"));
@@ -119,7 +120,8 @@ async function main() {
         await page.close();
       }
     }
-  } finally {
+  } catch (error) { await captureFailure(browser, evidence, error); throw error; }
+  finally {
     await browser.close();
     if (evidence) fs.writeFileSync(path.join(evidence, "observations.json"), JSON.stringify(observations, null, 2) + "\n");
   }

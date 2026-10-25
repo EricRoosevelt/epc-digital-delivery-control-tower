@@ -20,7 +20,7 @@ import subprocess
 import sys
 import tempfile
 import time
-from urllib.error import HTTPError, URLError
+from urllib.error import URLError
 from urllib.request import Request, urlopen
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -329,14 +329,12 @@ def exercise(checkout: Path, output: Path):
                 new_pid,
             ):
                 require(new_pid != pid, "The smoke did not start a new process")
-                try:
-                    request(base, "/api/review/report?review=" + before["review_id"])
-                    raise AssertionError("New process unexpectedly inherited review cache")
-                except HTTPError as missing:
-                    require(
-                        missing.code == 404,
-                        "Expected missing review before library re-admission",
-                    )
+                restored_report = request(
+                    base, "/api/review/report?review=" + before["review_id"]
+                )
+                require(
+                    restored_report == before, "Database read-through changed saved evidence"
+                )
                 reopened_before = request(base, "/api/projects/revision?revision=" + a)
                 reopened_after = request(base, "/api/projects/revision?revision=" + b)
                 require(

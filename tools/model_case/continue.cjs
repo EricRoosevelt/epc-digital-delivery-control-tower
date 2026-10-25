@@ -23,7 +23,8 @@ async function main() {
   const restarted = flag === "--restarted";
   const label = restarted ? "restart" : "flow";
   const errors = [];
-  const browser = await chromium.launch({ headless: true, channel: process.env.BROWSER_CHANNEL || "chromium" });
+  const channel = process.env.BROWSER_CHANNEL || "chromium";
+  const browser = await chromium.launch({ headless: true, ...(channel === "chromium" ? {} : { channel }) });
   const page = await browser.newPage({ viewport: { width: 1440, height: 1000 } });
   page.on("pageerror", error => errors.push(error.message));
   await page.route("**/*", route => {

@@ -2,6 +2,10 @@ import { bilingual } from "./i18n.js";
 
 export const W = bilingual("REVIEW", {
   technical: "技术信息",
+  uploading: "正在提交 IFC…", starting: "正在启动导入进程…", serializing: "正在整理 3D 数据…",
+  processed: "已处理构件",
+  resultsLoading: "正在载入检查结果…",
+  queued: "导入任务正在排队…", reading: "正在读取 IFC…", checking: "正在检查构件…", importing: "正在导入 IFC…", importSaving: "正在保存检查结果…", cancelling: "正在停止导入；等待服务确认…", cancelUnconfirmed: "尚未确认停止，可再次取消或继续等待。", cancelTooLate: "导入已完成；已按取消请求保留原结果。", importTimedOut: "导入任务已超时并停止。原结果仍可查看，请重新导入。", invalidJob: "导入服务没有返回有效任务。",
   title: "3D 检查工作台", home: "记录与检查", workspace: "3D 工作台", navigation: "主要路径",
   intro: "把问题放回模型里。", introBody: "载入真实 IFC，定位构件，再按证据处理问题。",
   demo: "载入公共示例", import: "导入 IFC", input: "选择单个 IFC 文件", source: "模型来源", sample: "buildingSMART 公共示例 · 建筑 / 结构 / 暖通",
@@ -12,6 +16,10 @@ export const W = bilingual("REVIEW", {
   elements: "构件", renderable: "可显示", findings: "待处理结果", checks: "检查结果", view: "模型视窗", orbit: "拖动旋转 · 滚轮缩放 · 点击构件", fit: "显示全部", focus: "聚焦构件", isolate: "隔离构件", isolated: "取消隔离", reset: "重置视图", zoomIn: "放大", zoomOut: "缩小", rotateLeft: "向左旋转", rotateRight: "向右旋转", top: "俯视", iso: "轴测", selected: "已选中", select: "选择一条结果或点击模型构件", legend: "橙色：需核对 · 青色：选中", noGeometry: "此构件没有可用几何，检查证据仍可查看。", geometryError: "3D 视窗暂不可用。检查结果仍可查看。", emptyGeometry: "此 IFC 没有可显示的几何。", units: "世界坐标 · 米", visible: "显示构件", details: "构件与证据", unknown: "未记录", class: "IFC 类型", storey: "楼层", discipline: "专业", rule: "规则", expected: "要求", actual: "实际读取", reason: "检查说明", evidence: "检查证据", suggestion: "处理建议", guidance: "规则指导", ai: "AI 建议", aiReady: "AI 已配置", aiOff: "使用本地规则指导", aiNotice: "AI 只接收当前问题的最少文字证据，不发送 IFC 或几何。", generate: "生成 AI 建议", generating: "正在生成…", guidanceNotice: "依据当前规则和读取值生成的处理步骤。", adviceError: "建议暂时无法生成；可重试。", facts: "已知事实", actions: "建议操作", verify: "修改后验证", citations: "依据", limits: "适用范围", none: "无", sourceDetails: "来源与模型记录", unavailable: "无几何构件", fullReport: "检查结果可独立于 3D 使用。", selectedRule: "所选检查", keyboard: "也可用视窗按钮旋转、缩放和定位。",
 }, {
   technical: "Technical details",
+  uploading: "Submitting IFC…", starting: "Starting import process…", serializing: "Preparing 3D data…",
+  processed: "Elements processed",
+  resultsLoading: "Loading check results…",
+  queued: "Import queued…", reading: "Reading IFC…", checking: "Checking elements…", importing: "Importing IFC…", importSaving: "Saving check results…", cancelling: "Stopping import; waiting for service confirmation…", cancelUnconfirmed: "Stop is not confirmed. Cancel again or keep waiting.", cancelTooLate: "Import finished before cancellation; the previous results were kept.", importTimedOut: "The import timed out and stopped. Previous results remain available; import again to retry.", invalidJob: "The import service did not return a valid job.",
   title: "3D review workspace", home: "Records & checks", workspace: "3D workspace", navigation: "Main paths",
   intro: "Put each issue back in context.", introBody: "Load real IFC, locate the element, and act on its evidence.",
   demo: "Load public example", import: "Import IFC", input: "Choose a single IFC file", source: "Model source", sample: "buildingSMART public example · Architecture / Structure / HVAC",

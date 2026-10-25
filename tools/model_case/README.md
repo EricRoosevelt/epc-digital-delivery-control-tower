@@ -47,10 +47,12 @@ npx playwright install chromium
 python tools/model_case/measure_browser.py '<private-config.json>' --pid <server-pid>
 ```
 
-This drives the actual file input, not an injected report. The backend's POST
-includes upload, parsing, checking and tessellation; the geometry GET copies,
-serializes and transfers the already-built geometry. Browser upload-to-ready also
-includes these network steps, JSON parsing and the real Three.js scene.
+This drives the actual file input, not an injected report. The GUI submits an
+import job and polls its progress; `browser_post_request_ms` measures submission
+only. Parsing, checking and tessellation happen in the worker before the final
+report GET. Browser upload-to-ready includes that work, polling, geometry transfer,
+JSON parsing and the real Three.js scene. The response probe reads the final
+report GET as well as the legacy synchronous endpoint.
 
 The test-only WebGL draw wrapper confirms actual triangle draws, not an empty
 canvas. It records first triangle command submission and the next animation-frame

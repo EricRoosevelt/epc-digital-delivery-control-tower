@@ -17,6 +17,13 @@ read its checks. Models are positioned using IFC world coordinates in metres;
 no geometry is invented for objects without a representation. Missing geometry
 does not erase an element's check results.
 
+IFC imports run as worker jobs with real stage and processed-element progress.
+Cancel keeps the current report and 3D view and waits for the server to confirm
+the worker stopped. Leaving the page, including a language change, sends a
+keepalive cancellation for only that page's active job; it cannot promise delivery
+after a hard close. The server's 600-second job deadline is the fallback. Returning
+opens the previous report or saved revision; it does not silently re-upload IFC.
+
 The four runtime review checks are PV-001 (the existing four-value air-terminal
 type convention), INFO-001 (non-blank instance Name), INFO-002 (resolvable storey)
 and ID-001 (valid, model-local unique GlobalId). Name and storey results are

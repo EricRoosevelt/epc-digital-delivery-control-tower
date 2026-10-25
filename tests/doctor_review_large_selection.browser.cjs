@@ -5,6 +5,7 @@ const assert = require("node:assert/strict");
 const fs = require("node:fs");
 const path = require("node:path");
 const { chromium } = require("playwright");
+const { captureFailure, browserOptions } = require("./browser-qa-helpers.cjs");
 
 function publicIFC() {
   const rows = Array.from({ length: 150 }, (_, index) => {
@@ -19,16 +20,16 @@ async function main() {
   const evidence = process.argv[3];
   assert.ok(base);
   if (evidence) fs.mkdirSync(evidence, { recursive: true });
-  const browser = await chromium.launch({ headless: true, channel: process.env.BROWSER_CHANNEL || "msedge" });
+  const browser = await chromium.launch(browserOptions());
   const errors = [];
   try {
     const page = await browser.newPage({ viewport: { width: 1440, height: 1000 } });
     page.on("pageerror", error => errors.push(error.message));
     await page.goto(`${base}/review.html?lang=en`);
-    const responsePromise = page.waitForResponse(response => new URL(response.url()).pathname === "/api/review/models");
     await page.locator("#review-file").setInputFiles({ name: "public-selection-regression.ifc", mimeType: "application/octet-stream", buffer: publicIFC() });
-    const report = await (await responsePromise).json();
     await page.locator(".review-status").filter({ hasText: "Model loaded" }).waitFor();
+    const review = new URL(page.url()).searchParams.get("review");
+    const report = await (await page.request.get(`${base}/api/review/report?review=${review}`)).json();
     assert.equal(report.summary.elements, 150);
     const target = report.elements.at(-1);
     const finding = report.findings.find(f => f.element_key === target.element_key && f.rule_id === "PV-001");
@@ -48,7 +49,7 @@ async function main() {
       await page.locator(".review-status").filter({ hasText: lang === "en" ? "Model loaded" : "模型已载入" }).waitFor();
       assert.equal(await page.locator("#review-status-filter").inputValue(), "PASS");
       assert.equal(await page.locator(".review-finding").count(), 100);
-      assert.equal(await page.locator(".review-finding").first().getAttribute("data-finding"), finding.finding_id);
+      assert.equal(await page.locator(".review-finding").first().getAttribute("data-finding"), finding.finding_id, "deep-linked finding must be pinned inside the finite result window");
       assert.equal(await page.locator(".review-finding.is-selected").count(), 1);
       assert.equal(await page.locator(".review-finding.is-selected").getAttribute("aria-pressed"), "true");
       assert.equal(await page.locator(".review-object-heading h3").innerText(), target.name);
@@ -70,6 +71,7 @@ async function main() {
     }
     assert.deepEqual(errors, []);
     console.log(JSON.stringify({ passed: true, synthetic: true, elements: 150, pass_findings: passes.length, rendered_limit: 100, locales: ["en", "zh"], errors }));
-  } finally { await browser.close(); }
+  } catch (error) { await captureFailure(browser, evidence, error); throw error; }
+  finally { await browser.close(); }
 }
 main().catch(error => { console.error(error); process.exitCode = 1; });

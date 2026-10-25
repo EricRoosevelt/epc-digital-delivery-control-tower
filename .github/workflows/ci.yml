@@ -193,6 +193,16 @@ jobs:
         if: runner.os == 'Linux'
         run: sudo apt-get install -y fonts-noto-cjk
 
+      - name: Run real browser regressions with fresh public state
+        working-directory: ${{ runner.temp }}/phase2-candidate/checkout
+        run: |
+          if [ "$RUNNER_OS" = "Windows" ]; then
+            qa_python="$RUNNER_TEMP/phase2-candidate/venv/Scripts/python.exe"
+          else
+            qa_python="$RUNNER_TEMP/phase2-candidate/venv/bin/python"
+          fi
+          "$qa_python" tools/run_browser_qa.py --output "$RUNNER_TEMP/phase2-candidate/evidence/browser-qa"
+
       - name: Capture the public demo at the same source SHA
         working-directory: ${{ runner.temp }}/phase2-candidate/checkout
         run: |

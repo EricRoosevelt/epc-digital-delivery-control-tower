@@ -341,10 +341,11 @@ def test_saved_geometry_identity_mismatch_does_not_poison_session(tmp_path):
             ),
         )
     restarted = ReviewStore()
-    with pytest.raises(ProjectLibraryError, match="saved review"):
-        ProjectLibrary(tmp_path, restarted).revision(saved["revision"]["revision_id"])
-    with pytest.raises(KeyError):
-        restarted.get(report["review_id"])
+    reopened = ProjectLibrary(tmp_path, restarted).revision(saved["revision"]["revision_id"])
+    assert reopened["report"] == report  # Report-only reopening does not touch bad geometry.
+    with pytest.raises(ProjectLibraryError, match="saved review geometry"):
+        restarted.geometry_payload(report["review_id"])
+    assert restarted.get(report["review_id"]) == report
 
 
 def test_saved_recheck_resolves_only_when_new_ifc_passes(tmp_path):

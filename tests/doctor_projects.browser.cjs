@@ -5,6 +5,7 @@ const assert = require("node:assert/strict");
 const fs = require("node:fs");
 const path = require("node:path");
 const { chromium } = require("playwright");
+const { captureFailure, browserOptions } = require("./browser-qa-helpers.cjs");
 
 async function main() {
   const [base, evidence, fixturePath] = process.argv.slice(2);
@@ -12,7 +13,7 @@ async function main() {
   fs.mkdirSync(evidence, { recursive: true });
   const fixture = JSON.parse(fs.readFileSync(fixturePath, "utf8"));
   assert.equal(fixture.synthetic, true);
-  const browser = await chromium.launch({ headless: true, channel: process.env.BROWSER_CHANNEL || "msedge" });
+  const browser = await chromium.launch(browserOptions());
   const errors = [];
   const observations = [];
   const capture = (page, name) => page.screenshot({ path: path.join(evidence, `${name}.png`) });
@@ -152,6 +153,7 @@ async function main() {
     const output = { observations, errors, project_id: projectId, model_id: modelId, revision_id: savedRevisionId, later_revision_id: laterRevision, finding_id: findingId, saved_note: draftNote };
     fs.writeFileSync(path.join(evidence, "projects-browser.json"), JSON.stringify(output, null, 2));
     console.log(JSON.stringify({ passed: true, ...output }, null, 2));
-  } finally { await browser.close(); }
+  } catch (error) { await captureFailure(browser, evidence, error); throw error; }
+  finally { await browser.close(); }
 }
 main().catch(error => { console.error(error); process.exitCode = 1; });

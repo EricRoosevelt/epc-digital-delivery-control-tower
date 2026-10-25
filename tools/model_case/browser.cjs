@@ -34,7 +34,7 @@ async function main() {
   let saved = null;
   const phases = {};
   const channel = config.channel || process.env.BROWSER_CHANNEL || "chromium";
-  const browser = await chromium.launch({ headless: true, channel });
+  const browser = await chromium.launch({ headless: true, ...(channel === "chromium" ? {} : { channel }) });
   const page = await browser.newPage({ viewport: config.viewport || { width: 1440, height: 1000 } });
   await page.route("**/*", route => {
     const url = new URL(route.request().url());
@@ -68,7 +68,7 @@ async function main() {
     Response.prototype.json = function () {
       const pathname = this.url ? new URL(this.url).pathname : "";
       return originalJSON.call(this).then(body => {
-        if (pathname === "/api/review/models" && body.elements) probe.report = body;
+        if (["/api/review/models", "/api/review/report"].includes(pathname) && body.elements) probe.report = body;
         if (pathname === "/api/review/geometry" && body.meshes) {
           probe.geometry = {
             meshes: body.meshes.map(mesh => ({ element_key: mesh.element_key })),
@@ -155,8 +155,8 @@ async function main() {
     const browserProbe = await page.evaluate(() => window.__modelCaseProbe);
     report = browserProbe.report; geometry = browserProbe.geometry;
     assert.ok(report && geometry?.meshes.length > 0, "Same case must contain real triangle geometry");
-    const resources = await page.evaluate(() => performance.getEntriesByType("resource").filter(entry => ["/api/review/models", "/api/review/geometry"].includes(new URL(entry.name).pathname)).map(entry => ({ path: new URL(entry.name).pathname, duration: entry.duration, bytes: entry.encodedBodySize })));
-    postDuration = resources.find(entry => entry.path.endsWith("/models"))?.duration;
+    const resources = await page.evaluate(() => performance.getEntriesByType("resource").filter(entry => ["/api/review/models", "/api/review/imports", "/api/review/report", "/api/review/geometry"].includes(new URL(entry.name).pathname)).map(entry => ({ path: new URL(entry.name).pathname, operation: new URL(entry.name).searchParams.has("filename") ? "submission" : "read", duration: entry.duration, bytes: entry.encodedBodySize })));
+    postDuration = resources.find(entry => entry.operation === "submission")?.duration;
     geometryDuration = resources.find(entry => entry.path.endsWith("/geometry"))?.duration;
     const heapReady = await heap();
     const actions = {};
