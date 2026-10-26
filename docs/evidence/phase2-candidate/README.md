@@ -63,9 +63,15 @@ Chinese scenes; CI installs `fonts-noto-cjk`. The default browser is Playwright'
 pinned Chromium. `--language zh` records the main workflow in Chinese instead of
 English. Both modes include Chinese saved-revision and mobile screenshots.
 
-CI also runs the five existing browser regression scripts: project drafts/save
+CI also runs six browser regression scripts: project drafts/save
 failure, geometry recovery, selected findings beyond the first 100 rows, the
-earlier UI flow, and import job cancellation/retry. Results are in
+earlier UI flow, import job cancellation/retry, and the enterprise rule/purpose
+loop. The latter uses original public geometric IFC and a real ZIP/native
+checker worker: source attachment, adoption, partial coverage, precise 3D
+location, human evidence, successor review, unsupported checks and mobile views.
+Its screenshots and observations are under `browser-qa/baseline/doctor_enterprise`.
+The main `capture/` recording still covers the general 3D/project workflow;
+enterprise evidence is explicitly in the browser regression output. Results are in
 `browser-qa/browser-qa.json`; each script retains its log and failures retain
 screenshots. To prove the original assertions detect broken behavior, add
 `--mutations` to the QA command. It modifies disposable external copies and

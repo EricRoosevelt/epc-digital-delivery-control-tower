@@ -106,3 +106,28 @@ Manual follow-up statuses are exactly open, in_progress and ready_for_recheck. T
 Revision comparison selectors contain revisions of one logical model only. Same-revision pairs are refused locally. Linked before/after parameters start comparison only after its form is mounted, so refresh and browser Back restore a concrete result. A new selection aborts stale comparison requests. Six response categories remain separate; resolved means same-object/same-rule FAIL→PASS, and missing/no-longer-applicable/not-comparable are never presented as repaired. ERROR and INFO counts/labels are separate. The server scope note appears before statistics, and each row keeps before/after observations, localized reason, identity disclosure and a precise revision link. The finite result register initially shows 100 rows with explicit load more.
 
 Project brief is an explicit Markdown attachment download. It does not navigate away from the active page or discard drafts. Browser evidence is stored under `docs/evidence/product-phase2/`; `tests/doctor_projects_fixture.py` creates clearly synthetic IFC revisions through the real API, and `tests/doctor_projects.browser.cjs` exercises those alongside the unchanged public example. No static result fallback is shipped.
+
+## Enterprise purpose review
+
+Project rules accept the declared ZIP format only. A parsed preview is unconfirmed
+until a named project confirmer and responsible team adopt its source, requirements,
+unsupported content and listed human-evidence methods. Unsupported conditions remain
+visible and contribute UNKNOWN. Adoption does not imply authenticated authority.
+Source IFC retention is an explicit SHA-matching attachment; a different hash links
+to a new model revision rather than replacing old evidence.
+
+Purpose runs use saved model/rule versions and declared scope. Client task UUIDs,
+short status requests and owned-task cancellation preserve the last readable run.
+Human evidence is keyed to its original run/method/subject context; failed saves and
+record selection preserve drafts. Saving evidence leaves the sealed conclusion
+unchanged. Explicit reassessment creates a new run. Basis changes and per-evidence
+outcomes are rendered from server data with finite load-more controls.
+
+Purpose 3D links retain assessment and purpose_finding, independently of base finding
+IDs. Current meshes use explicit review_element_key; reassessment restores checkboxes
+through the evaluation's stable-to-review mapping. No GlobalId guess is made. A
+selected in-filter purpose item is pinned within the 100-row window; blockers,
+comparison outcomes, object selectors and evidence/history lists load finite batches.
+`doctor_enterprise.browser.cjs` exercises actual public ZIP/IFC/native-worker flows,
+manual save versus reassessment, unsupported and missing-counterpart UNKNOWN, precise
+mesh links, 150 geometric objects, scope restoration, localization and narrow layout.

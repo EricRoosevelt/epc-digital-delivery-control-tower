@@ -22,6 +22,7 @@ ROOT = Path(__file__).resolve().parents[1]
 SCRIPTS = (
     "doctor_projects", "doctor_review", "doctor_review_large_selection", "doctor_ui",
     "doctor_review_import_jobs",
+    "doctor_enterprise",
 )
 
 
@@ -60,6 +61,12 @@ def run_scripts(checkout, directory, names):
             args = ["node", str(ROOT / f"tests/{name}.browser.cjs"), base, str(evidence)]
             if name == "doctor_projects":
                 args.append(str(fixture))
+            if name == "doctor_enterprise":
+                public = directory / "enterprise-public-fixtures"
+                if command([sys.executable, str(ROOT / "tests/doctor_enterprise_fixture.py"),
+                            "--output-dir", str(public)], directory / "enterprise-fixture"):
+                    raise RuntimeError("Enterprise public fixture export failed")
+                args.append(str(public))
             status = command(args, evidence, env=env)
             results.append({"script": name, "exit_code": status})
     return results

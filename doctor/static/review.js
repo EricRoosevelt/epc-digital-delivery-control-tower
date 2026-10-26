@@ -5,6 +5,8 @@ import { W } from "./review-words.js";
 import { P } from "./projects-words.js";
 import { createProjectReview } from "./projects-review.js";
 import { requestJSON } from "./projects-api.js";
+import { createPurposeReview } from "./review-purpose.js";
+import { E } from "./enterprise-words.js";
 
 document.documentElement.lang = LANG === "en" ? "en" : "zh-CN";
 document.title = `BIM Doctor · ${W.title}`;
@@ -88,6 +90,10 @@ const viewControls = [
 [W.zoomIn, W.zoomOut, W.rotateLeft, W.rotateRight, W.top, W.iso].forEach((name, i) => { viewControls[i].setAttribute("aria-label", name); viewControls[i].title = name; });
 const aiStatus = h("span", { class: "review-ai-status" }, W.aiOff);
 const projectReview = createProjectReview({ getReport: () => state.report, onSaved: () => renderDetail() });
+const purposeReview = createPurposeReview(key => {
+  state.selected = null; state.element = state.report?.elements.find(item => item.element_key === key) || null;
+  selectionChanged();
+});
 document.querySelector("#review-root").append(
   h("header", { class: "review-header" }, h("a", { class: "brand", href: `/?lang=${LANG}` }, h("span", { class: "brand-mark", "aria-hidden": "true" }, "BD"), "BIM Doctor"),
     h("nav", { class: "review-nav", "aria-label": W.navigation }, h("a", { href: `/projects.html?lang=${LANG}` }, P.nav), h("a", { href: `/review.html?lang=${LANG}`, "aria-current": "page" }, W.workspace), h("a", { href: `/?lang=${LANG}` }, W.home)), languageSwitch()),
@@ -95,7 +101,7 @@ document.querySelector("#review-root").append(
     h("section", { class: "review-heading" }, h("div", {}, h("p", { class: "review-eyebrow" }, "IFC / MODEL REVIEW"), h("h1", {}, W.title), h("p", { class: "review-subtitle" }, W.introBody)),
       h("div", { class: "review-load-actions" }, demoButton, importButton, fileInput, h("span", { class: "review-file-hint" }, W.size))),
     h("section", { class: "review-overview" }, h("div", { class: "review-source-block" }, h("span", { class: "review-overline" }, W.source), sourceName), stats, aiStatus),
-    projectReview.context, projectReview.panel,
+    projectReview.context, projectReview.panel, purposeReview.context,
     statusbar,
     h("div", { class: "review-workspace" },
       h("aside", { class: "review-left", "aria-label": W.models }, h("div", { class: "review-panel-heading" }, h("h2", {}, W.models), h("span", { class: "review-panel-index" }, "IFC")),
@@ -250,10 +256,13 @@ async function loadReport(getReport, { fresh = false, importJob = null } = {}) {
     state.query = ""; search.value = ""; statusSelect.value = state.status;
     projectReview.useReport(report, loaded.revision ? loaded : null);
     const url = new URL(location.href); url.searchParams.set("review", report.review_id);
-    if (fresh) url.searchParams.delete("finding");
+    if (fresh) { url.searchParams.delete("finding"); url.searchParams.delete("assessment"); url.searchParams.delete("purpose_finding"); }
     if (loaded.revision) { url.searchParams.set("revision", loaded.revision.revision_id); url.searchParams.set("project", loaded.revision.project_id); url.searchParams.set("model", loaded.revision.model_id); }
     else url.searchParams.delete("revision");
     history.replaceState(null, "", url);
+    await purposeReview.load(report, { fresh, signal: controller.signal });
+    if (current !== requestNumber) return;
+    statusSelect.closest("label").hidden = purposeReview.active();
     renderReport();
     const geometryReady = await loadGeometry(current);
     if (current === requestNumber) {
@@ -307,12 +316,15 @@ function geometryFailure(error, phase, requestId = null) {
 function renderReport() {
   const report = state.report;
   sourceName.textContent = report.source.filename || W.sample;
-  stats.replaceChildren(...[[report.summary.elements, W.elements], [report.summary.renderable, W.renderable], [report.summary.errors, W.errors], [report.summary.information, W.information]].map(([n, title]) => h("div", { class: "review-stat" }, h("strong", {}, number(n)), h("span", {}, title))));
+  const purposeSummary = purposeReview.summary();
+  const summaryStats = purposeReview.active() ? [[report.summary.elements, W.elements], [report.summary.renderable, W.renderable], [purposeSummary?.scope_count, E.scopeCount], [purposeSummary?.counts ? Object.values(purposeSummary.counts).reduce((sum, count) => sum + count, 0) : null, E.observations]] : [[report.summary.elements, W.elements], [report.summary.renderable, W.renderable], [report.summary.errors, W.errors], [report.summary.information, W.information]];
+  stats.replaceChildren(...summaryStats.map(([n, title]) => h("div", { class: "review-stat" }, h("strong", {}, n == null ? "—" : number(n)), h("span", {}, title))));
   modelSelect.replaceChildren(h("option", { value: "" }, W.allModels), ...report.models.map(m => h("option", { value: m.model_key }, m.name || m.model_key)));
   modelSelect.value = "";
   const records = document.querySelector("#review-source-records");
   records.replaceChildren(h("p", {}, value(report.source.attribution)), h("p", {}, W.local), ...report.models.map(m => h("div", {}, h("strong", {}, m.name || m.model_key), h("p", {}, `${W.discipline}: ${value(m.discipline)}`), h("code", {}, `SHA-256 ${value(m.sha256)}`))));
   renderList();
+  if (purposeReview.active()) { renderDetail(); updateViewButtons(); return; }
   const requested = report.findings.find(f => f.finding_id === new URL(location.href).searchParams.get("finding"));
   const first = requested || matching()[0] || report.findings[0];
   if (first) selectFinding(first.finding_id); else if (report.elements[0]) selectElement(report.elements[0].element_key);
@@ -329,6 +341,10 @@ function matching() {
 }
 function renderList() {
   clearSearch.hidden = !search.value;
+  if (purposeReview.active()) {
+    const result = purposeReview.renderList({ query: state.query, model: state.model, limit: state.limit, more: () => { state.limit += 100; renderList(); } });
+    list.replaceChildren(...result.nodes); listCount.textContent = `${number(result.count)} ${W.results}`; outside.hidden = !result.outside; return;
+  }
   const found = matching();
   listCount.textContent = `${number(found.length)} ${W.results}`;
   outside.hidden = !state.element || found.some(f => f.element_key === state.element.element_key);
@@ -358,6 +374,7 @@ function selectFinding(id) {
   selectionChanged();
 }
 function selectElement(key) {
+  if (purposeReview.active()) { purposeReview.pick(key); return; }
   const e = state.report.elements.find(e => e.element_key === key); if (!e) return;
   state.element = e; state.selected = state.report.findings.find(f => f.element_key === key && String(f.status).toUpperCase() === "FAIL") || state.report.findings.find(f => f.element_key === key) || null;
   selectionChanged();
@@ -369,7 +386,7 @@ function selectionChanged() {
   viewer?.select(state.element?.element_key);
   selectionLabel.textContent = `${W.selected}: ${state.element?.name || state.element?.ifc_class || W.unknown}`;
   const url = new URL(location.href);
-  if (state.selected) url.searchParams.set("finding", state.selected.finding_id); else url.searchParams.delete("finding");
+  if (!purposeReview.active() && state.selected) url.searchParams.set("finding", state.selected.finding_id); else url.searchParams.delete("finding");
   history.replaceState(null, "", url);
   renderList(); renderDetail(); updateViewButtons();
 }
@@ -378,6 +395,11 @@ function updateViewButtons() {
   focusButton.disabled = isolateButton.disabled = !state.geometryReady || !viewer?.has(state.element?.element_key);
 }
 function renderDetail() {
+  if (purposeReview.active()) {
+    detail.replaceChildren(purposeReview.renderDetail());
+    if (state.element && state.element.geometry_status !== "renderable" && !viewer?.has(state.element.element_key)) detail.append(h("p", { class: "review-geometry-note" }, W.noGeometry));
+    return;
+  }
   const e = state.element; const f = state.selected; if (!e) return;
   const model = state.report.models.find(m => m.model_key === e.model_key);
   const facts = [[W.class, e.ifc_class], [W.storey, e.storey]];

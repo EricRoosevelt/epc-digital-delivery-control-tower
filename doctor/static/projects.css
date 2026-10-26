@@ -1,4 +1,57 @@
 /* Projects extend the operational review variant; shared token ownership stays in doctor.css. */
+.enterprise-tabs { display: flex; gap: 6px; border-bottom: 1px solid var(--line); padding-bottom: 8px; flex-wrap: wrap; }
+.enterprise-tabs a { color: var(--muted); text-decoration: none; padding: 9px 14px; font-size: 13px; border-radius: var(--control-radius); }
+.enterprise-tabs a[aria-current=page] { color: var(--accent); background: var(--callout-bg); box-shadow: inset 0 -2px var(--accent); font-weight: 600; }
+.enterprise-tabs a:hover { background: var(--callout-bg); }
+.enterprise-panel, .enterprise-rule-content, .enterprise-result { display: grid; gap: 18px; min-width: 0; }
+.enterprise-section { padding: 24px; min-width: 0; }
+.enterprise-section h2 { font-size: 19px; margin: 0 0 16px; }
+.enterprise-section h3 { font-size: 15px; margin: 0 0 8px; overflow-wrap: anywhere; }
+.enterprise-section p { font-size: 13px; line-height: 1.7; overflow-wrap: anywhere; }
+.enterprise-row-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 14px; flex-wrap: wrap; }
+.enterprise-row-heading h2, .enterprise-row-heading h3 { flex: 1; min-width: 150px; }
+.enterprise-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.enterprise-actions button, .enterprise-actions a { font-size: 12px; }
+.enterprise-facts { display: grid; grid-template-columns: minmax(90px, 150px) minmax(0, 1fr); gap: 8px 18px; font-size: 12px; margin: 12px 0 18px; }
+.enterprise-facts dt { color: var(--muted); }
+.enterprise-facts dd { margin: 0; overflow-wrap: anywhere; white-space: pre-wrap; }
+.enterprise-status { display: inline-block; padding: 4px 8px; border-radius: 4px; background: var(--unknown-bg); color: var(--unknown); font: 11px var(--font-data); max-width: 100%; overflow-wrap: anywhere; }
+.enterprise-status.state-READY, .enterprise-status.state-supported { background: var(--callout-bg); color: var(--accent); }
+.enterprise-status.state-BLOCKED { background: var(--problem-bg); color: var(--problem-ink); }
+.enterprise-history { display: grid; gap: 8px; }
+.enterprise-finite { display: grid; gap: 8px; }
+.enterprise-history h2 { font-size: 15px; margin: 5px 0; }
+.review-app .enterprise-history-item { text-align: left; font-size: 12px; min-height: 42px; overflow-wrap: anywhere; white-space: normal; }
+.enterprise-form { display: grid; gap: 14px; }
+.enterprise-form > label, .enterprise-manual-form > label { display: grid; gap: 6px; font-size: 12px; }
+.enterprise-form > label > select, .enterprise-manual-form > label > select { width: 100%; min-width: 0; }
+.enterprise-form > p { margin: 0; }
+.enterprise-form textarea { min-height: 75px; }
+.enterprise-rule, .enterprise-blocker { border-top: 1px solid var(--line); padding: 18px 0; scroll-margin-top: 20px; }
+.enterprise-rule:first-of-type { border-top: 0; }
+.enterprise-requirement { display: flex; gap: 12px; flex-wrap: wrap; padding: 10px 0; font-size: 12px; }
+.enterprise-requirement strong { font-weight: 500; flex: 1; min-width: 160px; overflow-wrap: anywhere; }
+.enterprise-requirement p { width: 100%; margin: 0; }
+.enterprise-technical { margin-top: 14px; font-size: 11px; color: var(--muted); }
+.enterprise-technical pre { overflow: auto; max-height: 360px; white-space: pre-wrap; overflow-wrap: anywhere; font-size: 10px; }
+.enterprise-manual-form { border-top: 1px solid var(--line); padding: 20px 0; display: grid; gap: 12px; }
+.enterprise-manual-form textarea { min-height: 100px; }
+.enterprise-objects { min-width: 0; }
+.enterprise-object-list { max-height: 340px; overflow: auto; margin-top: 10px; }
+.enterprise-object-list label { display: flex; align-items: flex-start; gap: 10px; padding: 8px 0; font-size: 12px; }
+.enterprise-object-list input { width: 18px; min-height: 18px; flex: none; }
+.enterprise-object-list span { min-width: 0; overflow-wrap: anywhere; }
+.enterprise-object-list code { display: block; font-size: 10px; color: var(--muted); }
+.enterprise-purpose-context { padding: 16px; margin-top: 16px; background: var(--callout-bg); border-left: 3px solid var(--accent); font-size: 12px; }
+.enterprise-purpose-context .enterprise-actions { margin-top: 10px; }
+.review-detail-content > .enterprise-blocker { padding: 20px 16px; border: 0; }
+.review-detail-content .enterprise-facts { grid-template-columns: 85px minmax(0, 1fr); }
+@media (max-width: 700px) {
+  .enterprise-section { padding: 18px 14px; }
+  .enterprise-facts { grid-template-columns: 95px minmax(0, 1fr); gap: 8px 12px; }
+  .enterprise-tabs a { padding: 8px 10px; font-size: 12px; }
+  .enterprise-row-heading { gap: 8px; }
+}
 .projects-main { max-width: 1500px; padding: 30px 24px 60px; }
 .projects-page-heading { margin: 0 0 26px; }
 .projects-page-heading h1 { font-size: 28px; margin: 4px 0 8px; }

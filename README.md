@@ -1,6 +1,6 @@
-# BIM Doctor — Phase 2 RC1
+# BIM Doctor — enterprise rules and purpose review
 
-**Locate a check in real 3D, save the evidence, and explain the next revision.**
+**Bring project rules, review a declared delivery purpose, and trace what changed.**
 
 [中文](README.zh-CN.md) · [Candidate demo and exact-commit evidence](docs/evidence/phase2-candidate/README.md) · [Quick start](#quick-start) · [Windows / Ubuntu CI](https://github.com/EricRoosevelt/epc-digital-delivery-control-tower/actions/workflows/ci.yml?query=branch%3Afeat%2Fdoctor-product-phase1)
 
@@ -11,6 +11,17 @@ acceptance remain separate decisions.
 
 ## What this candidate does
 
+- **Bring and adopt project rules:** import one ZIP containing native TOML rules
+  and a purpose manifest. Inspect source, version, applicability, requirements
+  and unsupported parts before explicitly adopting an immutable project version.
+- **Review a delivery purpose:** choose internal review, tender submission or a
+  package-defined handover, select the revision and scope, and read the existing
+  Purpose engine's evidence-backed results. Missing coverage, unsupported checks
+  and absent evidence remain UNKNOWN; zero FAIL is not a readiness decision.
+- **Close the evidence loop:** open a blocker at its rule and exact 3D element,
+  record attributable human evidence separately from progress notes, then create
+  a successor review. Model, rule, scope, engine and human-evidence changes remain
+  distinct; an unverified possible cause stays a hypothesis.
 - **Real 3D inspection:** load the bundled public buildingSMART example or one
   IFC file, select a result, and focus or isolate its actual tessellated geometry.
 - **Projects and revision rechecks:** save immutable reports and 3D snapshots,
@@ -24,10 +35,20 @@ acceptance remain separate decisions.
   key. Optional generated advice uses the selected finding's text evidence;
   source IFC and meshes are not sent. [AI setup](doctor/README.md#openai-setup).
 
-The four workspace checks cover air-terminal type (PV-001), readable names,
+The four base workspace checks cover air-terminal type (PV-001), readable names,
 storey association and file-local GlobalId integrity. PV-001 shares the existing
 rule definition and IfcTester predicate with the framework. Name/storey findings
 are information prompts, not a count of engineering defects.
+Enterprise checks have their own immutable assessment records and do not rewrite
+those base reports or their meshes.
+
+In **Projects & rechecks**, open **Project rules**, download the editable public
+package, inspect/adopt it and open **Purpose review**. Existing revisions require
+an explicit, SHA-matching original IFC attachment for new rule checks. That
+source is retained only in the local project library for later rechecks; rules
+and source models are not sent to an AI provider. The public package demonstrates
+machine-only internal review, tender evidence, and a handover that also needs an
+actual counterpart model. [Format and workflow](docs/product/enterprise-purpose.md).
 
 ## Quick start
 

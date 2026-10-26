@@ -46,6 +46,7 @@ class _Job:
     process: subprocess.Popen | None = None
     reason: str | None = None
     review_id: str | None = None
+    result: dict | None = None
     error: dict | None = None
     worker_exited: bool = False
     done: threading.Event = field(default_factory=threading.Event)
@@ -64,6 +65,7 @@ class ImportJobs:
     def __init__(
         self, reviews, directory=None, *, timeout_seconds=600, max_history=16,
         max_artifacts=4, max_artifact_bytes=256 * 1024 * 1024, worker_script=None,
+        output_files=("report.json", "geometry.json"), result_handler=None,
     ):
         if timeout_seconds <= 0 or max_history < 1 or max_artifacts < 1:
             raise ValueError("Import limits must be positive.")
@@ -73,6 +75,11 @@ class ImportJobs:
         self.max_artifacts = max_artifacts
         self.max_artifact_bytes = max_artifact_bytes
         self.worker_script = Path(worker_script or Path(__file__).with_name("import_worker.py"))
+        self.output_files = tuple(output_files)
+        if any(Path(name).name != name or not name.endswith(".json")
+               for name in self.output_files):
+            raise ValueError("Worker outputs must be JSON filenames in its task directory.")
+        self.result_handler = result_handler
         self._temporary = tempfile.TemporaryDirectory(prefix="bim-doctor-imports-") \
             if directory is None else None
         self.root = Path(directory or self._temporary.name).resolve()
@@ -95,6 +102,7 @@ class ImportJobs:
             "completed": job.completed, "total": job.total,
             "elapsed_seconds": round((job.finished_at or time.monotonic()) - job.started, 3),
             "deadline_seconds": self.timeout_seconds, "review_id": job.review_id,
+            "result": job.result,
             "worker_pid": job.process.pid if job.process else None,
             "worker_exited": job.worker_exited, "error": job.error,
             "diagnostics": list(job.diagnostics)
@@ -146,14 +154,18 @@ class ImportJobs:
             self._remove_files(oldest)
             del self._jobs[oldest.identity]
 
-    def submit(self, filename, body, *, job_id=None):
+    def submit(self, filename, body, *, job_id=None, context=None):
         identity = self._identity(job_id)
         filename = str(filename).replace("\\", "/").rsplit("/", 1)[-1]
         if not filename.lower().endswith(".ifc") or not body:
             raise ValueError("Choose a nonempty .ifc STEP model file.")
         if len(body) > self.reviews.max_model_bytes:
             raise ValueError("The model exceeds the configured upload limit.")
-        key = (filename, hashlib.sha256(body).hexdigest())
+        context_bytes = json.dumps(
+            context, sort_keys=True, allow_nan=False, ensure_ascii=False,
+        ).encode("utf-8") if context is not None else b""
+        key = (filename, hashlib.sha256(body).hexdigest(),
+               hashlib.sha256(context_bytes).hexdigest())
         with self._lock:
             if self._closed:
                 raise ValueError("The import supervisor is shutting down.")
@@ -170,6 +182,7 @@ class ImportJobs:
                 if old.key == key and old.state == "succeeded" and old.directory:
                     job.state, job.stage = "succeeded", "complete"
                     job.review_id, job.worker_exited = old.review_id, True
+                    job.result = old.result
                     job.finished_at = time.monotonic()
                     job.done.set()
                     self._jobs[identity] = job
@@ -182,6 +195,8 @@ class ImportJobs:
             with self._lock:
                 job.directory = directory
             (directory / "input.ifc").write_bytes(body)
+            if context_bytes:
+                (directory / "context.json").write_bytes(context_bytes)
             (directory / "tmp").mkdir()
             env = {k: v for k, v in os.environ.items() if not k.startswith("OPENAI_")}
             env.update({"PYTHONUTF8": "1", "TMP": str(directory / "tmp"),
@@ -304,18 +319,23 @@ class ImportJobs:
                         "message": f"The IFC worker exited with code {job.process.returncode}.",
                     }
                 return
-            report = (job.directory / "report.json").read_bytes()
-            geometry = (job.directory / "geometry.json").read_bytes()
-            if len(report) + len(geometry) > self.max_artifact_bytes:
+            if sum((job.directory / name).stat().st_size for name in self.output_files) \
+                    > self.max_artifact_bytes:
                 raise ValueError("Import output exceeds the temporary artifact budget.")
+            outputs = {name: (job.directory / name).read_bytes() for name in self.output_files}
             with self._lock:
                 # Whichever wins this short commit section decides cancel vs success.
                 if job.reason is not None:
                     job.state = "cancelled"
                     return
                 job.stage = "publishing"
-                accepted = self.reviews.admit_serialized(report, geometry)
-                job.review_id = accepted["review_id"]
+                if self.result_handler is None:
+                    accepted = self.reviews.admit_serialized(
+                        outputs["report.json"], outputs["geometry.json"],
+                    )
+                    job.review_id = accepted["review_id"]
+                else:
+                    job.result = self.result_handler(outputs)
                 job.state, job.stage = "succeeded", "complete"
         except Exception as error:
             with self._lock:
@@ -329,6 +349,7 @@ class ImportJobs:
                     if job.directory:
                         if job.state == "succeeded":
                             (job.directory / "input.ifc").unlink(missing_ok=True)
+                            (job.directory / "context.json").unlink(missing_ok=True)
                             scratch = job.directory / "tmp"
                             if scratch.exists():
                                 shutil.rmtree(scratch)

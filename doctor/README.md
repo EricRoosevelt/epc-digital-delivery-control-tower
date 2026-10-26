@@ -84,8 +84,11 @@ are immutable; follow-up text is updated for its own revision/finding. Opening a
 saved revision restores the report; its geometry is loaded when requested by the
 workspace. Saving notes, comparing revisions and generating briefs do not load
 geometry. Evicted saved payloads are restored from SQLite, including after a
-restart. The source IFC file and API credentials are not stored by the project
-library. Unrelated older local-check entries retain their original storage behavior.
+restart. Ordinary model saving does not retain its source IFC. Enterprise rule
+review adds an explicit **Attach source IFC** action: the exact SHA-matching file
+is then retained in this local SQLite library for later rule checks, outside the
+geometry cache. API credentials are not stored. Unrelated older local-check
+entries retain their original storage behavior.
 For non-UTF-8 STEP exports, parsing uses an external temporary file containing
 the exact uploaded bytes; that file is removed immediately after native parsing.
 
@@ -94,6 +97,41 @@ not an authenticated assignment or notification. The downloaded brief uses the
 latest saved revision per model and its immediate predecessor, while keeping
 manual follow-up and machine results separate. Preserve your source IFC files
 and include the complete external project directory in your own backup routine.
+
+## Enterprise rules and purpose review
+
+In a project, **Project rules** accepts one ZIP with `manifest.json`,
+`rules/ruleset.toml` and native `rules/*.toml`. Download the public template there,
+or generate it with `python tools/enterprise_rules_example.py <output.zip>`.
+The manifest describes source, version, delivery purposes and evidence needs;
+TOML rules compile through the existing rule compiler and IfcTester. Preview
+parsing is not execution. Adoption requires a named confirmer and responsible
+reviewer/team and freezes that exact content. Unsupported fields/checks remain
+visible and cannot become successful observations. Excel, Word and PDF are not
+executable inputs in this version.
+
+**Purpose review** selects an adopted package, model revision, explicit object
+scope and, where required, a real counterpart revision. Attach the exact source
+IFC once if it was not retained previously. The check-only worker reuses existing
+geometry and supports confirmed cancellation and a hard deadline. It saves a new
+assessment rather than changing a model revision or its base four-rule report.
+
+The existing Purpose engine produces sealed evidence partitions. The interface
+shows BLOCKED or UNKNOWN whenever required observations fail, coverage is missing,
+an operation is unsupported or evidence is absent. Empty scope is UNKNOWN.
+READY is qualified to the listed purpose, evidence, version and scope, never a
+general project acceptance or an authenticated engineering signature.
+
+Blockers link to actual rules, observations and the exact saved 3D element.
+Non-geometric subjects retain their evidence. Human evidence needs an accepted
+method, recorder, reference and basis tied to the current model/scope; progress
+notes do not count. Saving a judgment leaves the old conclusion unchanged until
+an explicit successor review. Rechecks distinguish source-model changes,
+predicate/configuration changes, scope changes and new human evidence; deletion,
+reclassification or exclusion is not a repair. Candidate causes stay unverified.
+The purpose brief exports this same chain.
+
+See [the package contract and API](../docs/product/enterprise-purpose.md).
 
 One authorized source-backed case has exercised exact 3D selection, same-model
 revision comparison, a real server restart and brief download with 2,055 meshes

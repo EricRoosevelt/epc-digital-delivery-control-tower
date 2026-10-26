@@ -4,11 +4,17 @@ import { languageSwitch } from "./language.js";
 import { P } from "./projects-words.js";
 import { requestJSON, postJSON } from "./projects-api.js";
 import { comparisonPanel } from "./projects-compare.js";
+import { E } from "./enterprise-words.js";
+import { draftGuard } from "./enterprise-ui.js";
+import { rulesPanel } from "./projects-rules.js";
+import { purposePanel } from "./projects-purpose.js";
 
 document.documentElement.lang = LANG === "en" ? "en" : "zh-CN";
 document.title = `BIM Doctor · ${P.title}`;
 const state = { projects: [], project: null, controller: null, current: 0, limit: 100 };
 let compare = null;
+let enterprise = null;
+const navigate = draftGuard(() => enterprise);
 const date = value => value ? new Date(value).toLocaleString(LANG === "zh" ? "zh-CN" : "en", { dateStyle: "medium", timeStyle: "short" }) : P.unknown;
 const linkToReview = (project, model) => `/review.html?lang=${LANG}&project=${encodeURIComponent(project)}${model ? `&model=${encodeURIComponent(model)}` : ""}`;
 const projectList = h("div", { class: "project-list", id: "project-list" });
@@ -26,7 +32,7 @@ document.querySelector("#projects-root").append(
     h("div", { class: "projects-layout" }, h("aside", { class: "project-sidebar project-surface", "aria-label": P.projects }, h("h2", {}, P.projects), listStatus, projectList, h("div", { class: "project-create-section" }, h("h3", {}, P.create), form)), mainPanel)));
 
 function renderList() {
-  projectList.replaceChildren(...state.projects.slice(0, state.limit).map(project => h("button", { type: "button", class: `project-list-item${state.project?.project_id === project.project_id ? " is-selected" : ""}`, "aria-pressed": String(state.project?.project_id === project.project_id), onclick: () => openProject(project.project_id) }, h("strong", {}, project.name), h("span", {}, `${project.model_count || 0} ${P.models} · ${project.revision_count || 0} ${P.revisions}`))));
+  projectList.replaceChildren(...state.projects.slice(0, state.limit).map(project => h("button", { type: "button", class: `project-list-item${state.project?.project_id === project.project_id ? " is-selected" : ""}`, "aria-pressed": String(state.project?.project_id === project.project_id), onclick: () => navigate(() => openProject(project.project_id)) }, h("strong", {}, project.name), h("span", {}, `${project.model_count || 0} ${P.models} · ${project.revision_count || 0} ${P.revisions}`))));
   if (state.projects.length > state.limit) projectList.append(h("button", { type: "button", onclick: () => { state.limit += 100; renderList(); } }, P.more));
   listStatus.textContent = state.projects.length ? `${state.projects.length} ${P.projects}` : P.chooseProject;
 }
@@ -44,13 +50,15 @@ async function refreshProjects(preferred = null) {
 async function openProject(id) {
   state.controller?.abort(); state.controller = new AbortController(); const token = ++state.current;
   compare?.dispose(); compare = null; mainPanel.setAttribute("aria-busy", "true");
+  enterprise?.dispose(); enterprise = null;
   mainPanel.replaceChildren(h("p", { class: "project-surface project-loading", role: "status" }, P.loading));
   try {
     const data = await requestJSON(`/api/projects/detail?project=${encodeURIComponent(id)}`, { signal: state.controller.signal });
     if (token !== state.current) return;
-    state.project = data.project; renderList(); renderProject(data);
-    const url = new URL(location.href); if (url.searchParams.get("project") !== id) { url.searchParams.delete("before"); url.searchParams.delete("after"); }
+    state.project = data.project; renderList();
+    const url = new URL(location.href); if (url.searchParams.get("project") !== id) { for (const key of ["before", "after", "assessment", "rule_revision", "rule"]) url.searchParams.delete(key); }
     url.searchParams.set("project", id); history.replaceState(null, "", url);
+    renderProject(data);
     document.title = `${data.project.name} · BIM Doctor`;
   } catch (error) {
     if (error.name !== "AbortError") mainPanel.replaceChildren(h("div", { class: "project-surface project-error", role: "alert" }, h("p", {}, `${P.projectLoadError} ${error.message}`), h("button", { type: "button", onclick: () => openProject(id) }, P.retry)));
@@ -61,6 +69,10 @@ function renderProject(data) {
   const heading = h("section", { class: "project-detail-heading project-surface" }, h("div", {}, h("p", { class: "review-overline" }, P.projects), h("h2", {}, project.name), h("p", { class: "project-muted" }, `${models.length} ${P.models} · ${models.reduce((n, m) => n + m.revisions.length, 0)} ${P.revisions}`)),
     h("div", { class: "project-header-actions" }, h("a", { class: "project-primary-link", href: linkToReview(project.project_id) }, P.addModel), h("a", { class: "project-secondary-link", href: `/api/projects/brief?project=${encodeURIComponent(project.project_id)}&language=${LANG}`, download: true }, P.brief)));
   mainPanel.replaceChildren(heading);
+  const tab = new URL(location.href).searchParams.get("tab") || "models";
+  mainPanel.append(h("nav", { class: "enterprise-tabs", "aria-label": P.projects }, ["models", "rules", "purpose"].map(key => h("a", { href: `/projects.html?lang=${LANG}&project=${encodeURIComponent(project.project_id)}&tab=${key}`, "aria-current": key === tab ? "page" : null }, E[key]))));
+  if (tab === "rules") { enterprise = rulesPanel(project.project_id, { navigate }); mainPanel.append(enterprise.element); return; }
+  if (tab === "purpose") { enterprise = purposePanel(project, models); mainPanel.append(enterprise.element); return; }
   if (!models.length) {
     mainPanel.append(h("div", { class: "project-start-state project-surface" }, h("h3", {}, P.emptyModels), h("p", {}, P.emptyModelsBody), h("a", { class: "project-text-link", href: linkToReview(project.project_id) }, P.open3d, " ↗")));
     return;

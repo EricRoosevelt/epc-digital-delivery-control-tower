@@ -800,8 +800,16 @@ class FirstCheckTests(_Modelled):
             text = path.read_text(encoding="utf-8")
             with self.subTest(file=path.name):
                 self.assertNotRegex(
-                    text, r"AssetTag|SystemCode|EPC_Delivery|R-00\d|rules/|\.toml"
+                    text, r"AssetTag|SystemCode|EPC_Delivery|R-00\d"
                 )
+                # The returned-data readers still cannot invent a rule file as
+                # missing evidence. Enterprise management now legitimately uses
+                # rules API paths and documents its uploaded TOML format.
+                if path.name in {
+                    "first-check-model.js", "recheck-model.js", "detail.js",
+                    "screens.js", "workspace-screens.js", "vocabulary.js",
+                }:
+                    self.assertNotRegex(text, r"rules/|\.toml")
 
     def test_an_old_citations_requirement_is_the_earlier_runs_and_compares_nothing(self):
         """On a recheck row the old citation has its entry and the new one has none.

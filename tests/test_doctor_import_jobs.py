@@ -170,3 +170,38 @@ def test_job_metadata_history_and_artifact_storage_are_bounded(tmp_path):
         assert len(jobs.snapshot()["jobs"]) == 3
         with pytest.raises(KeyError):
             jobs.get("cancelled-0")
+
+
+def test_check_only_jobs_publish_context_bound_results_without_review_geometry(tmp_path):
+    worker = tmp_path / "check_worker.py"
+    worker.write_text(
+        "import json,sys\nfrom pathlib import Path\n"
+        "directory=Path(sys.argv[sys.argv.index('--output')+1])\n"
+        "context=json.loads((directory/'context.json').read_text())\n"
+        "(directory/'result.json').write_text(json.dumps(context))\n",
+        encoding="utf-8",
+    )
+    published = []
+
+    def publish(payloads):
+        data = json.loads(payloads["result.json"])
+        published.append(data)
+        return {"run_id": data["run_id"]}
+
+    store = ReviewStore()
+    body = model_body()
+    with ImportJobs(
+        store, tmp_path / "jobs", worker_script=worker,
+        output_files=("result.json",), result_handler=publish,
+    ) as jobs:
+        first = jobs.submit("public.ifc", body, context={"run_id": "run-1"})
+        result = wait_for(jobs, first["job_id"], {"succeeded", "failed"})
+        assert result["state"] == "succeeded", result
+        assert result["result"] == {"run_id": "run-1"}
+        assert result["review_id"] is None
+        assert store.stats()["entries"] == 0
+        second = jobs.submit("public.ifc", body, context={"run_id": "run-2"})
+        result = wait_for(jobs, second["job_id"], {"succeeded", "failed"})
+        assert result["result"] == {"run_id": "run-2"}
+        assert len(published) == 2
+        assert not list((tmp_path / "jobs").glob("*/context.json"))

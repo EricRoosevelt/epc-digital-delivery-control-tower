@@ -106,3 +106,20 @@ The comparison signature is six selectable evidence categories: rule recheck pas
 Saved revision context sits directly above the existing 3D workspace. A compact save panel explicitly chooses a project and either a new model or an existing model's next revision. Source bytes are not promised as stored: copy names the saved check results and 3D snapshot. Follow-up uses an in-place disclosure with a visible manual status and owner; editing expands the three actual fields. Notes auto-grow to 360px, then scroll. Advice remains ahead of detailed check evidence. Project and follow-up drafts do not go into localStorage; server responses are the source of saved identity.
 
 Canonical owners are `projects.js` (project/model revision navigation), `projects-compare.js` (comparison selection and evidence rendering), `projects-review.js` (save/follow-up state and unsaved-draft guard), `projects-words.js` (registered Chinese/English copy), and `projects-api.js` (shared bounded JSON requests). Existing safe DOM and language owners remain unchanged. New errors are inline and retryable; no toast or modal framework is introduced. An app-owned native HTML dialog is used only to protect unsaved follow-up input on navigation, with Keep editing initially focused, Escape, native modality and focus restoration.
+
+## Project rules and purpose evidence
+
+The project detail adds local Model revisions / Project rules / Purpose review tabs.
+Rules preview shows the declared source, version, actual requirements, unsupported
+parts and manual evidence methods before adoption. The confirmer and team are local
+project declarations. Distinct immutable contents retain distinct revision identities.
+The existing teal/ink/surface tokens and natural document scrolling remain canonical.
+
+`projects-rules.js` owns preview/adoption, `projects-purpose.js` owns source attachment,
+scope, supervised review jobs and user evidence, and `review-purpose.js` supplies a
+distinct evidence list/detail in the existing 3D viewport. `enterprise-ui.js` shares
+safe evidence rows, finite lists, comparison presentation and the draft guard;
+`enterprise-words.js` owns bilingual labels. Purpose counts distinguish objects in
+scope from evidence observations. Human evidence changes, basis changes and machine
+rule recheck passes have separate labels. Opaque identities stay in technical details
+and exact links; frozen purpose/rule snapshots supply human-readable context.

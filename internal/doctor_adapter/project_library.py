@@ -1,7 +1,8 @@
 """A small local SQLite project library for immutable review revisions.
 
-Only review JSON, triangle meshes and explicit follow-up text are persisted.
-The source IFC and provider credentials are never passed to this library.
+This adapter manages review JSON, meshes and follow-up text. The separate
+enterprise adapter can explicitly attach original IFC and purpose evidence in
+the same project database. Provider credentials are never stored.
 """
 
 from __future__ import annotations

@@ -51,6 +51,10 @@ from uuid import uuid4
 
 STATIC = Path(__file__).resolve().parent / "static"
 REPOSITORY_ROOT = Path(__file__).resolve().parent.parent
+if str(REPOSITORY_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPOSITORY_ROOT))
+
+from doctor import enterprise_http  # noqa: E402
 
 #: The experiences. Anything else is refused before a source is asked.
 #: ``workspace`` offers a run only when the server was started with one.
@@ -65,6 +69,7 @@ LOOPBACK_NAMES = ("127.0.0.1", "localhost", "[::1]")
 #: The body type each endpoint that is sent something takes. Neither can be
 #: sent cross-site without the browser asking first, and nothing here answers.
 POSTED_TYPES = {
+    **enterprise_http.POST_TYPES,
     "/api/review/imports": "application/octet-stream",
     "/api/review/imports/cancel": "application/json",
     "/api/review/advice": "application/json",
@@ -254,11 +259,27 @@ def make_handler(
     advice_factory: Callable[[], object] | None = None,
     project_factory: Callable[[], object] | None = None,
     import_factory: Callable[[], object] | None = None,
+    enterprise_factory: Callable[[], object] | None = None,
 ) -> type[BaseHTTPRequestHandler]:
     """The request handler; ``local_factory`` enables the local check endpoints."""
 
     import_holder = {}
     import_lock = threading.Lock()
+
+    def enterprise():
+        if enterprise_factory is not None:
+            return enterprise_factory()
+        with import_lock:
+            if "enterprise" not in import_holder:
+                from doctor.enterprise_service import EnterpriseService
+                from internal.doctor_adapter.enterprise_library import EnterpriseLibrary
+
+                if project_factory is None or review_factory is None:
+                    raise SourceUnavailable("This server has no enterprise project library.")
+                import_holder["enterprise"] = EnterpriseService(
+                    EnterpriseLibrary(project_factory()), review_factory(),
+                )
+            return import_holder["enterprise"]
 
     def imports():
         if import_factory is not None:
@@ -358,6 +379,21 @@ def make_handler(
             if parts.path == "/api/review/advice":
                 self._advice_post(length)
                 return
+            if parts.path in enterprise_http.POST_TYPES:
+                try:
+                    enterprise_http.post(self, enterprise(), parts.path, length, _json)
+                except KeyError as error:
+                    _json(self, 404, {"error": str(error)})
+                except (ValueError, TypeError) as error:
+                    _json(self, 400, {"error": str(error)})
+                except SourceUnavailable as error:
+                    _json(self, 503, {"error": str(error)})
+                except Exception as error:
+                    logging.getLogger(__name__).exception(
+                        "Enterprise request %s", self.request_id,
+                    )
+                    _json(self, 500, {"error": f"{type(error).__name__}: {error}"})
+                return
             if parts.path == "/api/projects" or parts.path.startswith("/api/projects/"):
                 self._project_post(parts.path, length)
                 return
@@ -370,6 +406,9 @@ def make_handler(
 
         def _project_get(self, path: str, query: dict[str, list[str]]) -> None:
             try:
+                if path in enterprise_http.GET_PATHS:
+                    enterprise_http.get(self, enterprise(), path, query, _json, _payload)
+                    return
                 library = self._projects()
                 if path == "/api/projects":
                     answer = {"projects": library.projects()}
@@ -795,10 +834,15 @@ def main(argv: list[str] | None = None) -> int:
         reviews, local.root / "import-jobs", timeout_seconds=arguments.import_timeout_seconds,
     )
     configure_import_loaders(imports, projects)
+    from doctor.enterprise_service import EnterpriseService
+    from internal.doctor_adapter.enterprise_library import EnterpriseLibrary
+
+    enterprise = EnterpriseService(EnterpriseLibrary(projects), reviews,
+                                   timeout_seconds=arguments.import_timeout_seconds)
     server = ThreadingHTTPServer(
         ("127.0.0.1", arguments.port),
         make_handler(source, lambda: local, lambda: reviews, lambda: advice, lambda: projects,
-                     lambda: imports),
+                     lambda: imports, lambda: enterprise),
     )
     print(f"BIM Doctor preview: http://127.0.0.1:{arguments.port}/")
     print(f"3D IFC review: http://127.0.0.1:{arguments.port}/review.html")
@@ -810,6 +854,7 @@ def main(argv: list[str] | None = None) -> int:
     except KeyboardInterrupt:
         pass
     finally:
+        enterprise.close()
         imports.close()
         server.server_close()
     return 0
