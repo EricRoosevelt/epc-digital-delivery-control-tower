@@ -35,8 +35,7 @@ def blocked_worker(tmp_path):
         "import json,time\n"
         "print('BIMDOCTOR_IMPORT '+json.dumps({'stage':'tessellating',"
         "'completed':1,'total':20}),flush=True)\n"
-        "while True: time.sleep(10)\n",
-        encoding="utf-8",
+        "while True: time.sleep(10)\n", encoding="utf-8",
     )
     return path
 
@@ -109,7 +108,8 @@ def test_cancel_stops_computing_descendants_not_only_the_python_launcher(tmp_pat
     worker.write_text(
         "import subprocess,sys,time\n"
         f"subprocess.Popen([sys.executable,{str(child)!r}])\n"
-        "while True: time.sleep(10)\n", encoding="utf-8",
+        "while True: time.sleep(10)\n",
+        encoding="utf-8",
     )
     try:
         with ImportJobs(ReviewStore(), tmp_path / "jobs", worker_script=worker) as jobs:
@@ -149,7 +149,7 @@ def test_real_worker_publishes_complete_serialized_result_and_reuses_completed_i
         assert repeated["state"] == "succeeded"
         assert repeated["review_id"] == result["review_id"]
         assert repeated["worker_pid"] is None
-        assert not list((tmp_path / "jobs").glob("*/input.ifc"))
+        assert jobs.source_payload(result["review_id"]) == body
 
 
 def test_invalid_input_fails_without_replacing_saved_report(tmp_path):
@@ -170,6 +170,79 @@ def test_job_metadata_history_and_artifact_storage_are_bounded(tmp_path):
         assert len(jobs.snapshot()["jobs"]) == 3
         with pytest.raises(KeyError):
             jobs.get("cancelled-0")
+
+
+def test_publication_refuses_source_plus_outputs_that_would_evict_the_current_import(
+    tmp_path,
+    monkeypatch,
+):
+    body = model_body()
+    fixture = ReviewStore()
+    report = fixture.create("public.ifc", body)
+    outputs = {
+        "report.json": fixture.report_payload(report["review_id"]),
+        "geometry.json": fixture.geometry_payload(report["review_id"]),
+    }
+    worker = tmp_path / "fixture_worker.py"
+    worker.write_text(
+        "import sys\nfrom pathlib import Path\n"
+        "directory=Path(sys.argv[sys.argv.index('--output')+1])\n"
+        + "\n".join(
+            f"(directory/{name!r}).write_bytes({payload!r})"
+            for name, payload in outputs.items()
+        ),
+        encoding="utf-8",
+    )
+    store = ReviewStore(cache_max_bytes=1)
+    admitted = []
+    original = store.admit_serialized
+
+    def track(*args):
+        admitted.append(True)
+        return original(*args)
+
+    monkeypatch.setattr(store, "admit_serialized", track)
+    # Both valid outputs fit exactly. Only retaining input.ifc exceeds this
+    # budget; silently trimming the job after success would strand its geometry.
+    budget = sum(map(len, outputs.values()))
+    assert budget < budget + len(body)
+    with ImportJobs(
+        store, tmp_path / "jobs", worker_script=worker, max_artifact_bytes=budget
+    ) as jobs:
+        job = jobs.submit("public.ifc", body)
+        result = jobs.wait(job["job_id"], timeout=10)
+        assert result["state"] == "failed", result
+        assert result["worker_exited"] and result["review_id"] is None
+        assert "budget" in result["error"]["message"]
+        assert admitted == []
+        assert store.stats()["entries"] == 0
+        assert not list((tmp_path / "jobs").glob("task-*"))
+
+
+def test_check_only_publication_budget_excludes_discarded_input(tmp_path):
+    worker = tmp_path / "small_check_worker.py"
+    payload = b'{"run_id":"small"}'
+    worker.write_text(
+        "import sys\nfrom pathlib import Path\n"
+        "directory=Path(sys.argv[sys.argv.index('--output')+1])\n"
+        f"(directory/'result.json').write_bytes({payload!r})\n",
+        encoding="utf-8",
+    )
+    body = model_body()
+    assert len(body) > len(payload)
+    with ImportJobs(
+        ReviewStore(),
+        tmp_path / "jobs",
+        worker_script=worker,
+        output_files=("result.json",),
+        result_handler=lambda outputs: {"run_id": json.loads(outputs["result.json"])["run_id"]},
+        max_artifact_bytes=len(payload),
+    ) as jobs:
+        job = jobs.submit("public.ifc", body)
+        result = jobs.wait(job["job_id"], timeout=10)
+        assert result["state"] == "succeeded", result
+        assert result["result"] == {"run_id": "small"}
+        assert not list((tmp_path / "jobs").glob("*/input.ifc"))
 
 
 def test_check_only_jobs_publish_context_bound_results_without_review_geometry(tmp_path):

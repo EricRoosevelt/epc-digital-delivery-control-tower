@@ -46,10 +46,13 @@ assessments never change when a package or manual judgment changes.
 
 ## Runtime boundaries
 
-- Existing project revisions have no original IFC. Explicitly attach the exact
-  SHA-matching source once, retained locally outside the checkout and geometry
-  cache. A different hash requires a new model revision. Source retention is
-  stated in the product; it does not happen merely by viewing an old revision.
+- Original single-file uploads remain temporarily in the existing bounded import
+  spool (four results / 256 MiB including the source). Saving a revision with
+  `retain_source:true` atomically retains the exact SHA-matching original in the
+  local project database. The choice defaults off. A save without consent retains
+  only the report and geometry. Viewing a revision never grants retention consent.
+  Historical records lacking source offer explicit attachment; a different hash
+  requires a new revision. Federated examples have no single source to retain.
 - Enterprise checks run in a supervised child, parse/check only, and reuse the
   saved review geometry. Rule/scope changes create assessment runs, not fake
   model revisions. Existing import cancellation/deadlines remain intact.
@@ -96,6 +99,11 @@ assessment history. They do not modify canonical outputs or the base review.
 
 ## HTTP/UI contract
 
+- `GET /api/review/source-status?review=ID`: source metadata only,
+  `review_id`, `source_available`, `retainable`, `reason`.
+- `POST /api/projects/revisions`: existing save fields plus optional strict boolean
+  `retain_source`; response revision includes `source_available`. Source and
+  revision commit together; a failed source save does not leave a new revision.
 - `GET /api/projects/rules?project=ID`: `rule_revisions`, `previews`.
 - `POST /api/projects/rules/preview?project=ID&filename=FILE.zip`: binary ZIP;
   returns `preview_id`, package/source metadata, `rules`, `purposes`, diagnostics.
@@ -117,7 +125,14 @@ assessment history. They do not modify canonical outputs or the base review.
   a subsequent explicit review uses it. It never edits the old verdict.
 - `GET /api/projects/rules/example`: original public example ZIP, downloadable.
 
-The project UI adds rules and purpose review alongside model revisions. Findings
+The main path is Project → Project rules → Model revisions → Purpose review.
+Saved revisions link directly to their purpose form; projects without adopted rules
+first link to rule preparation while retaining the revision context. Problem cards
+prioritize element, requirement, observed result and next step. Technical identities
+and route data are folded. Counts separate objects from evidence observations;
+UNKNOWN and manual gaps are not labelled machine violations. Recheck summaries
+separate rule passes from evidence updates, deletion, class and scope changes.
+Findings
 link to `review.html?revision=ID&assessment=RUN&purpose_finding=BLOCK&lang=...`.
 Purpose evidence remains distinct from the four base review rules. Missing mesh
 does not hide evidence. English/Chinese and a 390px viewport use the same state
@@ -127,7 +142,7 @@ and boundary semantics.
 
 The automated public workflow uses two geometric IFC revisions made from the
 repository's editable synthetic source. It adopts the downloaded native package,
-requires exact-source attachment, shows machine and missing-evidence outcomes,
+tests consented source retention and historical exact-source attachment, shows machine and missing-evidence outcomes,
 opens the precise mesh, records a human judgment without editing the old record,
 and explicitly reassesses. It also tests unsupported adoption, missing counterpart,
 bounded lists beyond 100 observations, saved explicit scope, failed-save drafts,

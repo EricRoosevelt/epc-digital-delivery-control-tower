@@ -1,8 +1,8 @@
 """A small local SQLite project library for immutable review revisions.
 
-This adapter manages review JSON, meshes and follow-up text. The separate
-enterprise adapter can explicitly attach original IFC and purpose evidence in
-the same project database. Provider credentials are never stored.
+This adapter manages review JSON, meshes, follow-up text and explicitly retained
+original IFC. The enterprise adapter can also attach source to old revisions and
+record purpose evidence in the same database. Provider credentials are never stored.
 """
 
 from __future__ import annotations
@@ -47,9 +47,20 @@ CREATE TABLE IF NOT EXISTS followups (
     owner TEXT NOT NULL, note TEXT NOT NULL, updated_at TEXT NOT NULL,
     PRIMARY KEY(revision_id, finding_id)
 );
+CREATE TABLE IF NOT EXISTS enterprise_sources (
+    source_sha256 TEXT PRIMARY KEY, body BLOB NOT NULL, created_at TEXT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS enterprise_revision_sources (
+    revision_id TEXT PRIMARY KEY REFERENCES revisions(revision_id),
+    source_sha256 TEXT NOT NULL REFERENCES enterprise_sources(source_sha256)
+);
 """
 _REVISION_COLUMNS = """r.revision_id, r.model_id, m.project_id, r.review_id,
-    r.number, r.label, r.created_at, r.filename, r.sha256, r.summary_json"""
+    r.number, r.label, r.created_at, r.filename, r.sha256, r.summary_json,
+    EXISTS(SELECT 1 FROM enterprise_revision_sources s
+           JOIN enterprise_sources b ON b.source_sha256=s.source_sha256
+           WHERE s.revision_id=r.revision_id AND s.source_sha256=r.sha256)
+    AS source_available"""
 
 
 def _now():
@@ -81,6 +92,25 @@ def _bytes(value):
     if isinstance(value, str):
         return value.encode("utf-8")
     raise ProjectLibraryError("The saved review payload is not JSON text or bytes.")
+
+
+def _retain_source(db, revision_id, source_sha256, body=None):
+    """Use the caller's revision transaction; source validation happens before it."""
+    if body is not None:
+        db.execute("INSERT OR IGNORE INTO enterprise_sources VALUES(?,?,?)",
+                   (source_sha256, body, _now()))
+    elif not db.execute("SELECT 1 FROM enterprise_sources WHERE source_sha256=?",
+                        (source_sha256,)).fetchone():
+        raise ProjectLibraryError(
+            "The original IFC is no longer available in the temporary import storage. "
+            "Save without source retention, then attach the exact original IFC for Purpose."
+        )
+    prior = db.execute("SELECT source_sha256 FROM enterprise_revision_sources "
+                       "WHERE revision_id=?", (revision_id,)).fetchone()
+    if prior is not None and prior["source_sha256"] != source_sha256:
+        raise ProjectLibraryError("The retained source reference is inconsistent.")
+    db.execute("INSERT OR IGNORE INTO enterprise_revision_sources VALUES(?,?)",
+               (revision_id, source_sha256))
 
 
 class ProjectLibrary:
@@ -170,6 +200,7 @@ class ProjectLibrary:
     @staticmethod
     def _metadata(row):
         metadata = dict(row)
+        metadata["source_available"] = bool(metadata["source_available"])
         try:
             metadata["summary"] = json.loads(metadata.pop("summary_json"))
             if not isinstance(metadata["summary"], dict):
@@ -206,8 +237,38 @@ class ProjectLibrary:
             ).fetchone()
         return row["revision_id"] if row else None
 
-    def save_revision(self, project_id, review_id, *, model_id=None, model_name=None, label=""):
+    def source_available(self, review_id):
+        """Whether this review already has a retained source; no BLOB or geometry read."""
+        with self._db() as db:
+            return db.execute(
+                "SELECT 1 FROM revisions r JOIN enterprise_revision_sources s "
+                "ON s.revision_id=r.revision_id AND s.source_sha256=r.sha256 "
+                "JOIN enterprise_sources b ON b.source_sha256=s.source_sha256 "
+                "WHERE r.review_id=? LIMIT 1", (_id(review_id, "Review id"),),
+            ).fetchone() is not None
+
+    def validate_source(self, report, body):
+        if (report.get("source", {}).get("kind") != "upload"
+                or len(report.get("models", [])) != 1):
+            raise ProjectLibraryError(
+                "Original-source retention supports one uploaded IFC, not the federated demo."
+            )
+        if body is not None:
+            if not isinstance(body, bytes) or not body:
+                raise ProjectLibraryError("The original IFC source must be nonempty bytes.")
+            if len(body) > self.reviews.max_model_bytes:
+                raise ProjectLibraryError("The IFC exceeds the configured upload limit.")
+            if hashlib.sha256(body).hexdigest() != report["source"]["sha256"]:
+                raise ProjectLibraryError(
+                    "The original IFC source hash does not match this revision."
+                )
+        return report["source"]["sha256"]
+
+    def save_revision(self, project_id, review_id, *, model_id=None, model_name=None, label="",
+                      retain_source=False, source_body=None):
         project_id, review_id = _id(project_id, "Project id"), _id(review_id, "Review id")
+        if type(retain_source) is not bool:
+            raise ProjectLibraryError("retain_source must be a boolean.")
         label = _text(label, "Revision label", 120)
         if model_id is not None:
             model_id = _id(model_id, "Model id")
@@ -218,8 +279,19 @@ class ProjectLibrary:
         with self._db() as db:
             prior = self._existing_revision(db, project_id, model_id, review_id)
         if prior is not None:
-            return self.revision(prior)
+            saved = self.revision(prior)
+            if not retain_source or saved["revision"]["source_available"]:
+                return saved
         report = self.reviews.get(review_id)
+        if retain_source:
+            self.validate_source(report, source_body)
+        if prior is not None:
+            if saved["revision"]["sha256"] != report["source"]["sha256"]:
+                raise ProjectLibraryError("The saved review source hash is inconsistent.")
+            with self._db() as db:
+                db.execute("BEGIN IMMEDIATE")
+                _retain_source(db, prior, report["source"]["sha256"], source_body)
+            return self.revision(prior)
         report_json = self.reviews.report_payload(review_id)
         geometry_json = self.reviews.geometry_payload(review_id)
         geometry_sha256 = hashlib.sha256(geometry_json).hexdigest()
@@ -263,6 +335,8 @@ class ProjectLibrary:
                 db.execute(
                     "UPDATE projects SET updated_at=? WHERE project_id=?", (now, project_id)
                 )
+            if retain_source:
+                _retain_source(db, existing_id, report["source"]["sha256"], source_body)
         return self.revision(existing_id)
 
     def restore_report(self, review_id: str) -> bytes:

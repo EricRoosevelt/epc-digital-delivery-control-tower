@@ -15,6 +15,7 @@
 .enterprise-facts { display: grid; grid-template-columns: minmax(90px, 150px) minmax(0, 1fr); gap: 8px 18px; font-size: 12px; margin: 12px 0 18px; }
 .enterprise-facts dt { color: var(--muted); }
 .enterprise-facts dd { margin: 0; overflow-wrap: anywhere; white-space: pre-wrap; }
+.enterprise-blocker .enterprise-facts { font-size: 13px; line-height: 1.75; }
 .enterprise-status { display: inline-block; padding: 4px 8px; border-radius: 4px; background: var(--unknown-bg); color: var(--unknown); font: 11px var(--font-data); max-width: 100%; overflow-wrap: anywhere; }
 .enterprise-status.state-READY, .enterprise-status.state-supported { background: var(--callout-bg); color: var(--accent); }
 .enterprise-status.state-BLOCKED { background: var(--problem-bg); color: var(--problem-ink); }
@@ -155,6 +156,13 @@
 .project-save-form { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; align-items: end; }
 .project-save-form > button { font-size: 13px; min-height: 40px; }
 .project-save-form > .project-form-message { grid-column: 1 / -1; }
+.project-source-retention { grid-column: 1 / -1; padding: 12px; border: 1px solid var(--line); border-radius: var(--control-radius); }
+.project-save-form .project-checkbox { display: flex; align-items: flex-start; gap: 10px; cursor: pointer; }
+.project-checkbox input[type=checkbox] { width: 18px; min-width: 18px; height: 18px; margin: 3px 0 0; }
+.project-source-retention p { margin: 8px 0 0; }
+.project-workflow, .home-workflow { color: var(--accent); font-weight: 600; line-height: 1.8; }
+.project-purpose-hint { flex-basis: 100%; }
+@media (max-width: 700px) { .review-app .project-review-context-text > .project-purpose-hint { display: block; } }
 .project-followup { padding: 13px 0; margin-top: 16px; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
 .project-followup > summary { display: flex; align-items: center; flex-wrap: wrap; gap: 7px; font-size: 12px; }
 .project-followup > summary::before { content: "+"; color: var(--accent); font-size: 16px; }

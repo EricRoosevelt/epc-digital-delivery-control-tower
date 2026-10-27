@@ -16,7 +16,7 @@ export function rulesPanel(projectId, { navigate = next => next() } = {}) {
   const input = h("input", { id: "project-rules-file", type: "file", accept: ".zip", hidden: true, "aria-label": E.upload });
   const upload = action(E.upload, () => input.click(), "review-primary");
   upload.disabled = true;
-  const element = h("section", { class: "enterprise-panel", "aria-label": E.rules }, h("div", { class: "project-surface enterprise-section" }, h("div", { class: "enterprise-row-heading" }, h("h2", {}, E.rules), h("div", { class: "enterprise-actions" }, upload, h("a", { class: "project-secondary-link", href: "/api/projects/rules/example", download: true }, E.example))), h("p", { class: "project-muted" }, E.zipOnly), input, message), history, content);
+  const element = h("section", { class: "enterprise-panel", "aria-label": E.rules }, h("div", { class: "project-surface enterprise-section" }, h("h2", {}, E.onboarding), h("p", { class: "project-workflow" }, E.steps), h("div", { class: "enterprise-actions" }, h("a", { class: "project-secondary-link", href: "/api/projects/rules/example", download: true }, E.template), upload), h("p", {}, E.zipStructure), h("p", { class: "project-muted" }, E.editGuide), h("p", { class: "project-muted" }, E.reviewGuide), input, message), history, content);
   function error(error) { message.textContent = `${E.failed}: ${error.message}`; message.classList.add("is-error"); }
   async function refresh(selected) {
     try {
@@ -88,6 +88,10 @@ export function rulesPanel(projectId, { navigate = next => next() } = {}) {
         finally { save.disabled = name.disabled = team.disabled = false; }
       });
       content.append(h("section", { class: "project-surface enterprise-section" }, form));
+    } else {
+      const target = new URL(location.href); const resumeRevision = target.searchParams.has("revision");
+      target.searchParams.set("tab", resumeRevision ? "purpose" : "models"); target.searchParams.delete("rule");
+      content.prepend(h("a", { class: "project-primary-link", href: target.pathname + target.search }, resumeRevision ? E.purpose : E.nextModels));
     }
     const selectedRule = new URL(location.href).searchParams.get("rule");
     if (selectedRule) requestAnimationFrame(() => document.getElementById(`enterprise-rule-${selectedRule}`)?.scrollIntoView({ block: "start" }));

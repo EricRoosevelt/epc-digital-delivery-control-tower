@@ -463,10 +463,21 @@ def make_handler(
                 if path == "/api/projects":
                     answer = library.create_project(request.get("name"))
                 elif path == "/api/projects/revisions":
+                    retain_source = request.get("retain_source", False)
+                    if type(retain_source) is not bool:
+                        raise ValueError("retain_source must be a boolean.")
+                    source_body = None
+                    if retain_source and not library.source_available(request.get("review_id")):
+                        try:
+                            source_body = imports().source_payload(request.get("review_id"))
+                        except KeyError:
+                            # The atomic save reports expired source without a ghost revision.
+                            pass
                     answer = library.save_revision(
                         request.get("project_id"), request.get("review_id"),
                         model_id=request.get("model_id"), model_name=request.get("model_name"),
                         label=request.get("label", ""),
+                        retain_source=retain_source, source_body=source_body,
                     )
                 elif path == "/api/projects/followup":
                     answer = library.update_followup(
@@ -511,6 +522,18 @@ def make_handler(
                     answer = store.demo()
                 elif path == "/api/review/report":
                     answer = store.get((query.get("review") or [""])[0])
+                elif path == "/api/review/source-status":
+                    identity = (query.get("review") or [""])[0]
+                    report = store.get(identity)
+                    single = (report.get("source", {}).get("kind") == "upload"
+                              and len(report.get("models", [])) == 1)
+                    retained = (single and project_factory is not None
+                                and self._projects().source_available(identity))
+                    temporary = single and not retained and imports().source_available(identity)
+                    answer = {"review_id": identity, "source_available": bool(retained),
+                              "retainable": bool(retained or temporary),
+                              "reason": "federated_demo" if not single else "retained"
+                              if retained else "temporary" if temporary else "expired"}
                 elif path == "/api/review/geometry":
                     payload = store.geometry_payload((query.get("review") or [""])[0])
                     _payload(self, HTTPStatus.OK, payload)

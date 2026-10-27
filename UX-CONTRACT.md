@@ -1,5 +1,16 @@
 # BIM Doctor main-path UX contract
 
+The primary entry is Project → Enterprise rules → Model → Purpose review. Original
+examples, standalone checks and stored records retain their routes as historical
+or independent tools. New project detail starts with rule onboarding; explicit
+model/comparison deep links remain model routes. Rule ZIP preview precedes adoption.
+Saving a revision retains original IFC bytes only after the separate unchecked
+retention choice. Source availability comes from the server; a federated public
+example never claims one retained source. Save errors preserve the retention choice
+and input. Retained-source save automatically opens purpose review for the exact
+project and revision, or rule adoption first when no rule version is adopted. A
+rule-status lookup failure keeps the saved 3D record and offers a retryable next action.
+
 Visual ownership: [DESIGN.md](DESIGN.md), runtime `doctor/static/doctor.css`. This is the user-approved direction implemented for independent candidate review, not evidence of review completion.
 
 ## Business-context sources
@@ -52,7 +63,7 @@ Use the project venv and mandatory pinned IDS audit for all AGENTS gates. Explic
 
 ## Real IFC review workspace
 
-The authorized 2026-10-24 product scope adds `/review.html` and the `ReviewStore` HTTP contract under `/api/review/`. This is a named operational variant, with the existing record/check paths preserved. The homepage recommends the new workbench and keeps both prior paths reachable.
+The authorized 2026-10-24 product scope adds `/review.html` and the `ReviewStore` HTTP contract under `/api/review/`. This is a named operational variant, with the existing record/check paths preserved. The homepage recommends the project workflow; the standalone workbench and prior record paths remain secondary tools.
 
 | Capability | Canonical owner | Source of truth | Allowed variants | Verification |
 |---|---|---|---|---|
@@ -77,7 +88,7 @@ A geometry/viewer failure does not display Model loaded as the final status and 
 
 ## Persistent project and revision workflow
 
-The 2026-10-25 product scope adds the `ProjectLibrary` `/api/projects` contract and the BIM revision comparison response. Saved project/revision/follow-up identities come only from that service. Project names are human labels; project/model/revision IDs identify records. The store persists reports and mesh snapshots, not a downloadable copy of the original IFC bytes. Existing pipeline outputs and public samples are untouched.
+The 2026-10-25 product scope adds the `ProjectLibrary` `/api/projects` contract and the BIM revision comparison response. Saved project/revision/follow-up identities come only from that service. Project names are human labels; project/model/revision IDs identify records. The store persists reports and mesh snapshots. An explicit retain_source choice also permanently stores the original IFC locally and binds it to the saved revision. Existing pipeline outputs and public samples are untouched.
 
 | Capability | Canonical owner | Source of truth | Allowed variants | Verification |
 |---|---|---|---|---|
@@ -85,7 +96,7 @@ The 2026-10-25 product scope adds the `ProjectLibrary` `/api/projects` contract 
 | Select/Listbox | projects-review.js / projects-compare.js native selects | Project/model/revision/status API enums | OS popup accepted; new model versus existing model explicitly named | Desktop/phone keyboard and opened native selects |
 | Form | projects-review.js / projects.js | ProjectLibrary create/save/follow-up schemas | Labelled native controls; owned inline errors; novalidate | Blank validation, saved fields, failures and retry |
 | Scrollbar | doctor.css global baseline | DESIGN.md | Bounded project/issue registers; natural detail/comparison; auto-growing note | 1440px / 390px overflow checks |
-| CRUD | ProjectLibrary routes with projects.js / projects-review.js | Persisted revision/follow-up envelopes | Create project stays on its detail; save revision stays in 3D; save follow-up stays at current finding | Full workflow plus server restart reopening |
+| CRUD | ProjectLibrary routes with projects.js / projects-review.js | Persisted revision/follow-up envelopes | Create project stays on its detail; snapshot-only save stays in 3D; retained-source save opens the exact revision purpose (or rule adoption first); follow-up save stays at current finding | Full workflow plus server restart reopening |
 
 New project creation and revision/follow-up save are pessimistic and duplicate-disabled. After a revision save, its returned ID enters the URL and the same model remains visible. A raw new IFC removes the old revision identity while retaining the intended project/model destination. The logical model selection uses its server ID; filename changes do not create a new slot implicitly. Same-slot/same-review retry is idempotent in the service. Errors preserve input and expose a retry action or an enabled save control. Model choices finish loading before save is enabled.
 
@@ -113,8 +124,9 @@ Project rules accept the declared ZIP format only. A parsed preview is unconfirm
 until a named project confirmer and responsible team adopt its source, requirements,
 unsupported content and listed human-evidence methods. Unsupported conditions remain
 visible and contribute UNKNOWN. Adoption does not imply authenticated authority.
-Source IFC retention is an explicit SHA-matching attachment; a different hash links
-to a new model revision rather than replacing old evidence.
+New single-IFC imports can retain the uploaded bytes in the same save action after
+explicit opt-in. Older revisions without retained source accept a SHA-matching
+attachment; a different hash links to a new revision rather than replacing evidence.
 
 Purpose runs use saved model/rule versions and declared scope. Client task UUIDs,
 short status requests and owned-task cancellation preserve the last readable run.

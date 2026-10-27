@@ -10,7 +10,7 @@ import hashlib
 import json
 from uuid import uuid4
 
-from .project_library import ProjectLibraryError, _id, _json, _now, _text
+from .project_library import ProjectLibraryError, _id, _json, _now, _retain_source, _text
 
 _SCHEMA = """
 CREATE TABLE IF NOT EXISTS enterprise_previews (
@@ -24,13 +24,6 @@ CREATE TABLE IF NOT EXISTS enterprise_rules (
     created_at TEXT NOT NULL, package BLOB NOT NULL, snapshot_json TEXT NOT NULL
 );
 CREATE INDEX IF NOT EXISTS enterprise_rules_project ON enterprise_rules(project_id);
-CREATE TABLE IF NOT EXISTS enterprise_sources (
-    source_sha256 TEXT PRIMARY KEY, body BLOB NOT NULL, created_at TEXT NOT NULL
-);
-CREATE TABLE IF NOT EXISTS enterprise_revision_sources (
-    revision_id TEXT PRIMARY KEY REFERENCES revisions(revision_id),
-    source_sha256 TEXT NOT NULL REFERENCES enterprise_sources(source_sha256)
-);
 CREATE TABLE IF NOT EXISTS purpose_runs (
     run_id TEXT PRIMARY KEY, project_id TEXT NOT NULL REFERENCES projects(project_id),
     revision_id TEXT NOT NULL REFERENCES revisions(revision_id),
@@ -156,22 +149,18 @@ class EnterpriseLibrary:
                               (_id(revision_id, "Revision id"),)).fetchone() is not None
 
     def attach_source(self, revision_id, filename, body):
-        revision = self.projects.revision(revision_id)["revision"]
+        saved = self.projects.revision(revision_id)
+        revision = saved["revision"]
         if not str(filename).lower().endswith(".ifc") or not body:
             raise ProjectLibraryError("Choose the original nonempty IFC for this revision.")
-        if len(body) > self.projects.reviews.max_model_bytes:
-            raise ProjectLibraryError("The IFC exceeds the configured upload limit.")
-        digest = hashlib.sha256(body).hexdigest()
+        digest = self.projects.validate_source(saved["report"], body)
         if digest != revision["sha256"]:
             raise ProjectLibraryError(
                 "The source SHA-256 does not match this revision. Import changed IFC as a new "
                 "model revision; this saved evidence cannot be replaced."
             )
         with self.projects._db() as db:
-            db.execute("INSERT OR IGNORE INTO enterprise_sources VALUES(?,?,?)",
-                       (digest, body, _now()))
-            db.execute("INSERT OR IGNORE INTO enterprise_revision_sources VALUES(?,?)",
-                       (revision_id, digest))
+            _retain_source(db, revision_id, digest, body)
         return {"revision_id": revision_id, "source_available": True,
                 "source_sha256": digest, "retention": "project-local-source-for-rule-rechecks"}
 

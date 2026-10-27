@@ -2,7 +2,8 @@ import { h } from "./dom.js";
 import { LANG } from "./i18n.js";
 import { requestJSON, postJSON } from "./projects-api.js";
 import { E } from "./enterprise-words.js";
-import { action, field, text, title, facts, details, status, blockerCard, ruleURL, changeSummary, finiteRows } from "./enterprise-ui.js";
+import { action, field, text, title, facts, details, status, blockerCard, ruleURL, changeSummary, finiteRows, problemSummary, noProblemsText } from "./enterprise-ui.js";
+import { orderedProblems, noticeText } from "./enterprise-results.js";
 
 const terminal = value => ["succeeded", "failed", "cancelled", "timed_out"].includes(value);
 const lines = value => value.split(/\r?\n/).map(item => item.trim()).filter(Boolean);
@@ -26,6 +27,8 @@ export function purposePanel(project, models) {
   const objectKeys = new Set();
   const controller = new AbortController();
   const revision = h("select", { id: "purpose-revision" }, revisions.map(item => h("option", { value: item.revision_id }, `${item.model_name} · R${item.number} · ${item.label}`)));
+  const requestedRevision = new URL(location.href).searchParams.get("revision");
+  if (revisions.some(item => item.revision_id === requestedRevision)) revision.value = requestedRevision;
   const rule = h("select", { id: "purpose-rule-revision" });
   const purpose = h("select", { id: "purpose-id" });
   const counterpart = h("select", { id: "purpose-counterpart" }, h("option", { value: "" }, E.noCounterpart), revisions.map(item => h("option", { value: item.revision_id }, `${item.model_name} · R${item.number} · ${item.label}`)));
@@ -48,12 +51,14 @@ export function purposePanel(project, models) {
   const message = h("p", { class: "project-form-message enterprise-job-status", role: "status", "aria-live": "polite" });
   const history = h("div", { class: "enterprise-history" });
   const result = h("div", { class: "enterprise-result" });
-  const form = h("form", { class: "enterprise-form", novalidate: true }, field(E.revision, revision), h("div", { class: "enterprise-source" }, sourceNote, h("p", { class: "project-muted" }, E.retainSource), attach, attachInput, sourceMessage), field(E.ruleVersion, rule), field(E.choosePurpose, purpose), field(E.scope, scopeKind), h("p", { class: "project-muted" }, E.scopeHint), classesField, objectsField, field(E.counterpart, counterpart), counterpartHint, field(E.prior, prior), h("div", { class: "enterprise-actions" }, start, cancel, retry), message);
+  const retentionNote = h("p", { class: "project-muted" }, E.retainSource);
+  const form = h("form", { class: "enterprise-form", novalidate: true }, field(E.revision, revision), h("div", { class: "enterprise-source" }, sourceNote, retentionNote, attach, attachInput, sourceMessage), field(E.ruleVersion, rule), field(E.choosePurpose, purpose), field(E.scope, scopeKind), h("p", { class: "project-muted" }, E.scopeHint), classesField, objectsField, field(E.counterpart, counterpart), counterpartHint, field(E.prior, prior), h("div", { class: "enterprise-actions" }, start, cancel, retry), message);
   const element = h("section", { class: "enterprise-panel", "aria-label": E.purpose }, h("section", { class: "project-surface enterprise-section" }, h("h2", {}, E.purpose), !revisions.length ? h("p", {}, E.noRevision) : null, form), result, history);
   function error(failure) { message.textContent = `${E.failed}: ${failure.message}`; message.classList.add("is-error"); retry.hidden = false; }
   function sourceState() {
     const available = library?.sources?.find(item => item.revision_id === revision.value)?.source_available;
     sourceNote.textContent = available ? E.sourceReady : E.sourceMissing;
+    retentionNote.hidden = !!available;
     attach.hidden = !!available; attach.disabled = pending || !library || !revision.value; start.disabled = pending || !available || !rule.value || !purpose.value;
   }
   function scopeFields() { classesField.hidden = scopeKind.value !== "classes"; objectsField.hidden = scopeKind.value !== "elements"; }
@@ -177,15 +182,16 @@ export function purposePanel(project, models) {
     const revisionInfo = revisions.find(item => item.revision_id === run.revision_id);
     const purposeInfo = ruleInfo.purposes?.find(item => item.purpose_id === run.purpose_id);
     const blockers = h("section", { class: "project-surface enterprise-section enterprise-blockers" });
+    const ordered = orderedProblems(run);
     let blockLimit = 100;
     const renderBlockers = () => {
-      blockers.replaceChildren(h("h2", {}, `${E.blockers} · ${run.blockers?.length || 0}`), ...(run.blockers || []).slice(0, blockLimit).map(item => blockerCard(run, item)));
-      if (!run.blockers?.length) blockers.append(h("p", { class: "project-muted" }, E.noBlockers));
+      blockers.replaceChildren(h("h2", {}, E.blockers), problemSummary(run), ...ordered.slice(0, blockLimit).map(item => blockerCard(run, item)));
+      if (!run.blockers?.length) blockers.append(h("p", { class: "project-muted" }, noProblemsText(run)));
       if (run.blockers?.length > blockLimit) blockers.append(action(E.more, () => { blockLimit += 100; renderBlockers(); }, "enterprise-more-blockers"));
     };
     renderBlockers();
-    result.replaceChildren(h("section", { class: "project-surface enterprise-section enterprise-run", "data-run": run.run_id }, h("div", { class: "enterprise-row-heading" }, h("h2", {}, E.conclusion), status(conclusion.status)), facts([[E.choosePurpose, purposeInfo ? title(purposeInfo) : run.purpose_id], [E.revision, revisionInfo ? `${revisionInfo.model_name} · R${revisionInfo.number} · ${revisionInfo.label}` : run.revision_id], [E.ruleVersion, `${ruleInfo.title} · ${ruleInfo.version}`], [E.source, ruleInfo.source?.organization], [E.confirmer, ruleInfo.confirmed_by], [E.scopeCount, conclusion.scope_count], [E.responsible, ruleInfo.responsible_team]]), ...(conclusion.caveats || []).map(item => h("p", {}, text(item))),
-      h("div", { class: "enterprise-actions" }, action(E.rerun, () => prepareReassessment(run)), h("a", { class: "project-secondary-link", href: `/api/projects/purpose/brief?run=${encodeURIComponent(run.run_id)}&language=${LANG}`, download: true }, E.brief), h("a", { href: ruleURL(run) }, E.ruleLink)), run.refusal ? details(E.refusal, run.refusal) : null,
+    result.replaceChildren(h("section", { class: "project-surface enterprise-section enterprise-run", "data-run": run.run_id }, h("div", { class: "enterprise-row-heading" }, h("h2", {}, E.conclusion), status(conclusion.status)), facts([[E.choosePurpose, purposeInfo ? title(purposeInfo) : run.purpose_id], [E.revision, revisionInfo ? `${revisionInfo.model_name} · R${revisionInfo.number} · ${revisionInfo.label}` : run.revision_id], [E.ruleVersion, `${ruleInfo.title} · ${ruleInfo.version}`], [E.source, ruleInfo.source?.organization], [E.confirmer, ruleInfo.confirmed_by], [E.scopeCount, conclusion.scope_count], [E.responsible, ruleInfo.responsible_team]]), ...(conclusion.caveats || []).map(item => h("p", {}, noticeText(text(item), LANG))),
+      h("div", { class: "enterprise-actions" }, action(E.rerun, () => prepareReassessment(run)), h("a", { class: "project-secondary-link", href: `/api/projects/purpose/brief?run=${encodeURIComponent(run.run_id)}&language=${LANG}`, download: true }, E.brief), h("a", { href: ruleURL(run) }, E.ruleLink)), run.refusal ? h("p", { class: "project-form-message is-error", role: "status" }, `${E.refusal}: ${noticeText(run.refusal.text || text(run.refusal), LANG)}`) : null,
       changeSummary(run)),
       blockers,
       h("section", { class: "project-surface enterprise-section" }, h("h2", {}, E.evidenceRequests), finiteRows((run.evidence_requests || []).filter(item => item.execution !== "unsupported" && item.method_id), item => manualForm(run, item))),

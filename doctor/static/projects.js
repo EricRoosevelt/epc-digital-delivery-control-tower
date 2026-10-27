@@ -69,8 +69,9 @@ function renderProject(data) {
   const heading = h("section", { class: "project-detail-heading project-surface" }, h("div", {}, h("p", { class: "review-overline" }, P.projects), h("h2", {}, project.name), h("p", { class: "project-muted" }, `${models.length} ${P.models} · ${models.reduce((n, m) => n + m.revisions.length, 0)} ${P.revisions}`)),
     h("div", { class: "project-header-actions" }, h("a", { class: "project-primary-link", href: linkToReview(project.project_id) }, P.addModel), h("a", { class: "project-secondary-link", href: `/api/projects/brief?project=${encodeURIComponent(project.project_id)}&language=${LANG}`, download: true }, P.brief)));
   mainPanel.replaceChildren(heading);
-  const tab = new URL(location.href).searchParams.get("tab") || "models";
-  mainPanel.append(h("nav", { class: "enterprise-tabs", "aria-label": P.projects }, ["models", "rules", "purpose"].map(key => h("a", { href: `/projects.html?lang=${LANG}&project=${encodeURIComponent(project.project_id)}&tab=${key}`, "aria-current": key === tab ? "page" : null }, E[key]))));
+  const params = new URL(location.href).searchParams;
+  const tab = params.get("tab") || (params.has("before") || params.has("after") ? "models" : "rules");
+  mainPanel.append(h("p", { class: "project-workflow" }, P.path), h("nav", { class: "enterprise-tabs", "aria-label": P.projects }, ["rules", "models", "purpose"].map(key => { const target = new URL(location.href); target.searchParams.set("tab", key); target.searchParams.delete("assessment"); return h("a", { href: target.pathname + target.search, "aria-current": key === tab ? "page" : null }, E[key]); })));
   if (tab === "rules") { enterprise = rulesPanel(project.project_id, { navigate }); mainPanel.append(enterprise.element); return; }
   if (tab === "purpose") { enterprise = purposePanel(project, models); mainPanel.append(enterprise.element); return; }
   if (!models.length) {

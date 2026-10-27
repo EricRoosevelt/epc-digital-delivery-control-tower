@@ -135,7 +135,9 @@ class ImportJobs:
         # Called with the metadata lock, never while native IFC work is running here.
         artifacts = [job for job in self._jobs.values()
                      if job.state == "succeeded" and job.directory]
-        sizes = {job.identity: sum(p.stat().st_size for p in job.directory.glob("*.json"))
+        sizes = {job.identity: sum(p.stat().st_size for p in job.directory.iterdir()
+                                  if p.is_file() and (p.suffix == ".json"
+                                                      or p.name == "input.ifc"))
                  for job in artifacts}
         while artifacts and (len(artifacts) > self.max_artifacts
                              or sum(sizes.values()) > self.max_artifact_bytes):
@@ -319,9 +321,11 @@ class ImportJobs:
                         "message": f"The IFC worker exited with code {job.process.returncode}.",
                     }
                 return
-            if sum((job.directory / name).stat().st_size for name in self.output_files) \
+            retained_files = self.output_files + (("input.ifc",)
+                                                   if self.result_handler is None else ())
+            if sum((job.directory / name).stat().st_size for name in retained_files) \
                     > self.max_artifact_bytes:
-                raise ValueError("Import output exceeds the temporary artifact budget.")
+                raise ValueError("Retained import files exceed the temporary artifact budget.")
             outputs = {name: (job.directory / name).read_bytes() for name in self.output_files}
             with self._lock:
                 # Whichever wins this short commit section decides cancel vs success.
@@ -348,7 +352,11 @@ class ImportJobs:
                 try:
                     if job.directory:
                         if job.state == "succeeded":
-                            (job.directory / "input.ifc").unlink(missing_ok=True)
+                            # Original upload remains only in the same finite spool
+                            # as its report/meshes, until explicit project consent.
+                            # Purpose jobs already read a retained source from DB.
+                            if self.result_handler is not None:
+                                (job.directory / "input.ifc").unlink(missing_ok=True)
                             (job.directory / "context.json").unlink(missing_ok=True)
                             scratch = job.directory / "tmp"
                             if scratch.exists():
@@ -421,6 +429,19 @@ class ImportJobs:
 
     def geometry_payload(self, review_id):
         return self._artifact(review_id, "geometry.json")
+
+    def source_payload(self, review_id):
+        """Internal exact bytes for an explicit source-retention save, not HTTP download."""
+        return self._artifact(review_id, "input.ifc")
+
+    def source_available(self, review_id):
+        """Metadata only: never read the IFC into memory to render a consent control."""
+        with self._lock:
+            return not self._closed and any(
+                job.state == "succeeded" and job.review_id == review_id
+                and job.directory is not None and (job.directory / "input.ifc").is_file()
+                for job in self._jobs.values()
+            )
 
     def close(self):
         with self._lock:

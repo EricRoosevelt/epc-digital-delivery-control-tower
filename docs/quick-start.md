@@ -20,7 +20,31 @@ The server binds to 127.0.0.1 and prints its browser and data-directory addresse
 Choose an external writable `--checks-dir`; use the same directory after restart.
 If port 8765 is busy, add `--port 8770` and change the browser URL accordingly.
 
-## Inspect, save and reopen
+## Bring your rules into a purpose review
+
+1. Open <http://127.0.0.1:8765/projects.html?lang=en> and create a project.
+2. In **Project rules**, download the editable template. Keep `manifest.json` at
+   the ZIP root; edit purposes and evidence methods there, with executable checks
+   in `rules/*.toml` listed by `rules/ruleset.toml`.
+3. Upload the ZIP for preview. Check source/version, applicability, requirements,
+   manual evidence and unsupported parts, then name the confirmer/team and adopt.
+   Uploading is not execution. This version does not convert Office/PDF documents.
+4. Add a model and import one IFC. Save its revision with **Permanently retain this
+   original IFC…** selected. Source and revision are stored together, then the
+   purpose form opens for that exact revision without another file upload.
+5. Select purpose and scope, run the review and follow element/requirement/observed
+   value/next action in each problem card. Supply required human evidence and
+   explicitly reassess; saving a note alone does not change the conclusion.
+6. Export an updated IFC into the same model slot and compare purpose runs.
+   The summary separates same-rule passes, evidence changes, removal and changed
+   classes/scope. Restart with the same checks directory to reopen the records.
+
+Source retention defaults off. If skipped, saving still preserves the report and
+geometry. Historical revisions missing source offer an exact SHA-matching
+attachment. A different export belongs in a new revision. Retained sources stay
+in the local project database; include them in your backup.
+
+## Explore public geometry, save and reopen
 
 1. Open <http://127.0.0.1:8765/review.html?lang=en> and choose **Load public example**.
    No uploaded file or existing project is needed.
@@ -36,8 +60,9 @@ If port 8765 is busy, add `--port 8770` and change the browser URL accordingly.
    reopen without re-uploading the IFC.
 
 Revision data is in `<checks-dir>/projects/library.sqlite3`. Back up the entire
-external checks directory while the server is stopped. Project snapshots do not
-archive the original IFC; retain source models separately. Clearing browser
+external checks directory while the server is stopped. Report-only snapshots do
+not archive the original IFC; keep source models separately unless you selected
+source retention. The federated public example cannot retain a single IFC. Clearing browser
 storage does not delete this library. An empty directory opens an empty library.
 
 ## Import a revision and explain the change
@@ -112,16 +137,22 @@ an application dependency. [Recording commands](evidence/phase2-candidate/README
 安装完整源码并指定仓库外的 `--checks-dir`。普通运行无需 Revit、Node 或 AI 账户。
 固定复现时，把 `git rev-parse HEAD` 与 CI 附件里的 `source_sha` 对齐。
 
-1. 打开 <http://127.0.0.1:8765/review.html?lang=zh>，点 **载入公共示例**。
-2. 选择结果并 **聚焦构件**、**隔离构件**。公共示例有 39 个构件、32 个真实网格；
-   信息提示、规则未满足和没有几何分别说明。
-3. 点 **保存到项目**，建立项目和模型槽，保存 R1。报告、规则快照、真实几何一并保存。
-4. 记录处理人、进度及备注。**待复检** 不会把机器 FAIL 改成 PASS。
-5. Ctrl+C 停止，用**同一个存储目录**重启；在 **项目与复查** 重开保存版本。
-   无需再次上传原 IFC。
+1. 打开 <http://127.0.0.1:8765/projects.html?lang=zh> 创建项目，在 **项目规则** 下载可编辑模板。
+2. 编辑 ZIP 根目录的 `manifest.json` 用途与证据方法，以及 `rules/` 内的 TOML 要求。
+   上传后核对来源、版本、适用对象、要求及不支持部分，记录确认人和团队，再采用。
+   上传成功不等于执行；当前不转换 Excel、Word、PDF。
+3. 添加模型并导入单个 IFC，保存修订时明确勾选留存原文件。源文件与修订一并保存，
+   然后进入该修订的用途审查，无需重复上传。默认不勾选；缺源历史记录才需附加同 SHA 原文件。
+4. 选择用途和范围，按问题卡片查看构件、要求、实际值和下一步，补充证据后明确复检。
+   处理备注或 **待复检** 状态不会把机器 FAIL 改成 PASS。
+5. 导入新导出的 IFC 到同一模型槽，查看用途复检摘要；删除、改分类和范围变化不算修复。
+   Ctrl+C 停止后，用**同一个存储目录**重启，在项目内重开保存版本。
+
+如需先体验几何，3D 工作台仍提供公共联邦示例：39 个构件、32 个真实网格，可聚焦、
+隔离并保存重开。该多文件示例不能提供单份原 IFC 执行企业规则。
 
 数据在 `<checks-dir>/projects/library.sqlite3`。停止服务后备份整个外部存储目录，
-原 IFC 另行保留。清理浏览器缓存不会删除 SQLite；换空目录则会打开空项目库。
+未选择留存的原 IFC 需另行保留。清理浏览器缓存不会删除 SQLite；换空目录则会打开空项目库。
 端口忙时加 `--port 8770`，浏览器地址也改为 8770。
 
 从源工具重新导出单个 IFC，保存到同一模型槽的新修订，比较证据并下载简报。

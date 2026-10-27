@@ -42,10 +42,13 @@ are information prompts, not a count of engineering defects.
 Enterprise checks have their own immutable assessment records and do not rewrite
 those base reports or their meshes.
 
-In **Projects & rechecks**, open **Project rules**, download the editable public
-package, inspect/adopt it and open **Purpose review**. Existing revisions require
-an explicit, SHA-matching original IFC attachment for new rule checks. That
-source is retained only in the local project library for later rechecks; rules
+Follow **Project → Project rules → Model revisions → Purpose review**. Download
+the editable rule template, inspect its source and requirements, then adopt it.
+Import one IFC and select **Permanently retain this original IFC…** when
+saving its revision. The exact revision's purpose review opens without
+uploading the file again. Only historical revisions missing a source need an
+explicit, SHA-matching original attachment. Retained sources stay in the local
+project library for later rechecks; rules
 and source models are not sent to an AI provider. The public package demonstrates
 machine-only internal review, tender evidence, and a handover that also needs an
 actual counterpart model. [Format and workflow](docs/product/enterprise-purpose.md).
@@ -81,9 +84,11 @@ python3.14 -m venv .venv
 .venv/bin/python doctor/serve.py --checks-dir "$HOME/.local/state/bim-doctor/phase2-rc1"
 ```
 
-Open **[the 3D workspace](http://127.0.0.1:8765/review.html?lang=en)** and choose
-**Load public example**. Save it to a project, then open
-**[Projects & rechecks](http://127.0.0.1:8765/projects.html?lang=en)**. Stop with
+Open **[Projects & rechecks](http://127.0.0.1:8765/projects.html?lang=en)**,
+create a project and adopt your edited rule template. Add a model, import one IFC,
+save with source retention selected; that revision's purpose review opens directly.
+The 3D workspace also offers a public federated example for geometry exploration;
+it cannot supply a single source IFC for enterprise rule execution. Stop with
 Ctrl+C and restart using the **same checks directory** to reopen saved revisions.
 If the port is occupied, use `--port 8770` and change the browser URL accordingly.
 

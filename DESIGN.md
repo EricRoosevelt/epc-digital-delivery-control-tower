@@ -103,13 +103,18 @@ The 2026-10-25 extension adds a durable daily workflow without changing the mode
 
 The comparison signature is six selectable evidence categories: rule recheck passed, still needs review, new failed check, missing, no longer applicable and not comparable. Counts come from the response rows, and errors versus information prompts have independent selectors. Missing and not-comparable use neutral tones; neither looks like a completed repair. Raw before/after observations, the reason, and an exact revision/finding link make each category inspectable. The server's scope note is visible before the categories, particularly for multi-file comparisons that cannot safely match identities.
 
-Saved revision context sits directly above the existing 3D workspace. A compact save panel explicitly chooses a project and either a new model or an existing model's next revision. Source bytes are not promised as stored: copy names the saved check results and 3D snapshot. Follow-up uses an in-place disclosure with a visible manual status and owner; editing expands the three actual fields. Notes auto-grow to 360px, then scroll. Advice remains ahead of detailed check evidence. Project and follow-up drafts do not go into localStorage; server responses are the source of saved identity.
+Saved revision context sits directly above the existing 3D workspace. A compact save panel explicitly chooses a project and either a new model or an existing model's next revision. Check results and the 3D snapshot are saved; a separate unchecked control explicitly retains the uploaded original IFC permanently in local project data. The server's source status distinguishes retained, temporary, expired and federated-demo inputs. Retained-source save opens purpose review for the exact revision, or rule adoption first when the project has no adopted rules. Snapshot-only saves keep the current 3D view. Follow-up uses an in-place disclosure with a visible manual status and owner; editing expands the three actual fields. Notes auto-grow to 360px, then scroll. Advice remains ahead of detailed check evidence. Project and follow-up drafts do not go into localStorage; server responses are the source of saved identity.
 
 Canonical owners are `projects.js` (project/model revision navigation), `projects-compare.js` (comparison selection and evidence rendering), `projects-review.js` (save/follow-up state and unsaved-draft guard), `projects-words.js` (registered Chinese/English copy), and `projects-api.js` (shared bounded JSON requests). Existing safe DOM and language owners remain unchanged. New errors are inline and retryable; no toast or modal framework is introduced. An app-owned native HTML dialog is used only to protect unsaved follow-up input on navigation, with Keep editing initially focused, Escape, native modality and focus restoration.
 
 ## Project rules and purpose evidence
 
 The project detail adds local Model revisions / Project rules / Purpose review tabs.
+The main entry follows Project → Enterprise rules → Model → Purpose review. New
+project detail opens rules first; explicit model and comparison routes retain their
+destination. Historical examples and standalone checks remain subordinate links.
+Rule onboarding explains the editable template's actual ZIP tree and the distinction
+between executable requirements, human evidence and unsupported requirements.
 Rules preview shows the declared source, version, actual requirements, unsupported
 parts and manual evidence methods before adoption. The confirmer and team are local
 project declarations. Distinct immutable contents retain distinct revision identities.

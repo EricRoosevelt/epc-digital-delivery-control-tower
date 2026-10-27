@@ -67,9 +67,15 @@ CI also runs six browser regression scripts: project drafts/save
 failure, geometry recovery, selected findings beyond the first 100 rows, the
 earlier UI flow, import job cancellation/retry, and the enterprise rule/purpose
 loop. The latter uses original public geometric IFC and a real ZIP/native
-checker worker: source attachment, adoption, partial coverage, precise 3D
+checker worker: historical source attachment, adoption, partial coverage, precise 3D
 location, human evidence, successor review, unsupported checks and mobile views.
 Its screenshots and observations are under `browser-qa/baseline/doctor_enterprise`.
+The project regression also exercises the current main path: homepage → project
+rules → single IFC import → explicit source retention in the revision save →
+automatic purpose form for that exact revision, with no second source upload.
+Its English and Chinese/390px results are under
+`browser-qa/baseline/doctor_projects`. Purpose problem cards and recheck summaries
+keep technical data folded and distinguish missing evidence from check failure.
 The main `capture/` recording still covers the general 3D/project workflow;
 enterprise evidence is explicitly in the browser regression output. Results are in
 `browser-qa/browser-qa.json`; each script retains its log and failures retain

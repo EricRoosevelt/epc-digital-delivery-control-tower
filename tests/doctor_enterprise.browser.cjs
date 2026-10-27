@@ -74,8 +74,17 @@ async function main() {
     const blocked = await runReview();
     assert.equal(blocked.conclusion.status, "BLOCKED", "one passed condition cannot satisfy the other failed condition");
     assert.equal(blocked.conclusion.scope_count, 1);
+    assert.ok(Object.values(blocked.conclusion.counts).reduce((sum, count) => sum + count, 0) > blocked.conclusion.scope_count, "evidence observations and object counts remain distinct");
+    const firstProblem = page.locator(".enterprise-blocker").first();
+    assert.equal(await firstProblem.locator("h3").innerText(), blocked.blockers[0].element_name, "the problem list leads with the affected object, not an opaque rule ID");
+    assert.equal(await firstProblem.locator(".enterprise-facts").isVisible(), true, "required, actual and next action are visible without opening technical data");
+    assert.equal(await firstProblem.locator(".enterprise-facts dd").count(), 3);
+    assert.equal(await firstProblem.locator(".enterprise-technical").evaluate(node => node.open), false, "raw diagnostic data starts folded");
+    assert.match(await page.locator(".enterprise-problem-summary").innerText(), /Objects needing attention[\s\S]*Unmet machine checks/);
     await page.locator("[data-run]").scrollIntoViewIfNeeded();
     await capture("enterprise-en-blocked");
+    await firstProblem.scrollIntoViewIfNeeded();
+    await capture("enterprise-en-actionable-blocker");
     await page.locator(".enterprise-blocker").first().getByRole("link", { name: "Locate in 3D", exact: true }).click();
     await page.locator(".review-status").filter({ hasText: "Model loaded" }).waitFor();
     assert.equal(new URL(page.url()).searchParams.has("finding"), false);
@@ -97,6 +106,8 @@ async function main() {
     assert.equal(ready.conclusion.status, "READY");
     assert.ok(ready.change_summary.outcomes.some(item => item.change === "rule_recheck_passed"));
     assert.ok(await page.locator('.enterprise-change-row[data-change="rule_recheck_passed"]').count());
+    assert.equal(await page.locator(".enterprise-change-details").evaluate(node => node.open), false, "per-observation changes start folded under the summary");
+    await page.locator(".enterprise-change-details > summary").click();
     assert.match(await page.locator(".enterprise-changes").innerText(), /Same machine rule passed on recheck/);
     await page.locator("#purpose-id").selectOption("tender-submission");
     await selectA();
@@ -126,6 +137,7 @@ async function main() {
     assert.equal(humanReady.conclusion.status, "READY");
     assert.ok(humanReady.change_summary.outcomes.some(item => item.change === "evidence_updated"));
     assert.ok(await page.locator('.enterprise-change-row[data-change="evidence_updated"]').count());
+    await page.locator(".enterprise-change-details > summary").click();
     assert.match(await page.locator(".enterprise-changes").innerText(), /Human evidence changed/);
     assert.ok(humanReady.determinations.some(item => item.determiner === "Public fixture reviewer"));
     await page.locator("[data-run]").scrollIntoViewIfNeeded();
@@ -208,6 +220,13 @@ async function main() {
     const missingCounterpart = await runReview();
     assert.equal(missingCounterpart.conclusion.status, "UNKNOWN");
     assert.match(JSON.stringify(missingCounterpart.refusal || missingCounterpart.conclusion.caveats), /counterpart|consumer|recipient/i);
+    assert.match(await page.locator(".enterprise-blockers").innerText(), /not been fully assessed/, "refused assessment must not look like an empty successful problem list");
+    assert.equal(await page.locator(".enterprise-blockers .enterprise-problem-summary dd").count(), 0, "missing context must not be presented as four zero counts");
+    await page.goto(`${base}/review.html?lang=en&revision=${missingCounterpart.revision_id}&assessment=${missingCounterpart.run_id}`);
+    await page.locator(".review-status").filter({ hasText: "Model loaded" }).waitFor();
+    assert.match(await page.locator(".enterprise-purpose-context").innerText(), /counterpart|consumer|recipient/i, "3D context preserves the concrete refusal reason");
+    await page.getByRole("link", { name: "Back to purpose review", exact: true }).click();
+    await page.locator("[data-run]").waitFor();
     await page.setViewportSize({ width: 390, height: 844 });
     await page.getByRole("button", { name: "中文", exact: true }).click();
     await page.locator("[data-run]").waitFor();
@@ -232,6 +251,7 @@ async function main() {
     await page.locator(".enterprise-form").getByRole("button", { name: "Reassess this purpose", exact: true }).waitFor();
     const bulkAgain = await runReview();
     assert.equal(await page.locator(".enterprise-change-row").count(), 100);
+    await page.locator(".enterprise-change-details > summary").click();
     await page.locator(".enterprise-more-changes").click();
     assert.equal(await page.locator(".enterprise-change-row").count(), Math.min(200, bulkAgain.change_summary.outcomes.length));
     while (await page.locator(".enterprise-more-changes").count()) await page.locator(".enterprise-more-changes").click();

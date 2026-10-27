@@ -41,7 +41,8 @@ parity and deliberate reporting differences are recorded in the
 
 The browser uploads a selected file only to this loopback server. The in-memory
 JSON cache is bounded to 16 payloads / 64 MiB. Completed unsaved imports have a
-temporary spool capped at four results / 256 MiB per running server; job metadata
+temporary spool capped at four results / 256 MiB per running server, including
+original uploaded IFC bytes; job metadata
 retains at most 16 jobs. Unsaved data can expire before the server exits. A forced
 server termination can leave task directories in `<checks-dir>/import-jobs`;
 these are not restored or counted by a later server. Remove those scratch files
@@ -84,13 +85,18 @@ are immutable; follow-up text is updated for its own revision/finding. Opening a
 saved revision restores the report; its geometry is loaded when requested by the
 workspace. Saving notes, comparing revisions and generating briefs do not load
 geometry. Evicted saved payloads are restored from SQLite, including after a
-restart. Ordinary model saving does not retain its source IFC. Enterprise rule
-review adds an explicit **Attach source IFC** action: the exact SHA-matching file
-is then retained in this local SQLite library for later rule checks, outside the
-geometry cache. API credentials are not stored. Unrelated older local-check
+restart. Saving a new single-IFC revision offers an unchecked **Permanently retain
+this original IFC…** choice. With consent, source and revision are saved in one
+SQLite transaction for later enterprise-rule checks, outside the geometry cache.
+The exact revision's purpose form opens after saving; no second upload is
+needed. A project without adopted rules first opens rule preparation with this
+revision context. A save without consent preserves only the report and geometry. **Attach
+exact revision source IFC** appears only for records missing a source. API
+credentials are not stored. Unrelated older local-check
 entries retain their original storage behavior.
 For non-UTF-8 STEP exports, parsing uses an external temporary file containing
-the exact uploaded bytes; that file is removed immediately after native parsing.
+the exact uploaded bytes; that parser scratch file is removed after native parsing.
+The original upload remains in the bounded job spool until eviction or shutdown.
 
 Project records are local to this computer. An owner is a recorded person/team,
 not an authenticated assignment or notification. The downloaded brief uses the
@@ -100,7 +106,8 @@ and include the complete external project directory in your own backup routine.
 
 ## Enterprise rules and purpose review
 
-In a project, **Project rules** accepts one ZIP with `manifest.json`,
+Follow **Project → Project rules → Model revisions → Purpose review**. In a project,
+**Project rules** accepts one ZIP with `manifest.json`,
 `rules/ruleset.toml` and native `rules/*.toml`. Download the public template there,
 or generate it with `python tools/enterprise_rules_example.py <output.zip>`.
 The manifest describes source, version, delivery purposes and evidence needs;
@@ -122,7 +129,10 @@ an operation is unsupported or evidence is absent. Empty scope is UNKNOWN.
 READY is qualified to the listed purpose, evidence, version and scope, never a
 general project acceptance or an authenticated engineering signature.
 
-Blockers link to actual rules, observations and the exact saved 3D element.
+Problem cards show the element, requirement, observed result and next action
+before folded technical data. Counts distinguish objects from evidence
+observations. Machine failures, human evidence gaps and unexecuted checks have
+separate labels. Blockers link to actual rules and the exact saved 3D element.
 Non-geometric subjects retain their evidence. Human evidence needs an accepted
 method, recorder, reference and basis tied to the current model/scope; progress
 notes do not count. Saving a judgment leaves the old conclusion unchanged until

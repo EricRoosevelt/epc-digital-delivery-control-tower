@@ -2,7 +2,8 @@ import { h } from "./dom.js";
 import { LANG } from "./i18n.js";
 import { requestJSON } from "./projects-api.js";
 import { E } from "./enterprise-words.js";
-import { action, text, title, facts, details, status, blockerCard, ruleURL, purposeURL } from "./enterprise-ui.js";
+import { action, title, details, status, blockerCard, ruleURL, purposeURL, noProblemsText } from "./enterprise-ui.js";
+import { problemReading, orderedProblems, noticeText } from "./enterprise-results.js";
 
 // Purpose evidence has its own identities; it never becomes a base finding.
 export function createPurposeReview(onSelect) {
@@ -32,10 +33,12 @@ export function createPurposeReview(onSelect) {
       if (token !== current || signal.aborted) return;
       if (loaded.revision_id !== params.get("revision")) throw new Error(E.missingTarget);
       const asked = params.get("purpose_finding");
-      const item = asked ? (loaded.blockers || []).find(entry => entry.blocker_id === asked) : loaded.blockers?.[0];
+      const item = asked ? (loaded.blockers || []).find(entry => entry.blocker_id === asked) : orderedProblems(loaded)[0];
       if (asked && !item) throw new Error(E.missingTarget);
       run = loaded;
       context.replaceChildren(h("strong", {}, `${E.assessment} · ${run.purpose_snapshot ? title(run.purpose_snapshot) : run.purpose_id}`), " ", status(run.conclusion?.status || "UNKNOWN"), h("p", { class: "project-muted" }, `${E.ruleVersion}: ${run.rule_snapshot ? `${run.rule_snapshot.title} · ${run.rule_snapshot.version}` : run.rule_revision_id}`), h("div", { class: "enterprise-actions" }, h("a", { href: purposeURL(run) }, E.back), h("a", { href: ruleURL(run) }, E.ruleLink), h("a", { href: `/review.html?lang=${LANG}&revision=${encodeURIComponent(run.revision_id)}` }, E.base)), details(E.technical, { run_id: run.run_id, revision_id: run.revision_id, rule_revision_id: run.rule_revision_id, source: run.rule_snapshot?.source, confirmed_by: run.rule_snapshot?.confirmed_by, responsible_team: run.rule_snapshot?.responsible_team }));
+      for (const caveat of run.conclusion?.caveats || []) context.append(h("p", {}, noticeText(caveat, LANG)));
+      if (run.refusal) context.append(h("p", { class: "project-form-message is-error" }, `${E.refusal}: ${noticeText(run.refusal.text || run.refusal.code, LANG)}`));
       select(item || null);
     } catch (error) {
       if (error.name === "AbortError") throw error;
@@ -47,7 +50,7 @@ export function createPurposeReview(onSelect) {
   function renderList({ query, model, limit, more }) {
     const lookup = new Map((report?.elements || []).map(item => [item.element_key, item]));
     const needle = query.trim().toLocaleLowerCase();
-    const found = (run?.blockers || []).filter(item => {
+    const found = orderedProblems(run || {}).filter(item => {
       const element = lookup.get(item.review_element_key);
       return (!model || element?.model_key === model) && (!needle || [item.title, item.element_name, item.rule_id, item.evidence_id, element?.global_id, element?.ifc_class].some(value => String(value || "").toLocaleLowerCase().includes(needle)));
     });
@@ -57,17 +60,18 @@ export function createPurposeReview(onSelect) {
       const isSelected = selected?.blocker_id === item.blocker_id;
       const row = action("", () => select(item), `review-finding${isSelected ? " is-selected" : ""}`);
       row.dataset.purposeFinding = item.blocker_id; row.setAttribute("aria-pressed", String(isSelected));
-      row.append(h("span", { class: "review-finding-top" }, status(item.verdict || "UNKNOWN"), h("code", {}, item.rule_id || item.evidence_id)), h("strong", {}, item.element_name || item.title), h("span", { class: "review-finding-title" }, item.reason || item.title));
+      const reading = problemReading(run, item, LANG);
+      row.append(h("span", { class: "review-finding-top" }, reading.label), h("strong", {}, reading.name), h("span", { class: "review-finding-title" }, item.title), h("span", { class: "review-finding-title" }, `${E.observed}: ${reading.actual}`));
       return row;
     });
-    if (!found.length) nodes.push(h("p", { class: "review-empty" }, run ? run.blockers?.length ? E.noMatches : E.noBlockers : failure || E.loading));
+    if (!found.length) nodes.push(h("p", { class: "review-empty" }, run ? run.blockers?.length ? E.noMatches : noProblemsText(run) : failure || E.loading));
     if (found.length > limit) nodes.push(action(E.more, more, "quiet review-load-more"));
     return { nodes, count: found.length, outside: !!selected && !found.includes(selected) };
   }
   function renderDetail() {
-    if (!run || !selected) return h("p", { class: "review-detail-empty" }, failure || E.noBlockers);
+    if (!run || !selected) return h("p", { class: "review-detail-empty" }, failure || (run ? noProblemsText(run) : E.loading));
     const readings = (run.evaluation?.findings || []).filter(item => item.requirement_key === selected.requirement_key && (selected.subject_keys || []).includes(item.element_key || item.subject_key));
-    return h("div", { class: "enterprise-purpose-detail" }, blockerCard(run, selected), ...readings.map(item => h("section", { class: "enterprise-section" }, h("h3", {}, E.evidence), facts([[E.expected, item.expected], [E.outcome, item.status], [E.observed, item.actual], [E.basis, item.reason || item.citation]]))), details(E.technical, { run_id: run.run_id, rule_revision_id: run.rule_revision_id, blocker: selected, readings }));
+    return h("div", { class: "enterprise-purpose-detail" }, blockerCard(run, selected), details(E.technical, { run_id: run.run_id, rule_revision_id: run.rule_revision_id, readings }));
   }
   return { context, load, active: () => requested, renderList, renderDetail,
     summary: () => run?.conclusion,

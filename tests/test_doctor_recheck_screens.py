@@ -1314,14 +1314,15 @@ class ScreenStructureTests(unittest.TestCase):
         entry = screens[
             screens.index("function entry(") : screens.index("function runLink(")
         ]
-        # PM U1 (2026-10-09): the recommended action comes straight after the
-        # purpose; what is available and what is not is said after the entries.
-        self.assertLess(entry.index("HOME.lede"), entry.index("primary-action"))
-        self.assertLess(entry.index("primary-action"), entry.index("UI.reviewBody"))
+        # The current project workflow owns the primary action; older record
+        # routes remain readable, with accurate product limits after the entries.
+        self.assertLess(entry.index("UI.startBody"), entry.index("primary-action"))
+        self.assertIn('href: `/projects.html?lang=${LANG}`', entry)
+        self.assertLess(entry.index("primary-action"), entry.index("UI.legacy"))
         self.assertIn('card("fixture", HOME.example)', entry)
         self.assertIn("local ? local.card : null", entry)
-        self.assertLess(entry.index("entry-grid"), entry.index("said.status"))
-        self.assertLess(entry.index("said.status"), entry.index("HOME.cannotHeading"))
+        self.assertLess(entry.index("entry-grid"), entry.index("UI.currentScope"))
+        self.assertNotIn("said.status", entry)
         self.assertNotIn("details", entry)
 
     def test_an_element_is_described_from_what_was_handed_over_and_nothing_else(self):

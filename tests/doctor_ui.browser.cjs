@@ -26,6 +26,8 @@ async function main() {
       const page = await browser.newPage({ viewport: { width: 375, height: 812 } });
       await page.goto(`${base}/?lang=${lang}`);
       await page.locator(".home .primary-action").waitFor();
+      assert.equal(await page.locator(".home .primary-action").getAttribute("href"), `/projects.html?lang=${lang}`, "the primary entry starts the project workflow");
+      assert.equal(await page.locator(".home .primary-action").count(), 1, "historical paths must not compete as primary actions");
       const home = await page.locator(".home .primary-action").evaluate((button) => {
         const r = button.getBoundingClientRect();
         return { top: r.top, bottom: r.bottom, left: r.left, right: r.right, scroll: window.scrollY,

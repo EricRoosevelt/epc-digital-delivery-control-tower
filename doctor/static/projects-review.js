@@ -17,6 +17,11 @@ export function createProjectReview({ getReport, onSaved }) {
   let modelController = null;
   let modelRequest = 0;
   let saving = false;
+  let sourceStatus = null;
+  let sourceRequest = 0;
+  let nextRequest = 0;
+  let autoPurposeRevision = null;
+  const projectRules = new Map();
   const followups = new Map();
   const drafts = new Map();
   const expanded = new Map();
@@ -34,10 +39,14 @@ export function createProjectReview({ getReport, onSaved }) {
   const newModelName = h("input", { type: "text", id: "save-model-name", maxlength: "160", placeholder: P.modelPlaceholder, autocomplete: "off" });
   const newModelField = field(P.modelName, newModelName);
   const revisionLabel = h("input", { type: "text", id: "save-revision-label", maxlength: "120", placeholder: P.revisionPlaceholder, autocomplete: "off" });
+  const retainSource = h("input", { id: "save-retain-source", type: "checkbox", disabled: true });
+  const sourceNote = h("p", { class: "project-muted", id: "save-source-status", role: "status" }, P.sourceChecking);
+  retainSource.setAttribute("aria-describedby", "save-source-status");
+  const retainField = h("div", { class: "project-source-retention" }, h("label", { class: "project-checkbox" }, retainSource, h("span", {}, P.retainSource)), sourceNote);
   const saveMessage = h("p", { class: "project-form-message", id: "save-revision-message", role: "status", "aria-live": "polite" });
   for (const control of [projectSelect, newProjectName, modelSelect, newModelName, revisionLabel]) control.setAttribute("aria-describedby", "save-revision-message");
   const submit = h("button", { class: "review-primary", type: "submit" }, P.saveRevision);
-  const form = h("form", { class: "project-save-form", novalidate: true }, field(P.projects, projectSelect), newProjectField, field(P.model, modelSelect), newModelField, field(P.revisionLabel, revisionLabel), submit, saveMessage);
+  const form = h("form", { class: "project-save-form", novalidate: true }, field(P.projects, projectSelect), newProjectField, field(P.model, modelSelect), newModelField, field(P.revisionLabel, revisionLabel), retainField, submit, saveMessage);
   const panel = h("section", { class: "project-review-save project-surface", hidden: true }, h("div", { class: "project-section-header" }, h("div", {}, h("h2", {}, P.saveRevision), h("p", { class: "project-muted" }, P.saveDescription)), h("button", { type: "button", onclick: () => { panel.hidden = true; openSave.focus(); } }, P.close)), form);
 
   function hasDirty() { return [...drafts.values()].some(draft => draft.dirty); }
@@ -66,11 +75,42 @@ export function createProjectReview({ getReport, onSaved }) {
     openSave.disabled = !report || saving;
     if (revision) {
       const project = projects.find(item => item.project_id === revision.project_id);
-      contextText.replaceChildren(h("span", { class: "project-context-status" }, P.savedRevision), h("strong", {}, `${project?.name || P.projects} / ${revision.label} · R${revision.number}`), h("a", { class: "project-text-link", href: `/projects.html?lang=${LANG}&project=${encodeURIComponent(revision.project_id)}` }, P.back, " ↗"));
+      contextText.replaceChildren(h("span", { class: "project-context-status" }, P.savedRevision), h("strong", {}, `${project?.name || P.projects} / ${revision.label} · R${revision.number}`), h("a", { class: "project-text-link", href: `/projects.html?lang=${LANG}&project=${encodeURIComponent(revision.project_id)}&tab=models` }, P.back, " ↗"));
+      renderNextStep(revision);
       openSave.hidden = true; panel.hidden = true;
     } else {
       contextText.replaceChildren(h("span", { class: "project-context-status" }, P.noProject), h("span", { class: "project-muted" }, P.unsavedImport));
       openSave.hidden = false;
+    }
+  }
+  async function renderNextStep(savedRevision) {
+    const token = ++nextRequest;
+    try {
+      if (!projectRules.has(savedRevision.project_id)) projectRules.set(savedRevision.project_id, requestJSON(`/api/projects/rules?project=${encodeURIComponent(savedRevision.project_id)}`));
+      const rules = await projectRules.get(savedRevision.project_id);
+      if (token !== nextRequest || revision?.revision_id !== savedRevision.revision_id) return;
+      const adopted = !!rules.rule_revisions?.length;
+      const target = `/projects.html?lang=${LANG}&project=${encodeURIComponent(savedRevision.project_id)}&revision=${encodeURIComponent(savedRevision.revision_id)}&tab=${adopted ? "purpose" : "rules"}`;
+      const next = h("a", { class: "project-primary-link project-purpose-next", href: target }, adopted ? P.continuePurpose : P.continueRules);
+      contextText.append(next);
+      if (!adopted) contextText.append(h("span", { class: "project-muted project-purpose-hint" }, P.ruleFirst));
+      if (autoPurposeRevision === savedRevision.revision_id) { autoPurposeRevision = null; next.click(); }
+    } catch (error) {
+      projectRules.delete(savedRevision.project_id);
+      if (token === nextRequest && revision?.revision_id === savedRevision.revision_id) contextText.append(h("span", { class: "project-muted" }, `${P.projectLoadError} `, h("button", { type: "button", onclick: () => renderContext() }, P.retry)));
+    }
+  }
+  async function loadSourceStatus(report) {
+    const token = ++sourceRequest; sourceStatus = null; retainSource.checked = false; retainSource.disabled = true; sourceNote.textContent = P.sourceChecking;
+    try {
+      const result = await requestJSON(`/api/review/source-status?review=${encodeURIComponent(report.review_id)}`);
+      if (token !== sourceRequest || getReport()?.review_id !== report.review_id) return;
+      sourceStatus = result; retainSource.disabled = saving || !result.retainable;
+      retainField.hidden = false;
+      sourceNote.textContent = result.source_available ? P.retainedSource : result.reason === "federated_demo" ? P.federatedSource : result.retainable ? P.temporarySource : P.expiredSource;
+    } catch (error) {
+      if (token !== sourceRequest) return;
+      sourceNote.replaceChildren(P.sourceStatusError, " ", h("button", { type: "button", onclick: () => loadSourceStatus(report) }, P.retry));
     }
   }
   function showFields() {
@@ -119,7 +159,7 @@ export function createProjectReview({ getReport, onSaved }) {
     if (!modelSelect.value && !newModelName.value.trim()) { invalid(newModelName, P.modelRequired); return; }
     const report = getReport(); if (!report) return;
     saving = true; submit.disabled = true; submit.textContent = P.saving; form.setAttribute("aria-busy", "true"); saveMessage.textContent = P.saving; saveMessage.classList.remove("is-error");
-    const fields = [projectSelect, newProjectName, modelSelect, newModelName, revisionLabel]; fields.forEach(control => { control.disabled = true; });
+    const fields = [projectSelect, newProjectName, modelSelect, newModelName, revisionLabel, retainSource]; fields.forEach(control => { control.disabled = true; });
     try {
       let projectId = projectSelect.value;
       if (projectId === "__new__") {
@@ -127,17 +167,19 @@ export function createProjectReview({ getReport, onSaved }) {
         projects.push(created); preferredProject = projectId = created.project_id;
         projectSelect.prepend(option(projectId, created.name)); projectSelect.value = projectId;
       }
-      const body = { project_id: projectId, label: revisionLabel.value.trim(), review_id: report.review_id };
+      const body = { project_id: projectId, label: revisionLabel.value.trim(), review_id: report.review_id, retain_source: !!(retainSource.checked && sourceStatus?.retainable) };
       if (modelSelect.value) body.model_id = modelSelect.value; else body.model_name = newModelName.value.trim();
       const result = await postJSON("/api/projects/revisions", body);
       if (getReport()?.review_id !== report.review_id) return;
+      if (body.retain_source && result.revision.source_available) autoPurposeRevision = result.revision.revision_id;
       useReport(report, result); saveMessage.textContent = P.saveSuccess;
       const url = new URL(location.href); url.searchParams.set("revision", result.revision.revision_id); url.searchParams.set("project", result.revision.project_id); url.searchParams.set("model", result.revision.model_id); history.replaceState(null, "", url);
       onSaved(result);
     } catch (error) { saveMessage.textContent = `${P.revisionSaveError} ${error.message}`; saveMessage.classList.add("is-error"); }
-    finally { saving = false; fields.forEach(control => { control.disabled = false; }); submit.textContent = P.saveRevision; form.setAttribute("aria-busy", "false"); showFields(); renderContext(); }
+    finally { saving = false; fields.forEach(control => { control.disabled = false; }); retainSource.disabled = !sourceStatus?.retainable; submit.textContent = P.saveRevision; form.setAttribute("aria-busy", "false"); showFields(); renderContext(); }
   });
   function useReport(report, envelope = null) {
+    ++nextRequest; loadSourceStatus(report);
     if (envelope?.revision) {
       revision = envelope.revision; preferredProject = revision.project_id; preferredModel = revision.model_id;
       followups.clear(); for (const item of envelope.followups || []) followups.set(item.finding_id, item);
