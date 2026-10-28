@@ -4,15 +4,14 @@
 const assert = require("node:assert/strict");
 const fs = require("node:fs");
 const path = require("node:path");
-const { chromium } = require("playwright");
-const { captureFailure, browserOptions } = require("./browser-qa-helpers.cjs");
+const { captureFailure, launchBrowser } = require("./browser-qa-helpers.cjs");
 
 async function main() {
   const base = process.argv[2];
   const evidence = process.argv[3];
   assert.ok(base, "Supply an isolated Doctor URL");
   if (evidence) fs.mkdirSync(evidence, { recursive: true });
-  const browser = await chromium.launch(browserOptions());
+  const browser = await launchBrowser(evidence);
   const failures = [];
   const observations = [];
   function check(label, test) {

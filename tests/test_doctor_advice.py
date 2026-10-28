@@ -2,11 +2,15 @@
 
 import io
 import json
+from http.server import ThreadingHTTPServer
+import threading
 from urllib.error import HTTPError, URLError
+from urllib.request import Request, urlopen
 
 import pytest
 
 from doctor.advice import AdviceService, AdviceUnavailable
+from doctor.serve import make_handler
 
 
 class Reviews:
@@ -158,3 +162,65 @@ def test_language_and_ai_choice_are_explicit():
         advice.explain("review-1", "finding-1", language="fr")
     with pytest.raises(ValueError):
         advice.explain("review-1", "finding-1", use_ai="false")
+
+
+@pytest.mark.parametrize("response", [
+    [], None,
+    {"status": "completed", "output": None},
+    {"status": "completed", "output": [None]},
+    {"status": "completed", "output": [{"type": "message", "content": None}]},
+    {"status": "completed", "output": [{"type": "message", "content": [None]}]},
+    {"status": "completed", "output": [{"type": "message", "content": [
+        {"type": "output_text"},
+    ]}]},
+])
+def test_unusable_provider_envelope_preserves_local_guidance_and_retry(response):
+    advice = service(environ={"OPENAI_API_KEY": "test-only"}, opener=lambda *a, **k:
+                     io.BytesIO(json.dumps(response).encode()))
+    with pytest.raises(AdviceUnavailable, match="Local rule guidance remains available"):
+        advice.explain("review-1", "finding-1", use_ai=True)
+    assert advice.explain("review-1", "finding-1")["mode"] == "guidance"
+
+
+def test_provider_failure_http_is_retryable_without_losing_selected_evidence():
+    generated = {"summary": "Verify source", "actions": ["Review source object"],
+                 "verification": ["Repeat this rule"]}
+    responses = iter([
+        {"status": "completed", "output": [{"type": "message", "content": [
+            {"type": "output_text"}]}]},
+        {"status": "completed", "output": [{"type": "message", "content": [
+            {"type": "output_text", "text": json.dumps(generated)}]}]},
+    ])
+    advice = service(environ={"OPENAI_API_KEY": "test-only"}, opener=lambda *a, **k:
+                     io.BytesIO(json.dumps(next(responses)).encode()))
+    server = ThreadingHTTPServer(("127.0.0.1", 0), make_handler(
+        lambda: None, review_factory=lambda: advice.reviews, advice_factory=lambda: advice,
+    ))
+    thread = threading.Thread(target=server.serve_forever, daemon=True)
+    thread.start()
+
+    def ask(use_ai):
+        request = Request(
+            f"http://127.0.0.1:{server.server_port}/api/review/advice",
+            data=json.dumps({"review_id": "review-1", "finding_id": "finding-1",
+                             "use_ai": use_ai}).encode(),
+            headers={"Content-Type": "application/json"},
+        )
+        with urlopen(request, timeout=5) as response:
+            return json.load(response)
+
+    try:
+        with pytest.raises(HTTPError) as error:
+            ask(True)
+        assert error.value.code == 503
+        assert "Local rule guidance remains available" in json.load(error.value)["error"]
+        local = ask(False)
+        retried = ask(True)
+        assert local["mode"] == "guidance" and retried["mode"] == "ai"
+        assert local["facts"] == retried["facts"] == ["USERDEFINED: chimney cover"]
+        assert retried["citations"] == local["citations"]
+        assert advice.reviews.get("review-1")["findings"][0]["status"] == "FAIL"
+    finally:
+        server.shutdown()
+        server.server_close()
+        thread.join(timeout=5)

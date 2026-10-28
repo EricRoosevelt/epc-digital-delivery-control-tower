@@ -53,7 +53,7 @@ and use Node.js 20 or later. From the checked-out candidate commit:
 ```sh
 npm ci
 npx playwright install --with-deps chromium
-python tools/run_browser_qa.py --output <new-external-browser-evidence-directory>
+python tools/run_browser_qa.py --extended --output <new-external-browser-evidence-directory>
 npm run capture:phase2 -- --source-sha <full-40-character-SHA> --data-dir <new-external-data-directory> --output-dir <new-external-artifact-directory>/capture --python <python-executable> --browser chromium --port 0
 ```
 
@@ -63,10 +63,18 @@ Chinese scenes; CI installs `fonts-noto-cjk`. The default browser is Playwright'
 pinned Chromium. `--language zh` records the main workflow in Chinese instead of
 English. Both modes include Chinese saved-revision and mobile screenshots.
 
-CI also runs six browser regression scripts: project drafts/save
+CI runs eleven browser regression scripts. The six main-path checks cover project drafts/save
 failure, geometry recovery, selected findings beyond the first 100 rows, the
 earlier UI flow, import job cancellation/retry, and the enterprise rule/purpose
-loop. The latter uses original public geometric IFC and a real ZIP/native
+loop. Five additional checks cover new browser process startup, mobile search and
+IME, actual local-check states, controlled transport/schema recovery and layouts.
+Startup checks observe geometry JSON decoding, WebGL initialization, real triangle
+submission, the next animation frame and camera redraw; they do not claim physical
+GPU presentation time. QA logs record request/status/timing and browser state without
+request headers or bodies. A first-navigation failure retains its resource and CDP
+diagnostics alongside the screenshot. Repeated successful probes do not establish
+the cause of a historical failure. Omit `--extended` for the six-script main-path run.
+The enterprise check uses original public geometric IFC and a real ZIP/native
 checker worker: historical source attachment, adoption, partial coverage, precise 3D
 location, human evidence, successor review, unsupported checks and mobile views.
 Its screenshots and observations are under `browser-qa/baseline/doctor_enterprise`.

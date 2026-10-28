@@ -172,6 +172,161 @@ def test_job_metadata_history_and_artifact_storage_are_bounded(tmp_path):
             jobs.get("cancelled-0")
 
 
+def test_repeated_same_import_keeps_payload_after_original_job_history_expires(tmp_path):
+    store = ReviewStore(cache_max_bytes=1)
+    body = model_body()
+    with ImportJobs(store, tmp_path / "jobs", max_history=2) as jobs:
+        store.set_loaders(report_loader=jobs.report_payload,
+                          geometry_loader=jobs.geometry_payload)
+        first = jobs.submit("public.ifc", body)
+        first = wait_for(jobs, first["job_id"], {"succeeded", "failed"})
+        assert first["state"] == "succeeded", first
+        geometry = store.geometry_payload(first["review_id"])
+        for _ in range(2):
+            repeated = jobs.submit("public.ifc", body)
+            assert repeated["state"] == "succeeded"
+            assert repeated["worker_pid"] is None  # No repeated native work.
+        assert len(jobs.snapshot()["jobs"]) == 2
+        assert jobs.get(repeated["job_id"])["state"] == "succeeded"
+        assert store.geometry_payload(first["review_id"]) == geometry
+        assert jobs.source_payload(first["review_id"]) == body
+        assert len(list((tmp_path / "jobs").glob("task-*"))) == 1
+
+
+def test_reused_import_keeps_an_existing_source_reader_pinned(tmp_path, monkeypatch):
+    from concurrent.futures import ThreadPoolExecutor
+    from pathlib import Path
+    import threading
+
+    body = model_body()
+    with ImportJobs(ReviewStore(cache_max_bytes=1), tmp_path / "jobs", max_history=2) as jobs:
+        first = jobs.submit("public.ifc", body)
+        first = wait_for(jobs, first["job_id"], {"succeeded", "failed"})
+        assert first["state"] == "succeeded", first
+        entered, release = threading.Event(), threading.Event()
+        original = Path.read_bytes
+
+        def pinned(path):
+            if path.name == "input.ifc":
+                entered.set()
+                assert release.wait(5)
+            return original(path)
+
+        monkeypatch.setattr(Path, "read_bytes", pinned)
+        with ThreadPoolExecutor(max_workers=1) as pool:
+            read = pool.submit(jobs.source_payload, first["review_id"])
+            assert entered.wait(3)
+            try:
+                for _ in range(5):
+                    repeated = jobs.submit("public.ifc", body)
+                    assert repeated["state"] == "succeeded"
+                assert jobs.get(repeated["job_id"])["state"] == "succeeded"
+                assert len(jobs.snapshot()["jobs"]) == 2
+            finally:
+                release.set()
+            assert read.result(timeout=3) == body
+        assert jobs.source_available(first["review_id"])
+
+
+def test_a_pinned_old_result_cannot_leave_the_next_import_successful_but_unreadable(
+    tmp_path, monkeypatch,
+):
+    from concurrent.futures import ThreadPoolExecutor
+    from pathlib import Path
+    import threading
+
+    store = ReviewStore(cache_max_bytes=1)
+    with ImportJobs(store, tmp_path / "jobs", max_artifacts=1) as jobs:
+        store.set_loaders(report_loader=jobs.report_payload,
+                          geometry_loader=jobs.geometry_payload)
+        first = jobs.submit("first.ifc", model_body())
+        first = wait_for(jobs, first["job_id"], {"succeeded", "failed"})
+        assert first["state"] == "succeeded", first
+        entered, release = threading.Event(), threading.Event()
+        original = Path.read_bytes
+
+        def pinned(path):
+            if path.name == "input.ifc":
+                entered.set()
+                assert release.wait(10)
+            return original(path)
+
+        monkeypatch.setattr(Path, "read_bytes", pinned)
+        with ThreadPoolExecutor(max_workers=1) as pool:
+            read = pool.submit(jobs.source_payload, first["review_id"])
+            assert entered.wait(3)
+            second_body = model_body()
+            try:
+                latest = jobs.submit("second.ifc", second_body)
+                latest = wait_for(jobs, latest["job_id"], {"succeeded", "failed"})
+                if latest["state"] == "succeeded":
+                    assert store.geometry_payload(latest["review_id"])
+                else:
+                    assert "budget" in latest["error"]["message"]
+                    assert latest["error"]["code"] == "publication_failed"
+                    assert "Retry" in latest["error"]["message"]
+                    assert latest["review_id"] is None
+            finally:
+                release.set()
+            assert read.result(timeout=3)
+        jobs.wait(latest["job_id"], timeout=2)
+        retried = jobs.submit("second.ifc", second_body)
+        assert retried["job_id"] != latest["job_id"]
+        retried = wait_for(jobs, retried["job_id"], {"succeeded", "failed"})
+        assert retried["state"] == "succeeded", retried
+        assert store.geometry_payload(retried["review_id"])
+
+
+def test_pinned_purpose_result_prevents_a_second_result_handler_write(tmp_path, monkeypatch):
+    from concurrent.futures import ThreadPoolExecutor
+    from pathlib import Path
+    import threading
+
+    worker = tmp_path / "check_worker.py"
+    worker.write_text(
+        "import sys\nfrom pathlib import Path\n"
+        "directory=Path(sys.argv[sys.argv.index('--output')+1])\n"
+        "(directory/'result.json').write_text('{\"run_id\":\"public\"}')\n",
+        encoding="utf-8",
+    )
+    published = []
+
+    def publish(outputs):
+        published.append(True)
+        return json.loads(outputs["result.json"])
+
+    with ImportJobs(ReviewStore(), tmp_path / "jobs", worker_script=worker,
+                    output_files=("result.json",), result_handler=publish,
+                    max_artifacts=1) as jobs:
+        first = jobs.submit("first.ifc", model_body())
+        first = wait_for(jobs, first["job_id"], {"succeeded", "failed"})
+        assert first["state"] == "succeeded", first
+        entered, release = threading.Event(), threading.Event()
+        original = Path.read_bytes
+        pinned_path = next((tmp_path / "jobs").glob("task-*/result.json"))
+
+        def pinned(path):
+            if path == pinned_path:
+                entered.set()
+                assert release.wait(5)
+            return original(path)
+
+        monkeypatch.setattr(Path, "read_bytes", pinned)
+        with ThreadPoolExecutor(max_workers=1) as pool:
+            read = pool.submit(jobs._artifact, None, "result.json")
+            assert entered.wait(2)
+            try:
+                latest = jobs.submit("second.ifc", model_body())
+                latest = wait_for(jobs, latest["job_id"], {"succeeded", "failed"})
+                assert latest["state"] == "failed", latest
+                assert "budget" in latest["error"]["message"]
+                assert latest["result"] is None
+                assert published == [True]
+            finally:
+                release.set()
+            assert json.loads(read.result(timeout=3)) == {"run_id": "public"}
+
+
 def test_publication_refuses_source_plus_outputs_that_would_evict_the_current_import(
     tmp_path,
     monkeypatch,

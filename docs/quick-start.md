@@ -114,15 +114,19 @@ an application dependency. [Recording commands](evidence/phase2-candidate/README
 - For import errors, check the venv Python, repository root, complete source and
   pip installation. Do not add this developer's machine paths to `PYTHONPATH`.
 - A viewport failure leaves check evidence readable. Inspect its technical
-  details and retry; a failed viewer is not evidence of missing IFC geometry.
+  details. Geometry requests/JSON can retry in place; failed viewer modules use
+  **Reload page**, retaining the current revision/assessment URL. A failed viewer
+  is not evidence of missing IFC geometry. Entry resource failures also expose
+  a reload action without depending on the missing modules or stylesheets.
 - Imports show worker stages and progress. Cancel waits for the native process to
   stop; a failed/cancelled job keeps the existing report and viewport. A lost
   response can resume polling. The server enforces a 600-second deadline; use
   `--import-timeout-seconds` to choose another positive deadline at startup.
 - The 50 MB browser upload cap is not a capacity guarantee. A recorded 2,055-mesh
   case took about 179.5 seconds under the old synchronous API. One earlier cold
-  3D failure remains unexplained; technical details now include the request ID
-  and failure phase. [Measured scope](handoffs/model-case.md).
+  3D failure has insufficient retained evidence for a confirmed cause. Current
+  regressions reproduce interrupted dependencies and failed viewer-module reuse,
+  with request/phase diagnostics and distinct recovery. [Measured scope](handoffs/model-case.md).
 - Save important work. The report/geometry cache is limited to 16 payloads and
   64 MiB; saved revisions restore from SQLite after eviction or restart. Notes,
   comparison and briefs read reports without restoring full geometry. Unsaved

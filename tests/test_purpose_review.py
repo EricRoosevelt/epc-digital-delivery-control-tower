@@ -570,3 +570,35 @@ def test_next_steps_distinguish_machine_failure_coverage_manual_and_unsupported(
     ]
     assert machine["next_action"] in routes
     assert unsupported["next_action"] in routes
+
+
+def test_required_manual_evidence_cannot_be_shadowed_by_a_machine_pass():
+    from internal.doctor_adapter.enterprise_package import digest
+
+    package, evaluation = case(manual=True)
+    package.manifest["purposes"][0]["evidence_requirements"][0]["evidence_id"] = (
+        "check-" + digest("a")[:16]
+    )
+    with pytest.raises(ValueError, match="[Cc]onflict|[Dd]uplicate"):
+        assess(package, evaluation)
+
+
+@pytest.mark.parametrize("edit", ["manual_removed", "rule_renamed"])
+def test_requirements_removed_or_renamed_cannot_be_claimed_as_model_repairs(edit):
+    package, evaluation = case(manual=True)
+    prior = assess(package, evaluation)
+    sealed = copy.deepcopy(prior["record"])
+    package.source_sha256 = "e" * 64
+    if edit == "manual_removed":
+        package.manifest["purposes"][0]["evidence_requirements"] = []
+    else:
+        package.manifest["purposes"][0]["required_rule_ids"] = ["ORG-2"]
+        for check in evaluation["checks"]:
+            check["rule_id"] = "ORG-2"
+    current = assess(package, evaluation, prior=prior)
+    assert "successor" not in current["record"]
+    assert not current["change_summary"]["comparable"]
+    assert not any(
+        row["change"] == "rule_recheck_passed" for row in current["change_summary"]["outcomes"]
+    )
+    assert prior["record"] == sealed

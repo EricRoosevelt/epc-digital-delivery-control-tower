@@ -1,6 +1,7 @@
 """Enterprise adoption, source attachment and immutable purpose history."""
 
 import hashlib
+import json
 from types import SimpleNamespace
 
 import ifcopenshell
@@ -126,3 +127,60 @@ def test_runs_are_immutable_and_other_project_cannot_adopt_preview(library):
             method_id="document-review", determiner="Engineer", basis="Checked drawing",
             reference="drawing-A", context_digest="forged",
         )
+
+
+@pytest.mark.parametrize("invalid", ["evidence_collision", "whitespace"])
+def test_current_confirmation_revalidates_persisted_legacy_preview_bytes(library, monkeypatch,
+                                                                       invalid):
+    from internal.doctor_adapter.enterprise_package import digest
+    from internal.doctor_adapter.enterprise_rules import parse_package
+    from test_enterprise_rules import package_bytes, manifest
+
+    enterprise, projects, project, *_ = library
+    original = parse_package(package_bytes(), "public.zip")
+    declaration = manifest()
+    if invalid == "evidence_collision":
+        declaration["purposes"][0]["evidence_requirements"] = [{
+            "evidence_id": "check-" + digest(original.checks[0]["requirement_key"])[:16],
+            "title": "Independent review", "acceptance": "Evidence required",
+            "execution": "manual", "method_id": "review", "method_description": "Review",
+        }]
+    else:
+        declaration["purposes"][0]["purpose_id"] = " schedule "
+    body = package_bytes(declaration=declaration)
+    snapshot = original.preview()
+    snapshot.update(project_id=project["project_id"], preview_id="preview-legacy",
+                    filename="legacy.zip", created_at="2026-10-26T00:00:00Z",
+                    can_confirm=True, source_sha256=hashlib.sha256(body).hexdigest(),
+                    manifest=declaration, purposes=declaration["purposes"])
+    serialized = json.dumps(snapshot, ensure_ascii=False)
+    with projects._db() as db:
+        db.execute("INSERT INTO enterprise_previews VALUES(?,?,?,?,?,?)", (
+            snapshot["preview_id"], project["project_id"], snapshot["created_at"],
+            "legacy.zip", body, serialized,
+        ))
+    monkeypatch.setattr(module, "_parse", parse_package)
+    with pytest.raises(ProjectLibraryError, match="validation|preview|package"):
+        enterprise.confirm(project["project_id"], snapshot["preview_id"],
+                           confirmed_by="User", responsible_team="Reviewer")
+    with projects._db() as db:
+        assert db.execute("SELECT COUNT(*) FROM enterprise_rules").fetchone()[0] == 0
+        stored = db.execute("SELECT package,preview_json FROM enterprise_previews "
+                            "WHERE preview_id=?", (snapshot["preview_id"],)).fetchone()
+    assert bytes(stored["package"]) == body
+    assert stored["preview_json"] == serialized
+
+
+def test_current_validation_keeps_the_reviewed_preview_snapshot(library, monkeypatch):
+    from internal.doctor_adapter.enterprise_rules import parse_package
+    from test_enterprise_rules import package_bytes
+
+    enterprise, _, project, *_ = library
+    monkeypatch.setattr(module, "_parse", parse_package)
+    body = package_bytes()
+    preview = enterprise.preview(project["project_id"], "public.zip", body)
+    confirmed = enterprise.confirm(project["project_id"], preview["preview_id"],
+                                   confirmed_by="User", responsible_team="Reviewer")
+    for field in ("rules", "checks", "ruleset", "source_sha256", "source", "purposes"):
+        assert confirmed[field] == preview[field]
+    assert enterprise.package_bytes(confirmed["rule_revision_id"]) == body

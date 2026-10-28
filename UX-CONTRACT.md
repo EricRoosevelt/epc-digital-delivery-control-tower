@@ -37,6 +37,17 @@ Date, Toast and CRUD capability systems are not introduced. Existing local check
 
 ## State and navigation
 
+Entry initialization has a zero-dependency bilingual recovery region in each HTML
+entry. Native module/link error handlers reveal it when required modules or CSS
+fail; successful startup hides it. Its explicit reload preserves language,
+project/revision/assessment queries and legacy hashes. There is no automatic retry
+or replacement router. The inline variant is intentional because its own recovery
+must remain operable when external scripts or styles have failed.
+The 3D viewer's module-import failure separately offers a same-URL page reload:
+the browser may retain the failed dependency in its module map for that document.
+Geometry transport/decode, renderer initialization and mesh failures retain their
+in-place retry. No cache-busting module URLs or automatic reload loop is introduced.
+
 Actual routes and IDs remain canonical. Example items stay independent routes/deep links; same-item recheck keeps existing correspondence rules. Language reload changes only lang, retains route/object, and restores same-check local query/status/selection through a one-use tab-local handoff consumed and removed before rendering. Ordinary typing writes nothing to storage. No query enters shareable URLs, localStorage or a durable session record, and ordinary refresh restoration is not promised. Another check/run resets the view.
 
 Local phone finding routes show detail alone at <=700px. Visible Back and browser Back return to the list; query/selection remain for the same check. Selected row's name link gets visible focus; if filtered out, focus goes to search. The document scrolls to that target, not to a promised prior pixel coordinate. New objects focus their own heading. Locate/skip/results jumps do not replace router hashes.

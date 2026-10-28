@@ -1,6 +1,7 @@
 import { bilingual } from "./i18n.js";
 
 export const W = bilingual("REVIEW", {
+  reloadPage: "重新载入页面",
   technical: "技术信息",
   uploading: "正在提交 IFC…", starting: "正在启动导入进程…", serializing: "正在整理 3D 数据…",
   processed: "已处理构件",
@@ -15,6 +16,7 @@ export const W = bilingual("REVIEW", {
   models: "模型与问题", model: "模型", allModels: "全部模型", status: "检查结果", all: "全部结果", fail: "未满足", errors: "需核对", information: "信息提示", pass: "通过", na: "不适用", search: "搜索名称、类型或 GlobalId", clear: "清空搜索", results: "条检查结果", noResults: "没有匹配的结果", clearFilters: "清除筛选", more: "再显示 100 条", selectedOutside: "当前构件不在筛选结果中。", noFindings: "该构件没有检查结果。",
   elements: "构件", renderable: "可显示", findings: "待处理结果", checks: "检查结果", view: "模型视窗", orbit: "拖动旋转 · 滚轮缩放 · 点击构件", fit: "显示全部", focus: "聚焦构件", isolate: "隔离构件", isolated: "取消隔离", reset: "重置视图", zoomIn: "放大", zoomOut: "缩小", rotateLeft: "向左旋转", rotateRight: "向右旋转", top: "俯视", iso: "轴测", selected: "已选中", select: "选择一条结果或点击模型构件", legend: "橙色：需核对 · 青色：选中", noGeometry: "此构件没有可用几何，检查证据仍可查看。", geometryError: "3D 视窗暂不可用。检查结果仍可查看。", emptyGeometry: "此 IFC 没有可显示的几何。", units: "世界坐标 · 米", visible: "显示构件", details: "构件与证据", unknown: "未记录", class: "IFC 类型", storey: "楼层", discipline: "专业", rule: "规则", expected: "要求", actual: "实际读取", reason: "检查说明", evidence: "检查证据", suggestion: "处理建议", guidance: "规则指导", ai: "AI 建议", aiReady: "AI 已配置", aiOff: "使用本地规则指导", aiNotice: "AI 只接收当前问题的最少文字证据，不发送 IFC 或几何。", generate: "生成 AI 建议", generating: "正在生成…", guidanceNotice: "依据当前规则和读取值生成的处理步骤。", adviceError: "建议暂时无法生成；可重试。", facts: "已知事实", actions: "建议操作", verify: "修改后验证", citations: "依据", limits: "适用范围", none: "无", sourceDetails: "来源与模型记录", unavailable: "无几何构件", fullReport: "检查结果可独立于 3D 使用。", selectedRule: "所选检查", keyboard: "也可用视窗按钮旋转、缩放和定位。",
 }, {
+  reloadPage: "Reload page",
   technical: "Technical details",
   uploading: "Submitting IFC…", starting: "Starting import process…", serializing: "Preparing 3D data…",
   processed: "Elements processed",

@@ -38,6 +38,13 @@ requirements; their absence of executable evidence contributes UNKNOWN. Each
 compiled requirement gets its own Purpose evidence binding, preventing a partial
 PASS from satisfying a group of simultaneous requirements. Empty partitions and
 uncovered declared objects cannot produce readiness.
+Package, purpose and evidence identifiers must not have surrounding whitespace.
+Declared evidence identifiers must also be distinct from the compiled check
+identifiers used by the same purpose: a collision could otherwise shadow a
+required human-evidence question. Preview rejects such a package before adoption;
+the evaluator also refuses duplicate evidence identities. Existing sealed history
+is unchanged. An earlier adopted conflicting package needs a corrected rule
+revision and a new assessment, not a rewritten historical verdict.
 
 Confirmation freezes package bytes, source digest, compiler/checker versions,
 preview and the declared project reviewer/team. Reusing a declared version with

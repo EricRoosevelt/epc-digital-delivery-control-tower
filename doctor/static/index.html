@@ -4,10 +4,23 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>BIM Doctor · Projects</title>
-<link rel="stylesheet" href="/doctor.css">
-<script type="module" src="/app.js"></script>
+<link onerror="document.documentElement.dataset.startupState='failed'" rel="stylesheet" href="/doctor.css">
+<script onerror="document.documentElement.dataset.startupState='failed'" onload="if(document.documentElement.dataset.startupState!=='failed') document.documentElement.dataset.startupState='ready'" type="module" src="/app.js"></script>
+<style>
+#startup-error { margin: 16px; padding: 16px; border: 1px solid var(--line, #dbe3e9); background: var(--surface, #fff); color: var(--ink, #172b3a); font: 16px/1.6 "Segoe UI", sans-serif; }
+#startup-error button { padding: 8px 14px; font: inherit; cursor: pointer; }
+#startup-error .startup-failure { display: none; }
+html[data-startup-state="failed"] #startup-error .startup-loading { display: none; }
+html[data-startup-state="failed"] #startup-error .startup-failure { display: block; }
+html[data-startup-state="ready"] #startup-error { display: none; }
+</style>
 </head>
 <body>
+<section id="startup-error" role="alert" aria-live="polite">
+<p class="startup-loading">正在载入应用 / Loading application…</p>
+<p class="startup-failure">应用资源未载入。请重试载入此页面。 / Application resources could not be loaded. Retry loading this page.</p>
+<button type="button" onclick="location.reload()">重试载入 / Retry loading</button>
+</section>
 <a class="skip" href="#main">跳到正文</a>
 <header id="shell" class="app-header"><div id="language" class="language"></div></header>
 <header id="context" class="context" aria-label="当前模式与上下文"></header>

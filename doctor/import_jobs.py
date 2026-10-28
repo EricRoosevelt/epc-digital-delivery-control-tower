@@ -122,38 +122,49 @@ class ImportJobs:
                            "artifact_bytes": self.max_artifact_bytes},
             }
 
-    def _remove_files(self, job):
+    def _remove_files(self, job, *, keep_shared=False):
         path = job.directory
         if path is not None:
+            aliases = [other for other in self._jobs.values() if other.directory == path]
+            if keep_shared and any(other is not job for other in aliases):
+                job.directory = None
+                return
             resolved = path.resolve()
             if resolved == self.root or not resolved.is_relative_to(self.root):
                 raise ValueError("Import cleanup must remain in its owned task directory.")
             shutil.rmtree(resolved, ignore_errors=False)
+            for alias in aliases:
+                alias.directory = None
             job.directory = None
+
+    @staticmethod
+    def _retained_size(directory):
+        return sum(p.stat().st_size for p in directory.iterdir()
+                   if p.is_file() and (p.suffix == ".json" or p.name == "input.ifc"))
 
     def _trim(self):
         # Called with the metadata lock, never while native IFC work is running here.
-        artifacts = [job for job in self._jobs.values()
-                     if job.state == "succeeded" and job.directory]
-        sizes = {job.identity: sum(p.stat().st_size for p in job.directory.iterdir()
-                                  if p.is_file() and (p.suffix == ".json"
-                                                      or p.name == "input.ifc"))
-                 for job in artifacts}
+        artifacts = {}
+        for job in self._jobs.values():
+            if job.state == "succeeded" and job.directory:
+                artifacts.setdefault(job.directory, []).append(job)
+        sizes = {path: self._retained_size(path) for path in artifacts}
         while artifacts and (len(artifacts) > self.max_artifacts
                              or sum(sizes.values()) > self.max_artifact_bytes):
-            oldest = next((job for job in artifacts if not job.readers), None)
+            oldest = next((path for path, aliases in artifacts.items()
+                           if not any(job.readers for job in aliases)), None)
             if oldest is None:
                 break  # An in-flight disk read is pinned until its file handle closes.
-            artifacts.remove(oldest)
-            sizes.pop(oldest.identity)
-            self._remove_files(oldest)
+            aliases = artifacts.pop(oldest)
+            sizes.pop(oldest)
+            self._remove_files(aliases[0])
         while len(self._jobs) > self.max_history:
             oldest = next((j for j in self._jobs.values()
                            if j.state in TERMINAL and not j.readers
                            and j.identity != self._active), None)
             if oldest is None:
                 break
-            self._remove_files(oldest)
+            self._remove_files(oldest, keep_shared=True)
             del self._jobs[oldest.identity]
 
     def submit(self, filename, body, *, job_id=None, context=None):
@@ -184,6 +195,7 @@ class ImportJobs:
                 if old.key == key and old.state == "succeeded" and old.directory:
                     job.state, job.stage = "succeeded", "complete"
                     job.review_id, job.worker_exited = old.review_id, True
+                    job.directory = old.directory
                     job.result = old.result
                     job.finished_at = time.monotonic()
                     job.done.set()
@@ -323,8 +335,9 @@ class ImportJobs:
                 return
             retained_files = self.output_files + (("input.ifc",)
                                                    if self.result_handler is None else ())
-            if sum((job.directory / name).stat().st_size for name in retained_files) \
-                    > self.max_artifact_bytes:
+            retained_bytes = sum((job.directory / name).stat().st_size
+                                 for name in retained_files)
+            if retained_bytes > self.max_artifact_bytes:
                 raise ValueError("Retained import files exceed the temporary artifact budget.")
             outputs = {name: (job.directory / name).read_bytes() for name in self.output_files}
             with self._lock:
@@ -333,6 +346,17 @@ class ImportJobs:
                     job.state = "cancelled"
                     return
                 job.stage = "publishing"
+                # A slow existing read may pin every older result. Never publish
+                # success if enforcing the spool budget would delete this result.
+                pinned = {old.directory for old in self._jobs.values()
+                          if old.directory is not None and old.readers}
+                if (len(pinned) + 1 > self.max_artifacts
+                        or sum(self._retained_size(path) for path in pinned) + retained_bytes
+                        > self.max_artifact_bytes):
+                    raise ValueError(
+                        "The temporary artifact budget is occupied by active reads. "
+                        "Retry after those reads finish."
+                    )
                 if self.result_handler is None:
                     accepted = self.reviews.admit_serialized(
                         outputs["report.json"], outputs["geometry.json"],
@@ -455,7 +479,11 @@ class ImportJobs:
             if job.process is not None:
                 self._stop(job)
                 job.done.wait()
+        # Aliases share the same files. Wait for every existing reader before
+        # deleting a directory through any one of those task references.
+        for job in jobs:
             job.readers_done.wait()
+        for job in jobs:
             with self._lock:
                 self._remove_files(job)
         if self._temporary:

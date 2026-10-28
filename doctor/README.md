@@ -148,9 +148,13 @@ revision comparison, a real server restart and brief download with 2,055 meshes
 and 1.07 million triangles. Under the earlier synchronous API, new uncached
 content took 179.5 seconds to become usable on the recorded host. Imports now run
 as separate jobs, with 30-second individual requests and a configurable hard
-deadline (`--import-timeout-seconds`, default 600). An earlier cold viewport
-failure was not reproduced; technical details distinguish request, JSON decode,
-viewer initialization and geometry loading failures, with request IDs. This
+deadline (`--import-timeout-seconds`, default 600). Full regression reproduced a
+network-change interruption during entry dependency loading and a failed viewer
+module that remains failed on same-page retry. A standalone startup notice survives
+missing modules/styles; failed viewer modules offer **Reload page** with the same
+record URL. Geometry request/JSON failures retain in-place retry. Technical details
+separate request, decode, viewer module, initialization and geometry loading phases.
+The earlier cold viewport record lacks evidence to establish the same cause. This
 is a measured case, not a larger-model capacity guarantee or engineering sign-off.
 See the [case evidence and limitations](../docs/handoffs/model-case.md).
 
@@ -179,7 +183,9 @@ retention policy. Calls use the user's API account and may incur charges.
 
 The key is never returned to the browser. A missing key leaves **Rule guidance**
 available; a timeout, provider refusal or quota error is reported without claiming
-that AI generated advice. There is no automatic model edit or status change.
+that AI generated advice. Malformed provider output is a retryable service error,
+not a missing-selection result; local evidence and guidance remain readable.
+There is no automatic model edit or status change.
 Transport and selection are covered by offline tests; evaluating a live model
 requires a configured account and representative project examples.
 

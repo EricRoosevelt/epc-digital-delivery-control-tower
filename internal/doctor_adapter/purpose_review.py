@@ -292,6 +292,11 @@ def _next_actions(row, failed, coverage=None):
 
 
 def _configuration(package, purpose, rows, elements, evaluation, team):
+    evidence_ids = [row["evidence_id"] for row in rows]
+    if len(evidence_ids) != len(set(evidence_ids)):
+        raise ValueError(
+            "Duplicate evidence identifiers would shadow required purpose evidence"
+        )
     pack_id = package.manifest["package_id"] + "--" + purpose["purpose_id"]
     version = package.manifest["version"]
     ruleset = evaluation["ruleset"]

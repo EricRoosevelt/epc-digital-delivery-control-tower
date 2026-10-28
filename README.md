@@ -123,8 +123,11 @@ have bounded temporary storage and expire.
 
 The upload limit is not a validated capacity guarantee. A recorded 2,055-mesh,
 1.07-million-triangle case took 179.5 seconds under the earlier synchronous API.
-One earlier cold 3D failure remains unexplained; request IDs and geometry/viewer
-phase diagnostics now support investigation, and recovery paths run in browser CI.
+Regression investigation reproduced interrupted entry dependencies and a failed
+viewer module retained by the browser. Startup now has an independent recovery
+notice; failed viewer modules offer a page reload that retains the record URL.
+Geometry request/JSON failures keep in-place retry. The original cold failure has
+insufficient evidence to prove it had the same cause.
 [Measured scope and qualifications](docs/handoffs/model-case.md).
 Live OpenAI advice requires the user's own configured account and was not a
 prerequisite for the candidate's offline checks or demonstration.

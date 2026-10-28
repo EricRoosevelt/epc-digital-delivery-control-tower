@@ -201,7 +201,7 @@ jobs:
           else
             qa_python="$RUNNER_TEMP/phase2-candidate/venv/bin/python"
           fi
-          "$qa_python" tools/run_browser_qa.py --output "$RUNNER_TEMP/phase2-candidate/evidence/browser-qa"
+          "$qa_python" tools/run_browser_qa.py --extended --output "$RUNNER_TEMP/phase2-candidate/evidence/browser-qa"
 
       - name: Capture the public demo at the same source SHA
         working-directory: ${{ runner.temp }}/phase2-candidate/checkout
@@ -230,6 +230,10 @@ jobs:
               data = json.loads((root / name).read_text(encoding="utf-8"))
               assert data["status"] == "passed", name + " did not pass"
               assert data["source_sha"] == expected, name + " source SHA mismatch"
+              if name == "browser-qa/browser-qa.json":
+                  assert data["source_tree_clean"], "Browser checks used a dirty checkout"
+                  assert len(data["scripts"]) == 11, "The full browser set was not run"
+                  assert all(item["exit_code"] == 0 for item in data["scripts"])
           manifest = json.loads((root / "capture/manifest.json").read_text(encoding="utf-8"))
           assert manifest["status"] == "candidate-captured"
           assert manifest["source_sha"] == expected and manifest["source_tree_verified"]

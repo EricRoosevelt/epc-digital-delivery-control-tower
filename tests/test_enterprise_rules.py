@@ -78,11 +78,88 @@ def test_manifest_identifiers_cannot_break_purpose_reference_coordinates(field):
     elif field == "purpose_id":
         document["purposes"][0][field] = "handover::other"
     else:
-        document["purposes"][0]["evidence_requirements"] = [{
-            "evidence_id": "evidence::other", "title": "Unsupported example",
-            "acceptance": "Need evidence", "execution": "unsupported", "reason": "No engine",
-        }]
+        document["purposes"][0]["evidence_requirements"] = [
+            {
+                "evidence_id": "evidence::other",
+                "title": "Unsupported example",
+                "acceptance": "Need evidence",
+                "execution": "unsupported",
+                "reason": "No engine",
+            }
+        ]
     with pytest.raises(ValueError, match="identifier|reserved|separator"):
+        parse_package(package_bytes(declaration=document), "public.zip")
+
+
+@pytest.mark.parametrize("execution", ["manual", "unsupported"])
+def test_evidence_identifier_cannot_alias_a_compiled_check(execution):
+    from internal.doctor_adapter.enterprise_package import digest
+
+    native = parse_package(package_bytes(), "public.zip")
+    document = manifest()
+    document["purposes"][0]["evidence_requirements"] = [
+        {
+            "evidence_id": "check-" + digest(native.checks[0]["requirement_key"])[:16],
+            "title": "Separate required evidence",
+            "acceptance": "Independent evidence required",
+            "execution": execution,
+            **(
+                {"method_id": "review", "method_description": "Review"}
+                if execution == "manual"
+                else {"reason": "No executor"}
+            ),
+        }
+    ]
+    with pytest.raises(ValueError, match="[Cc]onflict|[Cc]ollision|[Dd]uplicate"):
+        parse_package(package_bytes(declaration=document), "public.zip")
+
+
+@pytest.mark.parametrize("field", ["package_id", "purpose_id", "evidence_id"])
+def test_manifest_identifiers_roundtrip_without_silent_trimming(field):
+    document = manifest()
+    if field == "package_id":
+        document[field] = " public-company "
+    elif field == "purpose_id":
+        document["purposes"][0][field] = " schedule "
+    else:
+        document["purposes"][0]["evidence_requirements"] = [
+            {
+                "evidence_id": " review ",
+                "title": "Review",
+                "acceptance": "Review evidence",
+                "execution": "manual",
+                "method_id": "review",
+                "method_description": "Review",
+            }
+        ]
+    with pytest.raises(ValueError, match="identifier|whitespace|canonical"):
+        parse_package(package_bytes(declaration=document), "public.zip")
+
+
+def test_nonconflicting_check_prefixed_evidence_remains_supported():
+    document = manifest()
+    document["purposes"][0]["evidence_requirements"] = [
+        {
+            "evidence_id": "check-public-review",
+            "title": "Independent review",
+            "acceptance": "Recorded evidence",
+            "execution": "manual",
+            "method_id": "review",
+            "method_description": "Review",
+        }
+    ]
+    assert (
+        parse_package(package_bytes(declaration=document), "public.zip").manifest["purposes"][
+            0
+        ]["evidence_requirements"][0]["evidence_id"]
+        == "check-public-review"
+    )
+
+
+def test_required_rule_reference_is_exact_not_silently_trimmed():
+    document = manifest()
+    document["purposes"][0]["required_rule_ids"] = [" COMPANY-01 "]
+    with pytest.raises(ValueError, match="missing rule"):
         parse_package(package_bytes(declaration=document), "public.zip")
 
 
@@ -90,8 +167,11 @@ def test_declared_discipline_filter_cannot_be_claimed_executed_from_an_unknown_u
     body = package_bytes(rule='discipline_scope=["Mechanical"]\n' + RULE)
     package = parse_package(body, "public.zip")
     assert all(check["support"] == "unsupported" for check in package.checks)
-    assert any("discipline_scope" in reason for check in package.checks
-               for reason in check["unsupported_reasons"])
+    assert any(
+        "discipline_scope" in reason
+        for check in package.checks
+        for reason in check["unsupported_reasons"]
+    )
 
 
 def model_case(*, schema="IFC4", predefined="DIFFUSER", name="Public terminal", typed=False):

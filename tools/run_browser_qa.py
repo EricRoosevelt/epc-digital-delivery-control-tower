@@ -24,6 +24,10 @@ SCRIPTS = (
     "doctor_review_import_jobs",
     "doctor_enterprise",
 )
+EXTENDED_SCRIPTS = (
+    "doctor_startup", "doctor_mobile_search", "doctor_ui_states",
+    "doctor_ui_resilience", "doctor_ui_layout",
+)
 
 
 def command(args, directory, *, env=None, cwd=ROOT):
@@ -67,6 +71,12 @@ def run_scripts(checkout, directory, names):
                             "--output-dir", str(public)], directory / "enterprise-fixture"):
                     raise RuntimeError("Enterprise public fixture export failed")
                 args.append(str(public))
+            if name == "doctor_ui_states":
+                synthetic = directory / "synthetic-long-layout.ifc"
+                if command([sys.executable, str(ROOT / "tests/doctor_ui_stress_fixture.py"),
+                            str(synthetic)], directory / "layout-fixture"):
+                    raise RuntimeError("Public long-field fixture export failed")
+                args.append(str(synthetic))
             status = command(args, evidence, env=env)
             results.append({"script": name, "exit_code": status})
     return results
@@ -120,6 +130,10 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--mutations", action="store_true")
+    parser.add_argument(
+        "--extended", action="store_true",
+        help="Also run startup, legacy mobile search/state/recovery/layout checks",
+    )
     args = parser.parse_args()
     output = args.output.resolve()
     if output.is_relative_to(ROOT) or output.exists():
@@ -130,9 +144,13 @@ def main():
             ["git", "rev-parse", "HEAD"], cwd=ROOT, text=True,
         ).strip(),
         "status": "running", "browser_channel": "chromium", "scripts": [], "mutations": [],
+        "source_tree_clean": not subprocess.check_output(
+            ["git", "status", "--porcelain"], cwd=ROOT, text=True,
+        ).strip(),
     }
     try:
-        result["scripts"] = run_scripts(ROOT, output / "baseline", SCRIPTS)
+        names = SCRIPTS + EXTENDED_SCRIPTS if args.extended else SCRIPTS
+        result["scripts"] = run_scripts(ROOT, output / "baseline", names)
         if any(item["exit_code"] for item in result["scripts"]):
             raise RuntimeError(
                 "A browser regression failed; inspect its process.log and screenshot",

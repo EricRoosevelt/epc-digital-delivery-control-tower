@@ -2,14 +2,13 @@
 const assert = require("node:assert/strict");
 const fs = require("node:fs");
 const path = require("node:path");
-const { chromium } = require("playwright");
-const { captureFailure, browserOptions } = require("./browser-qa-helpers.cjs");
+const { captureFailure, launchBrowser } = require("./browser-qa-helpers.cjs");
 
 async function main() {
   const [base, evidence] = process.argv.slice(2);
   assert.ok(base && evidence);
   fs.mkdirSync(evidence, { recursive: true });
-  const browser = await chromium.launch(browserOptions());
+  const browser = await launchBrowser(evidence);
   const errors = [];
   const observations = [];
   try {
@@ -46,7 +45,7 @@ async function main() {
       let switching = false;
       const knownIds = new Set();
       const statusOverrides = new Map();
-      const descriptor = id => ({ job_id: id, state: statusOverrides.get(id) || mode, stage: "tessellating", completed: 7, total: 100, review_id: mode === "succeeded" ? resultReview : null, error: mode === "failed" ? "Controlled worker failure" : null });
+      const descriptor = id => ({ job_id: id, state: statusOverrides.get(id) || mode, stage: mode === "failed" ? "publishing" : "tessellating", completed: 7, total: 100, review_id: mode === "succeeded" ? resultReview : null, error: mode === "failed" ? { code: "publication_failed", stage: "publishing", message: "The temporary artifact budget is occupied by active reads. Retry after those reads finish." } : null });
       await page.route(url => url.pathname === "/api/review/imports", async route => {
         const request = route.request();
         const id = new URL(request.url()).searchParams.get("job");
@@ -109,12 +108,15 @@ async function main() {
         await upload(`controlled-${terminal}`);
         await page.locator(".review-status.has-error").waitFor();
         if (terminal === "timed_out") assert.match(await page.locator(".review-status").innerText(), /timed out and stopped|超时并停止/);
+        else assert.match(await page.locator(".review-status").innerText(), /temporary artifact budget/);
         await kept();
         const beforeRetry = posts;
+        const terminalId = submittedId;
         mode = "succeeded";
         await page.locator(".review-status").getByRole("button", { name: text("Retry", "重试"), exact: true }).click();
         await page.locator(".review-status").filter({ hasText: text("Model loaded", "模型已载入") }).waitFor();
         assert.equal(posts, beforeRetry + 1, "terminal job retry creates a new import");
+        assert.notEqual(submittedId, terminalId, "a terminal publication failure or timeout must retry with a fresh owned job ID");
       }
       mode = "running"; failPoll = true;
       await upload("controlled-network-retry");

@@ -178,14 +178,14 @@ class AdviceService:
             raise AdviceUnavailable(
                 "OpenAI returned an unreadable response. Try again."
             ) from failure
-        if result.get("status") != "completed":
-            raise AdviceUnavailable("OpenAI did not complete the advice. Try again.")
-        texts = [
-            part["text"]
-            for item in result.get("output", []) if item.get("type") == "message"
-            for part in item.get("content", []) if part.get("type") == "output_text"
-        ]
         try:
+            if result.get("status") != "completed":
+                raise AdviceUnavailable("OpenAI did not complete the advice. Try again.")
+            texts = [
+                part["text"]
+                for item in result.get("output", []) if item.get("type") == "message"
+                for part in item.get("content", []) if part.get("type") == "output_text"
+            ]
             generated = json.loads("".join(texts))
             summary = generated.get("summary")
             if not isinstance(summary, str) or not summary.strip():
@@ -196,7 +196,7 @@ class AdviceService:
                     raise ValueError("missing steps")
                 if any(not isinstance(step, str) or not step.strip() for step in steps):
                     raise ValueError("invalid step")
-        except (json.JSONDecodeError, TypeError, AttributeError, ValueError) as failure:
+        except (KeyError, TypeError, AttributeError, ValueError) as failure:
             raise AdviceUnavailable(
                 "OpenAI did not return usable advice. Local rule guidance remains available."
             ) from failure

@@ -6,17 +6,14 @@
 const assert = require("node:assert/strict");
 const fs = require("node:fs");
 const path = require("node:path");
-const { chromium } = require("playwright");
+const { launchBrowser, captureFailure } = require("./browser-qa-helpers.cjs");
 
 async function main() {
   const base = process.argv[2];
   assert.ok(base, "Supply the isolated Doctor server URL");
   const evidence = process.argv[3];
   if (evidence) fs.mkdirSync(evidence, { recursive: true });
-  const browser = await chromium.launch({
-    headless: true,
-    channel: process.env.BROWSER_CHANNEL || (process.platform === "win32" ? "msedge" : undefined),
-  });
+  const browser = await launchBrowser(evidence);
   const failures = [];
   const observations = [];
   try {
@@ -111,7 +108,7 @@ async function main() {
         await page.close();
       }
     }
-  } finally {
+  } catch (error) { await captureFailure(browser, evidence, error); throw error; } finally {
     await browser.close();
     if (evidence) fs.writeFileSync(path.join(evidence, "observations.json"), JSON.stringify(observations, null, 2) + "\n");
   }

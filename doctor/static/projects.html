@@ -4,12 +4,25 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>BIM Doctor · Projects</title>
-<link rel="stylesheet" href="/doctor.css">
-<link rel="stylesheet" href="/review.css">
-<link rel="stylesheet" href="/projects.css">
-<script type="module" src="/projects.js"></script>
+<link onerror="document.documentElement.dataset.startupState='failed'" rel="stylesheet" href="/doctor.css">
+<link onerror="document.documentElement.dataset.startupState='failed'" rel="stylesheet" href="/review.css">
+<link onerror="document.documentElement.dataset.startupState='failed'" rel="stylesheet" href="/projects.css">
+<script onerror="document.documentElement.dataset.startupState='failed'" onload="if(document.documentElement.dataset.startupState!=='failed') document.documentElement.dataset.startupState='ready'" type="module" src="/projects.js"></script>
+<style>
+#startup-error { margin: 16px; padding: 16px; border: 1px solid var(--line, #dbe3e9); background: var(--surface, #fff); color: var(--ink, #172b3a); font: 16px/1.6 "Segoe UI", sans-serif; }
+#startup-error button { padding: 8px 14px; font: inherit; cursor: pointer; }
+#startup-error .startup-failure { display: none; }
+html[data-startup-state="failed"] #startup-error .startup-loading { display: none; }
+html[data-startup-state="failed"] #startup-error .startup-failure { display: block; }
+html[data-startup-state="ready"] #startup-error { display: none; }
+</style>
 </head>
 <body class="review-app projects-app">
+<section id="startup-error" role="alert" aria-live="polite">
+<p class="startup-loading">正在载入应用 / Loading application…</p>
+<p class="startup-failure">应用资源未载入。请重试载入此页面。 / Application resources could not be loaded. Retry loading this page.</p>
+<button type="button" onclick="location.reload()">重试载入 / Retry loading</button>
+</section>
 <a class="skip" href="#main">Skip to projects / 跳到项目</a>
 <div id="projects-root"></div>
 <noscript>Enable JavaScript to open projects. 请启用 JavaScript。</noscript>

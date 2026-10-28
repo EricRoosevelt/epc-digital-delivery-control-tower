@@ -99,7 +99,8 @@ class EnterpriseService:
                  "## " + ("受阻及未确定事项" if zh else "Blockers and unknowns"), ""]
         for block in run.get("blockers", []):
             lines += [f"- {block['verdict']}: {block['title']} — {block['reason']}",
-                      "  " + block.get("next_action", "")]
+                      "  " + ((block.get("next_action_zh") or block.get("next_action", ""))
+                               if zh else block.get("next_action", ""))]
         lines += ["", "## " + ("人工记录" if zh else "User-recorded evidence"), ""]
         for claim in run.get("determinations", []):
             lines.append(f"- {claim['determiner']}: {claim['outcome']} — {claim['reference']}; "

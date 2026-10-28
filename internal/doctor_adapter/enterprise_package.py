@@ -96,6 +96,8 @@ def _texts(value, label, *, empty=False):
 
 def _identifier(value, label):
     _text(value, label)
+    if value != value.strip():
+        raise ValueError(f"{label} identifier must not contain surrounding whitespace.")
     if "::" in value or len(value) > 80:
         raise ValueError(
             f"{label} identifier must be at most 80 characters without reserved '::'."
@@ -393,6 +395,20 @@ def parse_package(body: bytes, filename: str) -> EnterprisePackage:
     keys = [c["requirement_key"] for c in checks]
     if len(keys) != len(set(keys)):
         raise ValueError("Duplicate requirement labels would share a key.")
+    for purpose in manifest["purposes"]:
+        automatic = {
+            "check-" + digest(c["requirement_key"])[:16]
+            for c in checks
+            if c["rule_id"] in purpose["required_rule_ids"]
+        }
+        conflicts = automatic & {
+            item["evidence_id"] for item in purpose["evidence_requirements"]
+        }
+        if conflicts:
+            raise ValueError(
+                "Evidence identifier conflicts with a compiled check in purpose "
+                f"{purpose['purpose_id']!r}: {sorted(conflicts)}"
+            )
     source_sha = hashlib.sha256(body).hexdigest()
     preview = {
         "filename": str(filename).replace("\\", "/").rsplit("/", 1)[-1],

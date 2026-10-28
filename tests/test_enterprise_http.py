@@ -178,3 +178,48 @@ def test_model_change_is_rechecked_in_same_slot_without_geometry_regeneration(ru
         second["evaluation"]["elements"][0]["element_key"]
     assert second["blockers"][0]["review_element_key"] == report["elements"][0]["element_key"]
     assert second["record"]["successor"]["kind"] == "recheck"
+
+
+def test_conflicting_required_evidence_cannot_be_previewed_or_adopted(runtime):
+    from internal.doctor_adapter.enterprise_package import digest
+    from internal.doctor_adapter.enterprise_rules import parse_package
+    from test_enterprise_rules import package_bytes, manifest
+
+    package = parse_package(package_bytes(), "public.zip")
+    document = manifest()
+    document["purposes"][0]["evidence_requirements"] = [
+        {
+            "evidence_id": "check-" + digest(package.checks[0]["requirement_key"])[:16],
+            "title": "Independent review",
+            "acceptance": "Review evidence",
+            "execution": "manual",
+            "method_id": "review",
+            "method_description": "Review",
+        }
+    ]
+    project = runtime["project"]["project_id"]
+    with pytest.raises(HTTPError) as error:
+        call(
+            runtime["base"],
+            f"/api/projects/rules/preview?project={project}&filename=public.zip",
+            package_bytes(declaration=document),
+        )
+    assert error.value.code == 400
+    assert "conflicts" in json.load(error.value)["error"]
+    catalog = call(runtime["base"], f"/api/projects/rules?project={project}")
+    assert not catalog["previews"] and not catalog["rule_revisions"]
+
+
+def test_chinese_brief_download_uses_the_recorded_chinese_next_step(runtime):
+    rt = runtime
+    rule = adopted(rt)
+    attach(rt)
+    run = completed(rt, rule, "tender-submission")
+    manual = next(block for block in run["blockers"] if block["kind"] == "manual")
+    with urlopen(
+        rt["base"] + "/api/projects/purpose/brief?run=" + run["run_id"] + "&language=zh",
+        timeout=8,
+    ) as response:
+        brief = response.read().decode("utf8")
+    assert manual["next_action_zh"] in brief
+    assert manual["next_action"] not in brief

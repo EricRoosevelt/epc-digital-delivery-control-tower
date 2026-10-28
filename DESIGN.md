@@ -75,6 +75,14 @@ BD is a text product mark. Directional arrows supplement named navigation contro
 
 No animation is necessary for this reading workflow. In-page jumps move visible focus without changing the route hash. Reduced-motion preference retains immediate, operable navigation.
 
+## Entry resource recovery
+
+The three HTML entries carry the same small, static bilingual recovery region.
+Its native reload action and minimal inline styles deliberately do not depend on
+the application's module graph or external stylesheets. Successful entry loading
+hides the region; a stylesheet or entry-module graph failure leaves a readable
+retry action. Reload retains the exact current URL and never loops automatically.
+
 ## Do's and Don'ts
 
 - Keep source/FAIL/PASS/N/A/READY limitations next to the result or action they qualify.

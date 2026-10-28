@@ -4,8 +4,7 @@
 const assert = require("node:assert/strict");
 const fs = require("node:fs");
 const path = require("node:path");
-const { chromium } = require("playwright");
-const { captureFailure, browserOptions } = require("./browser-qa-helpers.cjs");
+const { captureFailure, launchBrowser } = require("./browser-qa-helpers.cjs");
 
 async function main() {
   const [base, evidence, fixturePath] = process.argv.slice(2);
@@ -13,7 +12,7 @@ async function main() {
   fs.mkdirSync(evidence, { recursive: true });
   const fixture = JSON.parse(fs.readFileSync(fixturePath, "utf8"));
   assert.equal(fixture.synthetic, true);
-  const browser = await chromium.launch(browserOptions());
+  const browser = await launchBrowser(evidence);
   const errors = [];
   const observations = [];
   const capture = (page, name) => page.screenshot({ path: path.join(evidence, `${name}.png`) });

@@ -116,6 +116,15 @@ class EnterpriseLibrary:
             result = json.loads(row["preview_json"])
             if not result.get("can_confirm", True):
                 raise ProjectLibraryError("Resolve package structure errors before adoption.")
+            try:
+                # Old previews retain their reviewed snapshot, but an earlier
+                # parser's can_confirm flag cannot bypass current input guards.
+                _parse(bytes(row["package"]), row["filename"])
+            except ValueError as error:
+                raise ProjectLibraryError(
+                    "This saved preview no longer passes current package validation. "
+                    "Upload a corrected package as a new preview. " + str(error)
+                ) from error
             result.update({"rule_revision_id": "rules-" + uuid4().hex,
                            "confirmed_by": confirmed_by, "responsible_team": responsible_team,
                            "created_at": _now()})

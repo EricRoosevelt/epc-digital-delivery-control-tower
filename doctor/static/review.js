@@ -285,8 +285,12 @@ async function loadGeometry(current = requestNumber) {
   try {
     const data = await json(`/api/review/geometry?review=${encodeURIComponent(state.report.review_id)}`, { signal: controller.signal, onResponse: response => { requestId = response.requestId; } });
     if (current !== requestNumber) return;
-    phase = "viewer_initialize";
-    if (!viewer) { const { createViewer } = await import("./review-viewer.js"); viewer = createViewer(viewport, key => selectElement(key)); }
+    if (!viewer) {
+      phase = "viewer_module";
+      const { createViewer } = await import("./review-viewer.js");
+      phase = "viewer_initialize";
+      viewer = createViewer(viewport, key => selectElement(key));
+    }
     if (current !== requestNumber) return;
     phase = "viewer_load";
     const count = viewer.load(data, state.report); state.geometryReady = true;
@@ -308,9 +312,10 @@ function geometryFailure(error, phase, requestId = null) {
     const diagnostic = { phase, request_id: requestId, name: error.name, message: error.message, webgl_events: [...webglEvents] };
     console.error("BIM Doctor geometry", diagnostic, error);
     viewOverlay.hidden = false;
-    viewOverlay.replaceChildren(h("h2", {}, W.geometryError), h("p", {}, W.fullReport), button(W.retry, () => {
+    const recover = phase === "viewer_module" ? button(W.reloadPage, () => location.reload()) : button(W.retry, () => {
       controller = new AbortController(); loadGeometry().then(ready => { message.textContent = ready ? W.loaded : W.geometryError; statusbar.classList.toggle("has-error", !ready); });
-    }), h("details", { class: "review-geometry-error-details" }, h("summary", {}, W.technical), h("pre", {}, JSON.stringify(diagnostic, null, 2))));
+    });
+    viewOverlay.replaceChildren(h("h2", {}, W.geometryError), h("p", {}, W.fullReport), recover, h("details", { class: "review-geometry-error-details" }, h("summary", {}, W.technical), h("pre", {}, JSON.stringify(diagnostic, null, 2))));
     state.geometryReady = false; updateViewButtons();
 }
 function renderReport() {

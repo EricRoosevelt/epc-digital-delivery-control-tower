@@ -3,15 +3,14 @@
 const assert = require("node:assert/strict");
 const fs = require("node:fs");
 const path = require("node:path");
-const { chromium } = require("playwright");
-const { captureFailure, browserOptions } = require("./browser-qa-helpers.cjs");
+const { captureFailure, launchBrowser } = require("./browser-qa-helpers.cjs");
 
 async function main() {
   const base = process.argv[2];
   assert.ok(base, "Supply a running isolated Doctor URL");
   const evidence = process.argv[3];
   if (evidence) fs.mkdirSync(evidence, { recursive: true });
-  const browser = await chromium.launch(browserOptions());
+  const browser = await launchBrowser(evidence);
   const observations = [];
   const errors = [];
   const capture = async (page, name, fullPage = false) => {
@@ -147,6 +146,55 @@ async function main() {
     assert.equal(new URL(page.url()).searchParams.get("lang"), "en");
     assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth));
     observations.push("Chinese 390px: real WebGL, full viewport controls, selection/advice, no horizontal overflow; locale reload and reduced motion.");
+    // Controlled HTTP UI contract only: no key and no live provider call.
+    for (const language of ["en", "zh"]) {
+      const wording = (en, zh) => language === "en" ? en : zh;
+      await page.route("**/api/review/ai", route => route.fulfill({ json: { configured: true, provider: "CONTROLLED", model: "UI fixture; no live provider" } }));
+      let mode = "error", release, heldStarted, heldFinished;
+      const started = new Promise(resolve => { heldStarted = resolve; });
+      const finished = new Promise(resolve => { heldFinished = resolve; });
+      await page.route("**/api/review/advice", async route => {
+        const payload = route.request().postDataJSON();
+        assert.deepEqual(Object.keys(payload).sort(), ["finding_id", "language", "review_id", "use_ai"], "AI request sends identifiers and language only, never IFC or geometry");
+        if (!payload.use_ai) return route.continue();
+        if (mode === "error") return route.fulfill({ status: 503, json: { error: "CONTROLLED provider outage" } });
+        if (mode === "held") {
+          heldStarted();
+          await new Promise(resolve => { release = resolve; });
+          try { await route.fulfill({ json: { mode: "ai", summary: "CONTROLLED late answer for old selection", actions: [], verification: [], facts: [], citations: [], limitations: [] } }); }
+          finally { heldFinished(); }
+          return;
+        }
+        return route.fulfill({ json: { mode: "ai", summary: "CONTROLLED AI response; not a live provider", actions: ["CONTROLLED source verification action"], verification: ["CONTROLLED export verification"], facts: [], citations: [{ id: "CONTROLLED", label: "Controlled public UI fixture" }], limitations: ["Controlled response for browser-state verification only"] } });
+      });
+      await page.goto(`${base}/review.html?lang=${language}`);
+      await page.getByRole("button", { name: wording("Load public example", "载入公共示例"), exact: true }).click();
+      await page.locator(".review-status").filter({ hasText: wording("Model loaded", "模型已载入") }).waitFor();
+      await page.locator(".review-advice-summary").waitFor();
+      const generate = page.getByRole("button", { name: wording("Generate AI advice", "生成 AI 建议"), exact: true });
+      await generate.click();
+      await page.locator(".review-inline-error").waitFor();
+      assert.equal(await generate.isEnabled(), true);
+      assert.equal(await page.locator(".review-advice-mode").innerText(), wording("Rule guidance", "规则指导"), "a failed AI request must not claim an AI answer");
+      mode = "success";
+      await page.locator(".review-advice").getByRole("button", { name: wording("Retry", "重试"), exact: true }).click();
+      await page.locator(".review-advice-summary").filter({ hasText: "CONTROLLED AI response" }).waitFor();
+      assert.equal(await page.locator(".review-advice-mode").innerText(), wording("AI advice", "AI 建议"));
+      await page.locator(".review-advice").scrollIntoViewIfNeeded();
+      await capture(page, `review-${language}-controlled-ai`);
+      mode = "held";
+      await generate.click(); await started;
+      assert.equal(await page.getByRole("button", { name: wording("Generating…", "正在生成…"), exact: true }).isEnabled(), false);
+      assert.equal(await page.locator(".review-advice-body").getAttribute("aria-busy"), "true");
+      await page.locator(".review-finding").nth(1).click();
+      await page.locator(".review-advice-summary").waitFor();
+      const currentAdvice = await page.locator(".review-advice-summary").innerText();
+      release(); await finished;
+      assert.equal(await page.locator(".review-advice-summary").innerText(), currentAdvice, "late AI response cannot overwrite a newly selected object's guidance");
+      assert.equal(await page.locator(".review-advice-mode").innerText(), wording("Rule guidance", "规则指导"));
+      await page.unroute("**/api/review/ai"); await page.unroute("**/api/review/advice");
+    }
+    observations.push("CONTROLLED HTTP only, no live AI: zh/en configured label, generating/disabled state, provider error and Retry, explicit AI response label, minimal request fields, and late old-selection response ignored.");
     assert.deepEqual(errors, []);
     if (evidence) fs.writeFileSync(path.join(evidence, "review-browser.json"), JSON.stringify({ observations, errors }, null, 2));
     console.log(JSON.stringify({ passed: true, observations, errors }, null, 2));

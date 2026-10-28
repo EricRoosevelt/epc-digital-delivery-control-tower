@@ -4,8 +4,7 @@
 const assert = require("node:assert/strict");
 const fs = require("node:fs");
 const path = require("node:path");
-const { chromium } = require("playwright");
-const { captureFailure, browserOptions } = require("./browser-qa-helpers.cjs");
+const { captureFailure, launchBrowser } = require("./browser-qa-helpers.cjs");
 
 function publicIFC() {
   const rows = Array.from({ length: 150 }, (_, index) => {
@@ -20,7 +19,7 @@ async function main() {
   const evidence = process.argv[3];
   assert.ok(base);
   if (evidence) fs.mkdirSync(evidence, { recursive: true });
-  const browser = await chromium.launch(browserOptions());
+  const browser = await launchBrowser(evidence);
   const errors = [];
   try {
     const page = await browser.newPage({ viewport: { width: 1440, height: 1000 } });

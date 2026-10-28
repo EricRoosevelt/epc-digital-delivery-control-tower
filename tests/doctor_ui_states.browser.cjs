@@ -3,13 +3,13 @@
 const assert = require("node:assert/strict");
 const path = require("node:path");
 const fs = require("node:fs");
-const { chromium } = require("playwright");
+const { launchBrowser, captureFailure } = require("./browser-qa-helpers.cjs");
 
 async function main() {
   const [base, evidence, synthetic] = process.argv.slice(2);
   assert.ok(base && evidence && synthetic);
   fs.mkdirSync(evidence, { recursive: true });
-  const browser = await chromium.launch({ channel: process.env.BROWSER_CHANNEL || "msedge", headless: true });
+  const browser = await launchBrowser(evidence);
   const facts = [];
   async function shot(page, name) {
     const geometry = await page.evaluate(() => ({ width: innerWidth, height: innerHeight, scroll: scrollY,
@@ -92,6 +92,7 @@ async function main() {
       await page.locator("#workspace-filter").fill("house");
       await page.locator(".c-name a").filter({ hasText: "house fireplace cap" }).click();
       await page.goBack(); await page.locator("#workspace-filter").waitFor();
+      await page.waitForFunction(() => document.activeElement?.matches('.c-name a[aria-current="true"]'));
       assert.equal(await page.locator("#workspace-filter").inputValue(), "house");
       assert.equal(await page.evaluate(() => document.activeElement.textContent), "house fireplace cap");
       await page.locator(".clear-search").click();
@@ -106,6 +107,7 @@ async function main() {
       assert.equal(await page.locator(".ws-list tbody tr:visible").count(), 1);
       await page.locator(".clear-search").click();
       await page.locator(".c-name a").filter({ hasText: "chimney cover" }).click();
+      await page.waitForFunction(() => document.querySelector(".ws-detail h2")?.textContent === "chimney cover");
       if (width > 700) {
         await page.locator("#workspace-filter").fill("house");
         assert.ok(await page.locator(".out-of-filter").isVisible());
@@ -113,6 +115,7 @@ async function main() {
         assert.equal(await page.locator(".ws-list tbody tr:visible").count(), 0);
         await shot(page, prefix + "-outside-filter");
         await page.locator(".ws-back").click();
+        await page.waitForFunction(() => document.activeElement?.id === "workspace-filter");
         assert.equal(await page.evaluate(() => document.activeElement.id), "workspace-filter");
       }
 
@@ -150,7 +153,7 @@ async function main() {
       assert.equal(await page.locator(".ws-list tbody tr:visible").count(), 2);
       await page.close();
     }
-  } finally {
+  } catch (error) { await captureFailure(browser, evidence, error); throw error; } finally {
     await browser.close();
     fs.writeFileSync(path.join(evidence, "states.json"), JSON.stringify(facts, null, 2) + "\n");
   }
