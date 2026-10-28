@@ -4,14 +4,14 @@
 const assert = require("node:assert/strict");
 const fs = require("node:fs");
 const path = require("node:path");
-const { chromium } = require("playwright");
+const { captureFailure, launchBrowser } = require("./browser-qa-helpers.cjs");
 
 async function main() {
   const base = process.argv[2];
   const evidence = process.argv[3];
   assert.ok(base, "Supply an isolated Doctor URL");
   if (evidence) fs.mkdirSync(evidence, { recursive: true });
-  const browser = await chromium.launch({ headless: true, channel: process.env.BROWSER_CHANNEL || "msedge" });
+  const browser = await launchBrowser(evidence);
   const failures = [];
   const observations = [];
   function check(label, test) {
@@ -25,6 +25,8 @@ async function main() {
       const page = await browser.newPage({ viewport: { width: 375, height: 812 } });
       await page.goto(`${base}/?lang=${lang}`);
       await page.locator(".home .primary-action").waitFor();
+      assert.equal(await page.locator(".home .primary-action").getAttribute("href"), `/projects.html?lang=${lang}`, "the primary entry starts the project workflow");
+      assert.equal(await page.locator(".home .primary-action").count(), 1, "historical paths must not compete as primary actions");
       const home = await page.locator(".home .primary-action").evaluate((button) => {
         const r = button.getBoundingClientRect();
         return { top: r.top, bottom: r.bottom, left: r.left, right: r.right, scroll: window.scrollY,
@@ -49,7 +51,7 @@ async function main() {
       check(`${lang} example jump exists`, () => assert.equal(jumpExists, 1));
       await links.first().click();
       const itemHash = new URL(page.url()).hash;
-      await page.locator("main h1").waitFor();
+      await page.locator(".next-step").waitFor();
       const itemTitle = await page.locator("main h1").innerText();
       await page.getByRole("button", { name: lang === "zh" ? "English" : "中文", exact: true }).click();
       await page.waitForURL((url) => url.searchParams.get("lang") === (lang === "zh" ? "en" : "zh"));
@@ -105,6 +107,10 @@ async function main() {
         if (backExists) {
           await page.locator(".ws-back").click();
           await page.locator("#workspace-filter").waitFor();
+          // Desktop detail already contains a visible filter. Wait for the
+          // hash route's actual focus handoff, not for that pre-existing field.
+          await page.waitForFunction(() =>
+            document.activeElement?.matches('.c-name a[aria-current="true"]'));
           const returned = await page.evaluate(() => ({ query: document.querySelector("#workspace-filter").value,
             focus: document.activeElement.textContent, current: document.activeElement.getAttribute("aria-current") }));
           assert.equal(returned.query, "house");
@@ -115,7 +121,8 @@ async function main() {
         await page.close();
       }
     }
-  } finally {
+  } catch (error) { await captureFailure(browser, evidence, error); throw error; }
+  finally {
     await browser.close();
     if (evidence) fs.writeFileSync(path.join(evidence, "observations.json"), JSON.stringify(observations, null, 2) + "\n");
   }

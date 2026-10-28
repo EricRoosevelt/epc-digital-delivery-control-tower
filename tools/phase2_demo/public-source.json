@@ -1,0 +1,19 @@
+{
+  "schema": "bim-doctor-public-geometric-source/v1",
+  "title": "PUBLIC SYNTHETIC editable model — demonstration only",
+  "license": "MIT (original fixture authored in this repository)",
+  "units": "metres",
+  "revision_description": {
+    "before": "Baseline generated from this public editable source",
+    "after": "Source parameter changes: A passes, B remains, C newly fails, D is removed, E changes class"
+  },
+  "elements": [
+    {"id":"floor", "name":"PUBLIC SYNTHETIC · floor", "class":"IfcSlab", "type":"FLOOR", "position":[0,0,0], "size":[12,8,0.2]},
+    {"id":"duct", "name":"PUBLIC SYNTHETIC · main duct", "class":"IfcDuctSegment", "type":"RIGIDSEGMENT", "position":[0,1,2.0], "size":[10,0.4,0.35]},
+    {"id":"terminal-a", "name":"PUBLIC SYNTHETIC · terminal A · recheck passes", "class":"IfcAirTerminal", "before_type":"NOTDEFINED", "after_type":"DIFFUSER", "position":[-4,0,2.4], "size":[0.9,0.7,0.18]},
+    {"id":"terminal-b", "name":"PUBLIC SYNTHETIC · terminal B · still needs review", "class":"IfcAirTerminal", "before_type":"NOTDEFINED", "after_type":"NOTDEFINED", "position":[-2,0,2.4], "size":[0.9,0.7,0.18]},
+    {"id":"terminal-c", "name":"PUBLIC SYNTHETIC · terminal C · new failed check", "class":"IfcAirTerminal", "before_type":"DIFFUSER", "after_type":"NOTDEFINED", "position":[0,0,2.4], "size":[0.9,0.7,0.18]},
+    {"id":"terminal-d", "name":"PUBLIC SYNTHETIC · terminal D · removed in R2", "class":"IfcAirTerminal", "before_type":"NOTDEFINED", "after_type":"NOTDEFINED", "removed_after":true, "position":[2,0,2.4], "size":[0.9,0.7,0.18]},
+    {"id":"terminal-e", "name":"PUBLIC SYNTHETIC · terminal E · class changes in R2", "class":"IfcAirTerminal", "after_class":"IfcBuildingElementProxy", "before_type":"NOTDEFINED", "after_type":"NOTDEFINED", "position":[4,0,2.4], "size":[0.9,0.7,0.18]}
+  ]
+}

@@ -1,0 +1,32 @@
+{
+  "synthetic": true,
+  "project_id": "project-1de86f183e764c82be629bd6513994bb",
+  "model_id": "model-63b6b6c2c02348988a86fab01e1e9cc7",
+  "before_revision": "revision-eee62cb65e8545a3969552a159e80eed",
+  "after_revision": "revision-f21a3319fada4d1fb76ee7904b96040a",
+  "summary": {
+    "resolved": 1,
+    "remaining": 5,
+    "new": 3,
+    "missing": 2,
+    "not_applicable": 0,
+    "not_comparable": 4,
+    "errors": {
+      "resolved": 1,
+      "remaining": 1,
+      "new": 2,
+      "missing": 1,
+      "not_applicable": 0,
+      "not_comparable": 2
+    },
+    "information": {
+      "resolved": 0,
+      "remaining": 4,
+      "new": 1,
+      "missing": 1,
+      "not_applicable": 0,
+      "not_comparable": 2
+    }
+  },
+  "url": "http://127.0.0.1:8774/projects.html?lang=en&project=project-1de86f183e764c82be629bd6513994bb&before=revision-eee62cb65e8545a3969552a159e80eed&after=revision-f21a3319fada4d1fb76ee7904b96040a"
+}

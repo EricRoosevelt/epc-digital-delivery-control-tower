@@ -1,0 +1,7 @@
+{
+  "observations": [
+    "English desktop: real demo, list selection, picking, focus, isolate/reset, all extents, INFO semantics, local search/clear, no geometry, model filtering, failed-load preservation/retry, raw HVAC and information-only Architecture IFC import.",
+    "Chinese 390px: real WebGL, full viewport controls, selection/advice, no horizontal overflow; locale reload and reduced motion."
+  ],
+  "errors": []
+}
