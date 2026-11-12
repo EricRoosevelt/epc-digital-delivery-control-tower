@@ -8,6 +8,8 @@ preview server, private model, external NODE_PATH or user database is reused.
 from __future__ import annotations
 
 import argparse
+from collections import Counter
+import contextlib
 import json
 import os
 from pathlib import Path
@@ -15,6 +17,8 @@ import shutil
 import subprocess
 import sys
 import tempfile
+import threading
+import time
 
 from phase2_smoke import server
 
@@ -28,17 +32,69 @@ EXTENDED_SCRIPTS = (
     "doctor_startup", "doctor_mobile_search", "doctor_ui_states",
     "doctor_ui_resilience", "doctor_ui_layout",
 )
-# A Windows socket error (WSAENOBUFS) raised inside Chromium's network stack. No
-# application route or test fault produces it; it was observed once on a hosted
-# Windows runner, failing one module load. Only this error earns one rerun, and
-# the failed attempt's evidence is kept beside the rerun.
-HOST_SOCKET_ERRORS = ("net::ERR_NO_BUFFER_SPACE",)
+# Errors Chromium's network stack raises from the host, even for 127.0.0.1: a
+# Windows socket error (WSAENOBUFS, seen on hosted Windows runners) and an OS
+# network-change notification (seen on a developer machine). No application route
+# and no test fault produces them; tests inject only reset/disconnected errors.
+HOST_NETWORK_ERRORS = ("net::ERR_NO_BUFFER_SPACE", "net::ERR_NETWORK_CHANGED")
+HOST_NETWORK_COMMANDS = (
+    ("netsh", "int", "ipv4", "show", "dynamicport", "tcp"),
+    ("netsh", "int", "ipv4", "show", "excludedportrange", "protocol=tcp"),
+)
 
 
-def host_socket_error(evidence):
+@contextlib.contextmanager
+def socket_states(output):
+    """On Windows, record the port configuration and TCP state counts every two seconds."""
+
+    if os.name != "nt":
+        yield
+        return
+
+    def text(args):
+        # Console tools write UTF-8 or the OEM code page; only ASCII fields are parsed.
+        output = subprocess.run(args, capture_output=True, timeout=30).stdout
+        try:
+            return output.decode("utf-8")
+        except UnicodeDecodeError:
+            return output.decode("oem", errors="replace")
+
+    with (output / "host-network.txt").open("w", encoding="utf-8") as stream:
+        for args in HOST_NETWORK_COMMANDS:
+            try:
+                stream.write("$ " + " ".join(args) + "\n" + text(args))
+            except (OSError, subprocess.SubprocessError) as error:
+                stream.write(f"unavailable: {error}\n")
+    stop = threading.Event()
+
+    def sample():
+        start = time.monotonic()
+        with (output / "socket-states.jsonl").open("w", encoding="utf-8") as stream:
+            while not stop.wait(2):
+                try:
+                    lines = text(["netstat", "-an", "-p", "tcp"]).splitlines()
+                except (OSError, subprocess.SubprocessError) as error:
+                    stream.write(json.dumps({"error": str(error)}) + "\n")
+                    continue
+                states = Counter(line.split()[-1] for line in lines
+                                 if line.strip().startswith("TCP") and len(line.split()) >= 4)
+                row = {"s": round(time.monotonic() - start), **states}
+                stream.write(json.dumps(row) + "\n")
+                stream.flush()
+
+    thread = threading.Thread(target=sample, daemon=True)
+    thread.start()
+    try:
+        yield
+    finally:
+        stop.set()
+        thread.join(40)
+
+
+def host_network_error(evidence):
     for path in sorted(evidence.rglob("*.jsonl")):
         text = path.read_text(encoding="utf-8", errors="replace")
-        for error in HOST_SOCKET_ERRORS:
+        for error in HOST_NETWORK_ERRORS:
             if error in text:
                 return error
     return None
@@ -92,20 +148,29 @@ def run_scripts(checkout, directory, names):
                     raise RuntimeError("Public long-field fixture export failed")
                 args.append(str(synthetic))
             status = command(args, evidence, env=env)
-            result = {"script": name, "exit_code": status}
-            error = host_socket_error(evidence) if status else None
-            if error:
-                first = evidence.with_name(name + "-host-socket-error")
-                evidence.rename(first)
-                print(f"{name}: {error} on the host; first attempt kept in "
-                      f"{first.name}, rerunning once", flush=True)
-                status = command(args, evidence, env=env)
-                result = {"script": name, "exit_code": status, "host_socket_retry": {
-                    "error": error, "first_exit_code": result["exit_code"],
-                    "first_evidence": first.name,
-                }}
-            results.append(result)
+            results.append({"script": name, "exit_code": status})
     return results
+
+
+def run_with_host_retry(checkout, output, names):
+    """Run the set; rerun all of it once only if every failure was a host network error.
+
+    Later suites read state earlier ones create, so a rerun is the whole set on a new
+    server and state. The first attempt's evidence stays in ``baseline``.
+    """
+
+    baseline = output / "baseline"
+    scripts = run_scripts(checkout, baseline, names)
+    failures = [
+        {"script": item["script"], "error": host_network_error(baseline / item["script"])}
+        for item in scripts if item["exit_code"]
+    ]
+    if not failures or not all(item["error"] for item in failures):
+        return scripts, None
+    print("Host network error in " + ", ".join(item["script"] for item in failures)
+          + "; rerunning the browser set once with fresh state", flush=True)
+    rerun = run_scripts(checkout, output / "host-network-rerun", names)
+    return rerun, {"first_failures": failures, "rerun_evidence": "host-network-rerun"}
 
 
 def mutation_copy(destination):
@@ -176,7 +241,10 @@ def main():
     }
     try:
         names = SCRIPTS + EXTENDED_SCRIPTS if args.extended else SCRIPTS
-        result["scripts"] = run_scripts(ROOT, output / "baseline", names)
+        with socket_states(output):
+            result["scripts"], retry = run_with_host_retry(ROOT, output, names)
+        if retry:
+            result["host_network_retry"] = retry
         if any(item["exit_code"] for item in result["scripts"]):
             raise RuntimeError(
                 "A browser regression failed; inspect its process.log and screenshot",
