@@ -2,14 +2,14 @@
 
 **Bring project rules, review a declared delivery purpose, and trace what changed.**
 
-[中文](README.zh-CN.md) · [Candidate demo and exact-commit evidence](docs/evidence/phase2-candidate/README.md) · [Quick start](#quick-start) · [Windows / Ubuntu CI](https://github.com/EricRoosevelt/epc-digital-delivery-control-tower/actions/workflows/ci.yml?query=branch%3Afeat%2Fdoctor-product-phase1)
+[中文](README.zh-CN.md) · [Demo and exact-commit evidence](docs/evidence/phase2-candidate/README.md) · [Quick start](#quick-start) · [Windows / Ubuntu CI](https://github.com/EricRoosevelt/epc-digital-delivery-control-tower/actions/workflows/ci.yml?query=branch%3Amain)
 
 BIM Doctor is a personal open-source application for engineers and BIM
 coordinators reviewing IFC model exchanges. It runs in a local browser and keeps
 project records on that computer. A rule result and a person's engineering
 acceptance remain separate decisions.
 
-## What this candidate does
+## What it does
 
 - **Bring and adopt project rules:** import one ZIP containing native TOML rules
   and a purpose manifest. Inspect source, version, applicability, requirements
@@ -56,17 +56,14 @@ actual counterpart model. [Format and workflow](docs/product/enterprise-purpose.
 ## Quick start
 
 Use **Python 3.14**, **Git** and a browser with WebGL2, ES modules and import maps.
-Windows and Ubuntu are the candidate CI platforms. Node.js, Revit and an OpenAI
+Windows and Ubuntu are the CI-verified platforms. Node.js, Revit and an OpenAI
 account are not required to run the application. Keep the complete source checkout:
 the framework wheel alone does not contain the browser application and assets.
-
-The candidate is on `feat/doctor-product-phase1`; cloning the default branch may
-still give the earlier product until the candidate PR is merged.
 
 **Windows PowerShell**
 
 ```powershell
-git clone -c core.longpaths=true --branch feat/doctor-product-phase1 https://github.com/EricRoosevelt/epc-digital-delivery-control-tower.git
+git clone -c core.longpaths=true https://github.com/EricRoosevelt/epc-digital-delivery-control-tower.git
 cd epc-digital-delivery-control-tower
 py -3.14 -m venv .venv
 .\.venv\Scripts\python.exe -m pip install -e .
@@ -77,7 +74,7 @@ $doctorState = Join-Path $env:LOCALAPPDATA 'BIMDoctor\phase2-rc1'
 **Ubuntu / Bash**
 
 ```bash
-git clone --branch feat/doctor-product-phase1 https://github.com/EricRoosevelt/epc-digital-delivery-control-tower.git
+git clone https://github.com/EricRoosevelt/epc-digital-delivery-control-tower.git
 cd epc-digital-delivery-control-tower
 python3.14 -m venv .venv
 .venv/bin/python -m pip install -e .
@@ -97,19 +94,20 @@ If the port is occupied, use `--port 8770` and change the browser URL accordingl
 
 ## Reproduce this version and its demonstration
 
-Run `git rev-parse HEAD` and compare it with `source_sha` in the candidate CI
-artifact manifests. For an immutable rerun, use `git checkout <source_sha>` before
+Run `git rev-parse HEAD` and compare it with `source_sha` in the CI artifact
+manifests. For an immutable rerun, use `git checkout <source_sha>` before
 installation. Both Windows and Ubuntu jobs run the full checks and a clean
 installation/save/restart/restore workflow. Their commit-named artifacts contain
 machine results, the current demonstration and its screenshots/checksums.
 
-[Candidate evidence and recording commands](docs/evidence/phase2-candidate/README.md)
+[Evidence and recording commands](docs/evidence/phase2-candidate/README.md)
 explain how to download or regenerate those files. CI results count only when
-their head SHA matches the candidate; old green runs do not certify this branch.
+their head SHA matches the commit you evaluate; green runs on other commits do
+not certify it.
 
 ## Current limits
 
-This is a local candidate, with no authenticated team assignment, notifications,
+This is a local single-user application, with no authenticated team assignment, notifications,
 automatic source-model editing or project acceptance decision. Cross-revision
 pairing currently supports a single IFC file per logical model; public federated
 examples can be saved/reopened but are not paired across revisions.
@@ -130,16 +128,17 @@ Geometry request/JSON failures keep in-place retry. The original cold failure ha
 insufficient evidence to prove it had the same cause.
 [Measured scope and qualifications](docs/handoffs/model-case.md).
 Live OpenAI advice requires the user's own configured account and was not a
-prerequisite for the candidate's offline checks or demonstration.
+prerequisite for the offline checks or demonstration.
 
 ## Earlier work and engineering reference
 
 The [October 13 English recording](docs/evidence/doctor-resume-ui-en-2026-10-13/doctor-live-en.webm)
 and [earlier case study](https://app.notion.com/p/3be1cb002005801b8d5dd536615d46f9)
 show the previous simulated-handover experience. They remain historical material,
-not evidence of the Phase 2 candidate or a source-model repair.
+not evidence of v2.0.0 or a source-model repair.
 
-- [Engineering reference](docs/engineering-reference.md) and [candidate decisions](docs/product/phase2-candidate.md).
+- [Engineering reference](docs/engineering-reference.md) and [Phase 2 design decisions](docs/product/phase2-candidate.md).
+- [Changelog](CHANGELOG.md) and [v2.0.0 release notes](docs/releases/v2.0.0.md).
 - [Rule definitions](rules/product-validation/README.md), [rule parity](docs/handoffs/rule-parity.md) and [data formats](docs/data_contract.md).
 - [Earlier Power BI / Speckle work](dashboard/README.md).
 

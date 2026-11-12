@@ -2,12 +2,12 @@
 
 **带入项目规则，审查明确的交付用途，再沿证据复检变化。**
 
-[English](README.md) · [当前候选演示与同提交证据](docs/evidence/phase2-candidate/README.md) · [快速开始](#快速开始) · [Windows／Ubuntu CI](https://github.com/EricRoosevelt/epc-digital-delivery-control-tower/actions/workflows/ci.yml?query=branch%3Afeat%2Fdoctor-product-phase1)
+[English](README.md) · [演示与同提交证据](docs/evidence/phase2-candidate/README.md) · [快速开始](#快速开始) · [Windows／Ubuntu CI](https://github.com/EricRoosevelt/epc-digital-delivery-control-tower/actions/workflows/ci.yml?query=branch%3Amain)
 
 BIM Doctor 是面向工程师和 BIM 协调人员的个人开源应用，在本机浏览器中查看 IFC
 模型和检查证据。项目记录留在本机；规则结果与真人工程判断、项目接纳分别处理。
 
-## 这个候选版本能做什么
+## 能做什么
 
 - **带入并管理规则。** 导入含原生 TOML 规则和用途清单的 ZIP，先看来源、版本、
   适用对象、检查要求和不支持部分，再明确采用为项目内不可变版本。
@@ -40,15 +40,13 @@ PV-001 与旧框架共享规则定义和 IfcTester 判断；名称、楼层属�
 ## 快速开始
 
 使用 **Python 3.14、Git，以及支持 WebGL2、ES modules 和 import maps 的浏览器**。
-候选 CI 平台为 Windows 和 Ubuntu。运行应用无需 Node.js、Revit 或 OpenAI 账户。
+CI 验证平台为 Windows 和 Ubuntu。运行应用无需 Node.js、Revit 或 OpenAI 账户。
 必须保留完整源码检出；现有框架 wheel 不包含整个网页应用和配套资源。
-
-候选代码位于 `feat/doctor-product-phase1`；候选 PR 合并前，默认主线克隆可能仍是旧阶段。
 
 **Windows PowerShell**
 
 ```powershell
-git clone -c core.longpaths=true --branch feat/doctor-product-phase1 https://github.com/EricRoosevelt/epc-digital-delivery-control-tower.git
+git clone -c core.longpaths=true https://github.com/EricRoosevelt/epc-digital-delivery-control-tower.git
 cd epc-digital-delivery-control-tower
 py -3.14 -m venv .venv
 .\.venv\Scripts\python.exe -m pip install -e .
@@ -59,7 +57,7 @@ $doctorState = Join-Path $env:LOCALAPPDATA 'BIMDoctor\phase2-rc1'
 **Ubuntu／Bash**
 
 ```bash
-git clone --branch feat/doctor-product-phase1 https://github.com/EricRoosevelt/epc-digital-delivery-control-tower.git
+git clone https://github.com/EricRoosevelt/epc-digital-delivery-control-tower.git
 cd epc-digital-delivery-control-tower
 python3.14 -m venv .venv
 .venv/bin/python -m pip install -e .
@@ -77,16 +75,16 @@ python3.14 -m venv .venv
 
 ## 复现同一版本与演示
 
-运行 `git rev-parse HEAD`，应与候选 CI 附件清单中的 `source_sha` 完全相同。
+运行 `git rev-parse HEAD`，应与 CI 附件清单中的 `source_sha` 完全相同。
 固定复现时，先 `git checkout <source_sha>`，再安装。Windows 和 Ubuntu 都运行完整检查，
 并从新环境验证安装、保存、停止服务及重开。同提交命名的附件包含机器结果、新演示、截图和校验值。
 
-[当前候选证据与录制命令](docs/evidence/phase2-candidate/README.md)说明如何下载或重新生成。
-只有 HEAD 相同的 CI 才能证明这个候选；此前旧提交上的绿色结果不作为新版证据。
+[证据与录制命令](docs/evidence/phase2-candidate/README.md)说明如何下载或重新生成。
+只有 HEAD 相同的 CI 才能证明该提交；其他提交上的绿色结果不作为证据。
 
 ## 当前边界
 
-这是本机候选版本，尚无经过身份认证的团队派单、通知、自动修改源模型或项目接纳决定。
+这是本机单用户应用，尚无经过身份认证的团队派单、通知、自动修改源模型或项目接纳决定。
 跨修订配对目前要求一个模型槽对应单个 IFC；公共联邦示例可保存重开，但不跨版本配对。
 
 导入在独立进程中执行，显示真实阶段和处理数量；取消等待服务端确认进程退出。
@@ -99,15 +97,16 @@ python3.14 -m venv .venv
 补上独立启动恢复提示及保留记录地址的重新载入入口；几何请求／JSON 失败仍可原位重试。
 早期冷加载异常缺少完整证据，不能断言与本轮故障同因。
 [实测范围及限定](docs/handoffs/model-case.md)。OpenAI 建议需要用户自行配置账户，
-候选的离线检查和演示不以真实 API 调用为前提。
+离线检查和演示不以真实 API 调用为前提。
 
 ## 历史素材与开发参考
 
 [10 月 13 日中文录像](docs/evidence/doctor-resume-ui-2026-10-13/doctor-live.webm)
 和[早期案例](https://app.notion.com/p/3f81cb00200581f2aad8dd078f9d5fa9)展示之前的模拟交接体验，
-保留作历史材料，不作为 Phase 2 候选或源模型修正的证明。
+保留作历史材料，不作为 v2.0.0 或源模型修正的证明。
 
-- [开发参考](docs/engineering-reference.md)与[候选版本约定](docs/product/phase2-candidate.md)。
+- [开发参考](docs/engineering-reference.md)与 [Phase 2 设计约定](docs/product/phase2-candidate.md)。
+- [更新日志](CHANGELOG.md)与 [v2.0.0 发布说明](docs/releases/v2.0.0.md)。
 - [规则定义](rules/product-validation/README.md)、[一致性保障](docs/handoffs/rule-parity.md)和[数据格式](docs/data_contract.md)。
 - [早期 Power BI／Speckle 工作](dashboard/README.md)。
 

@@ -1,4 +1,4 @@
-# Phase 2 candidate demonstration
+# Phase 2 demonstration
 
 The current demonstration is generated from the **same source commit** as the
 clean-install checks. Download the `candidate-<40-character-SHA>-<Runner-OS>`
@@ -8,7 +8,7 @@ and a SHA-256 hash for every media file. Check that `source_sha` equals the
 commit you intend to evaluate. A successful recording has
 `status: "candidate-captured"` and `source_tree_verified: true`.
 
-Find the run in the [candidate branch's CI history](https://github.com/EricRoosevelt/epc-digital-delivery-control-tower/actions/workflows/ci.yml?query=branch%3Afeat%2Fdoctor-product-phase1),
+Find the run in the [CI history on `main`](https://github.com/EricRoosevelt/epc-digital-delivery-control-tower/actions/workflows/ci.yml?query=branch%3Amain),
 then verify its head SHA before downloading. Artifacts are retained for **90
 days**, and GitHub may require sign-in to download them. After expiry, regenerate
 from the same public source SHA using the commands below; no existing project
@@ -16,7 +16,7 @@ database or private model is needed.
 
 Videos and screenshots are artifact outputs, **not committed back into source**.
 This avoids changing the source SHA merely to add its own recording. Earlier
-October 13 videos are historical material and do not demonstrate this candidate's
+October 13 videos are historical material and do not demonstrate this version's
 project persistence or revision comparison.
 
 ## What the recording shows
@@ -48,7 +48,7 @@ change machine check results. No AI provider key is used: the product demonstrat
 ## Reproduce from an exact commit
 
 Install the Python dependencies using the repository's clean-install instructions,
-and use Node.js 20 or later. From the checked-out candidate commit:
+and use Node.js 20 or later. From the checked-out commit:
 
 ```sh
 npm ci

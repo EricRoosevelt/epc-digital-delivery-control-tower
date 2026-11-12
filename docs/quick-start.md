@@ -1,15 +1,15 @@
-# Phase 2 candidate quick start / 快速开始
+# BIM Doctor quick start / 快速开始
 
 [English overview](../README.md) · [中文介绍](../README.zh-CN.md) · [Exact-commit CI and demonstration](evidence/phase2-candidate/README.md)
 
-## Install the complete candidate checkout
+## Install the complete checkout
 
 Follow the Windows or Ubuntu commands in the [README](../README.md#quick-start).
 Use Python **3.14** with venv/pip, Git and a modern **WebGL2** browser. The native
-IfcOpenShell dependency does not support Python 3.15. Candidate CI verifies
-Windows and Ubuntu; macOS is not a certified candidate platform.
+IfcOpenShell dependency does not support Python 3.15. CI verifies
+Windows and Ubuntu; macOS is not a verified platform.
 
-Clone `feat/doctor-product-phase1` while the candidate PR is unmerged. For an
+Clone the default branch (`main`). For an
 immutable reproduction, compare `git rev-parse HEAD` with `source_sha` in the CI
 artifact manifest and check out that SHA. Keep the complete repository: the
 framework wheel is not a standalone installer for the Doctor application.
@@ -86,11 +86,11 @@ Rule guidance works without an account. Optional generated advice needs the
 user's own `OPENAI_API_KEY` in the server environment; see [setup](../doctor/README.md#openai-setup).
 Keep secrets out of the repository and browser. Selected finding text can be
 sent; IFC and meshes are not sent by this action. A configured key does not prove
-a live call or engineering correctness. Candidate CI uses no provider secret.
+a live call or engineering correctness. CI uses no provider secret.
 
 ## Verify a new environment
 
-From the candidate checkout, using Python 3.14:
+From the checkout, using Python 3.14:
 
 ```bash
 python3.14 tools/verify_clean_install.py --source . --output ../phase2-clean-check
@@ -102,7 +102,7 @@ a **new output directory outside any checkout**. The supervisor clones the exact
 commit, creates another venv, installs it and tests the real server, persistence,
 comparison and process restart. It does not copy dirty application files or
 reuse an existing database. Read `evidence/clean-install.json`,
-`evidence/smoke.json` and the logs; compare their source SHA with the candidate.
+`evidence/smoke.json` and the logs; compare their source SHA with the commit you evaluate.
 Both OS results are available in the same-SHA CI artifact.
 
 Browser recording additionally needs pinned Node.js/Playwright QA tooling, not
@@ -133,11 +133,11 @@ an application dependency. [Recording commands](evidence/phase2-candidate/README
   completed imports retain at most four temporary results / 256 MiB.
 - The [October 13 recording](evidence/doctor-resume-ui-en-2026-10-13/doctor-live-en.webm)
   and [earlier phase evidence](evidence/product-phase2/README.md) are historical.
-  Use the current SHA-bound CI artifacts for candidate acceptance.
+  Use the SHA-bound CI artifacts of the commit you evaluate.
 
 ## 中文操作指南
 
-按[中文 README](../README.zh-CN.md#快速开始)克隆候选分支，建立 Python 3.14 环境，
+按[中文 README](../README.zh-CN.md#快速开始)克隆默认分支，建立 Python 3.14 环境，
 安装完整源码并指定仓库外的 `--checks-dir`。普通运行无需 Revit、Node 或 AI 账户。
 固定复现时，把 `git rev-parse HEAD` 与 CI 附件里的 `source_sha` 对齐。
 
