@@ -28,6 +28,20 @@ EXTENDED_SCRIPTS = (
     "doctor_startup", "doctor_mobile_search", "doctor_ui_states",
     "doctor_ui_resilience", "doctor_ui_layout",
 )
+# A Windows socket error (WSAENOBUFS) raised inside Chromium's network stack. No
+# application route or test fault produces it; it was observed once on a hosted
+# Windows runner, failing one module load. Only this error earns one rerun, and
+# the failed attempt's evidence is kept beside the rerun.
+HOST_SOCKET_ERRORS = ("net::ERR_NO_BUFFER_SPACE",)
+
+
+def host_socket_error(evidence):
+    for path in sorted(evidence.rglob("*.jsonl")):
+        text = path.read_text(encoding="utf-8", errors="replace")
+        for error in HOST_SOCKET_ERRORS:
+            if error in text:
+                return error
+    return None
 
 
 def command(args, directory, *, env=None, cwd=ROOT):
@@ -78,7 +92,19 @@ def run_scripts(checkout, directory, names):
                     raise RuntimeError("Public long-field fixture export failed")
                 args.append(str(synthetic))
             status = command(args, evidence, env=env)
-            results.append({"script": name, "exit_code": status})
+            result = {"script": name, "exit_code": status}
+            error = host_socket_error(evidence) if status else None
+            if error:
+                first = evidence.with_name(name + "-host-socket-error")
+                evidence.rename(first)
+                print(f"{name}: {error} on the host; first attempt kept in "
+                      f"{first.name}, rerunning once", flush=True)
+                status = command(args, evidence, env=env)
+                result = {"script": name, "exit_code": status, "host_socket_retry": {
+                    "error": error, "first_exit_code": result["exit_code"],
+                    "first_evidence": first.name,
+                }}
+            results.append(result)
     return results
 
 
