@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "epc-digital-delivery-control-tower"
-version = "1.0.0"
+version = "2.0.0"
 description = "Turn IFC model data and project-authored information requirements into traceable digital-delivery findings"
 readme = "README.md"
 license = "MIT"

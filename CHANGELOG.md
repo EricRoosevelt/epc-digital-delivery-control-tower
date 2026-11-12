@@ -15,7 +15,70 @@ epc-ct snapshot --refresh --contract-changed
 The refresh refuses to run until this file describes the version, so the record
 of what moved exists before the expectation that says it did.
 
-## Unreleased
+## v2.0.0 — BIM Doctor: enterprise rules and purpose review
+
+Changes since v1.0.0 (2026-08-16), which shipped the deterministic IDS → BCF →
+Power BI pipeline. v2.0.0 keeps that pipeline and adds BIM Doctor, a local
+browser application. Release notes:
+[`docs/releases/v2.0.0.md`](docs/releases/v2.0.0.md).
+
+### Added
+
+- **Project → project rules → model revision → purpose review.** Import one ZIP
+  of native TOML rules and a purpose manifest, inspect source, version,
+  applicability, requirements and unsupported parts, then adopt it as an
+  immutable project version with a named confirmer and reviewer/team. Saving a
+  single-IFC revision can retain its exact original (off by default), so the
+  purpose review opens without a second upload.
+- **Purpose conclusions keep unknowns and coverage visible.** Missing coverage,
+  unsupported checks, absent evidence and an empty scope are UNKNOWN; READY is
+  qualified to the listed purpose, evidence, version and scope. A purpose that
+  requires a counterpart model needs a real counterpart revision.
+- **3D locate, focus and isolate** on actual tessellated IFC geometry, for the
+  bundled buildingSMART sample or one IFC of up to 50 MB. Blockers link to the
+  rule and the exact element in the saved 3D revision.
+- **Saved revisions and comparison.** Reports, rule snapshots and geometry are
+  kept in a local SQLite library and reopen after a restart. Comparison separates
+  passed rechecks, remaining and new findings, missing elements, checks no longer
+  applicable and unavailable comparisons. Owner/status/note follow-up and a
+  Markdown work brief.
+- **Rechecks attribute the change** to the source model, rules/configuration,
+  scope, engine or new human evidence. Deletion, reclassification, exclusion or a
+  changed rule basis is never counted as a repair. Human evidence needs a method,
+  recorder, reference and basis; progress notes do not count.
+- **Cancellable, recoverable long-running work.** Imports and enterprise checks
+  run in a supervised worker with stage progress, confirmed cancellation, 30-second
+  browser requests, resumable status polling and a 600-second default deadline
+  (`--import-timeout-seconds`). Geometry failures retry in place; a failed viewer
+  module or startup dependency offers a reload that keeps the record URL.
+- **Local guidance and optional AI advice.** Rule guidance needs no key. Optional
+  OpenAI advice uses the user's own key and sends only the selected result's text
+  evidence, never IFC bytes or meshes.
+- Chinese and English interface.
+
+### Changed
+
+- The published data contract is **1.7** (rule set 2.2). Canonical finding and
+  issue keys differ from earlier contract versions; legacy projections keep their
+  identities. The steps are recorded under *Data contract record* below.
+- The PV-001 runtime predicate is v2 and shares the pipeline's rule definition
+  and IfcTester predicate. Comparing against a v1 result reports a changed rule
+  basis.
+- Package version 2.0.0.
+
+### Known limitations
+
+- On one authorized real model (2,055 meshes, 1,073,546 triangles) two uncached
+  native imports took 167.99 s and 166.86 s to worker completion; under the earlier
+  synchronous API the same case took 179.5 s from upload to a usable UI
+  ([measured case](docs/handoffs/model-case.md)). Not a capacity guarantee.
+- Cross-revision pairing supports one IFC per model slot. Excel, Word and PDF are
+  not rule inputs. Single user on one computer: no authenticated assignment,
+  notifications, automatic model editing or project acceptance decision.
+
+## Data contract record
+
+Newest first. Contract 1.7 is the contract shipped in v2.0.0.
 
 ### Data contract 1.7 — the rule set's digest covers what each rule checks
 
