@@ -56,9 +56,10 @@ admitted as the browser 3D runtime for the Doctor preview.
 Copyright © 2010-2026 three.js authors. Licensed under the MIT License, whose
 text is retained verbatim in `third_party/three/0.186.1/LICENSE`.
 
-No three.js code is redistributed yet. When it is, only the three files listed
-in `third_party/three/0.186.1/provenance.json` are copied, unmodified, into that
-directory, and each is checked against the SHA-256 recorded there.
+The three runtime files listed in `third_party/three/0.186.1/provenance.json`
+are redistributed unmodified in that directory. The tarball and every copied
+file were checked against their recorded SHA-256 values. The local server serves
+these modules; the browser does not fetch a CDN copy.
 
 ## buildingSMART Sample IFC Files
 

@@ -32,7 +32,7 @@ import {
 } from "./dom.js";
 import { basisOf, firstCheckItem, firstCheckModel, leafOf, recordCitations } from "./first-check-model.js";
 import { handoverSide, recheckModel, sealedGroupIndex } from "./recheck-model.js";
-import { compose, fill, plural } from "./i18n.js";
+import { compose, fill, plural, LANG } from "./i18n.js";
 import { workspaceCheck, workspaceCompare, workspaceRefusal } from "./workspace-screens.js";
 import {
   ACTION,
@@ -447,12 +447,11 @@ function entry(workspace = { runs: [] }, local = null) {
       h("button", { type: "button", onclick: open(mode, runId) }, words.action),
     );
   const workspaceRun = carries(workspace, "runs") && workspace.runs.length ? workspace.runs[0] : null;
-  const said = local ? local.words : HOME;
   return h(
     "div",
     { class: "home" },
-    h("h1", {}, HOME.title),
-    h("p", { class: "lede" }, HOME.lede),
+    h("h1", {}, UI.startTitle),
+    h("p", { class: "lede" }, UI.startBody),
     h(
       "section",
       { class: "block" },
@@ -464,10 +463,12 @@ function entry(workspace = { runs: [] }, local = null) {
         "article",
         { class: "entry-card primary" },
         h("p", { class: "kicker" }, HOME.recommended),
-        h("h3", {}, HOME.example.title),
-        h("button", { type: "button", class: "primary-action", onclick: open("fixture") }, HOME.example.action),
-        h("p", {}, HOME.example.body),
-      ), local ? local.card : null),
+        h("h3", {}, UI.projects),
+        h("a", { class: "primary-action", href: `/projects.html?lang=${LANG}` }, UI.startAction),
+        h("p", { class: "home-workflow" }, UI.workflow),
+      )),
+      h("h2", {}, UI.legacy), h("p", { class: "sub" }, UI.legacyBody),
+      h("div", { class: "entry-grid" }, h("article", { class: "entry-card" }, h("h3", {}, UI.review), h("a", { href: `/review.html?lang=${LANG}` }, UI.reviewAction), h("p", {}, UI.reviewBody)), card("fixture", HOME.example), local ? local.card : null),
       workspaceRun
         ? h(
             "div",
@@ -494,15 +495,8 @@ function entry(workspace = { runs: [] }, local = null) {
       h(
         "p",
         { class: "home-status", role: "note" },
-        workspaceRun
-          ? said.statusWithWorkspace
-          : carries(workspace, "error")
-            ? said.statusWorkspaceUnknown
-            : said.status,
+        UI.currentScope,
       ),
-      h("h2", {}, HOME.cannotHeading),
-      h("ul", {}, said.cannot.map((text) => h("li", {}, text))),
-      note(HOME.cannotNote),
     ),
   );
 }

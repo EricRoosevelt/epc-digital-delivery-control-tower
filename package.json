@@ -1,0 +1,12 @@
+{
+  "name": "bim-doctor-candidate-qa",
+  "private": true,
+  "version": "0.0.0",
+  "description": "Development-only reproducible browser QA and candidate demonstration capture",
+  "scripts": {
+    "capture:phase2": "node tools/phase2_demo/capture.cjs"
+  },
+  "devDependencies": {
+    "playwright": "1.62.1"
+  }
+}

@@ -11,7 +11,7 @@ know about the other.
 
 __all__ = ["CONTRACT_VERSION", "__version__"]
 
-__version__ = "1.0.0"
+__version__ = "2.0.0"
 
 # Version of the published data contract (CSV/JSON column shapes and their
 # semantics). Bumping this is a deliberate, reviewable act: it requires a

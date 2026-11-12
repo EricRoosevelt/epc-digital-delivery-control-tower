@@ -1,4 +1,199 @@
-# BIM Doctor — D1 internal preview
+# BIM Doctor — local model review
+
+## 3D review workspace
+
+Start the server from the repository root and open the workspace:
+
+```powershell
+.\.venv\Scripts\python.exe doctor/serve.py
+# English: http://127.0.0.1:8765/review.html?lang=en
+# 中文:   http://127.0.0.1:8765/review.html?lang=zh
+```
+
+Load the public buildingSMART example or import one `.ifc` file (up to 50 MB).
+Select a result to highlight its exact element, focus or isolate it, and inspect
+the rule, observed value and next steps. You can also click a visible element and
+read its checks. Models are positioned using IFC world coordinates in metres;
+no geometry is invented for objects without a representation. Missing geometry
+does not erase an element's check results.
+
+IFC imports run as worker jobs with real stage and processed-element progress.
+Cancel keeps the current report and 3D view and waits for the server to confirm
+the worker stopped. Leaving the page, including a language change, sends a
+keepalive cancellation for only that page's active job; it cannot promise delivery
+after a hard close. The server's 600-second job deadline is the fallback. Returning
+opens the previous report or saved revision; it does not silently re-upload IFC.
+
+The four runtime review checks are PV-001 (the existing four-value air-terminal
+type convention), INFO-001 (non-blank instance Name), INFO-002 (resolvable storey)
+and ID-001 (valid, model-local unique GlobalId). Name and storey results are
+information prompts: site-level or multi-storey containment can be intentional.
+The public sample produces 39 elements, 32 renderable shapes, 2 type failures and
+19 storey prompts. These are review counts, not a defect or compliance score.
+
+PV-001 reads the existing product-validation rule definition and uses the same
+compiler and IfcTester predicate as the pipeline. The workbench records the
+rule semantics and engine versions with each revision. Its PV-001 runtime
+predicate is now v2; comparison with an older v1 result reports a changed rule
+basis, so rerun both source versions under v2 to assess a repair. Supported-scope
+parity and deliberate reporting differences are recorded in the
+[rule parity evidence](../docs/handoffs/rule-parity.md).
+
+The browser uploads a selected file only to this loopback server. The in-memory
+JSON cache is bounded to 16 payloads / 64 MiB. Completed unsaved imports have a
+temporary spool capped at four results / 256 MiB per running server, including
+original uploaded IFC bytes; job metadata
+retains at most 16 jobs. Unsaved data can expire before the server exits. A forced
+server termination can leave task directories in `<checks-dir>/import-jobs`;
+these are not restored or counted by a later server. Remove those scratch files
+only after all server/worker processes have stopped. Use **Save to project** to retain a report,
+its 3D snapshot and follow-up records across restarts. The established example
+and recheck experiences remain available from **Records & checks**.
+
+## Projects and revision rechecks
+
+Open **[Projects & rechecks](http://127.0.0.1:8765/projects.html?lang=en)**
+([中文](http://127.0.0.1:8765/projects.html?lang=zh)).
+
+1. Create a project, then load the public example or your own IFC in the workspace.
+2. Choose **Save to project**, name the model and its first revision. The saved
+   record includes the actual report, rule snapshot and triangle geometry.
+3. On an individual result, record an owner, work status and note. Work status
+   can be Open, In progress or Ready for recheck; it does not change PASS/FAIL.
+4. From the model's project card, choose **Import new revision**. Upload the
+   newly exported IFC and save it under the existing model. A renamed file still
+   belongs to the same model when you select it explicitly.
+5. Compare two revisions and open an individual result in the appropriate saved
+   3D revision. Download a Markdown work brief from the project when useful.
+
+Recheck results distinguish a passed rule, a remaining finding, a new finding,
+an element not found now, a check no longer applicable, and an unavailable
+comparison. Optional information prompts are counted separately. Single-file
+comparison uses valid GlobalIds proven unique in that file and the same frozen
+rule predicate; it exposes changes of class, schema or rule basis. A vanished
+object or an empty check result is not evidence of a successful fix.
+
+The public three-file federation can be saved and reopened. Cross-revision
+object pairing currently supports single-file models; a federation comparison
+states that limit and keeps the two revisions' failed observations separate.
+Names, tags and STEP IDs are never used to guess identity across versions.
+
+The SQLite project library is at `<checks-dir>/projects/library.sqlite3`.
+The server prints its actual location on startup. `--checks-dir` or the existing
+`EPC_DOCTOR_CHECKS_DIR` setting chooses the external data directory. Saved revisions
+are immutable; follow-up text is updated for its own revision/finding. Opening a
+saved revision restores the report; its geometry is loaded when requested by the
+workspace. Saving notes, comparing revisions and generating briefs do not load
+geometry. Evicted saved payloads are restored from SQLite, including after a
+restart. Saving a new single-IFC revision offers an unchecked **Permanently retain
+this original IFC…** choice. With consent, source and revision are saved in one
+SQLite transaction for later enterprise-rule checks, outside the geometry cache.
+The exact revision's purpose form opens after saving; no second upload is
+needed. A project without adopted rules first opens rule preparation with this
+revision context. A save without consent preserves only the report and geometry. **Attach
+exact revision source IFC** appears only for records missing a source. API
+credentials are not stored. Unrelated older local-check
+entries retain their original storage behavior.
+For non-UTF-8 STEP exports, parsing uses an external temporary file containing
+the exact uploaded bytes; that parser scratch file is removed after native parsing.
+The original upload remains in the bounded job spool until eviction or shutdown.
+
+Project records are local to this computer. An owner is a recorded person/team,
+not an authenticated assignment or notification. The downloaded brief uses the
+latest saved revision per model and its immediate predecessor, while keeping
+manual follow-up and machine results separate. Preserve your source IFC files
+and include the complete external project directory in your own backup routine.
+
+## Enterprise rules and purpose review
+
+Follow **Project → Project rules → Model revisions → Purpose review**. In a project,
+**Project rules** accepts one ZIP with `manifest.json`,
+`rules/ruleset.toml` and native `rules/*.toml`. Download the public template there,
+or generate it with `python tools/enterprise_rules_example.py <output.zip>`.
+The manifest describes source, version, delivery purposes and evidence needs;
+TOML rules compile through the existing rule compiler and IfcTester. Preview
+parsing is not execution. Adoption requires a named confirmer and responsible
+reviewer/team and freezes that exact content. Unsupported fields/checks remain
+visible and cannot become successful observations. Excel, Word and PDF are not
+executable inputs in this version.
+
+**Purpose review** selects an adopted package, model revision, explicit object
+scope and, where required, a real counterpart revision. Attach the exact source
+IFC once if it was not retained previously. The check-only worker reuses existing
+geometry and supports confirmed cancellation and a hard deadline. It saves a new
+assessment rather than changing a model revision or its base four-rule report.
+
+The existing Purpose engine produces sealed evidence partitions. The interface
+shows BLOCKED or UNKNOWN whenever required observations fail, coverage is missing,
+an operation is unsupported or evidence is absent. Empty scope is UNKNOWN.
+READY is qualified to the listed purpose, evidence, version and scope, never a
+general project acceptance or an authenticated engineering signature.
+
+Problem cards show the element, requirement, observed result and next action
+before folded technical data. Counts distinguish objects from evidence
+observations. Machine failures, human evidence gaps and unexecuted checks have
+separate labels. Blockers link to actual rules and the exact saved 3D element.
+Non-geometric subjects retain their evidence. Human evidence needs an accepted
+method, recorder, reference and basis tied to the current model/scope; progress
+notes do not count. Saving a judgment leaves the old conclusion unchanged until
+an explicit successor review. Rechecks distinguish source-model changes,
+predicate/configuration changes, scope changes and new human evidence; deletion,
+reclassification or exclusion is not a repair. Candidate causes stay unverified.
+The purpose brief exports this same chain.
+
+See [the package contract and API](../docs/product/enterprise-purpose.md).
+
+One authorized source-backed case has exercised exact 3D selection, same-model
+revision comparison, a real server restart and brief download with 2,055 meshes
+and 1.07 million triangles. Under the earlier synchronous API, new uncached
+content took 179.5 seconds to become usable on the recorded host. Imports now run
+as separate jobs, with 30-second individual requests and a configurable hard
+deadline (`--import-timeout-seconds`, default 600). Full regression reproduced a
+network-change interruption during entry dependency loading and a failed viewer
+module that remains failed on same-page retry. A standalone startup notice survives
+missing modules/styles; failed viewer modules offer **Reload page** with the same
+record URL. Geometry request/JSON failures retain in-place retry. Technical details
+separate request, decode, viewer module, initialization and geometry loading phases.
+The earlier cold viewport record lacks evidence to establish the same cause. This
+is a measured case, not a larger-model capacity guarantee or engineering sign-off.
+See the [case evidence and limitations](../docs/handoffs/model-case.md).
+
+### OpenAI setup
+
+Local rule guidance is available immediately. To enable optional generated advice,
+set `OPENAI_API_KEY` in the terminal that starts the server; use your operating
+system's secret/environment settings or a masked prompt. For example, PowerShell:
+
+```powershell
+$doctorKey = Read-Host 'OpenAI API key' -AsSecureString
+$env:OPENAI_API_KEY = [System.Net.NetworkCredential]::new('', $doctorKey).Password
+$env:OPENAI_MODEL = 'gpt-4.1-mini' # optional; this is the default
+.\.venv\Scripts\python.exe doctor/serve.py
+# When finished, stop with Ctrl+C and clear this terminal's key:
+Remove-Item Env:OPENAI_API_KEY
+```
+
+Then click **Generate AI advice** on a selected result. The server calls the
+OpenAI Responses API using the selected rule, actual/expected values, element
+name/class/storey/tag and local engineering guidance. It sends no IFC bytes, mesh
+arrays, file path or other findings. Facts and citation labels remain copied
+from the local result; the generated summary/actions are suggestions. The request
+sets `store: false`; this is not a promise about the provider's broader data
+retention policy. Calls use the user's API account and may incur charges.
+
+The key is never returned to the browser. A missing key leaves **Rule guidance**
+available; a timeout, provider refusal or quota error is reported without claiming
+that AI generated advice. Malformed provider output is a retryable service error,
+not a missing-selection result; local evidence and guidance remain readable.
+There is no automatic model edit or status change.
+Transport and selection are covered by offline tests; evaluating a live model
+requires a configured account and representative project examples.
+
+Implementation notes and worker handoffs are in
+[phase one](../docs/product/2026-10-24-product-phase1.md) and
+[phase two](../docs/product/2026-10-25-product-phase2.md).
+
+## Established example preview
 
 A local, clickable preview of the D1 screen flow
 ([design](../docs/product/2026-09-16-doctor-d1-screen-flow.md), PR #11) for a

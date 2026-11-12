@@ -1,0 +1,652 @@
+{
+  "format_version": 1,
+  "baseline_commit": "996fc7d",
+  "ifctester_version": "0.8.5",
+  "cases": [
+    {
+      "case": "enum-diffuser",
+      "schema": "IFC4",
+      "pipeline": "executed",
+      "legacy": [
+        {
+          "status": "PASS",
+          "actual": "",
+          "element_scope": true
+        }
+      ],
+      "runtime": [
+        {
+          "status": "PASS",
+          "actual": "DIFFUSER"
+        }
+      ]
+    },
+    {
+      "case": "enum-grille",
+      "schema": "IFC4",
+      "pipeline": "executed",
+      "legacy": [
+        {
+          "status": "PASS",
+          "actual": "",
+          "element_scope": true
+        }
+      ],
+      "runtime": [
+        {
+          "status": "PASS",
+          "actual": "GRILLE"
+        }
+      ]
+    },
+    {
+      "case": "enum-louvre",
+      "schema": "IFC4",
+      "pipeline": "executed",
+      "legacy": [
+        {
+          "status": "PASS",
+          "actual": "",
+          "element_scope": true
+        }
+      ],
+      "runtime": [
+        {
+          "status": "PASS",
+          "actual": "LOUVRE"
+        }
+      ]
+    },
+    {
+      "case": "enum-register",
+      "schema": "IFC4",
+      "pipeline": "executed",
+      "legacy": [
+        {
+          "status": "PASS",
+          "actual": "",
+          "element_scope": true
+        }
+      ],
+      "runtime": [
+        {
+          "status": "PASS",
+          "actual": "REGISTER"
+        }
+      ]
+    },
+    {
+      "case": "occurrence-notdefined",
+      "schema": "IFC4",
+      "pipeline": "executed",
+      "legacy": [
+        {
+          "status": "FAIL",
+          "actual": "",
+          "element_scope": true
+        }
+      ],
+      "runtime": [
+        {
+          "status": "FAIL",
+          "actual": "NOTDEFINED"
+        }
+      ]
+    },
+    {
+      "case": "occurrence-unset",
+      "schema": "IFC4",
+      "pipeline": "executed",
+      "legacy": [
+        {
+          "status": "FAIL",
+          "actual": "",
+          "element_scope": true
+        }
+      ],
+      "runtime": [
+        {
+          "status": "FAIL",
+          "actual": "Not declared"
+        }
+      ]
+    },
+    {
+      "case": "occurrence-userdefined-supported",
+      "schema": "IFC4",
+      "pipeline": "executed",
+      "legacy": [
+        {
+          "status": "PASS",
+          "actual": "",
+          "element_scope": true
+        }
+      ],
+      "runtime": [
+        {
+          "status": "PASS",
+          "actual": "GRILLE"
+        }
+      ]
+    },
+    {
+      "case": "occurrence-userdefined-custom",
+      "schema": "IFC4",
+      "pipeline": "executed",
+      "legacy": [
+        {
+          "status": "FAIL",
+          "actual": "",
+          "element_scope": true
+        }
+      ],
+      "runtime": [
+        {
+          "status": "FAIL",
+          "actual": "SPECIAL"
+        }
+      ]
+    },
+    {
+      "case": "occurrence-userdefined-blank",
+      "schema": "IFC4",
+      "pipeline": "executed",
+      "legacy": [
+        {
+          "status": "FAIL",
+          "actual": "",
+          "element_scope": true
+        }
+      ],
+      "runtime": [
+        {
+          "status": "FAIL",
+          "actual": "Not declared"
+        }
+      ]
+    },
+    {
+      "case": "occurrence-userdefined-missing",
+      "schema": "IFC4",
+      "pipeline": "executed",
+      "legacy": [
+        {
+          "status": "FAIL",
+          "actual": "",
+          "element_scope": true
+        }
+      ],
+      "runtime": [
+        {
+          "status": "FAIL",
+          "actual": "Not declared"
+        }
+      ]
+    },
+    {
+      "case": "occurrence-userdefined-case",
+      "schema": "IFC4",
+      "pipeline": "executed",
+      "legacy": [
+        {
+          "status": "FAIL",
+          "actual": "",
+          "element_scope": true
+        }
+      ],
+      "runtime": [
+        {
+          "status": "FAIL",
+          "actual": "grille"
+        }
+      ]
+    },
+    {
+      "case": "occurrence-userdefined-padded",
+      "schema": "IFC4",
+      "pipeline": "executed",
+      "legacy": [
+        {
+          "status": "FAIL",
+          "actual": "",
+          "element_scope": true
+        }
+      ],
+      "runtime": [
+        {
+          "status": "FAIL",
+          "actual": " GRILLE "
+        }
+      ]
+    },
+    {
+      "case": "unset-enum-free-text",
+      "schema": "IFC4",
+      "pipeline": "executed",
+      "legacy": [
+        {
+          "status": "PASS",
+          "actual": "",
+          "element_scope": true
+        }
+      ],
+      "runtime": [
+        {
+          "status": "PASS",
+          "actual": "LOUVRE"
+        }
+      ]
+    },
+    {
+      "case": "type-only",
+      "schema": "IFC4",
+      "pipeline": "executed",
+      "legacy": [
+        {
+          "status": "PASS",
+          "actual": "",
+          "element_scope": true
+        }
+      ],
+      "runtime": [
+        {
+          "status": "PASS",
+          "actual": "LOUVRE"
+        }
+      ]
+    },
+    {
+      "case": "type-over-notdefined",
+      "schema": "IFC4",
+      "pipeline": "executed",
+      "legacy": [
+        {
+          "status": "PASS",
+          "actual": "",
+          "element_scope": true
+        }
+      ],
+      "runtime": [
+        {
+          "status": "PASS",
+          "actual": "LOUVRE"
+        }
+      ]
+    },
+    {
+      "case": "type-notdefined-fallback",
+      "schema": "IFC4",
+      "pipeline": "executed",
+      "legacy": [
+        {
+          "status": "PASS",
+          "actual": "",
+          "element_scope": true
+        }
+      ],
+      "runtime": [
+        {
+          "status": "PASS",
+          "actual": "LOUVRE"
+        }
+      ]
+    },
+    {
+      "case": "type-custom-overrides-instance",
+      "schema": "IFC4",
+      "pipeline": "executed",
+      "legacy": [
+        {
+          "status": "FAIL",
+          "actual": "",
+          "element_scope": true
+        }
+      ],
+      "runtime": [
+        {
+          "status": "FAIL",
+          "actual": "SPECIAL"
+        }
+      ]
+    },
+    {
+      "case": "type-userdefined-missing-fallback",
+      "schema": "IFC4",
+      "pipeline": "executed",
+      "legacy": [
+        {
+          "status": "PASS",
+          "actual": "",
+          "element_scope": true
+        }
+      ],
+      "runtime": [
+        {
+          "status": "PASS",
+          "actual": "LOUVRE"
+        }
+      ]
+    },
+    {
+      "case": "type-userdefined-blank-fallback",
+      "schema": "IFC4",
+      "pipeline": "executed",
+      "legacy": [
+        {
+          "status": "PASS",
+          "actual": "",
+          "element_scope": true
+        }
+      ],
+      "runtime": [
+        {
+          "status": "PASS",
+          "actual": "LOUVRE"
+        }
+      ]
+    },
+    {
+      "case": "type-userdefined-whitespace",
+      "schema": "IFC4",
+      "pipeline": "executed",
+      "legacy": [
+        {
+          "status": "FAIL",
+          "actual": "",
+          "element_scope": true
+        }
+      ],
+      "runtime": [
+        {
+          "status": "FAIL",
+          "actual": " "
+        }
+      ]
+    },
+    {
+      "case": "type-userdefined-supported",
+      "schema": "IFC4",
+      "pipeline": "executed",
+      "legacy": [
+        {
+          "status": "PASS",
+          "actual": "",
+          "element_scope": true
+        }
+      ],
+      "runtime": [
+        {
+          "status": "PASS",
+          "actual": "GRILLE"
+        }
+      ]
+    },
+    {
+      "case": "type-unset-free-text",
+      "schema": "IFC4",
+      "pipeline": "executed",
+      "legacy": [
+        {
+          "status": "PASS",
+          "actual": "",
+          "element_scope": true
+        }
+      ],
+      "runtime": [
+        {
+          "status": "PASS",
+          "actual": "GRILLE"
+        }
+      ]
+    },
+    {
+      "case": "type-unset-fallback",
+      "schema": "IFC4",
+      "pipeline": "executed",
+      "legacy": [
+        {
+          "status": "PASS",
+          "actual": "",
+          "element_scope": true
+        }
+      ],
+      "runtime": [
+        {
+          "status": "PASS",
+          "actual": "REGISTER"
+        }
+      ]
+    },
+    {
+      "case": "type-enum-overrides-instance-text",
+      "schema": "IFC4",
+      "pipeline": "executed",
+      "legacy": [
+        {
+          "status": "PASS",
+          "actual": "",
+          "element_scope": true
+        }
+      ],
+      "runtime": [
+        {
+          "status": "PASS",
+          "actual": "DIFFUSER"
+        }
+      ]
+    },
+    {
+      "case": "malformed-enum",
+      "schema": "IFC4",
+      "pipeline": "executed",
+      "legacy": [
+        {
+          "status": "FAIL",
+          "actual": "",
+          "element_scope": true
+        }
+      ],
+      "runtime": [
+        {
+          "status": "FAIL",
+          "actual": "Not declared"
+        }
+      ]
+    },
+    {
+      "case": "malformed-enum-with-object-text",
+      "schema": "IFC4",
+      "pipeline": "executed",
+      "legacy": [
+        {
+          "status": "PASS",
+          "actual": "",
+          "element_scope": true
+        }
+      ],
+      "runtime": [
+        {
+          "status": "PASS",
+          "actual": "LOUVRE"
+        }
+      ]
+    },
+    {
+      "case": "wall-subclass-not-applicable",
+      "schema": "IFC4",
+      "pipeline": "executed",
+      "legacy": [
+        {
+          "status": "N/A",
+          "actual": "",
+          "element_scope": false
+        }
+      ],
+      "runtime": [
+        {
+          "status": "NOT_APPLICABLE",
+          "actual": "IfcWallStandardCase"
+        }
+      ]
+    },
+    {
+      "case": "base-class-not-applicable",
+      "schema": "IFC4",
+      "pipeline": "executed",
+      "legacy": [
+        {
+          "status": "N/A",
+          "actual": "",
+          "element_scope": false
+        }
+      ],
+      "runtime": [
+        {
+          "status": "NOT_APPLICABLE",
+          "actual": "IfcFlowTerminal"
+        }
+      ]
+    },
+    {
+      "case": "sibling-class-not-applicable",
+      "schema": "IFC4",
+      "pipeline": "executed",
+      "legacy": [
+        {
+          "status": "N/A",
+          "actual": "",
+          "element_scope": false
+        }
+      ],
+      "runtime": [
+        {
+          "status": "NOT_APPLICABLE",
+          "actual": "IfcAirTerminalBox"
+        }
+      ]
+    },
+    {
+      "case": "zero-elements",
+      "schema": "IFC4",
+      "pipeline": "executed",
+      "legacy": [
+        {
+          "status": "N/A",
+          "actual": "",
+          "element_scope": false
+        }
+      ],
+      "runtime": []
+    },
+    {
+      "case": "ifc2x3-type-mapping",
+      "schema": "IFC2X3",
+      "pipeline": "unsupported_schema",
+      "legacy": [
+        {
+          "status": "PASS",
+          "actual": "",
+          "element_scope": true
+        }
+      ],
+      "runtime": [
+        {
+          "status": "PASS",
+          "actual": "DIFFUSER"
+        }
+      ]
+    },
+    {
+      "case": "ifc2x3-other-class-type-mapping",
+      "schema": "IFC2X3",
+      "pipeline": "unsupported_schema",
+      "legacy": [
+        {
+          "status": "PASS",
+          "actual": "",
+          "element_scope": true
+        }
+      ],
+      "runtime": [
+        {
+          "status": "NOT_APPLICABLE",
+          "actual": "IfcFurnishingElement"
+        }
+      ]
+    },
+    {
+      "case": "ifc2x3-no-type",
+      "schema": "IFC2X3",
+      "pipeline": "unsupported_schema",
+      "legacy": [
+        {
+          "status": "N/A",
+          "actual": "",
+          "element_scope": false
+        }
+      ],
+      "runtime": [
+        {
+          "status": "NOT_APPLICABLE",
+          "actual": "IfcFlowTerminal"
+        }
+      ]
+    },
+    {
+      "case": "ifc4x3-terminal",
+      "schema": "IFC4X3",
+      "pipeline": "unsupported_schema",
+      "legacy": [
+        {
+          "status": "PASS",
+          "actual": "",
+          "element_scope": true
+        }
+      ],
+      "runtime": [
+        {
+          "status": "PASS",
+          "actual": "DIFFUSER"
+        }
+      ]
+    }
+  ],
+  "original_runtime_rules": [
+    {
+      "rule_id": "PV-001",
+      "predicate_version": "1",
+      "severity": "ERROR",
+      "title": "Air terminals declare one of four predefined types",
+      "expected": "DIFFUSER, GRILLE, LOUVRE, REGISTER",
+      "citation": "Repository product-validation/PV-001; not a statutory requirement. Values from IFC4 ADD2 TC1 IfcAirTerminalTypeEnum.",
+      "scope": "IfcAirTerminal occurrences, including IFC2x3 IfcAirTerminalType mapping; effective type text including assigned type"
+    },
+    {
+      "rule_id": "INFO-001",
+      "predicate_version": "1",
+      "severity": "INFO",
+      "title": "Element has a readable Name",
+      "expected": "A non-blank Name",
+      "citation": "BIM Doctor information-quality convention. IFC Name is optional; this check does not establish schema or regulatory compliance.",
+      "scope": "IfcElement occurrences"
+    },
+    {
+      "rule_id": "INFO-002",
+      "predicate_version": "1",
+      "severity": "INFO",
+      "title": "Element resolves to a building storey",
+      "expected": "An IfcBuildingStorey through spatial containment or parent relations",
+      "citation": "BIM Doctor information-location convention, using IFC containment and decomposition. Not a room-assignment or statutory check.",
+      "scope": "IfcElement occurrences including nested parts and openings"
+    },
+    {
+      "rule_id": "ID-001",
+      "predicate_version": "1",
+      "severity": "ERROR",
+      "title": "GlobalId is valid and unique within its IFC file",
+      "expected": "A 22-character compressed IFC GlobalId unique among this file's IfcRoot",
+      "citation": "IFC IfcGloballyUniqueId compressed identifier format; uniqueness checked within one file, not across federated models.",
+      "scope": "Displayed IfcElement; duplicate counts include every IfcRoot in the file"
+    }
+  ]
+}

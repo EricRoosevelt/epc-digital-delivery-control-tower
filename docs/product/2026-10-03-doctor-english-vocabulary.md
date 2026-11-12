@@ -1381,3 +1381,31 @@
 | outside | 当前选中项不在筛选结果中；详情保持可读。 | The selected item is outside this filter. Its detail remains visible. |
 | name | 名称 | Name |
 | basis | 依据 | Basis |
+
+## 2026-10-24 WORKSPACE_UI：真实 3D 工作台入口
+
+本轮只新增入口文案；既有领域词和历史记录不变。
+
+| Key | 中文 | English |
+|---|---|---|
+| review | 3D 检查工作台 | 3D review workspace |
+| reviewAction | 打开 3D 检查工作台 | Open 3D review workspace |
+| reviewBody | 载入真实公共示例或自己的 IFC，在模型中定位问题，并查看有证据的处理建议。 | Load the real public example or your own IFC, locate issues in the model, and read evidence-based next steps. |
+
+## 2026-10-25 WORKSPACE_UI：持久项目与复查入口
+
+| Key | 中文 | English |
+|---|---|---|
+| projects | 项目与复查 | Projects & rechecks |
+
+## 2026-10-28 WORKSPACE_UI：项目用途主入口
+
+| Key | 中文 | English |
+|---|---|---|
+| startTitle | 按项目开展用途审查 | Review model purposes in a project |
+| startBody | 建立项目，采用企业规则，保存模型修订，再按实际用途定位阻碍与复检变化。 | Create a project, adopt your rules, save a model revision, then locate blockers and recheck changes for its intended purpose. |
+| startAction | 打开项目 | Open projects |
+| workflow | 项目 → 企业规则 → 模型 → 用途审查 | Project → Enterprise rules → Model → Purpose review |
+| legacy | 历史记录与独立检查 | Historical records & standalone checks |
+| legacyBody | 原有示例和检查记录保留在这里；项目规则与用途审查从上方项目入口开始。 | Earlier examples and check records remain available here. Start project rules and purpose reviews from the project entry above. |
+| currentScope | 当前支持 IFC 几何、企业规则 ZIP、模型修订与用途证据复检。源模型修改后重新导出 IFC；本工具不写回 Revit，也不提供整体合规或施工许可。 | Supports IFC geometry, enterprise rule ZIPs, model revisions and purpose-evidence rechecks. Edit the source model and re-export IFC; this tool does not write back to Revit or grant overall compliance or construction approval. |

@@ -1,0 +1,62 @@
+[
+  {
+    "lang": "zh",
+    "width": 375,
+    "early": {
+      "query": "house",
+      "focus": "house fireplace cap",
+      "current": "true",
+      "hash": "#/local/e7838dad4ac0d3b3"
+    },
+    "settled": {
+      "query": "house",
+      "focus": "house fireplace cap",
+      "current": "true"
+    }
+  },
+  {
+    "lang": "en",
+    "width": 375,
+    "early": {
+      "query": "house",
+      "focus": "house fireplace cap",
+      "current": "true",
+      "hash": "#/local/e7838dad4ac0d3b3"
+    },
+    "settled": {
+      "query": "house",
+      "focus": "house fireplace cap",
+      "current": "true"
+    }
+  },
+  {
+    "lang": "zh",
+    "width": 1280,
+    "early": {
+      "query": "house",
+      "focus": "Back to results",
+      "current": null,
+      "hash": "#/local/e7838dad4ac0d3b3"
+    },
+    "settled": {
+      "query": "house",
+      "focus": "house fireplace cap",
+      "current": "true"
+    }
+  },
+  {
+    "lang": "en",
+    "width": 1280,
+    "early": {
+      "query": "house",
+      "focus": "返回结果列表",
+      "current": null,
+      "hash": "#/local/e7838dad4ac0d3b3"
+    },
+    "settled": {
+      "query": "house",
+      "focus": "house fireplace cap",
+      "current": "true"
+    }
+  }
+]

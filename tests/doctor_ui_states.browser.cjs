@@ -3,13 +3,13 @@
 const assert = require("node:assert/strict");
 const path = require("node:path");
 const fs = require("node:fs");
-const { chromium } = require("playwright");
+const { launchBrowser, captureFailure } = require("./browser-qa-helpers.cjs");
 
 async function main() {
   const [base, evidence, synthetic] = process.argv.slice(2);
   assert.ok(base && evidence && synthetic);
   fs.mkdirSync(evidence, { recursive: true });
-  const browser = await chromium.launch({ channel: process.env.BROWSER_CHANNEL || "msedge", headless: true });
+  const browser = await launchBrowser(evidence);
   const facts = [];
   async function shot(page, name) {
     const geometry = await page.evaluate(() => ({ width: innerWidth, height: innerHeight, scroll: scrollY,
@@ -69,7 +69,12 @@ async function main() {
       await page.locator(".first-register a.run").filter({ hasText: /查看|See/ }).first().click();
       await page.locator(".next-step").waitFor(); await shot(page, prefix + "-item");
       const follow = page.locator('main a[href*="/recheck/of/"]').first();
-      await follow.click(); await page.locator(".next-step").waitFor();
+      // The item page already has a .next-step: wait for the hash route to replace
+      // it, or the wait can resolve on the old page before the loading state.
+      const leaving = await page.locator(".next-step").elementHandle();
+      await follow.click();
+      await page.waitForFunction((el) => !el.isConnected, leaving);
+      await page.locator(".next-step").waitFor();
       await shot(page, prefix + "-same-item-recheck");
       if (lang === "en") assert.match(await page.locator("main").innerText(), /changed conclusion does not mean the original condition is met/i);
 
@@ -92,6 +97,7 @@ async function main() {
       await page.locator("#workspace-filter").fill("house");
       await page.locator(".c-name a").filter({ hasText: "house fireplace cap" }).click();
       await page.goBack(); await page.locator("#workspace-filter").waitFor();
+      await page.waitForFunction(() => document.activeElement?.matches('.c-name a[aria-current="true"]'));
       assert.equal(await page.locator("#workspace-filter").inputValue(), "house");
       assert.equal(await page.evaluate(() => document.activeElement.textContent), "house fireplace cap");
       await page.locator(".clear-search").click();
@@ -106,6 +112,7 @@ async function main() {
       assert.equal(await page.locator(".ws-list tbody tr:visible").count(), 1);
       await page.locator(".clear-search").click();
       await page.locator(".c-name a").filter({ hasText: "chimney cover" }).click();
+      await page.waitForFunction(() => document.querySelector(".ws-detail h2")?.textContent === "chimney cover");
       if (width > 700) {
         await page.locator("#workspace-filter").fill("house");
         assert.ok(await page.locator(".out-of-filter").isVisible());
@@ -113,6 +120,7 @@ async function main() {
         assert.equal(await page.locator(".ws-list tbody tr:visible").count(), 0);
         await shot(page, prefix + "-outside-filter");
         await page.locator(".ws-back").click();
+        await page.waitForFunction(() => document.activeElement?.id === "workspace-filter");
         assert.equal(await page.evaluate(() => document.activeElement.id), "workspace-filter");
       }
 
@@ -150,7 +158,7 @@ async function main() {
       assert.equal(await page.locator(".ws-list tbody tr:visible").count(), 2);
       await page.close();
     }
-  } finally {
+  } catch (error) { await captureFailure(browser, evidence, error); throw error; } finally {
     await browser.close();
     fs.writeFileSync(path.join(evidence, "states.json"), JSON.stringify(facts, null, 2) + "\n");
   }

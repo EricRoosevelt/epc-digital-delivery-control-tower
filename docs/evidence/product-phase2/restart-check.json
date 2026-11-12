@@ -1,0 +1,13 @@
+{
+  "passed": true,
+  "revision_id": "revision-4b284a4a160746dab8a33c890d034c62",
+  "real_process_restart": true,
+  "restored_elements": 39,
+  "restored_meshes": 32,
+  "followup_status": "ready_for_recheck",
+  "machine_status": "FAIL",
+  "saved_note_exact": true,
+  "local_guidance_restored": true,
+  "comparison_summary_unchanged": true,
+  "markdown_download_restored": true
+}

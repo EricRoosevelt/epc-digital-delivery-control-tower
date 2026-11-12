@@ -8,6 +8,7 @@ export function shell(mode) {
       h("span", { class: "brand-mark", "aria-hidden": "true" }, "BD"),
       h("span", { class: "brand-name" }, "BIM Doctor"), h("span", { class: "version-label" }, UI.preview)),
     h("nav", { class: "main-nav", "aria-label": UI.navigation },
+      h("a", { href: `./projects.html?lang=${document.documentElement.lang.startsWith("en") ? "en" : "zh"}` }, UI.projects),
       h("a", { href: "#/fixture", "aria-current": mode === "fixture" ? "page" : null }, UI.examples),
       h("a", { href: "#/local", "aria-current": mode === "local" ? "page" : null }, UI.local)),
     h("div", { id: "language", class: "language" }));

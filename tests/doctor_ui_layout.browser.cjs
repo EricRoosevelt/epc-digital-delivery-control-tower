@@ -1,9 +1,9 @@
 // Regression for verified review findings: tablet grid order and unbroken names.
 const assert = require("node:assert/strict");
-const { chromium } = require("playwright");
+const { launchBrowser, captureFailure } = require("./browser-qa-helpers.cjs");
 async function main() {
-  const base = process.argv[2]; assert.ok(base);
-  const browser = await chromium.launch({ channel: process.env.BROWSER_CHANNEL || "msedge", headless: true });
+  const [base, evidence] = process.argv.slice(2); assert.ok(base);
+  const browser = await launchBrowser(evidence);
   const failures = [];
   try {
     for (const width of [701, 768, 900]) {
@@ -43,7 +43,7 @@ async function main() {
       assert.equal((await page.locator(".ws-detail h2").innerText()).length, 181);
       await page.close();
     }
-  } finally { await browser.close(); }
+  } catch (error) { await captureFailure(browser, evidence, error); throw error; } finally { await browser.close(); }
   assert.deepEqual(failures, [], failures.join("\n"));
   console.log("PASS: 701/768/900 local grid and full-width initial list; 375/1280 unbroken name");
 }

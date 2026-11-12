@@ -2,12 +2,12 @@
 const assert = require("node:assert/strict");
 const fs = require("node:fs");
 const path = require("node:path");
-const { chromium } = require("playwright");
+const { launchBrowser, captureFailure } = require("./browser-qa-helpers.cjs");
 
 async function main() {
   const [base, out] = process.argv.slice(2); assert.ok(base && out);
   fs.mkdirSync(out, { recursive: true });
-  const browser = await chromium.launch({ channel: process.env.BROWSER_CHANNEL || "msedge", headless: true });
+  const browser = await launchBrowser(out);
   const page = await browser.newPage({ viewport: { width: 375, height: 812 } });
   const facts = [];
   try {
@@ -69,7 +69,7 @@ async function main() {
     const errorFocused = await page.locator(".ws-detail .problem").evaluate((el) => document.activeElement === el);
     assert.equal(errorFocused, true, "invalid finding must focus visible error, not the hidden result list");
     facts.push({ name: "invalid-finding-route", kind: "real-route-refusal", passed: true });
-  } finally {
+  } catch (error) { await captureFailure(browser, out, error); throw error; } finally {
     await browser.close();
     fs.writeFileSync(path.join(out, "resilience.json"), JSON.stringify(facts, null, 2) + "\n");
   }
