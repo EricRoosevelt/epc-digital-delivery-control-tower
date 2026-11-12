@@ -69,7 +69,12 @@ async function main() {
       await page.locator(".first-register a.run").filter({ hasText: /查看|See/ }).first().click();
       await page.locator(".next-step").waitFor(); await shot(page, prefix + "-item");
       const follow = page.locator('main a[href*="/recheck/of/"]').first();
-      await follow.click(); await page.locator(".next-step").waitFor();
+      // The item page already has a .next-step: wait for the hash route to replace
+      // it, or the wait can resolve on the old page before the loading state.
+      const leaving = await page.locator(".next-step").elementHandle();
+      await follow.click();
+      await page.waitForFunction((el) => !el.isConnected, leaving);
+      await page.locator(".next-step").waitFor();
       await shot(page, prefix + "-same-item-recheck");
       if (lang === "en") assert.match(await page.locator("main").innerText(), /changed conclusion does not mean the original condition is met/i);
 
